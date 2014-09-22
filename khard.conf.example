@@ -1,0 +1,11 @@
+[addressbooks]
+[[family]]
+path = ~/.contacts/family/
+
+[[friends]]
+path = ~/.contacts/friends/
+
+[general]
+editor = /usr/bin/vim
+default_country = Germany
+default_action = list

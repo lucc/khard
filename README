@@ -1,0 +1,52 @@
+khard
+=====
+
+Installation
+------------
+
+Install requirements:
+
+```
+sudo pip install vobject configobj argparse
+```
+
+Pull from git:
+
+```
+git clone https://github.com/scheibler/khard.git
+cd khard/
+```
+
+Config file:
+
+```
+mkdir ~/.config/khard/
+cp khard.conf.example ~/.config/khard/khard.conf
+```
+
+Usage
+-----
+
+List all contacts:
+
+```
+./main.py list
+```
+
+Add new contact:
+
+```
+./main.py new -a addressbook_name
+```
+
+mutt
+----
+
+Add the following to your mutt config file (~/.mutt/muttrc):
+
+```
+set query_command= "/home/eric/programming/source/khard/main.py mutt --search '%s'"
+bind editor <Tab> complete-query
+bind editor ^T    complete
+```
+
