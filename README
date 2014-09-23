@@ -50,3 +50,25 @@ bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
 
+Twinkle
+-------
+
+Add the following in your twinkle config file (~/.twinkle/twinkle.cfg):
+
+```
+# RING TONES
+# wen need a default ringtonw in case something goes wrong
+ringtone_file=/home/USERNAME/.twinkle/sounds/incoming_call.wav
+ringback_file=/home/USERNAME/.twinkle/sounds/outgoing_call.wav
+
+# SCRIPTS
+script_incoming_call=/home/USERNAME/.twinkle/scripts/incoming_call.py
+script_in_call_answered=
+script_in_call_failed=/home/USERNAME/.twinkle/scripts/incoming_call_failed.py
+script_outgoing_call=
+script_out_call_answered=
+script_out_call_failed=
+script_local_release=/home/USERNAME/.twinkle/scripts/incoming_call_ended.py
+script_remote_release=/home/USERNAME/.twinkle/scripts/incoming_call_ended.py
+```
+
