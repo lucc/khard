@@ -32,7 +32,7 @@ def pretty_print(table, justify = "L"):
 
 def get_new_contact_template(addressbook_name):
     return """# new contact
-# Addressbook: %s
+# Address book: %s
 # if you want to cancel, just leave the first or last name field blank
 
 # first and last name

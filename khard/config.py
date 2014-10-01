@@ -42,24 +42,24 @@ class Config:
                         Possible values are: list, details, new, modify and remove"
                 sys.exit(2)
 
-            # load addressbooks
+            # load address books
             if self.config.has_key("addressbooks") == False:
                 print "Error in config file\nMissing main section \"[addressbooks]\"."
                 sys.exit(2)
             if self.config['addressbooks'].keys().__len__() == 0:
-                print "Error in config file\nNo addressbook entries available."
+                print "Error in config file\nNo address book entries available."
                 sys.exit(2)
             for name in self.config['addressbooks'].keys():
                 addressbook = self.config['addressbooks'][name]
                 if addressbook.has_key("path") == False:
-                    print "Error in config file\nMissing path to the \"%s\" addressbook." % name
+                    print "Error in config file\nMissing path to the \"%s\" address book." % name
                     sys.exit(2)
                 if addressbook['path'].startswith("~"):
                     addressbook['path'] = addressbook['path'].replace("~", os.path.expanduser("~"))
                 if os.path.exists(addressbook['path']) == False:
-                    print "Error in config file\nThe path %s to the addressbook %s does not exist." % (addressbook['path'], name)
+                    print "Error in config file\nThe path %s to the address book %s does not exist." % (addressbook['path'], name)
                     sys.exit(2)
-                # set addressbook name
+                # set address book name
                 addressbook['name'] = name
                 # load all vcard files
                 addressbook['vcards'] = []
@@ -86,12 +86,12 @@ class Config:
             try:
                 return self.config['addressbooks'][name]
             except KeyError as e:
-                print "The addressbook \"%s\" does not exist" % name
+                print "The address book \"%s\" does not exist" % name
                 sys.exit(3)
 
         def get_vcard_objects(self, addressbook_names, sort_criteria, reverse, search):
             """returns a list of vcard objects
-            :param addressbook_names: list of selected addressbooks
+            :param addressbook_names: list of selected address books
             :type addressbook_names: list(str)
             :param sort_criteria: sort list by given criteria
             :type sort_criteria: str

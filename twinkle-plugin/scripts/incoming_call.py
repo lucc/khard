@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # This script speaks the incoming caller ID for the SIP client Twinkle
-# It also contains a very simple addressbook
 # The following programs are needed: espeak, ffmpeg and sox, mpc is optional
 # aptitude install ffmpeg espeak sox mpc
 # Further information about Twinkle scripts can be found at
@@ -15,7 +14,7 @@ def get_caller_id(from_hdr):
     return clid
 
 def caller_from_addressbook(caller_id):
-    caller_name = subprocess.check_output([config.khard_path, "twinkle", "-s", caller_id])
+    caller_name = subprocess.check_output(["khard", "twinkle", "-s", caller_id])
     if caller_name != "":
         return caller_name
     else:
@@ -67,7 +66,4 @@ if "SIP_FROM" in os.environ:
     # else do nothing and play the standard ringtone
     if os.path.exists(config.new_ringtone) == True:
         print "ringtone=" + config.new_ringtone
-    # send the caller id via jabber
-    #subprocess.call(["send_jabber_message", "-t", "heizung@wasserbett.ath.cx", "Anruf von " + caller_id], \
-    #        stdout=open(os.devnull, "w"), stderr=open(os.devnull, "w"))
 sys.exit()
