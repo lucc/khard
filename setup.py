@@ -13,7 +13,7 @@ setup(
     author_email = 'email@eric-scheibler.de',
     url = 'https://github.com/scheibler/khard/',
     description = 'A console carddav client',
-    long_description = open('README').read(),
+    long_description = open('README.rst').read(),
     license = 'GPL',
     keywords = 'Carddav console addressbook',
     classifiers = [
