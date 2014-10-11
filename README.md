@@ -5,6 +5,12 @@ Khard is an address book for the Linux console. It creates, reads, modifies and 
 carddav address book entries at your local machine. Khard is also compatible to the email client mutt
 and the SIP client twinkle.
 
+Khard is developed and tested on Debian operating system, version 7 and 8 but should run on 
+all Unix-like systems.
+
+If you encounter bugs, please contact me via email: email (at) eric-scheibler (dot) de.
+
+
 Prerequisites
 -------------
 
