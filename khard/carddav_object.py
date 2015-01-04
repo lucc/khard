@@ -288,7 +288,7 @@ class CarddavObject:
             :rtype: datetime.datetime
         """
         try:
-            return datetime.datetime.strptime(self.vcard.bday.value, "%Y%m%d")
+            return datetime.datetime.strptime(self.vcard.bday.value.replace('-', ''), "%Y%m%d")
         except AttributeError as e:
             return None
         except ValueError as e:
