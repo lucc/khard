@@ -7,18 +7,20 @@ import vobject
 class CarddavObject:
     def __init__(self, addressbook_name, addressbook_path, filename=""):
         self.addressbook_name = addressbook_name
-        self.addressbook_path = addressbook_path
         if filename == "":
             # create new vcard
             self.vcard = vobject.vCard()
             choice = string.ascii_uppercase + string.digits
             uid_obj = self.vcard.add('uid')
             uid_obj.value = ''.join([random.choice(choice) for _ in range(36)])
+            self.vcard_full_filename = os.path.join(addressbook_path,
+                    self.vcard.uid.value + ".vcf")
         else:
             # create vcard from file
             file = open(filename, "r")
             self.vcard = vobject.readOne(file.read())
             file.close()
+            self.vcard_full_filename = filename
 
     def __str__(self):
         return self.get_full_name()
@@ -54,21 +56,20 @@ class CarddavObject:
                 % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
 
         # name and organisation
-        # either enter first and last name or organisation
-        if (contact_data.has_key("first name") and contact_data['first name'] != "" \
-                and contact_data.has_key("last name") and contact_data['last name'] != "") \
-                or (contact_data.has_key("organisation") and contact_data['organisation'] != ""):
-            if contact_data.has_key("first name") == False:
-                contact_data['first name'] = ""
-            if contact_data.has_key("last name") == False:
-                contact_data['last name'] = ""
-            if contact_data.has_key("organisation") == False:
-                contact_data['organisation'] = ""
+        # either enter first name, first and last name or organisation
+        if contact_data.has_key("first name") == False:
+            contact_data['first name'] = ""
+        if contact_data.has_key("last name") == False:
+            contact_data['last name'] = ""
+        if contact_data.has_key("organisation") == False:
+            contact_data['organisation'] = ""
+        if (contact_data['first name'] == "" and contact_data['last name'] == "" and contact_data['organisation'] == "") \
+                or (contact_data['first name'] == "" and contact_data['last name'] != ""):
+            print "Error: You must enter a first name, a first and last name or an organisation"
+            sys.exit(1)
+        else:
             self.set_name_and_organisation(contact_data['first name'],
                     contact_data['last name'], contact_data['organisation'])
-        else:
-            print "You must at least enter a first and last name or an organisation"
-            sys.exit(1)
 
         # phone
         phone_list = []
@@ -77,12 +78,15 @@ class CarddavObject:
                 continue
             try:
                 label = contact_data[key].split(":")[0].strip()
-                number = contact_data[key].split(":")[1].strip()
-                if label == "" or number == "":
-                    print "Missing label or number for line %s" % key
+                if label == "":
+                    print "Error: Missing label for line %s" % key
                     sys.exit(1)
+                number = contact_data[key].split(":")[1].strip()
+                if number == "":
+                    print "Info: Skipped %s" % key
+                    continue
             except IndexError as e:
-                print "The %s line is malformed" % key
+                print "Error: The %s line is malformed" % key
                 sys.exit(1)
             phone_list.append({"type":label, "value":number})
         if phone_list.__len__() > 0:
@@ -95,12 +99,15 @@ class CarddavObject:
                 continue
             try:
                 label = contact_data[key].split(":")[0].strip()
-                email = contact_data[key].split(":")[1].strip()
-                if label == "" or email == "":
-                    print "Missing label or number for line %s" % key
+                if label == "":
+                    print "Error: Missing label for line %s" % key
                     sys.exit(1)
+                email = contact_data[key].split(":")[1].strip()
+                if email == "":
+                    print "Info: Skipped %s" % key
+                    continue
             except IndexError as e:
-                print "The %s line is malformed" % key
+                print "Error: The %s line is malformed" % key
                 sys.exit(1)
             email_list.append({"type":label, "value":email})
         if email_list.__len__() > 0:
@@ -113,33 +120,36 @@ class CarddavObject:
                 continue
             try:
                 label = contact_data[key].split(":")[0].strip()
+                if label == "":
+                    print "Error: Missing label for line %s" % key
+                    sys.exit(1)
                 address = contact_data[key].split(":")[1].strip()
-                if label == "" or address == "":
-                    print "Warning: Missing label or value for line %s" % key
+                if address.startswith("; ; ; ; "):
+                    print "Info: Skipped %s" % key
                     continue
             except IndexError as e:
-                print "Warning: The %s line is malformed" % key
-                continue
+                print "Error: The %s line is malformed" % key
+                sys.exit(1)
             if address.split(";").__len__() != 5:
-                print "Warning: The %s line is malformed" % key
-                continue
+                print "Error: The %s line is malformed" % key
+                sys.exit(1)
             street_and_house_number = address.split(";")[0].strip()
             if street_and_house_number == "":
-                print "Warning: %s has no street" % key
-                continue
+                print "Error: %s has no street" % key
+                sys.exit(1)
             postcode = address.split(";")[1].strip()
             if postcode == "":
-                print "Warning: %s has no postcode" % key
-                continue
+                print "Error: %s has no postcode" % key
+                sys.exit(1)
             city = address.split(";")[2].strip()
             if city == "":
-                print "Warning: %s has no city" % key
-                continue
+                print "Error: %s has no city" % key
+                sys.exit(1)
             region = address.split(";")[3].strip()
             country = address.split(";")[4].strip()
             if country == "":
-                print "Warning: %s has no country" % key
-                continue
+                print "Error: %s has no country" % key
+                sys.exit(1)
             address_list.append({"type":label, "street_and_house_number":street_and_house_number,
                     "postcode":postcode, "city":city, "region":region, "country":country})
         if address_list.__len__() > 0:
@@ -151,20 +161,37 @@ class CarddavObject:
                 date = datetime.datetime.strptime(contact_data['birthday'], "%d.%m.%Y")
                 self.set_birthday(date)
             except ValueError as e:
-                print "Birthday date in the wrong format. Example: 31.12.1989"
+                print "Error: Birthday date in the wrong format. Example: 31.12.1989"
                 sys.exit(1)
 
     def get_addressbook_name(self):
         return self.addressbook_name
 
+    def get_vcard_full_filename(self):
+        return self.vcard_full_filename
+
     def get_first_name(self):
-        return self.vcard.n.value.given.encode("utf-8")
+        try:
+            return self.vcard.n.value.given.encode("utf-8")
+        except AttributeError as e:
+            return ""
 
     def get_last_name(self):
-        return self.vcard.n.value.family.encode("utf-8")
+        try:
+            return self.vcard.n.value.family.encode("utf-8")
+        except AttributeError as e:
+            return ""
 
     def get_full_name(self):
-        return self.vcard.fn.value.encode("utf-8")
+        try:
+            return self.vcard.fn.value.encode("utf-8")
+        except AttributeError as e:
+            if self.get_first_name() != "" or self.get_last_name() != "":
+                return "%s %s" % (self.get_first_name(), self.get_last_name())
+            elif self.get_organisation() != "":
+                return self.get_organisation()
+            else:
+                return ""
 
     def get_organisation(self):
         try:
@@ -173,7 +200,7 @@ class CarddavObject:
             return ""
 
     def set_name_and_organisation(self, first_name, last_name, organisation):
-        if first_name == "" or last_name == "":
+        if first_name == "" and last_name == "":
             name_obj = self.vcard.add('fn')
             name_obj.value = organisation
             name_obj = self.vcard.add('n')
@@ -300,6 +327,9 @@ class CarddavObject:
 
     def print_vcard(self):
         strings = ["Name: %s" % self.get_full_name()]
+        if self.get_organisation() != "" \
+                and self.get_organisation() != self.get_full_name():
+            strings.append("organisation: %s" % self.get_organisation())
         if self.get_phone_numbers().__len__() > 0:
             strings.append("Phone")
             for index, entry in enumerate(self.get_phone_numbers()):
@@ -325,19 +355,27 @@ class CarddavObject:
         return '\n'.join(strings)
 
     def write_to_file(self, overwrite=False):
-        print self.vcard.serialize()
-        vcard_filename = os.path.join( self.addressbook_path,
-                self.vcard.uid.value + ".vcf")
-        if os.path.exists(vcard_filename) and overwrite == False:
-            print "Error: vcard with the file name %s already exists" % os.path.basename(vcard_filename)
+        if os.path.exists(self.vcard_full_filename) and overwrite == False:
+            print "Error: vcard with the file name %s already exists" \
+                    % os.path.basename(self.vcard_full_filename)
             sys.exit(4)
         try:
             vcard_output = self.vcard.serialize()
-            file = open(vcard_filename, "w")
+            file = open(self.vcard_full_filename, "w")
             file.write(vcard_output)
             file.close()
         except vobject.base.ValidateError as e:
             print "Error: Vcard is not valid.\n%s" % e
+            sys.exit(4)
+        except IOError as e:
+            print "Error: Can't write\n%s" % e
+            sys.exit(4)
+
+    def delete_vcard_file(self):
+        if os.path.exists(self.vcard_full_filename):
+            os.remove(self.vcard_full_filename)
+        else:
+            print "Error: Vcard file %s does not exist." % self.vcard_full_filename
             sys.exit(4)
 
     def clean_vcard(self):
@@ -390,10 +428,4 @@ class CarddavObject:
                 self.vcard.remove(self.vcard.x_ablabel)
             except AttributeError as e:
                 break
-
-    def delete_vcard_file(self):
-        vcard_filename = os.path.join( self.addressbook_path,
-                self.vcard.uid.value + ".vcf")
-        if os.path.exists(vcard_filename):
-            os.remove(vcard_filename)
 

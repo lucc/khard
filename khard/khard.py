@@ -91,20 +91,20 @@ def main():
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default=Config().get_default_action(),
-            help="Possible actions: list, details, mutt, twinkle, new, modify and remove")
+            help="Possible actions: list, details, mutt, twinkle, new, modify, remove and source")
     args = parser.parse_args()
     
     # version
     if args.version == True:
-        print "Khard version 0.2"
+        print "Khard version 0.2.1"
         sys.exit(0)
     
     # validate value for action
     if args.action == "":
-        print "Missing action. Possible values are: list, details, mutt, twinkle, new, modify and remove"
+        print "Missing action. Possible values are: list, details, mutt, twinkle, new, modify, remove and source"
         sys.exit(1)
-    elif args.action not in ["list", "details", "mutt", "twinkle", "new", "modify", "remove"]:
-        print "Unsupported action. Possible values are: list, details, mutt, twinkle, new, modify and remove"
+    elif args.action not in ["list", "details", "mutt", "twinkle", "new", "modify", "remove", "source"]:
+        print "Unsupported action. Possible values are: list, details, mutt, twinkle, new, modify, remove and source"
         sys.exit(1)
     
     # given address book name
@@ -127,7 +127,7 @@ def main():
     # create new contact
     if args.action == "new":
         if selected_addressbooks.__len__() != 1:
-            print "Error: You must specify one address book, in which the new \
+            print "Error: You must specify an address book, in which the new \
                     contact should be added. Possible values are: %s" \
                     % ', '.join(addressbooks.keys())
             sys.exit(1)
@@ -144,7 +144,6 @@ def main():
         print '\n'.join(address_list)
         if vcard_list.__len__() == 0:
             sys.exit(1)
-        sys.exit(0)
         sys.exit(0)
     
     # print twinkle  friendly contacts table
@@ -180,8 +179,8 @@ def main():
         list_contacts(selected_addressbooks, vcard_list)
         sys.exit(0)
     
-    # show details, modify or delete contact
-    if args.action in ["details", "modify", "remove"]:
+    # show source or details, modify or delete contact
+    if args.action in ["details", "modify", "remove", "source"]:
         if vcard_list.__len__() == 1:
             selected_vcard = vcard_list[0]
         else:
@@ -215,6 +214,10 @@ def main():
                     break
             selected_vcard.delete_vcard_file()
             print "Contact deleted successfully"
+        elif args.action == "source":
+            child = subprocess.Popen([Config().get_editor(),
+                    selected_vcard.get_vcard_full_filename()])
+            streamdata = child.communicate()[0]
 
 if __name__ == "__main__":
     main()

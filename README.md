@@ -1,9 +1,10 @@
 khard
 =====
 
-Khard is an address book for the Linux console. It creates, reads, modifies and removes
-carddav address book entries at your local machine. Khard is also compatible to the email client mutt
-and the SIP client twinkle.
+Khard is an address book for the Linux console. It creates, reads, modifies and removes carddav
+address book entries at your local machine. Khard is also compatible to the email client mutt and
+the SIP client twinkle. You can find more information about khard and the whole synchronization
+process [here](http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/).
 
 Khard is developed and tested on Debian operating system, version 7 and 8 but should run on 
 all Unix-like systems.
@@ -98,7 +99,7 @@ Use the following to modify the contact after successful creation:
 khard modify -s John
 ```
 
-To delete it, write "remove" instead.
+To delete it, write "remove" instead. Use "source", to open the Vcard file directly.
 
 
 davcontroller

@@ -8,7 +8,7 @@ from setuptools import setup
 
 setup(
     name = 'khard',
-    version = '0.2',
+    version = '0.2.1',
     author = 'Eric Scheibler',
     author_email = 'email@eric-scheibler.de',
     url = 'https://github.com/scheibler/khard/',

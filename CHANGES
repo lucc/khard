@@ -1,2 +1,3 @@
 v0.1.0, 2014.09.18 -- Initial release.
 v0.2.0, 2014.10.01 -- Added twinkle plugin, new project structure, extended readme file
+v0.2.1, 2015.01.14 -- Missing attribute "fn" in VCard file is handled correctly now.

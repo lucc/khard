@@ -33,30 +33,37 @@ def pretty_print(table, justify = "L"):
 def get_new_contact_template(addressbook_name):
     return """# new contact
 # Address book: %s
-# if you want to cancel, just leave the first or last name field blank
+# if you want to cancel, exit without saving
 
 # first and last name
-# at least enter first and last name or organisation
+# at least enter first name, first and last name or an organisation
 First name   = 
 Last name    = 
 Organisation = 
 
 # phone numbers
 # format: PhoneX = type: number
-# allowed types: cell, home, work
+# allowed types:
+#   Standard: cell, home, work
+#   Alternatively you can use every custom label (only letters). But maybe not all address book
+#   clients support that.
 Phone1 = cell: 
-Phone2 = home: 
+Phone2 = Dresden: 
 
 # email addresses
 # format: EmailX = type: address
-# allowed types: home, work
+# allowed types:
+#   Standard: home, work
+#   or a custom label (only letters)
 Email1 = home: 
 
 # post addresses
 # format: AddressX = type: street and house number; postcode; city; region; country
 # the region is optional so the following is allowed too:
 # format: AddressX = type: street and house number; postcode; city;; country
-# standard types: home, work
+# allowed types:
+#   Standard: home, work
+#   or a custom label (only letters)
 Address1 = home: ; ; ; ; %s
 
 # Birthday: day.month.year
@@ -77,18 +84,27 @@ def get_existing_contact_template(vcard):
             strings.append("Organisation = %s" % vcard.get_organisation())
         elif line.lower().startswith("phone"):
             if line.lower().startswith("phone1"):
-                for index, entry in enumerate(vcard.get_phone_numbers()):
-                    strings.append("Phone%d = %s: %s" % (index+1, entry['type'], entry['value']))
+                if vcard.get_phone_numbers().__len__() == 0:
+                    strings.append("Phone1 = cell: ")
+                else:
+                    for index, entry in enumerate(vcard.get_phone_numbers()):
+                        strings.append("Phone%d = %s: %s" % (index+1, entry['type'], entry['value']))
         elif line.lower().startswith("email"):
             if line.lower().startswith("email1"):
-                for index, entry in enumerate(vcard.get_email_addresses()):
-                    strings.append("Email%d = %s: %s" % (index+1, entry['type'], entry['value']))
+                if vcard.get_email_addresses().__len__() == 0:
+                    strings.append("Email1 = home: ")
+                else:
+                    for index, entry in enumerate(vcard.get_email_addresses()):
+                        strings.append("Email%d = %s: %s" % (index+1, entry['type'], entry['value']))
         elif line.lower().startswith("address"):
             if line.lower().startswith("address1"):
-                for index, entry in enumerate(vcard.get_post_addresses()):
-                    strings.append("Address%d = %s: %s; %s; %s; %s; %s" % (index+1, entry['type'],
-                            entry['street_and_house_number'], entry['postcode'], entry['city'],
-                            entry['region'], entry['country']))
+                if vcard.get_post_addresses().__len__() == 0:
+                    strings.append("Address1 = home: ; ; ; ; %s" % Config().get_default_country())
+                else:
+                    for index, entry in enumerate(vcard.get_post_addresses()):
+                        strings.append("Address%d = %s: %s; %s; %s; %s; %s" % (index+1, entry['type'],
+                                entry['street_and_house_number'], entry['postcode'], entry['city'],
+                                entry['region'], entry['country']))
         elif line.lower().startswith("birthday") and vcard.get_birthday() != None:
             date = vcard.get_birthday()
             strings.append("Birthday = %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
