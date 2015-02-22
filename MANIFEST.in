@@ -1,0 +1,6 @@
+include AUTHORS
+include CHANGES
+include khard.conf.example
+include LICENSE
+include README.md
+recursive-include twinkle-plugin *

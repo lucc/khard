@@ -21,24 +21,71 @@ calendarserver: https://wiki.debian.org/HowTo/CalendarServer
 Then you must synchronize the calendars and address books to your local machine with vdirsyncer:
 https://github.com/untitaker/vdirsyncer.
 
+And you need pip to install python modules:
+
+```
+sudo aptitude install python-setuptools
+sudo easy_install pip
+```
+
 
 Installation
 ------------
 
-Pull from git:
+Khard is installable via pip. You can choose between the following three methods:
+
+1. Install system wide:
+
+```
+sudo pip install khard
+```
+
+But that's not recommended due to security issues and cause it can damage dependencies of other
+python modules.
+
+2. Install into user space:
+
+```
+pip install --user khard
+```
+
+Then you can find the executable under ~/.local/bin.
+
+3. Use virtualenv to create a separate python environment for every module (keeps your system clean):
+
+```
+# install virtualenv package
+sudo pip install virtualenv
+# create folder for all virtualenv's
+mkdir ~/.virtualenvs
+# create new virtual environment with the name "khard"
+virtualenv ~/.virtualenvs/khard
+# to install khard, use the pip command from that newly created environment
+# otherwise it would be installed in the users home directory
+~/.virtualenvs/khard/bin/pip install khard
+# create a symlink to the local binary folder
+ln -s ~/.virtualenvs/khard/bin/khard ~/bin
+```
+
+More information about virtualenv at http://docs.python-guide.org/en/latest/dev/virtualenvs/
+
+To get the example config file and the twinkle plugin you can clone from git:
 
 ```
 git clone https://github.com/scheibler/khard.git
 cd khard/
 ```
 
-And install:
+Or download and extract with pip:
 
 ```
-python setup.py install --user
+pip install --download /tmp --no-deps --no-use-wheel khard
+tar xfz /tmp/khard-0.2.1.tar.gz
+rm /tmp/khard-0.2.1.tar.gz
+cd khard-0.2.1/
 ```
 
-Next copy the example config file and adapt it's contents to your needs:
+Now copy the example config file and adapt it's contents to your needs:
 
 ```
 mkdir ~/.config/khard/
@@ -53,7 +100,19 @@ like this:
 sudo aptitude install subversion
 svn checkout http://svn.calendarserver.org/repository/calendarserver/CalDAVClientLibrary/trunk CalDAVClientLibrary
 cd CalDAVClientLibrary
+```
+
+For user space installation:
+
+```
 python setup.py install --user
+```
+
+Or if you use the virtual environment:
+
+```
+~/.virtualenvs/khard/bin/python setup.py install
+ln -s ~/.virtualenvs/khard/bin/davcontroller ~/bin
 ```
 
 

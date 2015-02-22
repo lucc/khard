@@ -1,7 +1,8 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# tutorial: http://www.scotttorborg.com/python-packaging/minimal.html
+# tutorials:
+#   - https://packaging.python.org/en/latest/distributing.html
+#   - https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
 
 import os
 from setuptools import setup
@@ -39,6 +40,5 @@ setup(
         'configobj',
         'vobject',
         'argparse',
-        'vdirsyncer',
-    ]
+    ],
 )
