@@ -51,7 +51,8 @@ pip install --user khard
 
 Then you can find the executable under ~/.local/bin.
 
-3. Use virtualenv to create a separate python environment for every module (keeps your system clean):
+3. Use virtualenv to create a separate python environment for every module. That's recommended cause
+   it keeps your system clean:
 
 ```
 # install virtualenv package
