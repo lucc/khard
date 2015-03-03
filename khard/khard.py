@@ -78,34 +78,36 @@ def list_contacts(selected_addressbooks, vcard_list):
 
 
 def main():
-    addressbooks = Config().get_all_addressbooks()
-    
     # create the args parser
     parser = argparse.ArgumentParser(description="Khard is a carddav address book for the console")
-    parser.add_argument("-a", "--addressbook", default=','.join(addressbooks.keys()),
+    parser.add_argument("-a", "--addressbook", default="",
             help="Specify address book names as comma separated list")
     parser.add_argument("-r", "--reverse", action="store_true", help="Sort contacts in reverse order")
     parser.add_argument("-s", "--search", default="", help="Search for contacts")
     parser.add_argument("-t", "--sort", default="alphabetical", 
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
-    parser.add_argument("action", nargs="?", default=Config().get_default_action(),
+    parser.add_argument("action", nargs="?", default="",
             help="Possible actions: list, details, mutt, twinkle, new, modify, remove and source")
     args = parser.parse_args()
-    
+
     # version
     if args.version == True:
         print "Khard version 0.2.1"
         sys.exit(0)
-    
+
     # validate value for action
     if args.action == "":
-        print "Missing action. Possible values are: list, details, mutt, twinkle, new, modify, remove and source"
-        sys.exit(1)
-    elif args.action not in ["list", "details", "mutt", "twinkle", "new", "modify", "remove", "source"]:
+        args.action = Config().get_default_action()
+    if args.action not in ["list", "details", "mutt", "twinkle", "new", "modify", "remove", "source"]:
         print "Unsupported action. Possible values are: list, details, mutt, twinkle, new, modify, remove and source"
         sys.exit(1)
-    
+
+    # load address books which are defined in the configuration file
+    addressbooks = Config().get_all_addressbooks()
+    if args.addressbook == "":
+        args.addressbook = ','.join(addressbooks.keys())
+
     # given address book name
     selected_addressbooks = []
     for name in args.addressbook.split(","):
@@ -114,12 +116,12 @@ def main():
                     % (name, ', '.join(addressbooks.keys()))
             sys.exit(1)
         selected_addressbooks.append(name)
-    
+
     # sort criteria
     if args.sort not in ["alphabetical", "addressbook"]:
         print "Unsupported sort criteria. Possible values: alphabetical, addressbook"
         sys.exit(1)
-    
+
     # create a list of all found vcard objects
     vcard_list = Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, args.search)
     
@@ -132,7 +134,7 @@ def main():
             sys.exit(1)
         create_new_contact(addressbooks[selected_addressbooks[0]])
         sys.exit(0)
-    
+
     # print mutt friendly contacts table
     if args.action == "mutt":
         address_list = ["searching for '%s' ..." % args.search]
@@ -144,7 +146,7 @@ def main():
         if vcard_list.__len__() == 0:
             sys.exit(1)
         sys.exit(0)
-    
+
     # print twinkle  friendly contacts table
     if args.action == "twinkle":
         if args.search == "":
@@ -167,17 +169,17 @@ def main():
                 else:
                     print "%s (%s)" % (vcard.get_full_name(), type)
         sys.exit(0)
-    
+
     # cancel if we found no contacts
     if vcard_list.__len__() == 0:
         print "No contacts found"
         sys.exit(0)
-    
+
     # print user friendly contacts table
     if args.action == "list":
         list_contacts(selected_addressbooks, vcard_list)
         sys.exit(0)
-    
+
     # show source or details, modify or delete contact
     if args.action in ["details", "modify", "remove", "source"]:
         if vcard_list.__len__() == 1:
