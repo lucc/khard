@@ -16,10 +16,15 @@ class CarddavObject:
                     self.vcard.uid.value + ".vcf")
         else:
             # create vcard from file
-            file = open(filename, "r")
-            self.vcard = vobject.readOne(file.read())
-            file.close()
             self.vcard_full_filename = filename
+            try:
+                file = open(filename, "r")
+                self.vcard = vobject.readOne(file.read())
+                file.close()
+            except IOError as e:
+                raise CarddavObject.VCardParseError(e)
+            except vobject.base.ParseError as e:
+                raise CarddavObject.VCardParseError(e)
 
     def __str__(self):
         return self.get_full_name()
@@ -428,3 +433,5 @@ class CarddavObject:
             except AttributeError as e:
                 break
 
+    class VCardParseError(LookupError):
+        """ is called, when vcard could not be parsed """

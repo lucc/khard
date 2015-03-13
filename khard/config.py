@@ -62,10 +62,19 @@ class Config:
                 # set address book name
                 addressbook['name'] = name
                 # load all vcard files
+                error_counter = 0
                 addressbook['vcards'] = []
                 for filename in glob.glob(os.path.join(addressbook['path'], "*.vcf")):
-                    addressbook['vcards'].append(
-                            CarddavObject(addressbook['name'], addressbook['path'], filename))
+                    try:
+                        addressbook['vcards'].append(
+                                CarddavObject(addressbook['name'], addressbook['path'], filename))
+                    except CarddavObject.VCardParseError as e:
+                        error_counter += 1
+                        print "Parse Error: %s" % e
+                if error_counter == 1:
+                    print "1 vcard file could not be parsed"
+                elif error_counter > 1:
+                    print "%d vcard files could not be parsed" % error_counter
 
         def get_editor(self):
             return self.config['general']['editor']
