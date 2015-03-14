@@ -2,9 +2,10 @@ khard
 =====
 
 Khard is an address book for the Linux console. It creates, reads, modifies and removes carddav
-address book entries at your local machine. Khard is also compatible to the email client mutt and
-the SIP client twinkle. You can find more information about khard and the whole synchronization
-process [here](http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/).
+address book entries at your local machine. Khard is also compatible to the email clients mutt and
+alot and the SIP client twinkle. You can find more information about khard and the whole
+synchronization process
+[here](http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/).
 
 Khard is developed and tested on Debian operating system, version 7 and 8 but should run on 
 all Unix-like systems.
@@ -191,6 +192,19 @@ bind editor ^T    complete
 ```
 
 Then you can complete email addresses by pressing <tab> in mutt's new mail dialog.
+
+
+Alot
+----
+
+Add the following lines to your alot config file:
+
+```
+[[[abook]]]
+  type = shellcommand
+  command = khard alot -s
+  regexp = \"(?P<name>.+)\"\s*<(?P<email>.*.+?@.+?)>
+```
 
 
 Twinkle

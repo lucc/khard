@@ -88,19 +88,19 @@ def main():
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default="",
-            help="Possible actions: list, details, mutt, twinkle, new, modify, remove and source")
+            help="Possible actions: list, details, mutt, alot, twinkle, new, modify, remove and source")
     args = parser.parse_args()
 
     # version
     if args.version == True:
-        print "Khard version 0.2.1"
+        print "Khard version 0.2.2"
         sys.exit(0)
 
     # validate value for action
     if args.action == "":
         args.action = Config().get_default_action()
-    if args.action not in ["list", "details", "mutt", "twinkle", "new", "modify", "remove", "source"]:
-        print "Unsupported action. Possible values are: list, details, mutt, twinkle, new, modify, remove and source"
+    if args.action not in ["list", "details", "mutt", "alot", "twinkle", "new", "modify", "remove", "source"]:
+        print "Unsupported action. Possible values are: list, details, mutt, alot, twinkle, new, modify, remove and source"
         sys.exit(1)
 
     # load address books which are defined in the configuration file
@@ -145,6 +145,16 @@ def main():
         print '\n'.join(address_list)
         if vcard_list.__len__() == 0:
             sys.exit(1)
+        sys.exit(0)
+
+    # print alot friendly contacts table
+    if args.action == "alot":
+        address_list = []
+        for vcard in vcard_list:
+            for email_entry in vcard.get_email_addresses():
+                full = "%s %s" % (vcard.get_full_name(), email_entry['type'])
+                address_list.append("\"%s\" <%s>" % (full, email_entry['value']))
+        print '\n'.join(address_list)
         sys.exit(0)
 
     # print twinkle  friendly contacts table
