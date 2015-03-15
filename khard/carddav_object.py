@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, string, random, datetime
+import os, sys, string, random, datetime, re
 import vobject
 
 class CarddavObject:
@@ -17,17 +17,40 @@ class CarddavObject:
         else:
             # create vcard from file
             self.vcard_full_filename = filename
+            # open .vcf file
             try:
                 file = open(filename, "r")
-                self.vcard = vobject.readOne(file.read())
+                contents = file.read()
                 file.close()
             except IOError as e:
                 raise CarddavObject.VCardParseError(e)
+            # create vcard object
+            try:
+                self.vcard = vobject.readOne(contents)
             except vobject.base.ParseError as e:
-                raise CarddavObject.VCardParseError(e)
+                # if creation fails, try to repair vcard contents
+                try:
+                    self.vcard = vobject.readOne(
+                            self.filter_invalid_tags(contents))
+                    self.write_to_file(overwrite=True)
+                except vobject.base.ParseError as e:
+                    raise CarddavObject.VCardParseError(e)
 
     def __str__(self):
         return self.get_full_name()
+
+    def filter_invalid_tags(self, contents):
+        contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'), 'X-GADUGADU', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/groupwise-All'), 'X-GROUPWISE', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/icq-All'), 'X-ICQ', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/xmpp-All'), 'X-JABBER', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/msn-All'), 'X-MSN', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/yahoo-All'), 'X-YAHOO', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/skype-All'), 'X-SKYPE', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/irc-All'), 'X-IRC', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/sip-All'), 'X-SIP', contents)
+        return contents
 
     def process_user_input(self, input):
         # parse user input string
@@ -159,6 +182,17 @@ class CarddavObject:
         if address_list.__len__() > 0:
             self.set_post_addresses(address_list)
 
+        # instant messaging and social networks
+        if contact_data.has_key("jabber") and contact_data['jabber'] != "":
+            self.set_jabber_id(contact_data['jabber'])
+        if contact_data.has_key("skype") and contact_data['skype'] != "":
+            self.set_skype_id(contact_data['skype'])
+        if contact_data.has_key("twitter") and contact_data['twitter'] != "":
+            self.set_twitter_id(contact_data['twitter'])
+        if contact_data.has_key("webpage") and contact_data['webpage'] != "":
+            self.set_webpage(contact_data['webpage'])
+
+        # miscellaneous stuff
         # birthday
         if contact_data.has_key("birthday") and contact_data['birthday'] != "":
             try:
@@ -314,6 +348,46 @@ class CarddavObject:
                 label_obj.group = group_name
                 label_obj.value = entry['type']
 
+    def get_jabber_id(self):
+        try:
+            return self.vcard.x_jabber.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_jabber_id(self, jabber_id):
+        jabber_obj = self.vcard.add('x-jabber')
+        jabber_obj.value = jabber_id
+
+    def get_skype_id(self):
+        try:
+            return self.vcard.x_skype.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_skype_id(self, skype_id):
+        skype_obj = self.vcard.add('x-skype')
+        skype_obj.value = skype_id
+
+    def get_twitter_id(self):
+        try:
+            return self.vcard.x_twitter.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_twitter_id(self, twitter_id):
+        twitter_obj = self.vcard.add('x-twitter')
+        twitter_obj.value = twitter_id
+
+    def get_webpage(self):
+        try:
+            return self.vcard.url.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_webpage(self, webpage):
+        webpage_obj = self.vcard.add('url')
+        webpage_obj.value = webpage
+
     def get_birthday(self):
         """:returns: contacts birthday or None if not available
             :rtype: datetime.datetime
@@ -352,10 +426,24 @@ class CarddavObject:
                     strings.append("        %s, %s" % (entry['region'], entry['country']))
                 else:
                     strings.append("        %s" % entry['country'])
+        if self.get_jabber_id() != "" \
+                or self.get_skype_id() != "" \
+                or self.get_twitter_id() != "" \
+                or self.get_webpage() != "":
+            strings.append("Instant messaging and social networks")
+            if self.get_jabber_id() != "":
+                strings.append("    Jabber:  %s" % self.get_jabber_id())
+            if self.get_skype_id() != "":
+                strings.append("    Skype:   %s" % self.get_skype_id())
+            if self.get_twitter_id() != "":
+                strings.append("    Twitter: %s" % self.get_twitter_id())
+            if self.get_webpage() != "":
+                strings.append("    Webpage: %s" % self.get_webpage())
         if self.get_birthday() != None:
             strings.append("Miscellaneous")
-            date = self.get_birthday()
-            strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+            if self.get_birthday() != None:
+                date = self.get_birthday()
+                strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
         return '\n'.join(strings)
 
     def write_to_file(self, overwrite=False):
@@ -421,6 +509,23 @@ class CarddavObject:
                 self.vcard.remove(self.vcard.adr)
             except AttributeError as e:
                 break
+        # instant messaging and social networks
+        try:
+            self.vcard.remove(self.vcard.x_jabber)
+        except AttributeError as e:
+            pass
+        try:
+            self.vcard.remove(self.vcard.x_skype)
+        except AttributeError as e:
+            pass
+        try:
+            self.vcard.remove(self.vcard.x_twitter)
+        except AttributeError as e:
+            pass
+        try:
+            self.vcard.remove(self.vcard.url)
+        except AttributeError as e:
+            pass
         # birthday
         try:
             self.vcard.remove(self.vcard.bday)

@@ -65,6 +65,13 @@ Email1 = home:
 #   or a custom label (only letters)
 Address1 = home: ; ; ; ; %s
 
+# instant messaging and social networks
+Jabber  = 
+Skype   = 
+Twitter = 
+Webpage = 
+
+# Miscellaneous stuff
 # Birthday: day.month.year
 Birthday = """ % (addressbook_name, Config().get_default_country())
 
@@ -104,6 +111,14 @@ def get_existing_contact_template(vcard):
                         strings.append("Address%d = %s: %s; %s; %s; %s; %s" % (index+1, entry['type'],
                                 entry['street_and_house_number'], entry['postcode'], entry['city'],
                                 entry['region'], entry['country']))
+        elif line.lower().startswith("jabber"):
+            strings.append("Jabber  = %s" % vcard.get_jabber_id())
+        elif line.lower().startswith("skype"):
+            strings.append("Skype   = %s" % vcard.get_skype_id())
+        elif line.lower().startswith("twitter"):
+            strings.append("Twitter = %s" % vcard.get_twitter_id())
+        elif line.lower().startswith("webpage"):
+            strings.append("Webpage = %s" % vcard.get_webpage())
         elif line.lower().startswith("birthday") and vcard.get_birthday() != None:
             date = vcard.get_birthday()
             strings.append("Birthday = %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
