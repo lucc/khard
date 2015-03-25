@@ -193,6 +193,9 @@ class CarddavObject:
             self.set_webpage(contact_data['webpage'])
 
         # miscellaneous stuff
+        # nickname
+        if contact_data.has_key("nickname") and contact_data['nickname'] != "":
+            self.set_nickname(contact_data['nickname'])
         # birthday
         if contact_data.has_key("birthday") and contact_data['birthday'] != "":
             try:
@@ -230,6 +233,16 @@ class CarddavObject:
                 return self.get_organisation()
             else:
                 return ""
+
+    def get_nickname(self):
+        try:
+            return self.vcard.nickname.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_nickname(self, name):
+        nickname_obj = self.vcard.add('nickname')
+        nickname_obj.value = name
 
     def get_organisation(self):
         try:
@@ -408,6 +421,8 @@ class CarddavObject:
         if self.get_organisation() != "" \
                 and self.get_organisation() != self.get_full_name():
             strings.append("organisation: %s" % self.get_organisation())
+        if self.get_nickname() != "":
+            strings.append("Nickname: %s" % self.get_nickname())
         if self.get_phone_numbers().__len__() > 0:
             strings.append("Phone")
             for index, entry in enumerate(self.get_phone_numbers()):
@@ -524,6 +539,11 @@ class CarddavObject:
             pass
         try:
             self.vcard.remove(self.vcard.url)
+        except AttributeError as e:
+            pass
+        # nickname
+        try:
+            self.vcard.remove(self.vcard.nickname)
         except AttributeError as e:
             pass
         # birthday

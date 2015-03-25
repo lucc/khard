@@ -41,6 +41,15 @@ class Config:
                         "Non existing value for default action parameter\n" \
                         "Possible values are: list, details, mutt, twinkle, alot, new, modify, remove and source"
                 sys.exit(2)
+            if self.config['general'].has_key("show_nicknames") == False:
+                self.config['general']['show_nicknames'] = False
+            elif self.config['general']['show_nicknames'] == "yes":
+                self.config['general']['show_nicknames'] = True
+            elif self.config['general']['show_nicknames'] == "no":
+                self.config['general']['show_nicknames'] = False
+            else:
+                print "Error in config file\nshow_nicknames parameter must be yes or no."
+                sys.exit(2)
 
             # load address books
             if self.config.has_key("addressbooks") == False:
@@ -84,6 +93,9 @@ class Config:
 
         def get_default_action(self):
             return self.config['general']['default_action']
+
+        def show_nicknames(self):
+            return self.config['general']['show_nicknames']
 
         def has_addressbook(self, name):
             return self.config['addressbooks'].has_key(name)

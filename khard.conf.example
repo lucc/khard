@@ -9,3 +9,4 @@ path = ~/.contacts/friends/
 editor = /usr/bin/vim
 default_country = Germany
 default_action = list
+show_nicknames = no

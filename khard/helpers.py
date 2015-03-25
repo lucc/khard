@@ -73,7 +73,8 @@ Webpage =
 
 # Miscellaneous stuff
 # Birthday: day.month.year
-Birthday = """ % (addressbook_name, Config().get_default_country())
+Birthday = 
+Nickname = """ % (addressbook_name, Config().get_default_country())
 
 def get_existing_contact_template(vcard):
     strings = []
@@ -122,6 +123,8 @@ def get_existing_contact_template(vcard):
         elif line.lower().startswith("birthday") and vcard.get_birthday() != None:
             date = vcard.get_birthday()
             strings.append("Birthday = %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+        elif line.lower().startswith("nickname"):
+            strings.append("Nickname = %s" % vcard.get_nickname())
         else:
             strings.append(line)
     return '\n'.join(strings)

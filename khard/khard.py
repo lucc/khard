@@ -62,7 +62,11 @@ def list_contacts(selected_addressbooks, vcard_list):
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index+1)
-        row.append(vcard.get_full_name())
+        if vcard.get_nickname() != "" \
+                and Config().show_nicknames():
+            row.append("%s (Nickname: %s)" % (vcard.get_full_name(), vcard.get_nickname()))
+        else:
+            row.append(vcard.get_full_name())
         if vcard.get_phone_numbers().__len__() > 0:
             phone1 = vcard.get_phone_numbers()[0]
             row.append("%s: %s" % (phone1['type'], phone1['value']))
@@ -130,9 +134,8 @@ def main():
     # create new contact
     if args.action == "new":
         if selected_addressbooks.__len__() != 1:
-            print "Error: You must specify an address book, in which the new \
-                    contact should be added. Possible values are: %s" \
-                    % ', '.join(addressbooks.keys())
+            print "Error: You must specify an address book for the new contact\n" \
+                    "Possible values are: %s" % ', '.join(addressbooks.keys())
             sys.exit(1)
         create_new_contact(addressbooks[selected_addressbooks[0]])
         sys.exit(0)

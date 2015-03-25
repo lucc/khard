@@ -16,3 +16,7 @@ v0.2.2: 2015.03.14
 v0.3.0: 2015.03.25
 - Added support for jabber, skype, twitter and webpage
 - Created a filter for malformed vcard attributes
+
+v0.3.1: 2015.03.26
+- Nickname attribute added
+- New parameter in config file: show_nicknames = yes / no
