@@ -62,7 +62,10 @@ def list_contacts(selected_addressbooks, vcard_list):
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index+1)
-        row.append(vcard.get_full_name())
+        if vcard.get_nickname() != "":
+            row.append("%s (Nickname: %s)" % (vcard.get_full_name(), vcard.get_nickname()))
+        else:
+            row.append(vcard.get_full_name())
         if vcard.get_phone_numbers().__len__() > 0:
             phone1 = vcard.get_phone_numbers()[0]
             row.append("%s: %s" % (phone1['type'], phone1['value']))
