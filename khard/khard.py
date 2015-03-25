@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import tempfile, subprocess, os, sys, re
@@ -5,6 +6,7 @@ import argparse
 import helpers
 from config import Config
 from carddav_object import CarddavObject
+from version import khard_version
 
 def create_new_contact(addressbook):
     # create temp file
@@ -93,7 +95,7 @@ def main():
 
     # version
     if args.version == True:
-        print "Khard version 0.2.2"
+        print "Khard version %s" % khard_version
         sys.exit(0)
 
     # validate value for action

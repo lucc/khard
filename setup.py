@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 # tutorials:
@@ -6,10 +7,11 @@
 
 import os
 from setuptools import setup
+from khard.version import khard_version
 
 setup(
     name = 'khard',
-    version = '0.2.2',
+    version = khard_version,
     author = 'Eric Scheibler',
     author_email = 'email@eric-scheibler.de',
     url = 'https://github.com/scheibler/khard/',

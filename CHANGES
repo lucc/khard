@@ -12,3 +12,7 @@ v0.2.1: 2015.01.14
 
 v0.2.2: 2015.03.14
 - Added support for alot (MUA)
+
+v0.3.0: 2015.03.25
+- Added support for jabber, skype, twitter and webpage
+- Created a filter for malformed vcard attributes
