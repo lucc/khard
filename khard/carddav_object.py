@@ -230,6 +230,12 @@ class CarddavObject:
                 return self.get_organisation()
             else:
                 return ""
+    
+    def get_nickname(self):
+        try:
+            return self.vcard.nickname.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
 
     def get_organisation(self):
         try:
@@ -408,6 +414,8 @@ class CarddavObject:
         if self.get_organisation() != "" \
                 and self.get_organisation() != self.get_full_name():
             strings.append("organisation: %s" % self.get_organisation())
+        if self.get_nickname() != "":
+            strings.append("Nickname: %s" % self.get_nickname())
         if self.get_phone_numbers().__len__() > 0:
             strings.append("Phone")
             for index, entry in enumerate(self.get_phone_numbers()):
