@@ -234,6 +234,13 @@ class CarddavObject:
             else:
                 return ""
 
+    def get_categories(self):
+        category_list = []
+        for child in self.vcard.getChildren():
+            if child.name == "CATEGORIES":
+                category_list = [child.value[ii].encode('utf-8') for ii in xrange(len(child.value))]
+        return category_list
+
     def get_nickname(self):
         try:
             return self.vcard.nickname.value.encode("utf-8")
@@ -418,6 +425,10 @@ class CarddavObject:
 
     def print_vcard(self):
         strings = ["Name: %s" % self.get_full_name()]
+        if self.get_categories().__len__() > 0:
+            strings.append("Categories")
+            for index, entry in enumerate(self.get_categories()):
+                strings.append("    %s" % (entry))
         if self.get_organisation() != "" \
                 and self.get_organisation() != self.get_full_name():
             strings.append("organisation: %s" % self.get_organisation())
