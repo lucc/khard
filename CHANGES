@@ -20,3 +20,6 @@ v0.3.0: 2015.03.25
 v0.3.1: 2015.03.26
 - Nickname attribute added
 - New parameter in config file: show_nicknames = yes / no
+
+v0.3.2: 2015.03.27
+- Read-only support for Categories attribute
