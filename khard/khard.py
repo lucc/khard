@@ -84,6 +84,9 @@ def list_contacts(selected_addressbooks, vcard_list):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == 'import':
+            from . import address_import
+            address_import.main()
     # create the args parser
     parser = argparse.ArgumentParser(description="Khard is a carddav address book for the console")
     parser.add_argument("-a", "--addressbook", default="",
@@ -94,7 +97,7 @@ def main():
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default="",
-            help="Possible actions: list, details, mutt, alot, twinkle, new, modify, remove and source")
+            help="Possible actions: list, details, mutt, alot, twinkle, new, modify, remove, import and source")
     args = parser.parse_args()
 
     # version
@@ -105,7 +108,7 @@ def main():
     # validate value for action
     if args.action == "":
         args.action = Config().get_default_action()
-    if args.action not in ["list", "details", "mutt", "alot", "twinkle", "new", "modify", "remove", "source"]:
+    if args.action not in ["list", "details", "mutt", "alot", "twinkle", "new", "modify", "remove", "source", "import"]:
         print "Unsupported action. Possible values are: list, details, mutt, alot, twinkle, new, modify, remove and source"
         sys.exit(1)
 
