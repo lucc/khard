@@ -258,6 +258,9 @@ class CarddavObject:
             return ""
 
     def set_name_and_organisation(self, first_name, last_name, organisation):
+        for prop in ['fn', 'n']:
+            if prop in self.vcard.contents:
+                self.vcard.contents.pop(prop)
         if first_name == "" and last_name == "":
             name_obj = self.vcard.add('fn')
             name_obj.value = organisation

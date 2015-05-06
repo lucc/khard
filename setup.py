@@ -42,5 +42,6 @@ setup(
         'configobj',
         'vobject',
         'argparse',
+        'urwid',
     ],
 )
