@@ -36,10 +36,10 @@ class Config:
             if self.config['general'].has_key("default_action") == False:
                 print "Error in config file\nMissing default action parameter."
                 sys.exit(2)
-            elif self.config['general']['default_action'] not in ["list", "details", "new", "modify", "remove", "mutt", "twinkle", "alot", "source"]:
+            elif self.config['general']['default_action'] not in ["list", "details", "new", "modify", "remove", "mutt", "twinkle", "alot", "source", "telephone"]:
                 print "Error in config file\n" \
                         "Non existing value for default action parameter\n" \
-                        "Possible values are: list, details, mutt, twinkle, alot, new, modify, remove and source"
+                        "Possible values are: list, details, mutt, twinkle, alot, new, modify, remove, telephone and source"
                 sys.exit(2)
             if self.config['general'].has_key("show_nicknames") == False:
                 self.config['general']['show_nicknames'] = False

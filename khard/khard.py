@@ -90,11 +90,11 @@ def main():
             help="Specify address book names as comma separated list")
     parser.add_argument("-r", "--reverse", action="store_true", help="Sort contacts in reverse order")
     parser.add_argument("-s", "--search", default="", help="Search for contacts")
-    parser.add_argument("-t", "--sort", default="alphabetical", 
+    parser.add_argument("-t", "--sort", default="alphabetical",
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default="",
-            help="Possible actions: list, details, mutt, alot, twinkle, new, modify, remove and source")
+            help="Possible actions: list, details, mutt, alot, twinkle, new, modify, remove, telephone and source")
     args = parser.parse_args()
 
     # version
@@ -105,8 +105,8 @@ def main():
     # validate value for action
     if args.action == "":
         args.action = Config().get_default_action()
-    if args.action not in ["list", "details", "mutt", "alot", "twinkle", "new", "modify", "remove", "source"]:
-        print "Unsupported action. Possible values are: list, details, mutt, alot, twinkle, new, modify, remove and source"
+    if args.action not in ["list", "details", "mutt", "alot", "twinkle", "new", "modify", "remove", "source", "telephone"]:
+        print "Unsupported action. Possible values are: list, details, mutt, alot, twinkle, new, modify, remove, telephone and source"
         sys.exit(1)
 
     # load address books which are defined in the configuration file
@@ -130,7 +130,7 @@ def main():
 
     # create a list of all found vcard objects
     vcard_list = Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, args.search)
-    
+
     # create new contact
     if args.action == "new":
         if selected_addressbooks.__len__() != 1:
@@ -185,6 +185,18 @@ def main():
                     print "%s (%s)" % (vcard.get_full_name(), type)
         sys.exit(0)
 
+    if args.action == "telephone":
+        address_list = []
+        for vcard in vcard_list:
+            for tel_entry in vcard.get_phone_numbers():
+                full = "%s %s" % (vcard.get_full_name(), tel_entry['type'])
+                address_list.append("%s\t%s\t%s" % (vcard.get_full_name(),
+                                                    tel_entry['type'],
+                                                    tel_entry['value']))
+
+        print '\n'.join(address_list)
+        sys.exit(0)
+
     # cancel if we found no contacts
     if vcard_list.__len__() == 0:
         print "No contacts found"
@@ -214,7 +226,7 @@ def main():
                 print "Please enter an Id between 1 and %d or nothing to exit." % vcard_list.__len__()
             print ""
             selected_vcard = vcard_list[vcard_id-1]
-    
+
         if args.action == "details":
             print selected_vcard.print_vcard()
         elif args.action == "modify":
