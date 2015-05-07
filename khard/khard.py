@@ -94,7 +94,7 @@ def main():
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default="",
-            help="Possible actions: list, details, mutt, alot, twinkle, new, modify, remove and source")
+            help="Possible actions: list, details, mutt, alot, phone, new, modify, remove and source")
     args = parser.parse_args()
 
     # version
@@ -105,8 +105,8 @@ def main():
     # validate value for action
     if args.action == "":
         args.action = Config().get_default_action()
-    if args.action not in ["list", "details", "mutt", "alot", "twinkle", "new", "modify", "remove", "source"]:
-        print "Unsupported action. Possible values are: list, details, mutt, alot, twinkle, new, modify, remove and source"
+    if args.action not in ["list", "details", "mutt", "alot", "phone", "new", "modify", "remove", "source"]:
+        print "Unsupported action. Possible values are: list, details, mutt, alot, phone, new, modify, remove and source"
         sys.exit(1)
 
     # load address books which are defined in the configuration file
@@ -140,6 +140,18 @@ def main():
         create_new_contact(addressbooks[selected_addressbooks[0]])
         sys.exit(0)
 
+    # print phone application  friendly contacts table
+    if args.action == "phone":
+        address_list = []
+        for vcard in vcard_list:
+            for tel_entry in vcard.get_phone_numbers():
+                address_list.append("%s\t%s\t%s"
+                        % (tel_entry['value'], vcard.get_full_name(), tel_entry['type']))
+        print '\n'.join(address_list)
+        if vcard_list.__len__() == 0:
+            sys.exit(1)
+        sys.exit(0)
+
     # print mutt friendly contacts table
     if args.action == "mutt":
         address_list = ["searching for '%s' ..." % args.search]
@@ -157,32 +169,9 @@ def main():
         address_list = []
         for vcard in vcard_list:
             for email_entry in vcard.get_email_addresses():
-                full = "%s %s" % (vcard.get_full_name(), email_entry['type'])
-                address_list.append("\"%s\" <%s>" % (full, email_entry['value']))
+                address_list.append("\"%s %s\" <%s>"
+                        % (vcard.get_full_name(), email_entry['type'], email_entry['value']))
         print '\n'.join(address_list)
-        sys.exit(0)
-
-    # print twinkle  friendly contacts table
-    if args.action == "twinkle":
-        if args.search == "":
-            print "Error: Please use the -s option to search for a phone number"
-            sys.exit(1)
-        if vcard_list.__len__() > 0:
-            vcard = vcard_list[0]
-            if vcard.get_phone_numbers().__len__() == 1:
-                print vcard.get_full_name()
-            elif vcard.get_phone_numbers().__len__() > 1:
-                # search for the phone label, if the contact has more than one phone number
-                type = ""
-                regexp = re.compile(args.search.replace(" ", ".*"), re.IGNORECASE)
-                for phone_entry in vcard.get_phone_numbers():
-                    if regexp.search(phone_entry['value'].replace(" ","")) != None:
-                        type = phone_entry['type']
-                        break
-                if type == "":
-                    print vcard.get_full_name()
-                else:
-                    print "%s (%s)" % (vcard.get_full_name(), type)
         sys.exit(0)
 
     # cancel if we found no contacts

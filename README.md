@@ -16,8 +16,8 @@ If you encounter bugs, please contact me via email: email (at) eric-scheibler (d
 Prerequisites
 -------------
 
-You have to install and configure a caldav and carddav server. For example you could use
-calendarserver: https://wiki.debian.org/HowTo/CalendarServer
+You have to install and configure a caldav and carddav server. I recommend
+[Baïkal](http://baikal-server.com).
 
 Then you must synchronize the calendars and address books to your local machine with vdirsyncer:
 https://github.com/untitaker/vdirsyncer.
@@ -95,8 +95,13 @@ cp khard.conf.example ~/.config/khard/khard.conf
 ```
 
 Khard also contains a helper utility called davcontroller. It's designed to create and remove
-address books and calendars at the server. To use it, you have to install the CalDAVClientLibrary
-like this:
+address books and calendars at the server. I have created davcontroller cause my previously used
+CalDAV server (Darwin calendarserver) offered no simple way to create new address books and
+calendars. But davcontroller should be considered as a hacky solution and it's only tested against
+the Darwin calendarserver. So if your CalDAV server offers a way to create new address books and
+calendars I recommend to prefer that method over davcontroller.
+
+If you nonetheless want to try davcontroller, you have to install the CalDAVClientLibrary first:
 
 ```
 sudo aptitude install subversion
@@ -219,7 +224,7 @@ sudo aptitude install ffmpeg espeak sox mpc
 ```
 
 sox and ffmpeg are used to cut and convert the new ring tone and espeak speaks the caller id.  mpc is a client
-for the music player daemon (mpd). It's needed to stop music during an incoming call. Skip the last,
+for the music player daemon (mpd). It's required to stop music during an incoming call. Skip the last,
 if you don't use mpd. Don't forget to set the "stop_music"-parameter in the config.py file to
     False too.
 

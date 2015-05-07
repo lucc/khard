@@ -36,10 +36,10 @@ class Config:
             if self.config['general'].has_key("default_action") == False:
                 print "Error in config file\nMissing default action parameter."
                 sys.exit(2)
-            elif self.config['general']['default_action'] not in ["list", "details", "new", "modify", "remove", "mutt", "twinkle", "alot", "source"]:
+            elif self.config['general']['default_action'] not in ["list", "details", "new", "modify", "remove", "mutt", "phone", "alot", "source"]:
                 print "Error in config file\n" \
                         "Non existing value for default action parameter\n" \
-                        "Possible values are: list, details, mutt, twinkle, alot, new, modify, remove and source"
+                        "Possible values are: list, details, mutt, phone, alot, new, modify, remove and source"
                 sys.exit(2)
             if self.config['general'].has_key("show_nicknames") == False:
                 self.config['general']['show_nicknames'] = False
@@ -137,7 +137,7 @@ class Config:
                     else:
                         # special case for phone numbers without a space between prefix and number
                         for phone_entry in vcard.get_phone_numbers():
-                            if regexp.search(phone_entry['value'].replace(" ","")) != None:
+                            if regexp.search(re.sub("\D", "", phone_entry['value'])) != None:
                                 vcard_list.append(vcard)
                                 break
             if sort_criteria == "addressbook":

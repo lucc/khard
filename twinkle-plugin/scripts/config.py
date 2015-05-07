@@ -6,6 +6,9 @@ import os
 # twinkle config folder
 twinkle_config = os.path.join(os.environ['HOME'], ".twinkle")
 
+# khard executable
+khard_exe = os.path.join(os.environ['HOME'], ".virtualenvs", "bin", "khard")
+
 # user language
 language = "de"
 

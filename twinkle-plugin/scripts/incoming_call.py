@@ -6,19 +6,31 @@
 # Further information about Twinkle scripts can be found at
 # http://mfnboer.home.xs4all.nl/twinkle/manual.html#profile_scripts
 
-import os, subprocess, sys
+import os, subprocess, sys, re
 import config
 
 def get_caller_id(from_hdr):
-    clid = from_hdr[from_hdr.find(":")+1:from_hdr.find("@")]
-    return clid
+    caller_id = from_hdr[from_hdr.find(":")+1:from_hdr.find("@")]
+    # remove all non digits from caller id
+    caller_id = re.sub("\D", "", caller_id)
+    # remove two digit country identification if present
+    if not caller_id.startswith("0"):
+        return caller_id[2:]
+    return caller_id
 
 def caller_from_addressbook(caller_id):
-    caller_name = subprocess.check_output(["khard", "twinkle", "-s", caller_id])
-    if caller_name != "":
-        return caller_name
-    else:
+    callers = subprocess.check_output([config.khard_exe, "phone", "-s", caller_id]).strip()
+    if callers == "":
         return caller_id
+    elif len(callers.split("\n")) == 1:
+        return callers.split("\t")[1]
+    else:
+        # the contact contains multiple phone numbers and we have to obtain the right phone label
+        regexp = re.compile(caller_id, re.IGNORECASE)
+        for entry in callers.split("\n"):
+            if regexp.search(re.sub("\D", "", entry.split("\t")[0])) != None:
+                return "%s (%s)" % (entry.split("\t")[1], entry.split("\t")[2])
+        return callers.split("\n")[0].split("\t")[1]
 
 def create_ringtone(caller_id):
     if os.path.exists(config.new_ringtone) == True:

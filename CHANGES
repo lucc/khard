@@ -23,3 +23,9 @@ v0.3.1: 2015.03.26
 
 v0.3.2: 2015.03.27
 - Read-only support for Categories attribute
+
+v0.3.3: 2015.05.07
+- twinkle option was renamed to phone: Now it prints all phone numbers like the mutt option does for
+  e-mail addresses (more general approach for external phone clients)
+- adapted twinkle plugin for use with the new phone option
+
