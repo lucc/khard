@@ -187,7 +187,7 @@ must adapt your vdirsyncer config.
 mutt
 ----
 
-Khard can be used as an external address book for the email client mutt. To accomplish that, add the
+Khard may be used as an external address book for the email client mutt. To accomplish that, add the
 following to your mutt config file (mostly ~/.mutt/muttrc):
 
 ```
@@ -197,6 +197,16 @@ bind editor ^T    complete
 ```
 
 Then you can complete email addresses by pressing <tab> in mutt's new mail dialog.
+
+To add email addresses to khard's address book, you may also add the following lines to your muttrc file:
+
+```
+macro index,pager A \
+    "<pipe-message>khard add-email<return>" \
+    "add the sender email address to khard"
+```
+
+Then navigate to an email message in mutt's index view and press "A" to start the address import dialog.
 
 
 Alot

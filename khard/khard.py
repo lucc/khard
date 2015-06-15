@@ -4,6 +4,7 @@
 import tempfile, subprocess, os, sys, re
 import argparse
 import helpers
+from email.header import decode_header
 from config import Config
 from carddav_object import CarddavObject
 from version import khard_version
@@ -82,6 +83,27 @@ def list_contacts(selected_addressbooks, vcard_list):
         table.append(row)
     print helpers.pretty_print(table)
 
+def choose_vcard_from_list(selected_addressbooks, vcard_list):
+    if vcard_list.__len__() == 0:
+        return None
+    elif vcard_list.__len__() == 1:
+        return vcard_list[0]
+    else:
+        list_contacts(selected_addressbooks, vcard_list)
+        while True:
+            input_string = raw_input("Enter Id: ")
+            if input_string == "":
+                sys.exit(0)
+            try:
+                vcard_id = int(input_string)
+                if vcard_id > 0 and vcard_id <= vcard_list.__len__():
+                    break
+            except ValueError as e:
+                pass
+            print "Please enter an Id between 1 and %d or nothing to exit." % vcard_list.__len__()
+        print ""
+        return vcard_list[vcard_id-1]
+ 
 
 def main():
     # create the args parser
@@ -94,7 +116,7 @@ def main():
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default="",
-            help="Possible actions: list, details, mutt, alot, phone, new, modify, remove and source")
+            help="Possible actions: list, details, mutt, alot, phone, new, add-email, modify, remove and source")
     args = parser.parse_args()
 
     # version
@@ -105,8 +127,8 @@ def main():
     # validate value for action
     if args.action == "":
         args.action = Config().get_default_action()
-    if args.action not in ["list", "details", "mutt", "alot", "phone", "new", "modify", "remove", "source"]:
-        print "Unsupported action. Possible values are: list, details, mutt, alot, phone, new, modify, remove and source"
+    if args.action not in ["list", "details", "mutt", "alot", "phone", "new", "add-email", "modify", "remove", "source"]:
+        print "Unsupported action. Possible values are: list, details, mutt, alot, phone, new, add-email, modify, remove and source"
         sys.exit(1)
 
     # load address books which are defined in the configuration file
@@ -128,9 +150,6 @@ def main():
         print "Unsupported sort criteria. Possible values: alphabetical, addressbook"
         sys.exit(1)
 
-    # create a list of all found vcard objects
-    vcard_list = Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, args.search)
-    
     # create new contact
     if args.action == "new":
         if selected_addressbooks.__len__() != 1:
@@ -139,6 +158,85 @@ def main():
             sys.exit(1)
         create_new_contact(addressbooks[selected_addressbooks[0]])
         sys.exit(0)
+
+    # add email address to contact or create a new one if necessary
+    if args.action == "add-email":
+        email_address = ""
+        name = ""
+        for line in sys.stdin:
+            if line.startswith("From:"):
+                try:
+                    name = line[6:line.index("<")-1]
+                    email_address = line[line.index("<")+1:line.index(">")]
+                except ValueError as e:
+                    email_address = line[6:].strip()
+                break
+        # reopen stdin to get user input
+        sys.stdin = open('/dev/tty')
+        print "Khard: Add email address to contact"
+        if not email_address:
+            print "Found no email address"
+            sys.exit(1)
+        print "Email address: %s" % email_address
+        if not name:
+            name = raw_input("Contact's name: ")
+        else:
+            # fix encoding of senders name
+            name, encoding = decode_header(name)[0]
+            if encoding:
+                name = name.decode(encoding).encode("utf-8")
+            # remove quotes from name string
+            name = name.replace("\"", "")
+            # query user input.
+            user_input = raw_input("Contact's name [%s]: " % name)
+            # if empty, use the extracted name from above
+            name = user_input or name
+        # search for an existing contact
+        selected_vcard = choose_vcard_from_list(selected_addressbooks,
+                Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, name, True))
+        if selected_vcard == None:
+            # create new contact
+            while True:
+                input_string = raw_input("Contact %s does not exist. Do you want to create it (y/n)? " % name)
+                if input_string.lower() in ["", "n", "q"]:
+                    print "Canceled"
+                    sys.exit(0)
+                if input_string.lower() == "y":
+                    break
+            print "Available address books: %s" % ', '.join(selected_addressbooks)
+            while True:
+                book_name = raw_input("Address book [%s]: " % selected_addressbooks[0]) or selected_addressbooks[0]
+                if Config().has_addressbook(book_name):
+                    break
+            selected_vcard = CarddavObject(addressbooks[book_name]['name'], addressbooks[book_name]['path'])
+            while True:
+                first_name = raw_input("First name: ")
+                last_name = raw_input("Last name: ")
+                organization = raw_input("Organization: ")
+                if not first_name and not last_name and not organization:
+                    print "Error: All fields are empty."
+                else:
+                    break
+            selected_vcard.set_name_and_organisation(first_name.decode("utf-8"),
+                    last_name.decode("utf-8"), organization.decode("utf-8"))
+        # check if the contact already contains the email address
+        for email_entry in selected_vcard.get_email_addresses():
+            if email_entry['value'] == email_address:
+                print "The contact %s already contains the email address %s" % (selected_vcard, email_address)
+                sys.exit(0)
+        # ask for the email label
+        print "\nAdding email address %s to contact %s" % (email_address, selected_vcard)
+        label = raw_input("email label [home]: ") or "home"
+        # add email address to vcard object
+        selected_vcard.add_email_address(
+                label.decode("utf-8"), email_address.decode("utf-8"))
+        # save to disk
+        selected_vcard.write_to_file(overwrite=True)
+        print "Done.\n\n%s" % selected_vcard.print_vcard()
+        sys.exit(0)
+
+    # create a list of all found vcard objects
+    vcard_list = Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, args.search, False)
 
     # print phone application  friendly contacts table
     if args.action == "phone":
@@ -186,24 +284,7 @@ def main():
 
     # show source or details, modify or delete contact
     if args.action in ["details", "modify", "remove", "source"]:
-        if vcard_list.__len__() == 1:
-            selected_vcard = vcard_list[0]
-        else:
-            list_contacts(selected_addressbooks, vcard_list)
-            while True:
-                input_string = raw_input("Enter Id: ")
-                if input_string == "":
-                    sys.exit(0)
-                try:
-                    vcard_id = int(input_string)
-                    if vcard_id > 0 and vcard_id <= vcard_list.__len__():
-                        break
-                except ValueError as e:
-                    pass
-                print "Please enter an Id between 1 and %d or nothing to exit." % vcard_list.__len__()
-            print ""
-            selected_vcard = vcard_list[vcard_id-1]
-    
+        selected_vcard = choose_vcard_from_list(selected_addressbooks, vcard_list)
         if args.action == "details":
             print selected_vcard.print_vcard()
         elif args.action == "modify":

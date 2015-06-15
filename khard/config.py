@@ -36,10 +36,10 @@ class Config:
             if self.config['general'].has_key("default_action") == False:
                 print "Error in config file\nMissing default action parameter."
                 sys.exit(2)
-            elif self.config['general']['default_action'] not in ["list", "details", "new", "modify", "remove", "mutt", "phone", "alot", "source"]:
+            elif self.config['general']['default_action'] not in ["list", "details", "new", "add-email", "modify", "remove", "mutt", "phone", "alot", "source"]:
                 print "Error in config file\n" \
                         "Non existing value for default action parameter\n" \
-                        "Possible values are: list, details, mutt, phone, alot, new, modify, remove and source"
+                        "Possible values are: list, details, mutt, phone, alot, new, add-email, modify, remove and source"
                 sys.exit(2)
             if self.config['general'].has_key("show_nicknames") == False:
                 self.config['general']['show_nicknames'] = False
@@ -110,7 +110,7 @@ class Config:
                 print "The address book \"%s\" does not exist" % name
                 sys.exit(3)
 
-        def get_vcard_objects(self, addressbook_names, sort_criteria, reverse, search):
+        def get_vcard_objects(self, addressbook_names, sort_criteria, reverse, search, strict_search):
             """returns a list of vcard objects
             :param addressbook_names: list of selected address books
             :type addressbook_names: list(str)
@@ -120,6 +120,8 @@ class Config:
             :type reverse: bool
             :param search: filter contact list
             :type search: str
+            :param strict_search: if True, search only in full name field
+            :type strict_search: bool
             :returns: list of vcard objects
             :rtype: list(vobject.vCard)
             """
@@ -132,14 +134,18 @@ class Config:
             for addressbook_name in addressbook_names:
                 addressbook = self. get_addressbook(addressbook_name)
                 for vcard in addressbook['vcards']:
-                    if regexp.search(vcard.print_vcard()) != None:
-                        vcard_list.append(vcard)
+                    if strict_search:
+                        if regexp.search(vcard.get_full_name()) != None:
+                            vcard_list.append(vcard)
                     else:
-                        # special case for phone numbers without a space between prefix and number
-                        for phone_entry in vcard.get_phone_numbers():
-                            if regexp.search(re.sub("\D", "", phone_entry['value'])) != None:
-                                vcard_list.append(vcard)
-                                break
+                        if regexp.search(vcard.print_vcard()) != None:
+                            vcard_list.append(vcard)
+                        else:
+                            # special case for phone numbers without a space between prefix and number
+                            for phone_entry in vcard.get_phone_numbers():
+                                if regexp.search(re.sub("\D", "", phone_entry['value'])) != None:
+                                    vcard_list.append(vcard)
+                                    break
             if sort_criteria == "addressbook":
                 return sorted(vcard_list,
                         key = lambda x: (x.get_addressbook_name().lower(),

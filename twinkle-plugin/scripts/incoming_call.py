@@ -64,7 +64,10 @@ if "SIP_FROM" in os.environ:
     # parse the caller ID of the string
     caller_id = get_caller_id(from_hdr)
     # look into the addressbook
-    caller_id = caller_from_addressbook(caller_id)
+    if caller_id != "":
+        caller_id = caller_from_addressbook(caller_id)
+    else:
+        caller_id = "anonymous"
     # create the ringtone
     if config.language == "de":
         create_ringtone("Anruf von " + caller_id)

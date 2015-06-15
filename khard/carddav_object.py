@@ -99,7 +99,6 @@ class CarddavObject:
                     contact_data['last name'], contact_data['organisation'])
 
         # phone
-        phone_list = []
         for key in contact_data.keys():
             if key.startswith("phone") == False:
                 continue
@@ -115,12 +114,9 @@ class CarddavObject:
             except IndexError as e:
                 print "Error: The %s line is malformed" % key
                 sys.exit(1)
-            phone_list.append({"type":label, "value":number})
-        if phone_list.__len__() > 0:
-            self.set_phone_numbers(phone_list)
+            self.add_phone_number(label, number)
 
         # email
-        email_list = []
         for key in contact_data.keys():
             if key.startswith("email") == False:
                 continue
@@ -136,12 +132,9 @@ class CarddavObject:
             except IndexError as e:
                 print "Error: The %s line is malformed" % key
                 sys.exit(1)
-            email_list.append({"type":label, "value":email})
-        if email_list.__len__() > 0:
-            self.set_email_addresses(email_list)
+            self.add_email_address(label, email)
 
         # post addresses
-        address_list = []
         for key in contact_data.keys():
             if key.startswith("address") == False:
                 continue
@@ -177,10 +170,7 @@ class CarddavObject:
             if country == "":
                 print "Error: %s has no country" % key
                 sys.exit(1)
-            address_list.append({"type":label, "street_and_house_number":street_and_house_number,
-                    "postcode":postcode, "city":city, "region":region, "country":country})
-        if address_list.__len__() > 0:
-            self.set_post_addresses(address_list)
+            self.add_post_address(label, street_and_house_number, postcode, city, region, country)
 
         # instant messaging and social networks
         if contact_data.has_key("jabber") and contact_data['jabber'] != "":
@@ -290,18 +280,21 @@ class CarddavObject:
             phone_list.append({"type":type, "value":child.value.encode("utf-8")})
         return phone_list
 
-    def set_phone_numbers(self, phone_list):
-        for index, entry in enumerate(phone_list):
-            phone_obj = self.vcard.add('tel')
-            phone_obj.value = entry['value']
-            if entry['type'].lower() in ["cell", "home", "work",]:
-                phone_obj.type_param = entry['type']
-            else:
-                group_name = "itemtel%d" % (index+1)
-                phone_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = entry['type']
+    def add_phone_number(self, type, number):
+        phone_obj = self.vcard.add('tel')
+        phone_obj.value = number
+        if type.lower() in ["cell", "home", "work",]:
+            phone_obj.type_param = type
+        else:
+            number_of_custom_phone_number_labels = 0
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group.startswith("itemtel"):
+                    number_of_custom_phone_number_labels += 1
+            group_name = "itemtel%d" % (number_of_custom_phone_number_labels+1)
+            phone_obj.group = group_name
+            label_obj = self.vcard.add('x-ablabel')
+            label_obj.group = group_name
+            label_obj.value = type
 
     def get_email_addresses(self):
         email_list = []
@@ -319,18 +312,21 @@ class CarddavObject:
             email_list.append({"type":type, "value":child.value.encode("utf-8")})
         return email_list
 
-    def set_email_addresses(self, email_list):
-        for index, entry in enumerate(email_list):
-            email_obj = self.vcard.add('email')
-            email_obj.value = entry['value']
-            if entry['type'].lower() in ["home", "work",]:
-                email_obj.type_param = entry['type']
-            else:
-                group_name = "itememail%d" % (index+1)
-                email_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = entry['type']
+    def add_email_address(self, type, address):
+        email_obj = self.vcard.add('email')
+        email_obj.value = address
+        if type.lower() in ["home", "work",]:
+            email_obj.type_param = type
+        else:
+            number_of_custom_email_labels = 0
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group.startswith("itememail"):
+                    number_of_custom_email_labels += 1
+            group_name = "itememail%d" % (number_of_custom_email_labels+1)
+            email_obj.group = group_name
+            label_obj = self.vcard.add('x-ablabel')
+            label_obj.group = group_name
+            label_obj.value = type
 
     def get_post_addresses(self):
         address_list = []
@@ -353,20 +349,22 @@ class CarddavObject:
                     "country":child.value.country.encode("utf-8")})
         return address_list
 
-    def set_post_addresses(self, address_list):
-        for index, entry in enumerate(address_list):
-            adr_obj = self.vcard.add('adr')
-            adr_obj.value = vobject.vcard.Address(street=entry['street_and_house_number'],
-                    city=entry['city'], region=entry['region'],
-                    code=entry['postcode'], country=entry['country'])
-            if entry['type'].lower() in ["home", "work",]:
-                adr_obj.type_param = entry['type']
-            else:
-                group_name = "itemadr%d" % (index+1)
-                adr_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = entry['type']
+    def add_post_address(self, type, street_and_house_number, postcode, city, region, country):
+        adr_obj = self.vcard.add('adr')
+        adr_obj.value = vobject.vcard.Address(street=street_and_house_number,
+                city=city, region=region, code=postcode, country=country)
+        if type.lower() in ["home", "work",]:
+            adr_obj.type_param = type
+        else:
+            number_of_custom_post_address_labels = 0
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group.startswith("itemadr"):
+                    number_of_custom_post_address_labels += 1
+            group_name = "itemadr%d" % (number_of_custom_post_address_labels+1)
+            adr_obj.group = group_name
+            label_obj = self.vcard.add('x-ablabel')
+            label_obj.group = group_name
+            label_obj.value = type
 
     def get_jabber_id(self):
         try:
