@@ -19,8 +19,8 @@ Prerequisites
 You have to install and configure a caldav and carddav server. I recommend
 [Baïkal](http://baikal-server.com).
 
-Then you must synchronize the calendars and address books to your local machine with vdirsyncer:
-https://github.com/untitaker/vdirsyncer.
+Then you must synchronize the calendars and address books to your local machine with
+[vdirsyncer](https://github.com/untitaker/vdirsyncer).
 
 And you need pip to install python modules:
 
@@ -37,37 +37,36 @@ Khard is installable via pip. You can choose between the following three methods
 
 1. Install system wide:
 
-```
-sudo pip install khard
-```
+    ```
+    sudo pip install khard
+    ```
 
-But that's not recommended due to security issues and cause it can damage dependencies of other
-python modules.
+    But that's not recommended due to security issues and cause it can damage dependencies of other python modules.
 
 2. Install into user space:
 
-```
-pip install --user khard
-```
+    ```
+    pip install --user khard
+    ```
 
-Then you can find the executable under ~/.local/bin.
+    Then you can find the executable under ~/.local/bin.
 
 3. Use virtualenv to create a separate python environment for every module. That's recommended cause
    it keeps your system clean:
 
-```
-# install virtualenv package
-sudo pip install virtualenv
-# create folder for all virtualenv's
-mkdir ~/.virtualenvs
-# create new virtual environment with the name "khard"
-virtualenv ~/.virtualenvs/khard
-# to install khard, use the pip command from that newly created environment
-# otherwise it would be installed in the users home directory
-~/.virtualenvs/khard/bin/pip install khard
-# create a symlink to the local binary folder
-ln -s ~/.virtualenvs/khard/bin/khard ~/bin
-```
+    ```
+    # install virtualenv package
+    sudo pip install virtualenv
+    # create folder for all virtualenv's
+    mkdir ~/.virtualenvs
+    # create new virtual environment with the name "khard"
+    virtualenv ~/.virtualenvs/khard
+    # to install khard, use the pip command from that newly created environment
+    # otherwise it would be installed in the users home directory
+    ~/.virtualenvs/khard/bin/pip install khard
+    # create a symlink to the local binary folder
+    ln -s ~/.virtualenvs/khard/bin/khard ~/bin
+    ```
 
 More information about virtualenv at http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
@@ -196,7 +195,7 @@ bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
 
-Then you can complete email addresses by pressing <tab> in mutt's new mail dialog.
+Then you can complete email addresses by pressing the Tab-key in mutt's new mail dialog.
 
 To add email addresses to khard's address book, you may also add the following lines to your muttrc file:
 
@@ -268,5 +267,5 @@ script_remote_release=/home/USERNAME/.twinkle/scripts/incoming_call_ended.py
 Related projects
 ----------------
 
-If you need a console based calendar too, try out khal: https://github.com/geier/khal
+If you need a console based calendar too, try out [khal](https://github.com/geier/khal).
 
