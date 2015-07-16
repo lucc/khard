@@ -240,36 +240,47 @@ def main():
 
     # print phone application  friendly contacts table
     if args.action == "phone":
-        address_list = []
+        phone_list = []
+        regexp = re.compile(args.search.replace(" ", ".*"), re.IGNORECASE)
         for vcard in vcard_list:
             for tel_entry in vcard.get_phone_numbers():
-                address_list.append("%s\t%s\t%s"
-                        % (tel_entry['value'], vcard.get_full_name(), tel_entry['type']))
-        print '\n'.join(address_list)
-        if vcard_list.__len__() == 0:
+                phone_number_line = "%s\t%s\t%s" \
+                        % (tel_entry['value'], vcard.get_full_name(), tel_entry['type'])
+                if regexp.search(phone_number_line) != None:
+                    phone_list.append(phone_number_line)
+        print '\n'.join(phone_list)
+        if len(phone_list) == 0:
             sys.exit(1)
         sys.exit(0)
 
     # print mutt friendly contacts table
     if args.action == "mutt":
         address_list = ["searching for '%s' ..." % args.search]
+        regexp = re.compile(args.search.replace(" ", ".*"), re.IGNORECASE)
         for vcard in vcard_list:
             for email_entry in vcard.get_email_addresses():
-                address_list.append("%s\t%s\t%s" % (email_entry['value'],
-                        vcard.get_full_name(), email_entry['type']))
+                email_address_line = "%s\t%s\t%s" \
+                        % (email_entry['value'], vcard.get_full_name(), email_entry['type'])
+                if regexp.search(email_address_line) != None:
+                    address_list.append(email_address_line)
         print '\n'.join(address_list)
-        if vcard_list.__len__() == 0:
+        if len(address_list) <= 1:
             sys.exit(1)
         sys.exit(0)
 
     # print alot friendly contacts table
     if args.action == "alot":
         address_list = []
+        regexp = re.compile(args.search.replace(" ", ".*"), re.IGNORECASE)
         for vcard in vcard_list:
             for email_entry in vcard.get_email_addresses():
-                address_list.append("\"%s %s\" <%s>"
-                        % (vcard.get_full_name(), email_entry['type'], email_entry['value']))
+                email_address_line = "\"%s %s\" <%s>" \
+                        % (vcard.get_full_name(), email_entry['type'], email_entry['value'])
+                if regexp.search(email_address_line) != None:
+                    address_list.append(email_address_line)
         print '\n'.join(address_list)
+        if len(address_list) == 0:
+            sys.exit(1)
         sys.exit(0)
 
     # cancel if we found no contacts

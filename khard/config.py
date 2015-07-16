@@ -126,11 +126,7 @@ class Config:
             :rtype: list(vobject.vCard)
             """
             vcard_list = []
-            # regexp
-            if search == None or search == "":
-                regexp = re.compile(".*", re.IGNORECASE)
-            else:
-                regexp = re.compile(search.replace(" ", ".*"), re.IGNORECASE)
+            regexp = re.compile(search.replace(" ", ".*"), re.IGNORECASE | re.DOTALL)
             for addressbook_name in addressbook_names:
                 addressbook = self. get_addressbook(addressbook_name)
                 for vcard in addressbook['vcards']:

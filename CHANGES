@@ -33,3 +33,6 @@ v0.4.0: 2015.06.15
 - new option "add-email": Get full email from stdin, filter senders mail address and add that
   address to an existing contact or create a new one. Feature tested with email client mutt.
 
+v0.4.1: 2015.07.16
+- improved search results for phone, mutt and alot
+
