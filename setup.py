@@ -6,8 +6,13 @@
 #   - https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
 
 import os
+import sys
 from setuptools import setup
 from khard.version import khard_version
+
+modules_now_bundled = []
+if sys.version_info[0] == 2 and sys.version_info[1] <= 6:
+    modules_now_bundled += ['argparse']
 
 setup(
     name = 'khard',
@@ -41,6 +46,5 @@ setup(
     install_requires = [
         'configobj',
         'vobject',
-        'argparse',
-    ],
+    ] + modules_now_bundled,
 )
