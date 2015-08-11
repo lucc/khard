@@ -341,8 +341,12 @@ class CarddavObject:
                     if label.name == "X-ABLABEL" and label.group == child.group:
                         type = label.value.encode("utf-8")
                         break
+            try:
+                street_and_house_number = child.value.street.encode("utf-8")
+            except AttributeError as e:
+                street_and_house_number = ', '.join([ x.strip() for x in child.value.street ]).encode("utf-8")
             address_list.append({"type":type,
-                    "street_and_house_number":child.value.street.encode("utf-8"),
+                    "street_and_house_number":street_and_house_number,
                     "postcode":child.value.code.encode("utf-8"),
                     "city":child.value.city.encode("utf-8"),
                     "region":child.value.region.encode("utf-8"),
@@ -442,11 +446,19 @@ class CarddavObject:
             strings.append("Addresses")
             for index, entry in enumerate(self.get_post_addresses()):
                 strings.append("    %s:" % entry['type'])
-                strings.append("        %s" % entry['street_and_house_number'])
-                strings.append("        %s, %s" % (entry['postcode'], entry['city']))
-                if entry['region'] != "":
+                if entry['street_and_house_number'] != "":
+                    strings.append("        %s" % entry['street_and_house_number'])
+                if entry['postcode'] != "" and entry['city'] != "":
+                    strings.append("        %s %s" % (entry['postcode'], entry['city']))
+                elif entry['postcode'] != "":
+                    strings.append("        %s" % entry['postcode'])
+                elif entry['city'] != "":
+                    strings.append("        %s" % entry['city'])
+                if entry['region'] != "" and entry['country'] != "":
                     strings.append("        %s, %s" % (entry['region'], entry['country']))
-                else:
+                elif entry['region'] != "":
+                    strings.append("        %s" % entry['region'])
+                elif entry['country'] != "":
                     strings.append("        %s" % entry['country'])
         if self.get_jabber_id() != "" \
                 or self.get_skype_id() != "" \
