@@ -30,6 +30,12 @@ class Config:
             elif os.path.exists(self.config['general']['editor']) == False:
                 print "Error in config file\nInvalid editor path."
                 sys.exit(2)
+            if self.config['general'].has_key("merge_editor") == False:
+                print "Error in config file\nMissing merge_editor parameter. Example: merge_editor = /usr/bin/vimdiff."
+                sys.exit(2)
+            elif os.path.exists(self.config['general']['merge_editor']) == False:
+                print "Error in config file\nInvalid merge_editor path."
+                sys.exit(2)
             if self.config['general'].has_key("default_country") == False:
                 print "Error in config file\nMissing default country parameter."
                 sys.exit(2)
@@ -87,6 +93,9 @@ class Config:
 
         def get_editor(self):
             return self.config['general']['editor']
+
+        def get_merge_editor(self):
+            return self.config['general']['merge_editor']
 
         def get_default_country(self):
             return self.config['general']['default_country']

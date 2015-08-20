@@ -166,6 +166,16 @@ khard modify -s John
 
 To delete it, write "remove" instead. Use "source", to open the Vcard file directly.
 
+If you wish to merge contacts use the following to select a first and then a second contact:
+
+```
+khard merge -s John
+```
+
+You will be launched into your merge_editor ( see the "merge_editor" option in khard.conf)
+where you can merge all changes from the second selected contact onto the first.
+Once you are finished, the first contact is updated and the second one deleted.
+
 
 davcontroller
 -------------
