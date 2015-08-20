@@ -33,16 +33,22 @@ class Config:
             elif os.path.exists(self.config['general']['editor']) == False:
                 print "Error in config file\nInvalid editor path."
                 sys.exit(2)
+            if self.config['general'].has_key("merge_editor") == False:
+                print "Error in config file\nMissing merge_editor parameter. Example: merge_editor = /usr/bin/vimdiff."
+                sys.exit(2)
+            elif os.path.exists(self.config['general']['merge_editor']) == False:
+                print "Error in config file\nInvalid merge_editor path."
+                sys.exit(2)
             if self.config['general'].has_key("default_country") == False:
                 print "Error in config file\nMissing default country parameter."
                 sys.exit(2)
             if self.config['general'].has_key("default_action") == False:
                 print "Error in config file\nMissing default action parameter."
                 sys.exit(2)
-            elif self.config['general']['default_action'] not in ["list", "details", "new", "add-email", "modify", "remove", "mutt", "phone", "alot", "source"]:
+            elif self.config['general']['default_action'] not in self.get_list_of_actions():
                 print "Error in config file\n" \
                         "Non existing value for default action parameter\n" \
-                        "Possible values are: list, details, mutt, phone, alot, new, add-email, modify, remove and source"
+                        "Possible values are: %s" % ', '.join(self.get_list_of_actions())
                 sys.exit(2)
             if self.config['general'].has_key("show_nicknames") == False:
                 self.config['general']['show_nicknames'] = False
@@ -91,8 +97,15 @@ class Config:
         def get_editor(self):
             return self.config['general']['editor']
 
+        def get_merge_editor(self):
+            return self.config['general']['merge_editor']
+
         def get_default_country(self):
             return self.config['general']['default_country']
+
+        def get_list_of_actions(self):
+            return ["list", "details", "new", "add-email", "modify", "merge",
+                    "remove", "mutt", "phone", "alot", "source"]
 
         def get_default_action(self):
             return self.config['general']['default_action']
@@ -131,7 +144,7 @@ class Config:
             vcard_list = []
             regexp = re.compile(search.replace(" ", ".*"), re.IGNORECASE | re.DOTALL)
             for addressbook_name in addressbook_names:
-                addressbook = self. get_addressbook(addressbook_name)
+                addressbook = self.get_addressbook(addressbook_name)
                 for vcard in addressbook['vcards']:
                     if strict_search:
                         if regexp.search(vcard.get_full_name()) != None:

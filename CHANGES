@@ -36,3 +36,8 @@ v0.4.0: 2015.06.15
 v0.4.1: 2015.07.16
 - improved search results for phone, mutt and alot
 
+v0.5.0: 2015.09.05
+- New option to merge two contacts
+- Support for XDG_CONFIG_HOME parameter
+- Post address: Added support for street and house number field with multiple lines
+
