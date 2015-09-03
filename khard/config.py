@@ -14,7 +14,10 @@ class Config:
         """ Implementation of the singleton interface """
         def __init__(self):
             # load config file
-            config_file = os.path.join(os.path.expanduser("~"), ".config", "khard", "khard.conf")
+            xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
+                    os.path.join(os.path.expanduser("~"), ".config")
+            config_file = os.environ.get("KHARD_CONFIG") or \
+                    os.path.join(xdg_config_home, "khard", "khard.conf")
             if os.path.exists(config_file) == False:
                 print "Config file %s not available" % config_file
                 sys.exit(2)
