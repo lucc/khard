@@ -53,6 +53,61 @@ def modify_existing_contact(vcard):
     else:
         print "Nothing changed."
 
+def merge_existing_contacts(first_vcard, second_vcard):
+
+    # create temp files for each vcard
+
+    # first
+    old_first_contact_template = helpers.get_existing_contact_template(first_vcard)
+    first_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    first_temp_file_name = first_tf.name
+    first_tf.write(old_first_contact_template)
+    first_tf.close()
+
+    # second
+    old_second_contact_template = helpers.get_existing_contact_template(second_vcard)
+    second_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    second_temp_file_name = second_tf.name
+    second_tf.write(old_second_contact_template)
+    second_tf.close()
+
+    # start editor to edit contact template
+    child = subprocess.Popen([Config().get_merge_editor(), first_temp_file_name, second_temp_file_name])
+    streamdata = child.communicate()[0]
+
+    # first
+    first_tf = open(first_temp_file_name, "r")
+    new_first_contact_template = first_tf.read()
+    first_tf.close()
+    os.remove(first_temp_file_name)
+
+    # second
+    second_tf = open(second_temp_file_name, "r")
+    new_second_contact_template = second_tf.read()
+    second_tf.close()
+    os.remove(second_temp_file_name)
+
+    # make sure at least one of them changed
+
+    if new_second_contact_template != old_second_contact_template:
+        print("Merge unsuccessfull, please only modify the first contact");
+        return
+
+    first_vcard.process_user_input(new_first_contact_template)
+    while True:
+        input_string = raw_input("Merging contacts %s\n\nMerged\n\n%s\n\nTo be removed\n\n%s\n\n Are you sure? (y/n): " \
+                % (first_vcard.get_full_name(), first_vcard.print_vcard(), second_vcard.print_vcard()))
+        if input_string.lower() in ["", "n", "q"]:
+            print "Canceled"
+            sys.exit(0)
+        if input_string.lower() == "y":
+            break
+
+
+    first_vcard.write_to_file(overwrite=True)
+    second_vcard.delete_vcard_file()
+    print "Merge successful\n\n%s" % first_vcard.print_vcard()
+
 def list_contacts(selected_addressbooks, vcard_list):
     if selected_addressbooks.__len__() == 1:
         print "Address book: %s" % selected_addressbooks[0]
@@ -116,7 +171,7 @@ def main():
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default="",
-            help="Possible actions: list, details, mutt, alot, phone, new, add-email, modify, remove and source")
+            help="Possible actions: list, details, mutt, alot, phone, new, add-email, modify, merge, remove and source")
     args = parser.parse_args()
 
     # version
@@ -127,7 +182,7 @@ def main():
     # validate value for action
     if args.action == "":
         args.action = Config().get_default_action()
-    if args.action not in ["list", "details", "mutt", "alot", "phone", "new", "add-email", "modify", "remove", "source"]:
+    if args.action not in ["list", "details", "mutt", "alot", "phone", "new", "add-email", "modify", "merge", "remove", "source"]:
         print "Unsupported action. Possible values are: list, details, mutt, alot, phone, new, add-email, modify, remove and source"
         sys.exit(1)
 
@@ -315,6 +370,15 @@ def main():
             child = subprocess.Popen([Config().get_editor(),
                     selected_vcard.get_vcard_full_filename()])
             streamdata = child.communicate()[0]
+
+
+    if args.action in ["merge"]:
+        first_selected_vcard = choose_vcard_from_list(selected_addressbooks, vcard_list)
+        second_selected_vcard = choose_vcard_from_list(selected_addressbooks, vcard_list)
+        if first_selected_vcard == second_selected_vcard:
+            print("Selected same contact twice.")
+        else:
+            merge_existing_contacts(first_selected_vcard, second_selected_vcard)
 
 if __name__ == "__main__":
     main()
