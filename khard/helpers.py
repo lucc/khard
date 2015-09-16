@@ -30,8 +30,7 @@ def pretty_print(table, justify = "L"):
     return outputStr
 
 def get_new_contact_template(addressbook_name):
-    return """# new contact
-# Address book: %s
+    return """# Address book: %s
 # if you want to cancel, exit without saving
 
 # first and last name
@@ -79,9 +78,7 @@ Nickname = """ % (addressbook_name, Config().get_default_country())
 def get_existing_contact_template(vcard):
     strings = []
     for line in get_new_contact_template(vcard.get_addressbook_name()).splitlines():
-        if line == "# new contact":
-            strings.append("# Edit contact: %s" % vcard.get_full_name())
-        elif line.lower().startswith("# if you want to cancel"):
+        if line.lower().startswith("# if you want to cancel"):
             continue
         elif line.lower().startswith("first name"):
             strings.append("First name   = %s" % vcard.get_first_name())

@@ -39,6 +39,16 @@ class CarddavObject:
     def __str__(self):
         return self.get_full_name()
 
+    def __eq__(self, other):
+        if not isinstance(other, CarddavObject):
+            return False
+        return self.print_vcard() == other.print_vcard()
+
+    def __ne__(self, other):
+        if not isinstance(other, CarddavObject):
+            return False
+        return self.print_vcard() != other.print_vcard()
+
     def filter_invalid_tags(self, contents):
         contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM', contents)
         contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'), 'X-GADUGADU', contents)
@@ -200,6 +210,9 @@ class CarddavObject:
 
     def get_vcard_full_filename(self):
         return self.vcard_full_filename
+
+    def set_vcard_full_filename(self, filename):
+        self.vcard_full_filename = filename
 
     def get_first_name(self):
         try:

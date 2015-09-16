@@ -14,7 +14,7 @@ def create_new_contact(addressbook):
     # create temp file
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     temp_file_name = tf.name
-    tf.write(helpers.get_new_contact_template(addressbook['name']))
+    tf.write("# create new contact\n%s" % helpers.get_new_contact_template(addressbook['name']))
     tf.close()
 
     # start vim to edit contact template
@@ -36,7 +36,8 @@ def create_new_contact(addressbook):
 
 def modify_existing_contact(vcard):
     # get content template for contact
-    old_contact_template = helpers.get_existing_contact_template(vcard)
+    old_contact_template = "# Edit contact: %s\n%s" \
+            % (vcard.get_full_name(), helpers.get_existing_contact_template(vcard))
 
     # create temp file and open it with the specified text editor
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
@@ -63,63 +64,83 @@ def modify_existing_contact(vcard):
         print "Nothing changed."
 
 
-def merge_existing_contacts(first_vcard, second_vcard):
+def merge_existing_contacts(source_vcard, target_vcard, delete_source_vcard):
     # create temp files for each vcard
+    # source vcard
+    source_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    source_temp_file_name = source_tf.name
+    source_tf.write("# merge from %s\n%s" \
+            % (source_vcard.get_full_name(), helpers.get_existing_contact_template(source_vcard)))
+    source_tf.close()
 
-    # first
-    old_first_contact_template = helpers.get_existing_contact_template(first_vcard)
-    first_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-    first_temp_file_name = first_tf.name
-    first_tf.write(old_first_contact_template)
-    first_tf.close()
-
-    # second
-    old_second_contact_template = helpers.get_existing_contact_template(second_vcard)
-    second_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-    second_temp_file_name = second_tf.name
-    second_tf.write(old_second_contact_template)
-    second_tf.close()
+    # target vcard
+    old_target_vcard_template = "# merge into %s\n%s" \
+            % (target_vcard.get_full_name(), helpers.get_existing_contact_template(target_vcard))
+    target_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    target_temp_file_name = target_tf.name
+    target_tf.write(old_target_vcard_template)
+    target_tf.close()
 
     # start editor to edit contact template
-    child = subprocess.Popen([Config().get_merge_editor(), first_temp_file_name, second_temp_file_name])
+    child = subprocess.Popen([Config().get_merge_editor(), source_temp_file_name, target_temp_file_name])
     streamdata = child.communicate()[0]
 
-    # first
-    first_tf = open(first_temp_file_name, "r")
-    new_first_contact_template = first_tf.read()
-    first_tf.close()
-    os.remove(first_temp_file_name)
+    # template of source vcard is not required anymore
+    os.remove(source_temp_file_name)
 
-    # second
-    second_tf = open(second_temp_file_name, "r")
-    new_second_contact_template = second_tf.read()
-    second_tf.close()
-    os.remove(second_temp_file_name)
+    # instead we are interested in the target template contents
+    target_tf = open(target_temp_file_name, "r")
+    new_target_vcard_template = target_tf.read()
+    target_tf.close()
+    os.remove(target_temp_file_name)
 
-    # make sure at least one of them changed
-    if new_first_contact_template == old_first_contact_template:
-        print("Merge unsuccessfull, First contact unchanged")
-        return
-    if new_second_contact_template != old_second_contact_template:
-        print("Merge unsuccessfull, please only modify the first contact");
+    # compare them
+    if old_target_vcard_template == new_target_vcard_template:
+        print("Merge unsuccessfull, Contact which to merge into is unchanged")
         return
 
-    first_vcard.process_user_input(new_first_contact_template)
+    target_vcard.process_user_input(new_target_vcard_template)
     while True:
-        input_string = raw_input("Merging contacts %s and %s\n\nMerged\n\n%s\n\nTo be removed\n\n%s\n\nAre you sure? (y/n): " \
-                % (first_vcard.get_full_name(), second_vcard.get_full_name(),
-                    first_vcard.print_vcard(), second_vcard.print_vcard()))
+        if delete_source_vcard:
+            input_string = raw_input(
+                    "Merge contact %s from address book %s into contact %s from address book %s\n\n" \
+                        "To be removed\n\n%s\n\nMerged\n\n%s\n\nAre you sure? (y/n): " \
+                    % (source_vcard.get_full_name(), source_vcard.get_addressbook_name(),
+                        target_vcard.get_full_name(), target_vcard.get_addressbook_name(),
+                        source_vcard.print_vcard(), target_vcard.print_vcard()))
+        else:
+            input_string = raw_input(
+                    "Merge contact %s from address book %s into contact %s from address book %s\n\n" \
+                        "Keep unchanged\n\n%s\n\nMerged:\n\n%s\n\nAre you sure? (y/n): " \
+                    % (source_vcard.get_full_name(), source_vcard.get_addressbook_name(),
+                        target_vcard.get_full_name(), target_vcard.get_addressbook_name(),
+                        source_vcard.print_vcard(), target_vcard.print_vcard()))
         if input_string.lower() in ["", "n", "q"]:
             print "Canceled"
-            sys.exit(0)
+            return
         if input_string.lower() == "y":
             break
 
-    first_vcard.write_to_file(overwrite=True)
-    second_vcard.delete_vcard_file()
-    print "Merge successful\n\n%s" % first_vcard.print_vcard()
+    # write changes to target vcard file and delete source vcard file
+    target_vcard.write_to_file(overwrite=True)
+    if delete_source_vcard:
+        source_vcard.delete_vcard_file()
+    print "Merge successful\n\n%s" % target_vcard.print_vcard()
 
 
+def copy_contact(vcard, target_addressbook, delete_source_vcard):
+    if delete_source_vcard:
+        vcard.delete_vcard_file()
+    vcard.set_vcard_full_filename(
+            os.path.join(
+                target_addressbook['path'],
+                os.path.basename(vcard.get_vcard_full_filename()))
+            )
+    vcard.write_to_file(overwrite=True)
+    print("%s contact %s from address book %s to %s" \
+            % ("Moved" if delete_source_vcard else "Copied", vcard.get_full_name(),
+                vcard.get_addressbook_name(), target_addressbook['name']))
+ 
 def list_contacts(selected_addressbooks, vcard_list):
     if selected_addressbooks.__len__() == 1:
         print "Address book: %s" % selected_addressbooks[0]
@@ -171,7 +192,7 @@ def choose_vcard_from_list(selected_addressbooks, vcard_list):
             print "Please enter an Id between 1 and %d or nothing or q to exit." % vcard_list.__len__()
         print ""
         return vcard_list[vcard_id-1]
- 
+
 
 def main():
     # create the args parser
@@ -378,7 +399,7 @@ def main():
         list_contacts(selected_addressbooks, vcard_list)
         sys.exit(0)
 
-    # show source or details, modify or delete contact
+    # show source or details, modify or remove contact
     if args.action in ["details", "modify", "remove", "source"]:
         selected_vcard = choose_vcard_from_list(selected_addressbooks, vcard_list)
 
@@ -390,8 +411,8 @@ def main():
 
         elif args.action == "remove":
             while True:
-                input_string = raw_input("Deleting contact %s. Are you sure? (y/n): " \
-                        % selected_vcard.get_full_name())
+                input_string = raw_input("Deleting contact %s from address book %s. Are you sure? (y/n): " \
+                        % (selected_vcard.get_full_name(), selected_vcard.get_addressbook_name()))
                 if input_string.lower() in ["", "n", "q"]:
                     print "Canceled"
                     sys.exit(0)
@@ -405,33 +426,89 @@ def main():
                     selected_vcard.get_vcard_full_filename()])
             streamdata = child.communicate()[0]
 
-    # merge two contacts
+    # merge contacts
     if args.action == "merge":
-        # get the first vcard, into which to merge
-        # respect the users search query if available
-        first_selected_vcard = choose_vcard_from_list(selected_addressbooks,
+        # get the source vcard, from which to merge
+        source_vcard = choose_vcard_from_list(selected_addressbooks,
                 Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, search_terms[0], False))
-        if first_selected_vcard == None:
-            print("Found no contact to merge into")
+        if source_vcard == None:
+            print("Found no source contact for merging")
             sys.exit(1)
-        print("Merge into %s\n" % first_selected_vcard.get_full_name())
 
-        # then get the second vcard, which to merge from
-        # clear out the users potential serch query
-        print("Now choose the vcard from which to merge:")
-        second_selected_vcard = choose_vcard_from_list(selected_addressbooks,
+        # get the target vcard, into which to merge
+        print("Merge from %s from address book %s\nNow choose the contact into which to merge:" \
+                % (source_vcard.get_full_name(), source_vcard.get_addressbook_name()))
+        target_vcard = choose_vcard_from_list(selected_addressbooks,
                 Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, search_terms[1], False))
-        if second_selected_vcard == None:
-            print "Found no contact to merge from"
+        if target_vcard == None:
+            print("Found no target contact for merging")
             sys.exit(1)
 
-        # compare contacts
-        if first_selected_vcard == second_selected_vcard:
+        # merging
+        if source_vcard == target_vcard:
             print("Selected same contact twice.")
-            sys.exit(1)
         else:
-            merge_existing_contacts(first_selected_vcard, second_selected_vcard)
-            sys.exit(0)
+            merge_existing_contacts(source_vcard, target_vcard, True)
+
+    # copy or move contact
+    if args.action in ["copy", "move"]:
+        # get the source vcard, which to copy or move
+        source_vcard = choose_vcard_from_list(selected_addressbooks,
+                Config().get_vcard_objects(selected_addressbooks, args.sort, args.reverse, search_terms[0], False))
+        if source_vcard == None:
+            print("Found no contact")
+            sys.exit(1)
+
+        # get target address book
+        target_addressbook = Config().get_addressbook(search_terms[1])
+        available_addressbooks = [x for x in Config().get_all_addressbooks() if x != source_vcard.get_addressbook_name()]
+        print("%s contact %s from address book %s\n\nAvailable address books:\n  %s" \
+                % (args.action.title(), source_vcard.get_full_name(),
+                    source_vcard.get_addressbook_name(), '\n  '.join(available_addressbooks)))
+        while target_addressbook is None:
+            input_string = raw_input("Into address book: ")
+            if input_string == "":
+                print("Canceled")
+                sys.exit(0)
+            if input_string in available_addressbooks:
+                target_addressbook = Config().get_addressbook(input_string)
+        print("")
+
+        # check if a contact already exists in the target address book
+        target_vcard = choose_vcard_from_list([
+                target_addressbook['name']],
+                Config().get_vcard_objects(
+                    [target_addressbook['name']], args.sort, args.reverse,
+                    source_vcard.get_full_name(), True)
+                )
+
+        # if the target contact doesn't exist, move or copy the source contact into the target
+        # address book without further questions
+        if target_vcard == None:
+            copy_contact(source_vcard, target_addressbook, args.action == "move")
+
+        else:
+            # source and target contact are identical
+            if source_vcard == target_vcard:
+                copy_contact(source_vcard, target_addressbook, args.action == "move")
+
+            # source and target contacts are different
+            # either overwrite the target one or merge into target contact
+            else:
+                print("The address book %s already contains the contact %s\n" \
+                            "Possible actions:\n  o: Overwrite contact\n  m: merge contacts\n  q: quit" \
+                            % (target_vcard.get_addressbook_name(), source_vcard.get_full_name()))
+                while True:
+                    input_string = raw_input("Your choice: ")
+                    if input_string.lower() == "o":
+                        copy_contact(source_vcard, target_addressbook, args.action == "move")
+                        break
+                    if input_string.lower() == "m":
+                        merge_existing_contacts(source_vcard, target_vcard, args.action == "move")
+                        break
+                    if input_string.lower() == "q":
+                        print("Canceled")
+                        break
 
 
 if __name__ == "__main__":

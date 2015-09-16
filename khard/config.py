@@ -105,7 +105,7 @@ class Config:
 
         def get_list_of_actions(self):
             return ["list", "details", "new", "add-email", "modify", "merge",
-                    "remove", "mutt", "phone", "alot", "source"]
+                    "copy", "move", "remove", "mutt", "phone", "alot", "source"]
 
         def get_default_action(self):
             return self.config['general']['default_action']
@@ -123,8 +123,7 @@ class Config:
             try:
                 return self.config['addressbooks'][name]
             except KeyError as e:
-                print "The address book \"%s\" does not exist" % name
-                sys.exit(3)
+                return None
 
         def get_vcard_objects(self, addressbook_names, sort_criteria, reverse, search, strict_search):
             """returns a list of vcard objects
