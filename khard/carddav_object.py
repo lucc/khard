@@ -4,26 +4,30 @@ import os, sys, string, random, datetime, re
 import vobject
 
 class CarddavObject:
-    def __init__(self, addressbook_name, addressbook_path, filename=""):
-        self.addressbook_name = addressbook_name
-        if filename == "":
-            # create new vcard
+    def __init__(self, address_book, filename = None):
+        self.vcard = None
+        self.address_book = address_book
+        self.filename = filename
+
+        if self.filename is None:
+            # create new vcard object
             self.vcard = vobject.vCard()
+            # uid
             choice = string.ascii_uppercase + string.digits
             uid_obj = self.vcard.add('uid')
             uid_obj.value = ''.join([random.choice(choice) for _ in range(36)])
-            self.vcard_full_filename = os.path.join(addressbook_path,
+            # use uid for vcard filename
+            self.filename = os.path.join(address_book.get_path(),
                     self.vcard.uid.value + ".vcf")
+
         else:
-            # create vcard from file
-            self.vcard_full_filename = filename
-            # open .vcf file
+            # create vcard from .vcf file
             try:
-                file = open(filename, "r")
+                file = open(self.filename, "r")
                 contents = file.read()
                 file.close()
             except IOError as e:
-                raise CarddavObject.VCardParseError(e)
+                raise
             # create vcard object
             try:
                 self.vcard = vobject.readOne(contents)
@@ -34,185 +38,65 @@ class CarddavObject:
                             self.filter_invalid_tags(contents))
                     self.write_to_file(overwrite=True)
                 except vobject.base.ParseError as e:
-                    raise CarddavObject.VCardParseError(e)
+                    raise
+
+
+    #######################################
+    # factory methods to create new contact
+    #######################################
+
+    @classmethod
+    def new_contact(cls, address_book):
+        """ use this to create a new and empty contact """
+        return cls(address_book)
+
+    @classmethod
+    def from_file(cls, address_book, filename):
+        """ Use this if you want to create a new contact from an existing .vcf file """
+        return cls(address_book, filename)
+
+    @classmethod
+    def from_user_input(cls, address_book, user_input):
+        """ Use this if you want to create a new contact from user input """
+        contact = cls(address_book)
+        contact.process_user_input(user_input)
+        return contact
+
+    @classmethod
+    def from_existing_contact_with_new_user_input(cls, contact, user_input):
+        """ use this if you want to clone an existing contact and  replace its data with new user input in one step """
+        contact = cls(contact.get_address_book(), contact.get_filename())
+        contact.process_user_input(user_input)
+        return contact
+
+
+    ######################################
+    # overwrite some default class methods
+    ######################################
 
     def __str__(self):
         return self.get_full_name()
 
     def __eq__(self, other):
-        if not isinstance(other, CarddavObject):
-            return False
-        return self.print_vcard() == other.print_vcard()
+        return isinstance(other, CarddavObject) \
+                and self.print_vcard(show_address_book = False) == other.print_vcard(show_address_book = False)
 
     def __ne__(self, other):
-        if not isinstance(other, CarddavObject):
-            return False
-        return self.print_vcard() != other.print_vcard()
+        return not self == other
 
-    def filter_invalid_tags(self, contents):
-        contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'), 'X-GADUGADU', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/groupwise-All'), 'X-GROUPWISE', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/icq-All'), 'X-ICQ', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/xmpp-All'), 'X-JABBER', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/msn-All'), 'X-MSN', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/yahoo-All'), 'X-YAHOO', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/skype-All'), 'X-SKYPE', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/irc-All'), 'X-IRC', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/sip-All'), 'X-SIP', contents)
-        return contents
 
-    def process_user_input(self, input):
-        # parse user input string
-        contact_data = {}
-        counter = 1
-        for line in input.splitlines():
-            if line == "" or line.startswith("#"):
-                continue
-            try:
-                key = line.split("=")[0].strip().lower()
-                value = line.split("=")[1].strip()
-                if value == "":
-                    continue
-                if contact_data.has_key(key):
-                    print "Error in input line %d: key %s already exists" % (counter, key)
-                    sys.exit(1)
-                contact_data[key] = value.decode("utf-8")
-                counter += 1
-            except IndexError as e:
-                print "Error in input line %d: Malformed input\nLine: %s" % (counter, line)
-                sys.exit(1)
+    #####################
+    # getters and setters
+    #####################
 
-        # clean vcard
-        self.clean_vcard()
-        # process data
-        # update ref
-        dt = datetime.datetime.now()
-        rev_obj = self.vcard.add('rev')
-        rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
-                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
+    def get_address_book(self):
+        return self.address_book
 
-        # name and organisation
-        # either enter first name, first and last name or organisation
-        if contact_data.has_key("first name") == False:
-            contact_data['first name'] = ""
-        if contact_data.has_key("last name") == False:
-            contact_data['last name'] = ""
-        if contact_data.has_key("organisation") == False:
-            contact_data['organisation'] = ""
-        if (contact_data['first name'] == "" and contact_data['last name'] == "" and contact_data['organisation'] == "") \
-                or (contact_data['first name'] == "" and contact_data['last name'] != ""):
-            print "Error: You must enter a first name, a first and last name or an organisation"
-            sys.exit(1)
-        else:
-            self.set_name_and_organisation(contact_data['first name'],
-                    contact_data['last name'], contact_data['organisation'])
+    def get_filename(self):
+        return self.filename
 
-        # phone
-        for key in contact_data.keys():
-            if key.startswith("phone") == False:
-                continue
-            try:
-                label = contact_data[key].split(":")[0].strip()
-                if label == "":
-                    print "Error: Missing label for line %s" % key
-                    sys.exit(1)
-                number = contact_data[key].split(":")[1].strip()
-                if number == "":
-                    print "Info: Skipped %s" % key
-                    continue
-            except IndexError as e:
-                print "Error: The %s line is malformed" % key
-                sys.exit(1)
-            self.add_phone_number(label, number)
-
-        # email
-        for key in contact_data.keys():
-            if key.startswith("email") == False:
-                continue
-            try:
-                label = contact_data[key].split(":")[0].strip()
-                if label == "":
-                    print "Error: Missing label for line %s" % key
-                    sys.exit(1)
-                email = contact_data[key].split(":")[1].strip()
-                if email == "":
-                    print "Info: Skipped %s" % key
-                    continue
-            except IndexError as e:
-                print "Error: The %s line is malformed" % key
-                sys.exit(1)
-            self.add_email_address(label, email)
-
-        # post addresses
-        for key in contact_data.keys():
-            if key.startswith("address") == False:
-                continue
-            try:
-                label = contact_data[key].split(":")[0].strip()
-                if label == "":
-                    print "Error: Missing label for line %s" % key
-                    sys.exit(1)
-                address = contact_data[key].split(":")[1].strip()
-                if address.startswith("; ; ; ; "):
-                    print "Info: Skipped %s" % key
-                    continue
-            except IndexError as e:
-                print "Error: The %s line is malformed" % key
-                sys.exit(1)
-            if address.split(";").__len__() != 5:
-                print "Error: The %s line is malformed" % key
-                sys.exit(1)
-            street_and_house_number = address.split(";")[0].strip()
-            if street_and_house_number == "":
-                print "Error: %s has no street" % key
-                sys.exit(1)
-            postcode = address.split(";")[1].strip()
-            if postcode == "":
-                print "Error: %s has no postcode" % key
-                sys.exit(1)
-            city = address.split(";")[2].strip()
-            if city == "":
-                print "Error: %s has no city" % key
-                sys.exit(1)
-            region = address.split(";")[3].strip()
-            country = address.split(";")[4].strip()
-            if country == "":
-                print "Error: %s has no country" % key
-                sys.exit(1)
-            self.add_post_address(label, street_and_house_number, postcode, city, region, country)
-
-        # instant messaging and social networks
-        if contact_data.has_key("jabber") and contact_data['jabber'] != "":
-            self.set_jabber_id(contact_data['jabber'])
-        if contact_data.has_key("skype") and contact_data['skype'] != "":
-            self.set_skype_id(contact_data['skype'])
-        if contact_data.has_key("twitter") and contact_data['twitter'] != "":
-            self.set_twitter_id(contact_data['twitter'])
-        if contact_data.has_key("webpage") and contact_data['webpage'] != "":
-            self.set_webpage(contact_data['webpage'])
-
-        # miscellaneous stuff
-        # nickname
-        if contact_data.has_key("nickname") and contact_data['nickname'] != "":
-            self.set_nickname(contact_data['nickname'])
-        # birthday
-        if contact_data.has_key("birthday") and contact_data['birthday'] != "":
-            try:
-                date = datetime.datetime.strptime(contact_data['birthday'], "%d.%m.%Y")
-                self.set_birthday(date)
-            except ValueError as e:
-                print "Error: Birthday date in the wrong format. Example: 31.12.1989"
-                sys.exit(1)
-
-    def get_addressbook_name(self):
-        return self.addressbook_name
-
-    def get_vcard_full_filename(self):
-        return self.vcard_full_filename
-
-    def set_vcard_full_filename(self, filename):
-        self.vcard_full_filename = filename
+    def set_filename(self, filename):
+        self.filename = filename
 
     def get_first_name(self):
         try:
@@ -236,23 +120,6 @@ class CarddavObject:
                 return self.get_organisation()
             else:
                 return ""
-
-    def get_categories(self):
-        category_list = []
-        for child in self.vcard.getChildren():
-            if child.name == "CATEGORIES":
-                category_list = [child.value[ii].encode('utf-8') for ii in xrange(len(child.value))]
-        return category_list
-
-    def get_nickname(self):
-        try:
-            return self.vcard.nickname.value.encode("utf-8")
-        except AttributeError as e:
-            return ""
-
-    def set_nickname(self, name):
-        nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = name
 
     def get_organisation(self):
         try:
@@ -291,7 +158,7 @@ class CarddavObject:
                         type = label.value.encode("utf-8")
                         break
             phone_list.append({"type":type, "value":child.value.encode("utf-8")})
-        return phone_list
+        return sorted(phone_list, key=lambda k: k['type'])
 
     def add_phone_number(self, type, number):
         phone_obj = self.vcard.add('tel')
@@ -323,7 +190,7 @@ class CarddavObject:
                         type = label.value.encode("utf-8")
                         break
             email_list.append({"type":type, "value":child.value.encode("utf-8")})
-        return email_list
+        return sorted(email_list, key=lambda k: k['type'])
 
     def add_email_address(self, type, address):
         email_obj = self.vcard.add('email')
@@ -364,7 +231,7 @@ class CarddavObject:
                     "city":child.value.city.encode("utf-8"),
                     "region":child.value.region.encode("utf-8"),
                     "country":child.value.country.encode("utf-8")})
-        return address_list
+        return sorted(address_list, key=lambda k: k['type'])
 
     def add_post_address(self, type, street_and_house_number, postcode, city, region, country):
         adr_obj = self.vcard.add('adr')
@@ -382,6 +249,23 @@ class CarddavObject:
             label_obj = self.vcard.add('x-ablabel')
             label_obj.group = group_name
             label_obj.value = type
+
+    def get_categories(self):
+        category_list = []
+        for child in self.vcard.getChildren():
+            if child.name == "CATEGORIES":
+                category_list = [child.value[ii].encode('utf-8') for ii in xrange(len(child.value))]
+        return category_list
+
+    def get_nickname(self):
+        try:
+            return self.vcard.nickname.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_nickname(self, name):
+        nickname_obj = self.vcard.add('nickname')
+        nickname_obj.value = name
 
     def get_jabber_id(self):
         try:
@@ -438,84 +322,10 @@ class CarddavObject:
         bday_obj = self.vcard.add('bday')
         bday_obj.value = "%.4d%.2d%.2d" % (date.year, date.month, date.day)
 
-    def print_vcard(self):
-        strings = ["Name: %s" % self.get_full_name()]
-        if self.get_categories().__len__() > 0:
-            strings.append("Categories\n    %s" % ', '.join(self.get_categories()))
-        if self.get_organisation() != "" \
-                and self.get_organisation() != self.get_full_name():
-            strings.append("organisation: %s" % self.get_organisation())
-        if self.get_nickname() != "":
-            strings.append("Nickname: %s" % self.get_nickname())
-        if self.get_phone_numbers().__len__() > 0:
-            strings.append("Phone")
-            for index, entry in enumerate(self.get_phone_numbers()):
-                strings.append("    %s: %s" % (entry['type'], entry['value']))
-        if self.get_email_addresses().__len__() > 0:
-            strings.append("E-Mail")
-            for index, entry in enumerate(self.get_email_addresses()):
-                strings.append("    %s: %s" % (entry['type'], entry['value']))
-        if self.get_post_addresses().__len__() > 0:
-            strings.append("Addresses")
-            for index, entry in enumerate(self.get_post_addresses()):
-                strings.append("    %s:" % entry['type'])
-                if entry['street_and_house_number'] != "":
-                    strings.append("        %s" % entry['street_and_house_number'])
-                if entry['postcode'] != "" and entry['city'] != "":
-                    strings.append("        %s %s" % (entry['postcode'], entry['city']))
-                elif entry['postcode'] != "":
-                    strings.append("        %s" % entry['postcode'])
-                elif entry['city'] != "":
-                    strings.append("        %s" % entry['city'])
-                if entry['region'] != "" and entry['country'] != "":
-                    strings.append("        %s, %s" % (entry['region'], entry['country']))
-                elif entry['region'] != "":
-                    strings.append("        %s" % entry['region'])
-                elif entry['country'] != "":
-                    strings.append("        %s" % entry['country'])
-        if self.get_jabber_id() != "" \
-                or self.get_skype_id() != "" \
-                or self.get_twitter_id() != "" \
-                or self.get_webpage() != "":
-            strings.append("Instant messaging and social networks")
-            if self.get_jabber_id() != "":
-                strings.append("    Jabber:  %s" % self.get_jabber_id())
-            if self.get_skype_id() != "":
-                strings.append("    Skype:   %s" % self.get_skype_id())
-            if self.get_twitter_id() != "":
-                strings.append("    Twitter: %s" % self.get_twitter_id())
-            if self.get_webpage() != "":
-                strings.append("    Webpage: %s" % self.get_webpage())
-        if self.get_birthday() != None:
-            strings.append("Miscellaneous")
-            if self.get_birthday() != None:
-                date = self.get_birthday()
-                strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
-        return '\n'.join(strings)
 
-    def write_to_file(self, overwrite=False):
-        if os.path.exists(self.vcard_full_filename) and overwrite == False:
-            print "Error: vcard with the file name %s already exists" \
-                    % os.path.basename(self.vcard_full_filename)
-            sys.exit(4)
-        try:
-            vcard_output = self.vcard.serialize()
-            file = open(self.vcard_full_filename, "w")
-            file.write(vcard_output)
-            file.close()
-        except vobject.base.ValidateError as e:
-            print "Error: Vcard is not valid.\n%s" % e
-            sys.exit(4)
-        except IOError as e:
-            print "Error: Can't write\n%s" % e
-            sys.exit(4)
-
-    def delete_vcard_file(self):
-        if os.path.exists(self.vcard_full_filename):
-            os.remove(self.vcard_full_filename)
-        else:
-            print "Error: Vcard file %s does not exist." % self.vcard_full_filename
-            sys.exit(4)
+    #######################
+    # object helper methods
+    #######################
 
     def clean_vcard(self):
         # rev
@@ -590,5 +400,238 @@ class CarddavObject:
             except AttributeError as e:
                 break
 
-    class VCardParseError(LookupError):
-        """ is called, when vcard could not be parsed """
+    def filter_invalid_tags(self, contents):
+        contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'), 'X-GADUGADU', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/groupwise-All'), 'X-GROUPWISE', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/icq-All'), 'X-ICQ', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/xmpp-All'), 'X-JABBER', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/msn-All'), 'X-MSN', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/yahoo-All'), 'X-YAHOO', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/skype-All'), 'X-SKYPE', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/irc-All'), 'X-IRC', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/sip-All'), 'X-SIP', contents)
+        return contents
+
+    def process_user_input(self, input):
+        # parse user input string
+        contact_data = {}
+        counter = 1
+        for line in input.splitlines():
+            if line == "" or line.startswith("#"):
+                continue
+            try:
+                key = line.split("=")[0].strip().lower()
+                value = line.split("=")[1].strip()
+                if value == "":
+                    continue
+                if contact_data.has_key(key):
+                    print("Error in input line %d: key %s already exists" % (counter, key))
+                    sys.exit(1)
+                contact_data[key] = value.decode("utf-8")
+                counter += 1
+            except IndexError as e:
+                print("Error in input line %d: Malformed input\nLine: %s" % (counter, line))
+                sys.exit(1)
+
+        # clean vcard
+        self.clean_vcard()
+
+        # process data
+        # update ref
+        dt = datetime.datetime.now()
+        rev_obj = self.vcard.add('rev')
+        rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
+                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
+
+        # name and organisation
+        # either enter first name, first and last name or organisation
+        if contact_data.has_key("first name") == False:
+            contact_data['first name'] = ""
+        if contact_data.has_key("last name") == False:
+            contact_data['last name'] = ""
+        if contact_data.has_key("organisation") == False:
+            contact_data['organisation'] = ""
+        if (contact_data['first name'] == "" and contact_data['last name'] == "" and contact_data['organisation'] == "") \
+                or (contact_data['first name'] == "" and contact_data['last name'] != ""):
+            print("Error: You must enter a first name, a first and last name or an organisation")
+            sys.exit(1)
+        else:
+            self.set_name_and_organisation(contact_data['first name'],
+                    contact_data['last name'], contact_data['organisation'])
+
+        # phone
+        for key in contact_data.keys():
+            if key.startswith("phone") == False:
+                continue
+            try:
+                label = contact_data[key].split(":")[0].strip()
+                if label == "":
+                    print("Error: Missing label for line %s" % key)
+                    sys.exit(1)
+                number = contact_data[key].split(":")[1].strip()
+                if number == "":
+                    continue
+            except IndexError as e:
+                print("Error: The %s line is malformed" % key)
+                sys.exit(1)
+            self.add_phone_number(label, number)
+
+        # email
+        for key in contact_data.keys():
+            if key.startswith("email") == False:
+                continue
+            try:
+                label = contact_data[key].split(":")[0].strip()
+                if label == "":
+                    print("Error: Missing label for line %s" % key)
+                    sys.exit(1)
+                email = contact_data[key].split(":")[1].strip()
+                if email == "":
+                    continue
+            except IndexError as e:
+                print("Error: The %s line is malformed" % key)
+                sys.exit(1)
+            self.add_email_address(label, email)
+
+        # post addresses
+        for key in contact_data.keys():
+            if key.startswith("address") == False:
+                continue
+            try:
+                label = contact_data[key].split(":")[0].strip()
+                if label == "":
+                    print("Error: Missing label for line %s" % key)
+                    sys.exit(1)
+                address = contact_data[key].split(":")[1].strip()
+                if address.startswith("; ; ; ; "):
+                    continue
+            except IndexError as e:
+                print("Error: The %s line is malformed" % key)
+                sys.exit(1)
+            if address.split(";").__len__() != 5:
+                print("Error: The %s line is malformed" % key)
+                sys.exit(1)
+            street_and_house_number = address.split(";")[0].strip()
+            if street_and_house_number == "":
+                print("Error: %s has no street" % key)
+                sys.exit(1)
+            postcode = address.split(";")[1].strip()
+            if postcode == "":
+                print("Error: %s has no postcode" % key)
+                sys.exit(1)
+            city = address.split(";")[2].strip()
+            if city == "":
+                print("Error: %s has no city" % key)
+                sys.exit(1)
+            region = address.split(";")[3].strip()
+            country = address.split(";")[4].strip()
+            if country == "":
+                print("Error: %s has no country" % key)
+                sys.exit(1)
+            self.add_post_address(label, street_and_house_number, postcode, city, region, country)
+
+        # instant messaging and social networks
+        if contact_data.has_key("jabber") and contact_data['jabber'] != "":
+            self.set_jabber_id(contact_data['jabber'])
+        if contact_data.has_key("skype") and contact_data['skype'] != "":
+            self.set_skype_id(contact_data['skype'])
+        if contact_data.has_key("twitter") and contact_data['twitter'] != "":
+            self.set_twitter_id(contact_data['twitter'])
+        if contact_data.has_key("webpage") and contact_data['webpage'] != "":
+            self.set_webpage(contact_data['webpage'])
+
+        # miscellaneous stuff
+        # nickname
+        if contact_data.has_key("nickname") and contact_data['nickname'] != "":
+            self.set_nickname(contact_data['nickname'])
+        # birthday
+        if contact_data.has_key("birthday") and contact_data['birthday'] != "":
+            try:
+                date = datetime.datetime.strptime(contact_data['birthday'], "%d.%m.%Y")
+                self.set_birthday(date)
+            except ValueError as e:
+                print("Error: Birthday date in the wrong format. Example: 31.12.1989")
+                sys.exit(1)
+
+    def print_vcard(self, show_address_book = True):
+        strings = ["Name: %s" % self.get_full_name()]
+        if self.get_nickname() != "":
+            strings.append("Nickname: %s" % self.get_nickname())
+        if self.get_organisation() != "" \
+                and self.get_organisation() != self.get_full_name():
+            strings.append("organisation: %s" % self.get_organisation())
+        if show_address_book:
+            strings.append("Address book: %s" % self.address_book.get_name())
+        if self.get_categories().__len__() > 0:
+            strings.append("Categories\n    %s" % ', '.join(self.get_categories()))
+        if self.get_phone_numbers().__len__() > 0:
+            strings.append("Phone")
+            for index, entry in enumerate(self.get_phone_numbers()):
+                strings.append("    %s: %s" % (entry['type'], entry['value']))
+        if self.get_email_addresses().__len__() > 0:
+            strings.append("E-Mail")
+            for index, entry in enumerate(self.get_email_addresses()):
+                strings.append("    %s: %s" % (entry['type'], entry['value']))
+        if self.get_post_addresses().__len__() > 0:
+            strings.append("Addresses")
+            for index, entry in enumerate(self.get_post_addresses()):
+                strings.append("    %s:" % entry['type'])
+                if entry['street_and_house_number'] != "":
+                    strings.append("        %s" % entry['street_and_house_number'])
+                if entry['postcode'] != "" and entry['city'] != "":
+                    strings.append("        %s %s" % (entry['postcode'], entry['city']))
+                elif entry['postcode'] != "":
+                    strings.append("        %s" % entry['postcode'])
+                elif entry['city'] != "":
+                    strings.append("        %s" % entry['city'])
+                if entry['region'] != "" and entry['country'] != "":
+                    strings.append("        %s, %s" % (entry['region'], entry['country']))
+                elif entry['region'] != "":
+                    strings.append("        %s" % entry['region'])
+                elif entry['country'] != "":
+                    strings.append("        %s" % entry['country'])
+        if self.get_jabber_id() != "" \
+                or self.get_skype_id() != "" \
+                or self.get_twitter_id() != "" \
+                or self.get_webpage() != "":
+            strings.append("Instant messaging and social networks")
+            if self.get_jabber_id() != "":
+                strings.append("    Jabber:  %s" % self.get_jabber_id())
+            if self.get_skype_id() != "":
+                strings.append("    Skype:   %s" % self.get_skype_id())
+            if self.get_twitter_id() != "":
+                strings.append("    Twitter: %s" % self.get_twitter_id())
+            if self.get_webpage() != "":
+                strings.append("    Webpage: %s" % self.get_webpage())
+        if self.get_birthday() != None:
+            strings.append("Miscellaneous")
+            if self.get_birthday() != None:
+                date = self.get_birthday()
+                strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+        return '\n'.join(strings)
+
+    def write_to_file(self, overwrite=False):
+        if os.path.exists(self.filename) and overwrite == False:
+            print("Error: vcard with the file name %s already exists" \
+                    % os.path.basename(self.filename))
+            sys.exit(4)
+        try:
+            vcard_output = self.vcard.serialize()
+            file = open(self.filename, "w")
+            file.write(vcard_output)
+            file.close()
+        except vobject.base.ValidateError as e:
+            print("Error: Vcard is not valid.\n%s" % e)
+            sys.exit(4)
+        except IOError as e:
+            print("Error: Can't write\n%s" % e)
+            sys.exit(4)
+
+    def delete_vcard_file(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+        else:
+            print("Error: Vcard file %s does not exist." % self.filename)
+            sys.exit(4)
+

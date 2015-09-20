@@ -135,62 +135,64 @@ khard list
 Or if you have more than one address book and you want to filter the output:
 
 ```
-khard list -a family,friends
+khard list -a addressbook1,addressbook2
 ```
 
 Searching is possible too:
 
 ```
-khard list -s John
+khard list -s "name of contact"
 ```
 
 The list only shows the first phone number and email address. If you want to view all contact's
 details you type:
 
 ```
-khard details -s John
+khard details -a addressbook1 -s "name of contact"
 ```
 
 Add new contact.  The template for the new contact opens in the text editor, which you set in the
 khard.conf file.
 
 ```
-khard new -a address_book_name
+khard new -a "address book name"
 ```
 
 Use the following to modify the contact after successful creation:
 
 ```
-khard modify -s John
+khard modify -s "name of contact"
 ```
 
-If you wish to merge contacts use the following to select a first and then a second contact from a list:
+If you wish to merge contacts use the following to select a first and then a second contact:
 
 ```
-khard merge
-```
-
-Or filter by address book:
-
-```
-khard merge -a friends
-```
-
-Or search directly for two contacts:
-
-```
-khard merge -s "john|jane"
+khard merge -s "from contact,into contact"
 ```
 
 You will be launched into your merge_editor ( see the "merge_editor" option in khard.conf)
-where you can merge all changes from the second selected contact onto the first.
-Once you are finished, the first contact is updated and the second one deleted.
+where you can merge all changes from the first selected contact onto the second.
+Once you are finished, the first contact is deleted and the second one updated.
 
-If you want to delete a contact, type:
+Copy or move contact:
 
 ```
-khard remove -s John
+khard copy -s "source contact,target address book"
+khard move -s "source contact,target address book"
 ```
+
+Remove contact:
+
+```
+khard remove -s "name of contact"
+```
+
+The parameters -a and -s from the examples above are always optional (only exception is -a for the
+new command). If you don't use them or your input produces unambiguous results, you may pick the
+contacts from a list instead.
+
+The search parameter searches in all data fields. Therefore you aren't limited to the contact's name
+but you also could for example search for a part of a phone number, email address or post address.
 
 
 davcontroller

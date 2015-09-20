@@ -41,3 +41,9 @@ v0.5.0: 2015.09.05
 - Support for XDG_CONFIG_HOME parameter
 - Post address: Added support for street and house number field with multiple lines
 
+v0.6.0: 2015.09.20
+- New options copy contact and move contact
+- Changed behavior of merge command (have a look into the readme file for details)
+- Get path to editor and merge editor from the $PATH variable
+- Code cleanup: new object class AddressBook
+

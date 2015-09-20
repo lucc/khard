@@ -6,8 +6,8 @@ path = ~/.contacts/family/
 path = ~/.contacts/friends/
 
 [general]
-editor = /usr/bin/vim
-merge_editor = /usr/bin/vimdiff
+editor = vim
+merge_editor = vimdiff
 default_country = Germany
 default_action = list
 show_nicknames = no
