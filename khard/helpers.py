@@ -33,20 +33,21 @@ def get_new_contact_template(addressbook_name):
     return """# Address book: %s
 # if you want to cancel, exit without saving
 
-# first and last name
-# at least enter first name, first and last name or an organisation
+# title, name, organisation and role
+Title        = 
 First name   = 
 Last name    = 
 Organisation = 
+Role         = 
 
 # phone numbers
 # format: PhoneX = type: number
 # allowed types:
-#   Standard: cell, home, work
+#   Standard: cell, fax, pager, text, video, voice
 #   Alternatively you can use every custom label (only letters). But maybe not all address book
 #   clients support that.
 Phone1 = cell: 
-Phone2 = Dresden: 
+Phone2 = work: 
 
 # email addresses
 # format: EmailX = type: address
@@ -57,12 +58,10 @@ Email1 = home:
 
 # post addresses
 # format: AddressX = type: street and house number; postcode; city; region; country
-# the region is optional so the following is allowed too:
-# format: AddressX = type: street and house number; postcode; city;; country
 # allowed types:
 #   Standard: home, work
 #   or a custom label (only letters)
-Address1 = home: ; ; ; ; %s
+Address1 = home: ; ; ; ;
 
 # instant messaging and social networks
 Jabber  = 
@@ -73,19 +72,23 @@ Webpage =
 # Miscellaneous stuff
 # Birthday: day.month.year
 Birthday = 
-Nickname = """ % (addressbook_name, Config().get_default_country())
+Nickname = """ % addressbook_name
 
 def get_existing_contact_template(vcard):
     strings = []
     for line in get_new_contact_template(vcard.get_address_book().get_name()).splitlines():
         if line.lower().startswith("# if you want to cancel"):
             continue
+        elif line.lower().startswith("title"):
+            strings.append("Title        = %s" % vcard.get_title())
         elif line.lower().startswith("first name"):
             strings.append("First name   = %s" % vcard.get_first_name())
         elif line.lower().startswith("last name"):
             strings.append("Last name    = %s" % vcard.get_last_name())
         elif line.lower().startswith("organisation"):
             strings.append("Organisation = %s" % vcard.get_organisation())
+        elif line.lower().startswith("role"):
+            strings.append("Role         = %s" % vcard.get_role())
         elif line.lower().startswith("phone"):
             if line.lower().startswith("phone1"):
                 if vcard.get_phone_numbers().__len__() == 0:
@@ -103,7 +106,7 @@ def get_existing_contact_template(vcard):
         elif line.lower().startswith("address"):
             if line.lower().startswith("address1"):
                 if vcard.get_post_addresses().__len__() == 0:
-                    strings.append("Address1 = home: ; ; ; ; %s" % Config().get_default_country())
+                    strings.append("Address1 = home: ; ; ; ;")
                 else:
                     for index, entry in enumerate(vcard.get_post_addresses()):
                         strings.append("Address%d = %s: %s; %s; %s; %s; %s" % (index+1, entry['type'],

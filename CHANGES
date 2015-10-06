@@ -47,3 +47,7 @@ v0.6.0: 2015.09.20
 - Get path to editor and merge editor from the $PATH variable
 - Code cleanup: new object class AddressBook
 
+v0.6.1: 2015.10.06
+- Added title and role attribute
+- Removed input restrictions of name and post address fields
+- Parameter default_country in config file is not longer in use

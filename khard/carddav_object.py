@@ -98,6 +98,12 @@ class CarddavObject:
     def set_filename(self, filename):
         self.filename = filename
 
+    def get_title(self):
+        try:
+            return self.vcard.title.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
     def get_first_name(self):
         try:
             return self.vcard.n.value.given.encode("utf-8")
@@ -114,8 +120,12 @@ class CarddavObject:
         try:
             return self.vcard.fn.value.encode("utf-8")
         except AttributeError as e:
-            if self.get_first_name() != "" or self.get_last_name() != "":
+            if self.get_first_name() != "" and self.get_last_name() != "":
                 return "%s %s" % (self.get_first_name(), self.get_last_name())
+            elif self.get_first_name() != "":
+                return self.get_first_name()
+            elif self.get_last_name() != "":
+                return self.get_last_name()
             elif self.get_organisation() != "":
                 return self.get_organisation()
             else:
@@ -127,7 +137,13 @@ class CarddavObject:
         except AttributeError as e:
             return ""
 
-    def set_name_and_organisation(self, first_name, last_name, organisation):
+    def get_role(self):
+        try:
+            return self.vcard.role.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_name_and_organisation(self, title, first_name, last_name, organisation, role):
         if first_name == "" and last_name == "":
             name_obj = self.vcard.add('fn')
             name_obj.value = organisation
@@ -143,6 +159,12 @@ class CarddavObject:
         if organisation != "":
             org_obj = self.vcard.add('org')
             org_obj.value = [organisation]
+        if title != "":
+            title_obj = self.vcard.add('title')
+            title_obj.value = title
+        if role != "":
+            role_obj = self.vcard.add('role')
+            role_obj.value = role
 
     def get_phone_numbers(self):
         phone_list = []
@@ -158,7 +180,7 @@ class CarddavObject:
                         type = label.value.encode("utf-8")
                         break
             phone_list.append({"type":type, "value":child.value.encode("utf-8")})
-        return sorted(phone_list, key=lambda k: k['type'])
+        return sorted(phone_list, key=lambda k: k['type'].lower())
 
     def add_phone_number(self, type, number):
         phone_obj = self.vcard.add('tel')
@@ -190,7 +212,7 @@ class CarddavObject:
                         type = label.value.encode("utf-8")
                         break
             email_list.append({"type":type, "value":child.value.encode("utf-8")})
-        return sorted(email_list, key=lambda k: k['type'])
+        return sorted(email_list, key=lambda k: k['type'].lower())
 
     def add_email_address(self, type, address):
         email_obj = self.vcard.add('email')
@@ -231,7 +253,7 @@ class CarddavObject:
                     "city":child.value.city.encode("utf-8"),
                     "region":child.value.region.encode("utf-8"),
                     "country":child.value.country.encode("utf-8")})
-        return sorted(address_list, key=lambda k: k['type'])
+        return sorted(address_list, key=lambda k: k['type'].lower())
 
     def add_post_address(self, type, street_and_house_number, postcode, city, region, country):
         adr_obj = self.vcard.add('adr')
@@ -333,6 +355,11 @@ class CarddavObject:
             self.vcard.remove(self.vcard.rev)
         except AttributeError as e:
             pass
+        # title
+        try:
+            self.vcard.remove(self.vcard.title)
+        except AttributeError as e:
+            pass
         # name
         try:
             self.vcard.remove(self.vcard.n)
@@ -346,6 +373,11 @@ class CarddavObject:
             pass
         try:
             self.vcard.remove(self.vcard.x_abshowas)
+        except AttributeError as e:
+            pass
+        # role
+        try:
+            self.vcard.remove(self.vcard.role)
         except AttributeError as e:
             pass
         # phone
@@ -444,21 +476,27 @@ class CarddavObject:
         rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
                 % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
 
-        # name and organisation
-        # either enter first name, first and last name or organisation
+        # name, title, organisation and role
+        # at least enter name or organisation
+        if contact_data.has_key("title") == False:
+            contact_data['title'] = ""
         if contact_data.has_key("first name") == False:
             contact_data['first name'] = ""
         if contact_data.has_key("last name") == False:
             contact_data['last name'] = ""
         if contact_data.has_key("organisation") == False:
             contact_data['organisation'] = ""
-        if (contact_data['first name'] == "" and contact_data['last name'] == "" and contact_data['organisation'] == "") \
-                or (contact_data['first name'] == "" and contact_data['last name'] != ""):
-            print("Error: You must enter a first name, a first and last name or an organisation")
+        if contact_data.has_key("role") == False:
+            contact_data['role'] = ""
+        if contact_data['first name'] == "" \
+                and contact_data['last name'] == "" \
+                and contact_data['organisation'] == "":
+            print("Error: You must either enter a name or an organisation")
             sys.exit(1)
         else:
-            self.set_name_and_organisation(contact_data['first name'],
-                    contact_data['last name'], contact_data['organisation'])
+            self.set_name_and_organisation(contact_data['title'],
+                    contact_data['first name'], contact_data['last name'],
+                    contact_data['organisation'], contact_data['role'])
 
         # phone
         for key in contact_data.keys():
@@ -504,7 +542,7 @@ class CarddavObject:
                     print("Error: Missing label for line %s" % key)
                     sys.exit(1)
                 address = contact_data[key].split(":")[1].strip()
-                if address.startswith("; ; ; ; "):
+                if address == "; ; ; ;":
                     continue
             except IndexError as e:
                 print("Error: The %s line is malformed" % key)
@@ -513,22 +551,10 @@ class CarddavObject:
                 print("Error: The %s line is malformed" % key)
                 sys.exit(1)
             street_and_house_number = address.split(";")[0].strip()
-            if street_and_house_number == "":
-                print("Error: %s has no street" % key)
-                sys.exit(1)
             postcode = address.split(";")[1].strip()
-            if postcode == "":
-                print("Error: %s has no postcode" % key)
-                sys.exit(1)
             city = address.split(";")[2].strip()
-            if city == "":
-                print("Error: %s has no city" % key)
-                sys.exit(1)
             region = address.split(";")[3].strip()
             country = address.split(";")[4].strip()
-            if country == "":
-                print("Error: %s has no country" % key)
-                sys.exit(1)
             self.add_post_address(label, street_and_house_number, postcode, city, region, country)
 
         # instant messaging and social networks
@@ -555,12 +581,21 @@ class CarddavObject:
                 sys.exit(1)
 
     def print_vcard(self, show_address_book = True):
-        strings = ["Name: %s" % self.get_full_name()]
+        strings = []
+        # name or organisation
+        if self.get_organisation() == "" and self.get_full_name() == "":
+            strings.append("Name:")
+        elif self.get_organisation() != self.get_full_name():
+            if self.get_title() != "":
+                strings.append("Name: %s %s" % (self.get_title(), self.get_full_name()))
+            else:
+                strings.append("Name: %s" % self.get_full_name())
+        if self.get_organisation() != "":
+            strings.append("Organisation: %s" % self.get_organisation())
+        if self.get_role() != "":
+            strings.append("Role: %s" % self.get_role())
         if self.get_nickname() != "":
             strings.append("Nickname: %s" % self.get_nickname())
-        if self.get_organisation() != "" \
-                and self.get_organisation() != self.get_full_name():
-            strings.append("organisation: %s" % self.get_organisation())
         if show_address_book:
             strings.append("Address book: %s" % self.address_book.get_name())
         if self.get_categories().__len__() > 0:

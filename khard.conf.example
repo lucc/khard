@@ -8,6 +8,5 @@ path = ~/.contacts/friends/
 [general]
 editor = vim
 merge_editor = vimdiff
-default_country = Germany
 default_action = list
 show_nicknames = no

@@ -62,10 +62,7 @@ class Config:
                 print("Error in config file\nInvalid merge editor path or executable not found.")
                 sys.exit(2)
 
-            # default values for country, action and nickname settings
-            if self.config['general'].has_key("default_country") == False:
-                print("Error in config file\nMissing default country parameter.")
-                sys.exit(2)
+            # default values for action and nickname settings
             if self.config['general'].has_key("default_action") == False:
                 print("Error in config file\nMissing default action parameter.")
                 sys.exit(2)
@@ -133,10 +130,6 @@ class Config:
 
         def get_merge_editor(self):
             return self.config['general']['merge_editor']
-
-
-        def get_default_country(self):
-            return self.config['general']['default_country']
 
 
         def get_list_of_actions(self):
