@@ -90,7 +90,7 @@ Now copy the example config file and adapt it's contents to your needs:
 
 ```
 mkdir ~/.config/khard/
-cp khard.conf.example ~/.config/khard/khard.conf
+cp misc/khard.conf.example ~/.config/khard/khard.conf
 ```
 
 Khard also contains a helper utility called davcontroller. It's designed to create and remove
@@ -268,7 +268,7 @@ if you don't use mpd. Don't forget to set the "stop_music"-parameter in the conf
 After the installation, copy the scripts and sounds folders to your twinkle config folder:
 
 ```
-cp -R twinkle-plugin/scripts twinkle-plugin/sounds ~/.twinkle/
+cp -R misc/twinkle/* ~/.twinkle/
 ```
 
 Then edit your twinkle config file (mostly ~/.twinkle/twinkle.cfg) like this:
@@ -289,6 +289,22 @@ script_out_call_answered=
 script_out_call_failed=
 script_local_release=/home/USERNAME/.twinkle/scripts/incoming_call_ended.py
 script_remote_release=/home/USERNAME/.twinkle/scripts/incoming_call_ended.py
+```
+
+
+Zsh
+---
+
+The file misc/zsh/_khard contains a zsh completion definition for khard.
+
+Install by copying to a directory where zsh searches for completion functions (the $fpath array).
+If you, for example, put all completion functions into the folder ~/.zsh/completions you must add
+the following to your zsh main config file:
+
+```
+fpath=( $HOME/.zsh/completions $fpath )
+autoload -U compinit
+compinit
 ```
 
 

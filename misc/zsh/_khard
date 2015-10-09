@@ -1,0 +1,29 @@
+#compdef khard
+
+# Zsh completion definition.
+# Install by copying to a directory where zsh searches for completion
+# functions (the $fpath array).
+#
+# If you, for example, put all completion functions into the folder ~/.zsh/completions you must add
+# the following to your zsh main config file ~/.zshrc:
+#   fpath=( $HOME/.zsh/completions $fpath )
+#   autoload -U compinit
+#   compinit
+
+local curcontext="$curcontext"
+local -a state line expl
+local -A opt_args
+
+_arguments -s \
+    {-a+,--addressbook=}'[specify addressbook]:addressbook:->addressbooks' \
+    {-r,--reverse}'[sort contacts in reverse order]' \
+    {-s+,--search=}'[search for contacts]:search string' \
+    {-t+,--sort=}'[sort contacts list]:order:(alphabetical addressbook)' \
+    '(- 1)'{-h,--help}'[show help information]' \
+    '(- 1)'{-v,--version}'[show version information]' \
+    '1:action:(list details source mutt alot phone new add-email merge modify copy move remove)' && return
+
+if [[ -n $state ]]; then
+    _sequence _wanted addressbooks expl "addressbook" compadd - \
+        ${${=${"$(_call_program addressbooks ${words[1]} -a , 2>&1)"}##*:}//,/}
+fi

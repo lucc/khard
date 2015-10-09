@@ -51,3 +51,7 @@ v0.6.1: 2015.10.06
 - Added title and role attribute
 - Removed input restrictions of name and post address fields
 - Parameter default_country in config file is not longer in use
+
+v0.6.2: 2015.10.10
+- Added completion function for zsh
+

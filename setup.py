@@ -10,9 +10,9 @@ import sys
 from setuptools import setup
 from khard.version import khard_version
 
-modules_now_bundled = []
+required_modules = ['configobj', 'vobject']
 if sys.version_info[0] == 2 and sys.version_info[1] <= 6:
-    modules_now_bundled += ['argparse']
+    required_modules.append('argparse')
 
 setup(
     name = 'khard',
@@ -43,8 +43,5 @@ setup(
             'davcontroller = davcontroller.davcontroller:main',
         ]
     },
-    install_requires = [
-        'configobj',
-        'vobject',
-    ] + modules_now_bundled,
+    install_requires = required_modules,
 )
