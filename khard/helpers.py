@@ -72,7 +72,8 @@ Webpage =
 # Miscellaneous stuff
 # Birthday: day.month.year
 Birthday = 
-Nickname = """ % addressbook_name
+Nickname = 
+Note     = """ % addressbook_name
 
 def get_existing_contact_template(vcard):
     strings = []
@@ -125,6 +126,8 @@ def get_existing_contact_template(vcard):
             strings.append("Birthday = %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
         elif line.lower().startswith("nickname"):
             strings.append("Nickname = %s" % vcard.get_nickname())
+        elif line.lower().startswith("note"):
+            strings.append("Note     = %s" % vcard.get_note())
         else:
             strings.append(line)
     return '\n'.join(strings)

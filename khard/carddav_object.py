@@ -289,6 +289,16 @@ class CarddavObject:
         nickname_obj = self.vcard.add('nickname')
         nickname_obj.value = name
 
+    def get_note(self):
+        try:
+            return self.vcard.note.value.encode("utf-8")
+        except AttributeError as e:
+            return ""
+
+    def set_note(self, name):
+        note_obj = self.vcard.add('note')
+        note_obj.value = name
+
     def get_jabber_id(self):
         try:
             return self.vcard.x_jabber.value.encode("utf-8")
@@ -418,6 +428,11 @@ class CarddavObject:
         # nickname
         try:
             self.vcard.remove(self.vcard.nickname)
+        except AttributeError as e:
+            pass
+        # note
+        try:
+            self.vcard.remove(self.vcard.note)
         except AttributeError as e:
             pass
         # birthday
@@ -571,6 +586,9 @@ class CarddavObject:
         # nickname
         if contact_data.has_key("nickname") and contact_data['nickname'] != "":
             self.set_nickname(contact_data['nickname'])
+        # note
+        if contact_data.has_key("note") and contact_data['note'] != "":
+            self.set_note(contact_data['note'])
         # birthday
         if contact_data.has_key("birthday") and contact_data['birthday'] != "":
             try:
@@ -639,11 +657,14 @@ class CarddavObject:
                 strings.append("    Twitter: %s" % self.get_twitter_id())
             if self.get_webpage() != "":
                 strings.append("    Webpage: %s" % self.get_webpage())
-        if self.get_birthday() != None:
+        if self.get_birthday() != None \
+                or self.get_note() != "":
             strings.append("Miscellaneous")
             if self.get_birthday() != None:
                 date = self.get_birthday()
                 strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+            if self.get_note() != "":
+                strings.append("    Note: %s" % self.get_note())
         return '\n'.join(strings)
 
     def write_to_file(self, overwrite=False):
