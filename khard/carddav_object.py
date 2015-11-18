@@ -2,13 +2,38 @@
 
 import os, sys, string, random, datetime, re
 import vobject
+from pkg_resources import parse_version, get_distribution
 
 class CarddavObject:
     def __init__(self, address_book, filename = None):
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
+        self.old_vobject_version = False
 
+        # at the moment khard must support two different behavior of the vobject module
+        # the versions < 0.8.2 are still widely in use and expect unicode strings for non-ascii characters
+        # all newer versions use utf-8 encoded strings directly
+        # so we must determine, which version is installed
+        try:
+            # try to compare the version numbers
+            if parse_version(get_distribution("vobject").version) < parse_version("0.8.2"):
+                self.old_vobject_version = True
+        except Exception as e:
+            # if something goes wrong during vobject version comparison, try to serialize a
+            # minimal vcard object with umlauts
+            # if that fails, khard still uses a vobject version < 0.8.2
+            v = vobject.vCard()
+            o = v.add("fn")
+            o.value = "Markus Schröder"
+            o = v.add("n")
+            o.value = vobject.vcard.Name(family="Schröder", given="Markus")
+            try:
+                v.serialize()
+            except UnicodeDecodeError as e:
+                self.old_vobject_version = True
+
+        # load vcard
         if self.filename is None:
             # create new vcard object
             self.vcard = vobject.vCard()
@@ -100,25 +125,41 @@ class CarddavObject:
 
     def get_title(self):
         try:
-            return self.vcard.title.value.encode("utf-8")
+            title = self.vcard.title.value
+            if isinstance(title, unicode):
+                return title.encode("utf-8")
+            else:
+                return title
         except AttributeError as e:
             return ""
 
     def get_first_name(self):
         try:
-            return self.vcard.n.value.given.encode("utf-8")
+            first_name = self.vcard.n.value.given
+            if isinstance(first_name, unicode):
+                return first_name.encode("utf-8")
+            else:
+                return first_name
         except AttributeError as e:
             return ""
 
     def get_last_name(self):
         try:
-            return self.vcard.n.value.family.encode("utf-8")
+            last_name = self.vcard.n.value.family
+            if isinstance(last_name, unicode):
+                return last_name.encode("utf-8")
+            else:
+                return last_name
         except AttributeError as e:
             return ""
 
     def get_full_name(self):
         try:
-            return self.vcard.fn.value.encode("utf-8")
+            full_name = self.vcard.fn.value
+            if isinstance(full_name, unicode):
+                return full_name.encode("utf-8")
+            else:
+                return full_name
         except AttributeError as e:
             if self.get_first_name() != "" and self.get_last_name() != "":
                 return "%s %s" % (self.get_first_name(), self.get_last_name())
@@ -133,17 +174,34 @@ class CarddavObject:
 
     def get_organisation(self):
         try:
-            return ' '.join(self.vcard.org.value).encode("utf-8")
+            if isinstance(self.vcard.org.value, list):
+                organisation = ' '.join(self.vcard.org.value)
+            else:
+                organisation = self.vcard.org.value
+            if isinstance(organisation, unicode):
+                return organisation.encode("utf-8")
+            else:
+                return organisation
         except AttributeError as e:
             return ""
 
     def get_role(self):
         try:
-            return self.vcard.role.value.encode("utf-8")
+            role = self.vcard.role.value
+            if isinstance(role, unicode):
+                return role.encode("utf-8")
+            else:
+                return role
         except AttributeError as e:
             return ""
 
     def set_name_and_organisation(self, title, first_name, last_name, organisation, role):
+        if self.old_vobject_version:
+            title = title.decode("utf-8")
+            first_name = first_name.decode("utf-8")
+            last_name = last_name.decode("utf-8")
+            organisation = organisation.decode("utf-8")
+            role = role.decode("utf-8")
         if first_name == "" and last_name == "":
             name_obj = self.vcard.add('fn')
             name_obj.value = organisation
@@ -173,16 +231,26 @@ class CarddavObject:
                 continue
             type = "voice"
             if child.params.has_key("TYPE"):
-                type = ','.join(child.params['TYPE']).encode("utf-8")
+                type = ','.join(child.params['TYPE'])
+                if isinstance(type, unicode):
+                    type = type.encode("utf-8")
             elif child.group != None:
                 for label in self.vcard.getChildren():
                     if label.name == "X-ABLABEL" and label.group == child.group:
-                        type = label.value.encode("utf-8")
+                        type = label.value
+                        if isinstance(type, unicode):
+                            type = type.encode("utf-8")
                         break
-            phone_list.append({"type":type, "value":child.value.encode("utf-8")})
+            value = child.value
+            if isinstance(value, unicode):
+                value = value.encode("utf-8")
+            phone_list.append({"type":type, "value":value})
         return sorted(phone_list, key=lambda k: k['type'].lower())
 
     def add_phone_number(self, type, number):
+        if self.old_vobject_version:
+            type = type.decode("utf-8")
+            number = number.decode("utf-8")
         phone_obj = self.vcard.add('tel')
         phone_obj.value = number
         if type.lower() in ["cell", "home", "work",]:
@@ -205,16 +273,26 @@ class CarddavObject:
                 continue
             type = "home"
             if child.params.has_key("TYPE"):
-                type = ','.join(child.params['TYPE']).encode("utf-8")
+                type = ','.join(child.params['TYPE'])
+                if isinstance(type, unicode):
+                    type = type.encode("utf-8")
             elif child.group != None:
                 for label in self.vcard.getChildren():
                     if label.name == "X-ABLABEL" and label.group == child.group:
-                        type = label.value.encode("utf-8")
+                        type = label.value
+                        if isinstance(type, unicode):
+                            type = type.encode("utf-8")
                         break
-            email_list.append({"type":type, "value":child.value.encode("utf-8")})
+            value = child.value
+            if isinstance(value, unicode):
+                value = value.encode("utf-8")
+            email_list.append({"type":type, "value":value})
         return sorted(email_list, key=lambda k: k['type'].lower())
 
     def add_email_address(self, type, address):
+        if self.old_vobject_version:
+            type = type.decode("utf-8")
+            address = address.decode("utf-8")
         email_obj = self.vcard.add('email')
         email_obj.value = address
         if type.lower() in ["home", "work",]:
@@ -235,27 +313,48 @@ class CarddavObject:
         for child in self.vcard.getChildren():
             if child.name != "ADR":
                 continue
+            # label
             type = "home"
             if child.params.has_key("TYPE"):
-                type = ','.join(child.params['TYPE']).encode("utf-8")
+                type = ','.join(child.params['TYPE'])
+                if isinstance(type, unicode):
+                    type = type.encode("utf-8")
             elif child.group != None:
                 for label in self.vcard.getChildren():
                     if label.name == "X-ABLABEL" and label.group == child.group:
-                        type = label.value.encode("utf-8")
+                        type = label.value
+                        if isinstance(type, unicode):
+                            type = type.encode("utf-8")
                         break
-            try:
-                street_and_house_number = child.value.street.encode("utf-8")
-            except AttributeError as e:
-                street_and_house_number = ', '.join([ x.strip() for x in child.value.street ]).encode("utf-8")
-            address_list.append({"type":type,
-                    "street_and_house_number":street_and_house_number,
-                    "postcode":child.value.code.encode("utf-8"),
-                    "city":child.value.city.encode("utf-8"),
-                    "region":child.value.region.encode("utf-8"),
-                    "country":child.value.country.encode("utf-8")})
+            # address data fields
+            street_and_house_number = child.value.street
+            if isinstance(street_and_house_number, unicode):
+                street_and_house_number = street_and_house_number.encode("utf-8")
+            postcode = child.value.code
+            if isinstance(postcode, unicode):
+                postcode = postcode.encode("utf-8")
+            city = child.value.city
+            if isinstance(city, unicode):
+                city = city.encode("utf-8")
+            region = child.value.region
+            if isinstance(region, unicode):
+                region = region.encode("utf-8")
+            country = child.value.country
+            if isinstance(country, unicode):
+                country = country.encode("utf-8")
+            address_list.append(
+                    {"type":type, "street_and_house_number":street_and_house_number,
+                    "postcode":postcode, "city":city, "region":region, "country":country})
         return sorted(address_list, key=lambda k: k['type'].lower())
 
     def add_post_address(self, type, street_and_house_number, postcode, city, region, country):
+        if self.old_vobject_version:
+            type = type.decode("utf-8")
+            street_and_house_number = street_and_house_number.decode("utf-8")
+            postcode = postcode.decode("utf-8")
+            city = city.decode("utf-8")
+            region = region.decode("utf-8")
+            country = country.decode("utf-8")
         adr_obj = self.vcard.add('adr')
         adr_obj.value = vobject.vcard.Address(street=street_and_house_number,
                 city=city, region=region, code=postcode, country=country)
@@ -274,68 +373,109 @@ class CarddavObject:
 
     def get_categories(self):
         category_list = []
-        for child in self.vcard.getChildren():
-            if child.name == "CATEGORIES":
-                category_list = [child.value[ii].encode('utf-8') for ii in xrange(len(child.value))]
+        try:
+            for category in self.vcard.categories.value:
+                if isinstance(category, unicode):
+                    category_list.append(category.encode('utf-8'))
+                else:
+                    category_list.append(category)
+        except AttributeError as e:
+            pass
         return category_list
 
     def get_nickname(self):
         try:
-            return self.vcard.nickname.value.encode("utf-8")
+            nickname = self.vcard.nickname.value
+            if isinstance(nickname, unicode):
+                return nickname.encode("utf-8")
+            else:
+                return nickname
         except AttributeError as e:
             return ""
 
     def set_nickname(self, name):
+        if self.old_vobject_version:
+            name = name.decode("utf-8")
         nickname_obj = self.vcard.add('nickname')
         nickname_obj.value = name
 
     def get_note(self):
         try:
-            return self.vcard.note.value.encode("utf-8")
+            note = self.vcard.note.value
+            if isinstance(note, unicode):
+                return note.encode("utf-8")
+            else:
+                return note
         except AttributeError as e:
             return ""
 
-    def set_note(self, name):
+    def set_note(self, note):
+        if self.old_vobject_version:
+            note = note.decode("utf-8")
         note_obj = self.vcard.add('note')
-        note_obj.value = name
+        note_obj.value = note
 
     def get_jabber_id(self):
         try:
-            return self.vcard.x_jabber.value.encode("utf-8")
+            jabber_id = self.vcard.x_jabber.value
+            if isinstance(jabber_id, unicode):
+                return jabber_id.encode("utf-8")
+            else:
+                return jabber_id
         except AttributeError as e:
             return ""
 
     def set_jabber_id(self, jabber_id):
+        if self.old_vobject_version:
+            jabber_id = jabber_id.decode("utf-8")
         jabber_obj = self.vcard.add('x-jabber')
         jabber_obj.value = jabber_id
 
     def get_skype_id(self):
         try:
-            return self.vcard.x_skype.value.encode("utf-8")
+            skype_id = self.vcard.x_skype.value
+            if isinstance(skype_id, unicode):
+                return skype_id.encode("utf-8")
+            else:
+                return skype_id
         except AttributeError as e:
             return ""
 
     def set_skype_id(self, skype_id):
+        if self.old_vobject_version:
+            skype_id = skype_id.decode("utf-8")
         skype_obj = self.vcard.add('x-skype')
         skype_obj.value = skype_id
 
     def get_twitter_id(self):
         try:
-            return self.vcard.x_twitter.value.encode("utf-8")
+            twitter_id = self.vcard.x_twitter.value
+            if isinstance(twitter_id, unicode):
+                return twitter_id.encode("utf-8")
+            else:
+                return twitter_id
         except AttributeError as e:
             return ""
 
     def set_twitter_id(self, twitter_id):
+        if self.old_vobject_version:
+            twitter_id = twitter_id.decode("utf-8")
         twitter_obj = self.vcard.add('x-twitter')
         twitter_obj.value = twitter_id
 
     def get_webpage(self):
         try:
-            return self.vcard.url.value.encode("utf-8")
+            webpage = self.vcard.url.value
+            if isinstance(webpage, unicode):
+                return webpage.encode("utf-8")
+            else:
+                return webpage
         except AttributeError as e:
             return ""
 
     def set_webpage(self, webpage):
+        if self.old_vobject_version:
+            webpage = webpage.decode("utf-8")
         webpage_obj = self.vcard.add('url')
         webpage_obj.value = webpage
 
@@ -475,7 +615,7 @@ class CarddavObject:
                 if contact_data.has_key(key):
                     print("Error in input line %d: key %s already exists" % (counter, key))
                     sys.exit(1)
-                contact_data[key] = value.decode("utf-8")
+                contact_data[key] = value
                 counter += 1
             except IndexError as e:
                 print("Error in input line %d: Malformed input\nLine: %s" % (counter, line))

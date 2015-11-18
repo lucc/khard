@@ -211,7 +211,7 @@ def get_contact_list_by_user_selection(address_books, sort_criteria, reverse, se
     :rtype: list(CarddavObject)
     """
     contact_list = []
-    regexp = re.compile(search.replace(" ", ".*"), re.IGNORECASE | re.DOTALL)
+    regexp = re.compile(search.replace("*", ".*").replace(" ", ".*"), re.IGNORECASE | re.DOTALL)
     for address_book in address_books:
         for contact in address_book.get_contact_list():
             if strict_search:
@@ -253,7 +253,7 @@ def main():
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
     parser.add_argument("action", nargs="?", default="",
             help="Possible actions:\n" \
-                    "    list, details, source, mutt, alot, phone,\n" \
+                    "    list, details, email, phone, source,\n" \
                     "    new, add-email, merge, modify, copy, move and remove")
     args = parser.parse_args()
 
@@ -374,8 +374,7 @@ def main():
                 else:
                     break
             selected_vcard = CarddavObject.new_contact(Config().get_address_book(book_name))
-            selected_vcard.set_name_and_organisation(first_name.decode("utf-8"),
-                    last_name.decode("utf-8"), organization.decode("utf-8"))
+            selected_vcard.set_name_and_organisation("", first_name, last_name, organization, "")
 
         # check if the contact already contains the email address
         for email_entry in selected_vcard.get_email_addresses():
@@ -397,16 +396,16 @@ def main():
         print("\nAdding email address %s to contact %s" % (email_address, selected_vcard))
         label = raw_input("email label [home]: ") or "home"
         # add email address to vcard object
-        selected_vcard.add_email_address(
-                label.decode("utf-8"), email_address.decode("utf-8"))
+        selected_vcard.add_email_address(label, email_address)
         # save to disk
         selected_vcard.write_to_file(overwrite=True)
         print("Done.\n\n%s" % selected_vcard.print_vcard())
 
     # print phone application  friendly contacts table
     if args.action == "phone":
-        phone_list = []
-        regexp = re.compile(search_terms[0].replace(" ", ".*"), re.IGNORECASE)
+        all_phone_numbers_list = []
+        matching_phone_number_list = []
+        regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"), re.IGNORECASE)
         for vcard in vcard_list:
             for tel_entry in vcard.get_phone_numbers():
                 phone_number_line = "%s\t%s\t%s" \
@@ -416,42 +415,46 @@ def main():
                     # at least three digits
                     # so we remove all non-digit chars from the phone number field and match against that
                     if regexp.search(re.sub("\D", "", tel_entry['value'])) != None:
-                        phone_list.append(phone_number_line)
+                        matching_phone_number_list.append(phone_number_line)
                 else:
                     # the user doesn't search for a phone number so we can perform a standard search
                     # without removing all non-digit chars from the phone number string
                     if regexp.search(phone_number_line) != None:
-                        phone_list.append(phone_number_line)
-        print('\n'.join(phone_list))
-        if len(phone_list) == 0:
+                        matching_phone_number_list.append(phone_number_line)
+                # collect all phone numbers in a different list as fallback
+                all_phone_numbers_list.append(phone_number_line)
+        if len(matching_phone_number_list) > 0:
+            print('\n'.join(matching_phone_number_list))
+        elif len(all_phone_numbers_list) > 0:
+            print('\n'.join(all_phone_numbers_list))
+        else:
             sys.exit(1)
 
-    # print mutt friendly contacts table
-    if args.action == "mutt":
-        address_list = ["searching for '%s' ..." % search_terms[0]]
-        regexp = re.compile(search_terms[0].replace(" ", ".*"), re.IGNORECASE)
+    # print mail client friendly contacts table
+    # compatible to mutt and alot
+    # output format:
+    #   single line of text
+    #   email_address\tname\ttype
+    #   email_address\tname\ttype
+    #   [...]
+    if args.action == "email":
+        matching_email_address_list = []
+        all_email_address_list = []
+        regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"), re.IGNORECASE)
         for vcard in vcard_list:
             for email_entry in vcard.get_email_addresses():
                 email_address_line = "%s\t%s\t%s" \
                         % (email_entry['value'], vcard.get_full_name(), email_entry['type'])
                 if regexp.search(email_address_line) != None:
-                    address_list.append(email_address_line)
-        print('\n'.join(address_list))
-        if len(address_list) <= 1:
-            sys.exit(1)
-
-    # print alot friendly contacts table
-    if args.action == "alot":
-        address_list = []
-        regexp = re.compile(search_terms[0].replace(" ", ".*"), re.IGNORECASE)
-        for vcard in vcard_list:
-            for email_entry in vcard.get_email_addresses():
-                email_address_line = "\"%s %s\" <%s>" \
-                        % (vcard.get_full_name(), email_entry['type'], email_entry['value'])
-                if regexp.search(email_address_line) != None:
-                    address_list.append(email_address_line)
-        print('\n'.join(address_list))
-        if len(address_list) == 0:
+                    matching_email_address_list.append(email_address_line)
+                # collect all email addresses in a different list as fallback
+                all_email_address_list.append(email_address_line)
+        print("searching for '%s' ..." % search_terms[0])
+        if len(matching_email_address_list) > 0:
+            print('\n'.join(matching_email_address_list))
+        elif len(all_email_address_list) > 0:
+            print('\n'.join(all_email_address_list))
+        else:
             sys.exit(1)
 
     # print user friendly contacts table

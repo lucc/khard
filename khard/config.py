@@ -133,7 +133,7 @@ class Config:
 
 
         def get_list_of_actions(self):
-            return ["list", "details", "source", "mutt", "alot", "phone",
+            return ["list", "details", "email", "phone", "source",
                     "new", "add-email", "merge", "modify", "copy", "move", "remove"]
 
 

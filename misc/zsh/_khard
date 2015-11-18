@@ -21,7 +21,7 @@ _arguments -s \
     {-t+,--sort=}'[sort contacts list]:order:(alphabetical addressbook)' \
     '(- 1)'{-h,--help}'[show help information]' \
     '(- 1)'{-v,--version}'[show version information]' \
-    '1:action:(list details source mutt alot phone new add-email merge modify copy move remove)' && return
+    '1:action:(list details email phone source new add-email merge modify copy move remove)' && return
 
 if [[ -n $state ]]; then
     _sequence _wanted addressbooks expl "addressbook" compadd - \

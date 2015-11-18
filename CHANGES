@@ -58,3 +58,8 @@ v0.6.2: 2015.10.10
 v0.6.3: 2015.10.24
 - Added note attribute
 
+v0.7.0-b1: 2015.11.19
+- Support for vobject library version >= 0.8.2 from https://github.com/tBaxter/vobject
+- alot and mutt actions summarized to new email action (please have a look into the readme file for configuration changes)
+- Fixed a bug, which prevented the creation of new contacts with the add-email action
+
