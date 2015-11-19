@@ -63,3 +63,6 @@ v0.7.0-b1: 2015.11.19
 - alot and mutt actions summarized to new email action (please have a look into the readme file for configuration changes)
 - Fixed a bug, which prevented the creation of new contacts with the add-email action
 
+v0.7.0-b2: 2015.11.20
+- Categories attribute is also editable now
+

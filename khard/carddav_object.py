@@ -381,7 +381,14 @@ class CarddavObject:
                     category_list.append(category)
         except AttributeError as e:
             pass
-        return category_list
+        return ', '.join(category_list)
+
+    def set_categories(self, unformatted_category_list):
+        formatted_category_list = [ x.strip() for x in unformatted_category_list.split(",") ]
+        if self.old_vobject_version:
+            formatted_category_list = [ x.decode("utf-8") for x in formatted_category_list ]
+        categories_obj = self.vcard.add('categories')
+        categories_obj.value = formatted_category_list
 
     def get_nickname(self):
         try:
@@ -528,6 +535,11 @@ class CarddavObject:
         # role
         try:
             self.vcard.remove(self.vcard.role)
+        except AttributeError as e:
+            pass
+        # categories
+        try:
+            self.vcard.remove(self.vcard.categories)
         except AttributeError as e:
             pass
         # phone
@@ -723,6 +735,9 @@ class CarddavObject:
             self.set_webpage(contact_data['webpage'])
 
         # miscellaneous stuff
+        # categories
+        if contact_data.has_key("categories") and contact_data['categories'] != "":
+            self.set_categories(contact_data['categories'])
         # nickname
         if contact_data.has_key("nickname") and contact_data['nickname'] != "":
             self.set_nickname(contact_data['nickname'])
@@ -756,8 +771,8 @@ class CarddavObject:
             strings.append("Nickname: %s" % self.get_nickname())
         if show_address_book:
             strings.append("Address book: %s" % self.address_book.get_name())
-        if self.get_categories().__len__() > 0:
-            strings.append("Categories\n    %s" % ', '.join(self.get_categories()))
+        if self.get_categories() != "":
+            strings.append("Categories\n    %s" % self.get_categories())
         if self.get_phone_numbers().__len__() > 0:
             strings.append("Phone")
             for index, entry in enumerate(self.get_phone_numbers()):

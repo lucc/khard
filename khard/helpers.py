@@ -40,6 +40,10 @@ Last name    =
 Organisation = 
 Role         = 
 
+# categories or tags
+# format: category1, category2, ...
+categories = 
+
 # phone numbers
 # format: PhoneX = type: number
 # allowed types:
@@ -90,6 +94,8 @@ def get_existing_contact_template(vcard):
             strings.append("Organisation = %s" % vcard.get_organisation())
         elif line.lower().startswith("role"):
             strings.append("Role         = %s" % vcard.get_role())
+        elif line.lower().startswith("categories"):
+            strings.append("categories = %s" % vcard.get_categories())
         elif line.lower().startswith("phone"):
             if line.lower().startswith("phone1"):
                 if vcard.get_phone_numbers().__len__() == 0:
