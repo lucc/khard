@@ -144,18 +144,30 @@ Searching is possible too:
 khard list -s "name of contact"
 ```
 
-The list only shows the first phone number and email address. If you want to view all contact's
+The list only shows the first phone number and email address. If you want to view all contact
 details you type:
 
 ```
 khard details -a addressbook1 -s "name of contact"
 ```
 
-Add new contact.  The template for the new contact opens in the text editor, which you set in the
-khard.conf file.
+Add new contact with the following command:
 
 ```
 khard new -a "address book name"
+```
+
+The template for the new contact opens in the text editor, which you can set in the khard.conf file.
+
+Alternatively you also could create the contact from stdin. Take the syntax from the contact
+template file. Example:
+
+```
+echo "first name = John\nlast name = Smith\n" \
+    "email1 = work: john.smith@example.org\n" \
+    "phone1 = home: xxx 555 1234\n" \
+    "Categories = cat1, cat2, cat3" \
+| khard new -a "address book name"
 ```
 
 Use the following to modify the contact after successful creation:

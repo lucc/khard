@@ -307,7 +307,16 @@ def main():
             else:
                 print("Please enter only one address book name")
             sys.exit(1)
-        create_new_contact(selected_address_books[0])
+        # if there is some data in stdin
+        if not sys.stdin.isatty():
+            # create new contact from stdin
+            new_contact = CarddavObject.from_user_input(
+                    selected_address_books[0], sys.stdin.read())
+            print(new_contact.print_vcard())
+            new_contact.write_to_file()
+        else:
+            # open editor
+            create_new_contact(selected_address_books[0])
 
     # add email address to contact or create a new one if necessary
     if args.action == "add-email":
