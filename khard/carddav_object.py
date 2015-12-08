@@ -123,6 +123,9 @@ class CarddavObject:
     def set_filename(self, filename):
         self.filename = filename
 
+    def get_id(self):
+        return self.vcard.uid.value
+
     def get_title(self):
         try:
             title = self.vcard.title.value
