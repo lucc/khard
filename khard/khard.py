@@ -144,10 +144,10 @@ def list_contacts(vcard_list):
             selected_address_books.append(contact.get_address_book())
     if len(selected_address_books) == 1:
         print("Address book: %s" % str(selected_address_books[0]))
-        table = [["Id", "Name", "Phone", "E-Mail"]]
+        table = [["Id", "Name", "Phone", "E-Mail", "ID"]]
     else:
         print("Address books: %s" % ', '.join([str(book) for book in selected_address_books]))
-        table = [["Id", "Name", "Phone", "E-Mail", "Address book"]]
+        table = [["Id", "Name", "Phone", "E-Mail", "Address book", "ID"]]
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index+1)
@@ -168,6 +168,11 @@ def list_contacts(vcard_list):
             row.append("")
         if selected_address_books.__len__() > 1:
             row.append(vcard.get_address_book().get_name())
+        if vcard.get_id() != None:
+            row.append(vcard.get_id())
+        else:
+            row.append("")
+
         table.append(row)
     print(helpers.pretty_print(table))
 
