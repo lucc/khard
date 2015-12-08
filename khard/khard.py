@@ -144,10 +144,10 @@ def list_contacts(vcard_list):
             selected_address_books.append(contact.get_address_book())
     if len(selected_address_books) == 1:
         print("Address book: %s" % str(selected_address_books[0]))
-        table = [["Id", "Name", "Phone", "E-Mail"]]
+        table = [["Id", "Name", "Phone", "E-Mail", "ID"]]
     else:
         print("Address books: %s" % ', '.join([str(book) for book in selected_address_books]))
-        table = [["Id", "Name", "Phone", "E-Mail", "Address book"]]
+        table = [["Id", "Name", "Phone", "E-Mail", "Address book", "ID"]]
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index+1)
@@ -168,15 +168,26 @@ def list_contacts(vcard_list):
             row.append("")
         if selected_address_books.__len__() > 1:
             row.append(vcard.get_address_book().get_name())
+        if vcard.get_id() != None:
+            row.append(vcard.get_id())
+        else:
+            row.append("")
+
         table.append(row)
     print(helpers.pretty_print(table))
 
 
-def choose_vcard_from_list(vcard_list):
+def choose_vcard_from_list(vcard_list, vcard_id=None):
     if vcard_list.__len__() == 0:
         return None
     elif vcard_list.__len__() == 1:
         return vcard_list[0]
+    elif vcard_id != None:
+        matching_contacts = [ contact for contact in vcard_list if contact.get_id() == vcard_id ]
+        if len(matching_contacts) != 1:
+            return None
+        else:
+            return matching_contacts[0]
     else:
         list_contacts(vcard_list)
         while True:
@@ -248,6 +259,8 @@ def main():
                     "    default:   -s \"contact\"\n" \
                     "    merge:     -s \"source contact,target contact\"\n" \
                     "    copy/move: -s \"source contact,target address book\"")
+    parser.add_argument("-i", "--id", default="",
+            help="Search a contact by its id")
     parser.add_argument("-t", "--sort", default="alphabetical", 
             help="Sort contacts list. Possible values: alphabetical, addressbook")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
@@ -475,7 +488,7 @@ def main():
 
     # show source or details, modify or remove contact
     if args.action in ["details", "modify", "remove", "source"]:
-        selected_vcard = choose_vcard_from_list(vcard_list)
+        selected_vcard = choose_vcard_from_list(vcard_list, args.id)
         if selected_vcard is None:
             print("Found no contact")
             sys.exit(1)
