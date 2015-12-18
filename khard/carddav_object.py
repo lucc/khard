@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, string, random, datetime, re
-import vobject
+# contact object class
+# vcard: https://tools.ietf.org/html/rfc6350
+
+import os, sys, string, datetime, re
+import vobject, yaml
 from pkg_resources import parse_version, get_distribution
+import helpers
 
 class CarddavObject:
     def __init__(self, address_book, filename = None):
@@ -33,14 +37,19 @@ class CarddavObject:
             except UnicodeDecodeError as e:
                 self.old_vobject_version = True
 
+        # vcard supports the following type values
+        self.supported_phone_types = ["bbs", "car", "cell", "fax", "home", "isdn",
+                "msg", "modem", "pager", "pcs", "pref", "video", "voice", "work"]
+        self.supported_email_types = ["home", "internet", "pref", "uri", "work", "x400"]
+        self.supported_address_types = ["home", "pref", "work"]
+
         # load vcard
         if self.filename is None:
             # create new vcard object
             self.vcard = vobject.vCard()
             # uid
-            choice = string.ascii_uppercase + string.digits
             uid_obj = self.vcard.add('uid')
-            uid_obj.value = ''.join([random.choice(choice) for _ in range(36)])
+            uid_obj.value = helpers.get_random_uid()
             # use uid for vcard filename
             self.filename = os.path.join(address_book.get_path(),
                     self.vcard.uid.value + ".vcf")
@@ -64,6 +73,17 @@ class CarddavObject:
                     self.write_to_file(overwrite=True)
                 except vobject.base.ParseError as e:
                     raise
+            # organisation value
+            # some newer versions of vobject module don't return a list but a single string
+            # but the library awaits a list, if the vcard is serialized again
+            # so fix that by splitting the organisation value manually at the ";"
+            try:
+                organisation = self.vcard.org.value
+            except AttributeError as e:
+                pass
+            else:
+                if not isinstance(organisation, list):
+                    self.vcard.org.value = organisation.split(";")
 
 
     #######################################
@@ -104,7 +124,7 @@ class CarddavObject:
 
     def __eq__(self, other):
         return isinstance(other, CarddavObject) \
-                and self.print_vcard(show_address_book = False) == other.print_vcard(show_address_book = False)
+                and self.print_vcard(show_address_book=False, show_uid=False) == other.print_vcard(show_address_book=False, show_uid=False)
 
     def __ne__(self, other):
         return not self == other
@@ -117,144 +137,146 @@ class CarddavObject:
     def get_address_book(self):
         return self.address_book
 
+    def get_uid(self):
+        try:
+            return self.vcard_value_to_string(self.vcard.uid.value)
+        except AttributeError as e:
+            return ""
+
+    def set_uid(self, uid):
+        # try to remove old uid
+        try:
+            self.vcard.remove(self.vcard.uid)
+        except AttributeError as e:
+            pass
+        uid_obj = self.vcard.add('uid')
+        uid_obj.value = self.string_to_vcard_value(uid, output="text")
+
     def get_filename(self):
         return self.filename
 
     def set_filename(self, filename):
         self.filename = filename
 
-    def get_title(self):
+    def get_name_prefix(self):
         try:
-            title = self.vcard.title.value
-            if isinstance(title, unicode):
-                return title.encode("utf-8")
-            else:
-                return title
+            return self.vcard_value_to_string(self.vcard.n.value.prefix)
         except AttributeError as e:
             return ""
 
     def get_first_name(self):
         try:
-            first_name = self.vcard.n.value.given
-            if isinstance(first_name, unicode):
-                return first_name.encode("utf-8")
-            else:
-                return first_name
+            return self.vcard_value_to_string(self.vcard.n.value.given)
+        except AttributeError as e:
+            return ""
+
+    def get_additional_name(self):
+        try:
+            return self.vcard_value_to_string(self.vcard.n.value.additional)
         except AttributeError as e:
             return ""
 
     def get_last_name(self):
         try:
-            last_name = self.vcard.n.value.family
-            if isinstance(last_name, unicode):
-                return last_name.encode("utf-8")
-            else:
-                return last_name
+            return self.vcard_value_to_string(self.vcard.n.value.family)
+        except AttributeError as e:
+            return ""
+
+    def get_name_suffix(self):
+        try:
+            return self.vcard_value_to_string(self.vcard.n.value.suffix)
         except AttributeError as e:
             return ""
 
     def get_full_name(self):
         try:
-            full_name = self.vcard.fn.value
-            if isinstance(full_name, unicode):
-                return full_name.encode("utf-8")
-            else:
-                return full_name
+            return self.vcard_value_to_string(self.vcard.fn.value)
         except AttributeError as e:
-            if self.get_first_name() != "" and self.get_last_name() != "":
-                return "%s %s" % (self.get_first_name(), self.get_last_name())
-            elif self.get_first_name() != "":
-                return self.get_first_name()
-            elif self.get_last_name() != "":
-                return self.get_last_name()
-            elif self.get_organisation() != "":
-                return self.get_organisation()
-            else:
-                return ""
+            return ""
+
+    def set_name(self, prefix, first_name, additional_name, last_name, suffix):
+        # n
+        name_obj = self.vcard.add('n')
+        name_obj.value = vobject.vcard.Name(
+                prefix=self.string_to_vcard_value(prefix, output="list"),
+                given=self.string_to_vcard_value(first_name, output="list"),
+                additional=self.string_to_vcard_value(additional_name, output="list"),
+                family=self.string_to_vcard_value(last_name, output="list"),
+                suffix=self.string_to_vcard_value(suffix, output="list"))
+        # fn
+        if not self.vcard.getChildValue("fn") \
+                and (self.get_first_name() != "" or self.get_last_name() != ""):
+            names = []
+            if self.get_name_prefix() != "":
+                names.append(self.get_name_prefix())
+            if self.get_first_name() != "":
+                names.append(self.get_first_name())
+            if self.get_last_name() != "":
+                names.append(self.get_last_name())
+            if self.get_name_suffix() != "":
+                names.append(self.get_name_suffix())
+            name_obj = self.vcard.add('fn')
+            name_obj.value = self.string_to_vcard_value(
+                    ' '.join(names).replace(",", ""), output="text")
 
     def get_organisation(self):
         try:
-            if isinstance(self.vcard.org.value, list):
-                organisation = ' '.join(self.vcard.org.value)
-            else:
-                organisation = self.vcard.org.value
-            if isinstance(organisation, unicode):
-                return organisation.encode("utf-8")
-            else:
-                return organisation
+            return self.vcard_value_to_string(self.vcard.org.value)
         except AttributeError as e:
             return ""
+
+    def set_organisation(self, organisation):
+        org_obj = self.vcard.add('org')
+        org_obj.value = self.string_to_vcard_value(organisation, output="list")
+        # check if fn attribute is already present
+        if not self.vcard.getChildValue("fn") \
+                and self.get_organisation() != "":
+            # if not, set fn to organisation name
+            name_obj = self.vcard.add('fn')
+            name_obj.value = self.string_to_vcard_value(self.get_organisation(), output="text")
+            showas_obj = self.vcard.add('x-abshowas')
+            showas_obj.value = "COMPANY"
+
+    def get_title(self):
+        try:
+            return self.vcard_value_to_string(self.vcard.title.value)
+        except AttributeError as e:
+            return ""
+
+    def set_title(self, title):
+        title_obj = self.vcard.add('title')
+        title_obj.value = self.string_to_vcard_value(title, output="text")
 
     def get_role(self):
         try:
-            role = self.vcard.role.value
-            if isinstance(role, unicode):
-                return role.encode("utf-8")
-            else:
-                return role
+            return self.vcard_value_to_string(self.vcard.role.value)
         except AttributeError as e:
             return ""
 
-    def set_name_and_organisation(self, title, first_name, last_name, organisation, role):
-        if self.old_vobject_version:
-            title = title.decode("utf-8")
-            first_name = first_name.decode("utf-8")
-            last_name = last_name.decode("utf-8")
-            organisation = organisation.decode("utf-8")
-            role = role.decode("utf-8")
-        if first_name == "" and last_name == "":
-            name_obj = self.vcard.add('fn')
-            name_obj.value = organisation
-            name_obj = self.vcard.add('n')
-            name_obj.value = vobject.vcard.Name(family="", given="")
-            showas_obj = self.vcard.add('x-abshowas')
-            showas_obj.value = "COMPANY"
-        else:
-            name_obj = self.vcard.add('fn')
-            name_obj.value = "%s %s" % (first_name, last_name)
-            name_obj = self.vcard.add('n')
-            name_obj.value = vobject.vcard.Name(family=last_name, given=first_name)
-        if organisation != "":
-            org_obj = self.vcard.add('org')
-            org_obj.value = [organisation]
-        if title != "":
-            title_obj = self.vcard.add('title')
-            title_obj.value = title
-        if role != "":
-            role_obj = self.vcard.add('role')
-            role_obj.value = role
+    def set_role(self, role):
+        role_obj = self.vcard.add('role')
+        role_obj.value = self.string_to_vcard_value(role, output="text")
 
     def get_phone_numbers(self):
         phone_list = []
         for child in self.vcard.getChildren():
-            if child.name != "TEL":
-                continue
-            type = "voice"
-            if child.params.has_key("TYPE"):
-                type = ','.join(child.params['TYPE'])
-                if isinstance(type, unicode):
-                    type = type.encode("utf-8")
-            elif child.group != None:
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" and label.group == child.group:
-                        type = label.value
-                        if isinstance(type, unicode):
-                            type = type.encode("utf-8")
-                        break
-            value = child.value
-            if isinstance(value, unicode):
-                value = value.encode("utf-8")
-            phone_list.append({"type":type, "value":value})
+            if child.name == "TEL":
+                type = self.get_type_for_vcard_object(child) or "voice"
+                number = child.value
+                phone_list.append(
+                        {
+                            "type" : self.vcard_value_to_string(type),
+                            "value" : self.vcard_value_to_string(number)
+                        })
         return sorted(phone_list, key=lambda k: k['type'].lower())
 
     def add_phone_number(self, type, number):
-        if self.old_vobject_version:
-            type = type.decode("utf-8")
-            number = number.decode("utf-8")
+        standard_types, custom_types = self.parse_type_value(
+                type, number, self.supported_phone_types)
         phone_obj = self.vcard.add('tel')
         phone_obj.value = number
-        if type.lower() in ["cell", "home", "work",]:
-            phone_obj.type_param = type
+        if standard_types != "":
+            phone_obj.type_param = self.string_to_vcard_value(standard_types, output="list")
         else:
             number_of_custom_phone_number_labels = 0
             for label in self.vcard.getChildren():
@@ -264,39 +286,28 @@ class CarddavObject:
             phone_obj.group = group_name
             label_obj = self.vcard.add('x-ablabel')
             label_obj.group = group_name
-            label_obj.value = type
+            label_obj.value = self.string_to_vcard_value(custom_types, output="text")
 
     def get_email_addresses(self):
         email_list = []
         for child in self.vcard.getChildren():
-            if child.name != "EMAIL":
-                continue
-            type = "home"
-            if child.params.has_key("TYPE"):
-                type = ','.join(child.params['TYPE'])
-                if isinstance(type, unicode):
-                    type = type.encode("utf-8")
-            elif child.group != None:
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" and label.group == child.group:
-                        type = label.value
-                        if isinstance(type, unicode):
-                            type = type.encode("utf-8")
-                        break
-            value = child.value
-            if isinstance(value, unicode):
-                value = value.encode("utf-8")
-            email_list.append({"type":type, "value":value})
+            if child.name == "EMAIL":
+                type = self.get_type_for_vcard_object(child) or "internet"
+                address = child.value
+                email_list.append(
+                        {
+                            "type" : self.vcard_value_to_string(type),
+                            "value" : self.vcard_value_to_string(address)
+                        })
         return sorted(email_list, key=lambda k: k['type'].lower())
 
     def add_email_address(self, type, address):
-        if self.old_vobject_version:
-            type = type.decode("utf-8")
-            address = address.decode("utf-8")
+        standard_types, custom_types = self.parse_type_value(
+                type, address, self.supported_email_types)
         email_obj = self.vcard.add('email')
         email_obj.value = address
-        if type.lower() in ["home", "work",]:
-            email_obj.type_param = type
+        if standard_types != "":
+            email_obj.type_param = self.string_to_vcard_value(standard_types, output="list")
         else:
             number_of_custom_email_labels = 0
             for label in self.vcard.getChildren():
@@ -306,60 +317,37 @@ class CarddavObject:
             email_obj.group = group_name
             label_obj = self.vcard.add('x-ablabel')
             label_obj.group = group_name
-            label_obj.value = type
+            label_obj.value = self.string_to_vcard_value(custom_types, output="text")
 
     def get_post_addresses(self):
         address_list = []
         for child in self.vcard.getChildren():
-            if child.name != "ADR":
-                continue
-            # label
-            type = "home"
-            if child.params.has_key("TYPE"):
-                type = ','.join(child.params['TYPE'])
-                if isinstance(type, unicode):
-                    type = type.encode("utf-8")
-            elif child.group != None:
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" and label.group == child.group:
-                        type = label.value
-                        if isinstance(type, unicode):
-                            type = type.encode("utf-8")
-                        break
-            # address data fields
-            street_and_house_number = child.value.street
-            if isinstance(street_and_house_number, unicode):
-                street_and_house_number = street_and_house_number.encode("utf-8")
-            postcode = child.value.code
-            if isinstance(postcode, unicode):
-                postcode = postcode.encode("utf-8")
-            city = child.value.city
-            if isinstance(city, unicode):
-                city = city.encode("utf-8")
-            region = child.value.region
-            if isinstance(region, unicode):
-                region = region.encode("utf-8")
-            country = child.value.country
-            if isinstance(country, unicode):
-                country = country.encode("utf-8")
-            address_list.append(
-                    {"type":type, "street_and_house_number":street_and_house_number,
-                    "postcode":postcode, "city":city, "region":region, "country":country})
+            if child.name == "ADR":
+                type = self.get_type_for_vcard_object(child) or "work"
+                address = child.value
+                address_list.append(
+                        {
+                            "type" : self.vcard_value_to_string(type),
+                            "street" : self.vcard_value_to_string(address.street),
+                            "code" : self.vcard_value_to_string(address.code),
+                            "city" : self.vcard_value_to_string(address.city),
+                            "region" : self.vcard_value_to_string(address.region),
+                            "country" : self.vcard_value_to_string(address.country)
+                        })
         return sorted(address_list, key=lambda k: k['type'].lower())
 
-    def add_post_address(self, type, street_and_house_number, postcode, city, region, country):
-        if self.old_vobject_version:
-            type = type.decode("utf-8")
-            street_and_house_number = street_and_house_number.decode("utf-8")
-            postcode = postcode.decode("utf-8")
-            city = city.decode("utf-8")
-            region = region.decode("utf-8")
-            country = country.decode("utf-8")
+    def add_post_address(self, type, street, code, city, region, country):
+        standard_types, custom_types = self.parse_type_value(
+                type, "%s, %s" % (street, city), self.supported_address_types)
         adr_obj = self.vcard.add('adr')
-        adr_obj.value = vobject.vcard.Address(street=street_and_house_number,
-                city=city, region=region, code=postcode, country=country)
-        if type.lower() in ["home", "work",]:
-            adr_obj.type_param = type
+        adr_obj.value = vobject.vcard.Address(
+                street = self.string_to_vcard_value(street, output="list"),
+                code = self.string_to_vcard_value(code, output="list"),
+                city = self.string_to_vcard_value(city, output="list"),
+                region = self.string_to_vcard_value(region, output="list"),
+                country = self.string_to_vcard_value(country, output="list"))
+        if standard_types != "":
+            adr_obj.type_param = self.string_to_vcard_value(standard_types, output="list")
         else:
             number_of_custom_post_address_labels = 0
             for label in self.vcard.getChildren():
@@ -369,129 +357,86 @@ class CarddavObject:
             adr_obj.group = group_name
             label_obj = self.vcard.add('x-ablabel')
             label_obj.group = group_name
-            label_obj.value = type
+            label_obj.value = self.string_to_vcard_value(custom_types, output="text")
 
     def get_categories(self):
-        category_list = []
         try:
-            for category in self.vcard.categories.value:
-                if isinstance(category, unicode):
-                    category_list.append(category.encode('utf-8'))
-                else:
-                    category_list.append(category)
-        except AttributeError as e:
-            pass
-        return ', '.join(category_list)
-
-    def set_categories(self, unformatted_category_list):
-        formatted_category_list = [ x.strip() for x in unformatted_category_list.split(",") ]
-        if self.old_vobject_version:
-            formatted_category_list = [ x.decode("utf-8") for x in formatted_category_list ]
-        categories_obj = self.vcard.add('categories')
-        categories_obj.value = formatted_category_list
-
-    def get_nickname(self):
-        try:
-            nickname = self.vcard.nickname.value
-            if isinstance(nickname, unicode):
-                return nickname.encode("utf-8")
-            else:
-                return nickname
+            return self.vcard_value_to_string(self.vcard.categories.value)
         except AttributeError as e:
             return ""
 
-    def set_nickname(self, name):
-        if self.old_vobject_version:
-            name = name.decode("utf-8")
+    def set_categories(self, categories):
+        categories_obj = self.vcard.add('categories')
+        categories_obj.value = self.string_to_vcard_value(categories, output="list")
+
+    def get_nickname(self):
+        try:
+            return self.vcard_value_to_string(self.vcard.nickname.value)
+        except AttributeError as e:
+            return ""
+
+    def set_nickname(self, nick_name):
         nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = name
+        nickname_obj.value = self.string_to_vcard_value(nick_name, output="text")
 
     def get_note(self):
         try:
-            note = self.vcard.note.value
-            if isinstance(note, unicode):
-                return note.encode("utf-8")
-            else:
-                return note
+            return self.vcard_value_to_string(self.vcard.note.value)
         except AttributeError as e:
             return ""
 
     def set_note(self, note):
-        if self.old_vobject_version:
-            note = note.decode("utf-8")
         note_obj = self.vcard.add('note')
-        note_obj.value = note
+        note_obj.value = self.string_to_vcard_value(note, output="text")
 
     def get_jabber_id(self):
         try:
-            jabber_id = self.vcard.x_jabber.value
-            if isinstance(jabber_id, unicode):
-                return jabber_id.encode("utf-8")
-            else:
-                return jabber_id
+            return self.vcard_value_to_string(self.vcard.x_jabber.value)
         except AttributeError as e:
             return ""
 
     def set_jabber_id(self, jabber_id):
-        if self.old_vobject_version:
-            jabber_id = jabber_id.decode("utf-8")
         jabber_obj = self.vcard.add('x-jabber')
-        jabber_obj.value = jabber_id
+        jabber_obj.value = self.string_to_vcard_value(jabber_id, output="text")
 
     def get_skype_id(self):
         try:
-            skype_id = self.vcard.x_skype.value
-            if isinstance(skype_id, unicode):
-                return skype_id.encode("utf-8")
-            else:
-                return skype_id
+            return self.vcard_value_to_string(self.vcard.x_skype.value)
         except AttributeError as e:
             return ""
 
     def set_skype_id(self, skype_id):
-        if self.old_vobject_version:
-            skype_id = skype_id.decode("utf-8")
         skype_obj = self.vcard.add('x-skype')
-        skype_obj.value = skype_id
+        skype_obj.value = self.string_to_vcard_value(skype_id, output="text")
 
     def get_twitter_id(self):
         try:
-            twitter_id = self.vcard.x_twitter.value
-            if isinstance(twitter_id, unicode):
-                return twitter_id.encode("utf-8")
-            else:
-                return twitter_id
+            return self.vcard_value_to_string(self.vcard.x_twitter.value)
         except AttributeError as e:
             return ""
 
     def set_twitter_id(self, twitter_id):
-        if self.old_vobject_version:
-            twitter_id = twitter_id.decode("utf-8")
         twitter_obj = self.vcard.add('x-twitter')
-        twitter_obj.value = twitter_id
+        twitter_obj.value = self.string_to_vcard_value(twitter_id, output="text")
 
     def get_webpage(self):
         try:
-            webpage = self.vcard.url.value
-            if isinstance(webpage, unicode):
-                return webpage.encode("utf-8")
-            else:
-                return webpage
+            return self.vcard_value_to_string(self.vcard.url.value)
         except AttributeError as e:
             return ""
 
     def set_webpage(self, webpage):
-        if self.old_vobject_version:
-            webpage = webpage.decode("utf-8")
         webpage_obj = self.vcard.add('url')
-        webpage_obj.value = webpage
+        webpage_obj.value = self.string_to_vcard_value(webpage, output="text")
 
     def get_birthday(self):
         """:returns: contacts birthday or None if not available
             :rtype: datetime.datetime
         """
         try:
-            return datetime.datetime.strptime(self.vcard.bday.value.replace('-', ''), "%Y%m%d")
+            return datetime.datetime.strptime(
+                    self.vcard_value_to_string(self.vcard.bday.value).replace('-', ''),
+                    "%Y%m%d")
         except AttributeError as e:
             return None
         except ValueError as e:
@@ -512,15 +457,19 @@ class CarddavObject:
             self.vcard.remove(self.vcard.rev)
         except AttributeError as e:
             pass
-        # title
-        try:
-            self.vcard.remove(self.vcard.title)
-        except AttributeError as e:
-            pass
-        # name
+        # n
         try:
             self.vcard.remove(self.vcard.n)
+        except AttributeError as e:
+            pass
+        # fn
+        try:
             self.vcard.remove(self.vcard.fn)
+        except AttributeError as e:
+            pass
+        # nickname
+        try:
+            self.vcard.remove(self.vcard.nickname)
         except AttributeError as e:
             pass
         # organisation
@@ -530,6 +479,11 @@ class CarddavObject:
             pass
         try:
             self.vcard.remove(self.vcard.x_abshowas)
+        except AttributeError as e:
+            pass
+        # title
+        try:
+            self.vcard.remove(self.vcard.title)
         except AttributeError as e:
             pass
         # role
@@ -577,11 +531,6 @@ class CarddavObject:
             self.vcard.remove(self.vcard.url)
         except AttributeError as e:
             pass
-        # nickname
-        try:
-            self.vcard.remove(self.vcard.nickname)
-        except AttributeError as e:
-            pass
         # note
         try:
             self.vcard.remove(self.vcard.note)
@@ -614,183 +563,265 @@ class CarddavObject:
 
     def process_user_input(self, input):
         # parse user input string
-        contact_data = {}
-        counter = 1
-        for line in input.splitlines():
-            if line == "" or line.startswith("#"):
-                continue
-            try:
-                key = line.split("=")[0].strip().lower()
-                value = line.split("=")[1].strip()
-                if value == "":
-                    continue
-                if contact_data.has_key(key):
-                    print("Error in input line %d: key %s already exists" % (counter, key))
-                    sys.exit(1)
-                contact_data[key] = value
-                counter += 1
-            except IndexError as e:
-                print("Error in input line %d: Malformed input\nLine: %s" % (counter, line))
-                sys.exit(1)
+        try:
+            contact_data = yaml.load(input, Loader=yaml.BaseLoader)
+        except yaml.parser.ParserError as e:
+            raise ValueError(e)
+        except yaml.scanner.ScannerError as e:
+            raise ValueError(e)
 
         # clean vcard
         self.clean_vcard()
 
-        # process data
         # update ref
         dt = datetime.datetime.now()
         rev_obj = self.vcard.add('rev')
         rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
                 % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
 
-        # name, title, organisation and role
+        # check for available data
         # at least enter name or organisation
-        if contact_data.has_key("title") == False:
-            contact_data['title'] = ""
-        if contact_data.has_key("first name") == False:
-            contact_data['first name'] = ""
-        if contact_data.has_key("last name") == False:
-            contact_data['last name'] = ""
-        if contact_data.has_key("organisation") == False:
-            contact_data['organisation'] = ""
-        if contact_data.has_key("role") == False:
-            contact_data['role'] = ""
-        if contact_data['first name'] == "" \
-                and contact_data['last name'] == "" \
-                and contact_data['organisation'] == "":
-            print("Error: You must either enter a name or an organisation")
-            sys.exit(1)
+        if not bool(contact_data.get("First name")) \
+                and not bool(contact_data.get("Last name")) \
+                and not bool(contact_data.get("Organisation")):
+            raise ValueError("Error: You must either enter a name or an organisation")
         else:
-            self.set_name_and_organisation(contact_data['title'],
-                    contact_data['first name'], contact_data['last name'],
-                    contact_data['organisation'], contact_data['role'])
+            # set name
+            self.set_name(
+                    contact_data.get("Prefix") or "",
+                    contact_data.get("First name") or "",
+                    contact_data.get("Additional") or "",
+                    contact_data.get("Last name") or "",
+                    contact_data.get("Suffix") or "")
+
+        # organisation
+        if bool(contact_data.get("Organisation")):
+            self.set_organisation(contact_data.get("Organisation"))
+        # role
+        if bool(contact_data.get("Role")):
+            self.set_role(contact_data.get("Role"))
+        # title
+        if bool(contact_data.get("Title")):
+            self.set_title(contact_data.get("Title"))
 
         # phone
-        for key in contact_data.keys():
-            if key.startswith("phone") == False:
-                continue
-            try:
-                label = contact_data[key].split(":")[0].strip()
-                if label == "":
-                    print("Error: Missing label for line %s" % key)
-                    sys.exit(1)
-                number = contact_data[key].split(":")[1].strip()
-                if number == "":
-                    continue
-            except IndexError as e:
-                print("Error: The %s line is malformed" % key)
-                sys.exit(1)
-            self.add_phone_number(label, number)
+        try:
+            for label, number in contact_data.get("Phone").items():
+                if number != "":
+                    self.add_phone_number(label, number)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
 
         # email
-        for key in contact_data.keys():
-            if key.startswith("email") == False:
-                continue
-            try:
-                label = contact_data[key].split(":")[0].strip()
-                if label == "":
-                    print("Error: Missing label for line %s" % key)
-                    sys.exit(1)
-                email = contact_data[key].split(":")[1].strip()
-                if email == "":
-                    continue
-            except IndexError as e:
-                print("Error: The %s line is malformed" % key)
-                sys.exit(1)
-            self.add_email_address(label, email)
+        try:
+            for label, address in contact_data.get("Email").items():
+                if address != "":
+                    self.add_email_address(label, address)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
 
         # post addresses
-        for key in contact_data.keys():
-            if key.startswith("address") == False:
-                continue
-            try:
-                label = contact_data[key].split(":")[0].strip()
-                if label == "":
-                    print("Error: Missing label for line %s" % key)
-                    sys.exit(1)
-                address = contact_data[key].split(":")[1].strip()
-                if address == "; ; ; ;":
-                    continue
-            except IndexError as e:
-                print("Error: The %s line is malformed" % key)
-                sys.exit(1)
-            if address.split(";").__len__() != 5:
-                print("Error: The %s line is malformed" % key)
-                sys.exit(1)
-            street_and_house_number = address.split(";")[0].strip()
-            postcode = address.split(";")[1].strip()
-            city = address.split(";")[2].strip()
-            region = address.split(";")[3].strip()
-            country = address.split(";")[4].strip()
-            self.add_post_address(label, street_and_house_number, postcode, city, region, country)
+        try:
+            for label, address in contact_data.get("Address").items():
+                try:
+                    number_of_non_empty_address_values = 0
+                    for key, value in address.items():
+                        if key in ["Street", "Code", "City", "Region", "Country"] \
+                                and value != "":
+                            number_of_non_empty_address_values += 1
+                    if number_of_non_empty_address_values > 0:
+                        self.add_post_address(
+                                label,
+                                address.get("Street") or "",
+                                address.get("Code") or "",
+                                address.get("City") or "",
+                                address.get("Region") or "",
+                                address.get("Country") or "")
+                except TypeError as e:
+                    raise ValueError("Error during parsing of address with label %s" % label)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
 
         # instant messaging and social networks
-        if contact_data.has_key("jabber") and contact_data['jabber'] != "":
-            self.set_jabber_id(contact_data['jabber'])
-        if contact_data.has_key("skype") and contact_data['skype'] != "":
-            self.set_skype_id(contact_data['skype'])
-        if contact_data.has_key("twitter") and contact_data['twitter'] != "":
-            self.set_twitter_id(contact_data['twitter'])
-        if contact_data.has_key("webpage") and contact_data['webpage'] != "":
-            self.set_webpage(contact_data['webpage'])
+        if bool(contact_data.get("Jabber")):
+            self.set_jabber_id(contact_data.get("Jabber"))
+        if bool(contact_data.get("Skype")):
+            self.set_skype_id(contact_data.get("Skype"))
+        if bool(contact_data.get("Twitter")):
+            self.set_twitter_id(contact_data.get("Twitter"))
+        if bool(contact_data.get("Webpage")):
+            self.set_webpage(contact_data.get("Webpage"))
 
         # miscellaneous stuff
-        # categories
-        if contact_data.has_key("categories") and contact_data['categories'] != "":
-            self.set_categories(contact_data['categories'])
-        # nickname
-        if contact_data.has_key("nickname") and contact_data['nickname'] != "":
-            self.set_nickname(contact_data['nickname'])
-        # note
-        if contact_data.has_key("note") and contact_data['note'] != "":
-            self.set_note(contact_data['note'])
         # birthday
-        if contact_data.has_key("birthday") and contact_data['birthday'] != "":
-            try:
-                date = datetime.datetime.strptime(contact_data['birthday'], "%d.%m.%Y")
-                self.set_birthday(date)
-            except ValueError as e:
-                print("Error: Birthday date in the wrong format. Example: 31.12.1989")
-                sys.exit(1)
+        if bool(contact_data.get("Birthday")):
+            supported_date_formats = ["%d-%m-%Y", "%Y-%m-%d"]
+            for date_format in supported_date_formats:
+                try:
+                    self.set_birthday(
+                            datetime.datetime.strptime(
+                                re.sub("\D", "-", contact_data.get("Birthday")),
+                                date_format)
+                            )
+                except ValueError as e:
+                    pass
+                else:
+                    break
+            if not self.get_birthday():
+                raise ValueError("Error: Wrong date format\nExamples: 21.10.1988, 1988.10.21 or 1988-10-21")
+        # categories
+        if bool(contact_data.get("Categories")):
+            self.set_categories(contact_data.get("Categories"))
+        # nickname
+        if bool(contact_data.get("Nickname")):
+            self.set_nickname(contact_data.get("Nickname"))
+        # note
+        if bool(contact_data.get("Note")):
+            self.set_note(contact_data.get("Note"))
 
-    def print_vcard(self, show_address_book = True):
+    def get_template(self):
         strings = []
-        # name or organisation
-        if self.get_organisation() == "" and self.get_full_name() == "":
-            strings.append("Name:")
-        elif self.get_organisation() != self.get_full_name():
-            if self.get_title() != "":
-                strings.append("Name: %s %s" % (self.get_title(), self.get_full_name()))
-            else:
-                strings.append("Name: %s" % self.get_full_name())
+        for line in helpers.get_new_contact_template(self.get_address_book().get_name()).splitlines():
+            if line.startswith("#"):
+                strings.append(line)
+            elif line == "":
+                strings.append(line)
+
+            elif line.lower().startswith("prefix"):
+                strings.append("Prefix     : %s" % self.get_name_prefix())
+            elif line.lower().startswith("first name"):
+                strings.append("First name : %s" % self.get_first_name())
+            elif line.lower().startswith("additional"):
+                strings.append("Additional : %s" % self.get_additional_name())
+            elif line.lower().startswith("last name"):
+                strings.append("Last name  : %s" % self.get_last_name())
+            elif line.lower().startswith("suffix"):
+                strings.append("Suffix     : %s" % self.get_name_suffix())
+            elif line.lower().startswith("nickname"):
+                strings.append("Nickname   : %s" % self.get_nickname())
+
+            elif line.lower().startswith("organisation"):
+                strings.append("Organisation : %s" % self.get_organisation())
+            elif line.lower().startswith("title"):
+                strings.append("Title        : %s" % self.get_title())
+            elif line.lower().startswith("role"):
+                strings.append("Role         : %s" % self.get_role())
+            elif line.lower().startswith("categories"):
+                strings.append("Categories : %s" % self.get_categories())
+
+            elif line.lower().startswith("phone"):
+                strings.append("Phone :")
+                if len(self.get_phone_numbers()) == 0:
+                    strings.append("    cell : ")
+                    strings.append("    work : ")
+                else:
+                    for entry in self.get_phone_numbers():
+                        strings.append("    %s : %s" % (entry['type'], entry['value']))
+
+            elif line.lower().startswith("email"):
+                strings.append("Email :")
+                if len(self.get_email_addresses()) == 0:
+                    strings.append("    home : ")
+                    strings.append("    work : ")
+                else:
+                    for entry in self.get_email_addresses():
+                        strings.append("    %s : %s" % (entry['type'], entry['value']))
+
+            elif line.lower().startswith("address"):
+                strings.append("Address :")
+                if len(self.get_post_addresses()) == 0:
+                    strings.append("    home :")
+                    strings.append("        Street  : ")
+                    strings.append("        Code    : ")
+                    strings.append("        City    : ")
+                    strings.append("        Region  : ")
+                    strings.append("        Country : ")
+                else:
+                    for entry in self.get_post_addresses():
+                        strings.append("    %s :" % entry['type'])
+                        strings.append("        Street  : %s" % entry['street'])
+                        strings.append("        Code    : %s" % entry['code'])
+                        strings.append("        City    : %s" % entry['city'])
+                        strings.append("        Region  : %s" % entry['region'])
+                        strings.append("        Country : %s" % entry['country'])
+
+            elif line.lower().startswith("jabber"):
+                strings.append("Jabber  : %s" % self.get_jabber_id())
+            elif line.lower().startswith("skype"):
+                strings.append("Skype   : %s" % self.get_skype_id())
+            elif line.lower().startswith("twitter"):
+                strings.append("Twitter : %s" % self.get_twitter_id())
+            elif line.lower().startswith("webpage"):
+                strings.append("Webpage : %s" % self.get_webpage())
+            elif line.lower().startswith("birthday"):
+                date = self.get_birthday()
+                if not date:
+                    strings.append("Birthday : ")
+                else:
+                    strings.append("Birthday : %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+            elif line.lower().startswith("note"):
+                note = self.get_note()
+                if note == "":
+                    strings.append("Note : ")
+                else:
+                    strings.append("Note : |")
+                    for note_line in note.split("\n"):
+                        strings.append("    %s" % note_line)
+        return '\n'.join(strings)
+
+    def print_vcard(self, show_address_book = True, show_uid = True):
+        strings = []
+        # name
+        if self.get_first_name() != "" or self.get_last_name() != "":
+            names = []
+            if self.get_name_prefix() != "":
+                names.append(self.get_name_prefix())
+            if self.get_first_name() != "":
+                names.append(self.get_first_name())
+            if self.get_additional_name() != "":
+                names.append(self.get_additional_name())
+            if self.get_last_name() != "":
+                names.append(self.get_last_name())
+            if self.get_name_suffix() != "":
+                names.append(self.get_name_suffix())
+            strings.append("Name: %s" % ' '.join(names).replace(",", ""))
+            if self.get_nickname() != "":
+                strings.append("    Nickname: %s" % self.get_nickname())
+        # organisation
         if self.get_organisation() != "":
             strings.append("Organisation: %s" % self.get_organisation())
-        if self.get_role() != "":
-            strings.append("Role: %s" % self.get_role())
-        if self.get_nickname() != "":
-            strings.append("Nickname: %s" % self.get_nickname())
+            if self.get_title() != "":
+                strings.append("    Title: %s" % self.get_title())
+            if self.get_role() != "":
+                strings.append("    Role: %s" % self.get_role())
         if show_address_book:
             strings.append("Address book: %s" % self.address_book.get_name())
         if self.get_categories() != "":
             strings.append("Categories\n    %s" % self.get_categories())
-        if self.get_phone_numbers().__len__() > 0:
+        if len(self.get_phone_numbers()) > 0:
             strings.append("Phone")
-            for index, entry in enumerate(self.get_phone_numbers()):
+            for entry in self.get_phone_numbers():
                 strings.append("    %s: %s" % (entry['type'], entry['value']))
-        if self.get_email_addresses().__len__() > 0:
+        if len(self.get_email_addresses()) > 0:
             strings.append("E-Mail")
-            for index, entry in enumerate(self.get_email_addresses()):
+            for entry in self.get_email_addresses():
                 strings.append("    %s: %s" % (entry['type'], entry['value']))
-        if self.get_post_addresses().__len__() > 0:
-            strings.append("Addresses")
-            for index, entry in enumerate(self.get_post_addresses()):
+        if len(self.get_post_addresses()) > 0:
+            strings.append("Address")
+            for entry in self.get_post_addresses():
                 strings.append("    %s:" % entry['type'])
-                if entry['street_and_house_number'] != "":
-                    strings.append("        %s" % entry['street_and_house_number'])
-                if entry['postcode'] != "" and entry['city'] != "":
-                    strings.append("        %s %s" % (entry['postcode'], entry['city']))
-                elif entry['postcode'] != "":
-                    strings.append("        %s" % entry['postcode'])
+                if entry['street'] != "":
+                    strings.append("        %s" % entry['street'])
+                if entry['code'] != "" and entry['city'] != "":
+                    strings.append("        %s %s" % (entry['code'], entry['city']))
+                elif entry['code'] != "":
+                    strings.append("        %s" % entry['code'])
                 elif entry['city'] != "":
                     strings.append("        %s" % entry['city'])
                 if entry['region'] != "" and entry['country'] != "":
@@ -813,13 +844,21 @@ class CarddavObject:
             if self.get_webpage() != "":
                 strings.append("    Webpage: %s" % self.get_webpage())
         if self.get_birthday() != None \
-                or self.get_note() != "":
+                or self.get_note() != "" \
+                or show_uid:
             strings.append("Miscellaneous")
+            if show_uid and self.get_uid() != "":
+                strings.append("    UID: %s" % self.get_uid())
             if self.get_birthday() != None:
                 date = self.get_birthday()
                 strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
             if self.get_note() != "":
-                strings.append("    Note: %s" % self.get_note())
+                if len(self.get_note().split("\n")) == 1:
+                    strings.append("    Note: %s" % self.get_note())
+                else:
+                    strings.append("    Note:")
+                    for note_line in self.get_note().split("\n"):
+                        strings.append("        %s" % note_line)
         return '\n'.join(strings)
 
     def write_to_file(self, overwrite=False):
@@ -845,4 +884,90 @@ class CarddavObject:
         else:
             print("Error: Vcard file %s does not exist." % self.filename)
             sys.exit(4)
+
+    def vcard_value_to_string(self, value):
+        """convert values from source vcard to string
+        function is used by all getters
+        includes:
+            vobject version < 0.8.2 still uses unicode, so encode to utf-8
+            if it's a list, join to a comma separated string
+        """
+        if isinstance(value, list):
+            value = ', '.join(value)
+        if isinstance(value, unicode):
+            value = value.encode("utf-8")
+        return value
+
+    def string_to_vcard_value(self, string, output):
+        """Convert strings to vcard object data
+        function is used by all setters
+        The output parameter specifies the required type, currently we only need simple text and lists
+        vobject version < 0.8.2 needs unicode, so decode if necessary
+        """
+        # the yaml parser returns unicode strings, so fix that first
+        if isinstance(string, unicode):
+            string = string.encode("utf-8")
+        # possible vcard object types: list and text
+        if output == "list":
+            # use that for vcard objects, which require list output
+            # example: name or categories fields
+            #
+            # devide by comma char
+            value_list = [ x.strip() for x in string.split(",") ]
+            if self.old_vobject_version:
+                value_list = [ x.decode("utf-8") for x in value_list ]
+            return value_list
+        if output == "text":
+            # use that for vcard objects, which require a single text output
+            # examples: nickname and note field
+            string = string.strip()
+            if self.old_vobject_version:
+                string = string.decode("utf-8")
+            return string
+
+    def get_type_for_vcard_object(self, object):
+        # try to find label group for custom value type
+        if object.group:
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group == object.group:
+                    return label.value
+        # if that fails, try to load type from params dict
+        type = object.params.get("TYPE")
+        if type:
+            if isinstance(type, list):
+                return sorted(type)
+            return type
+        return None
+
+    def parse_type_value(self, types, value, supported_types):
+        """ parse type value of phone numbers, email and post addresses
+        :param types: one or several type values, separated by comma character
+        :type types: str or unicode
+        :param value: the corresponding label, required for more verbose exceptions
+        :type value: str or unicode
+        :param supported_types: all allowed standard types
+        :type supported_types: list
+        :returns: tuple of standard and custom types
+        :rtype: tuple(str, str)
+        """
+        if isinstance(types, unicode):
+            types = types.encode("utf-8")
+        if isinstance(value, unicode):
+            value = value.encode("utf-8")
+        custom_types = []
+        standard_types = []
+        for type in types.split(","):
+            type = type.strip()
+            if type.lower() in supported_types:
+                standard_types.append(type)
+            else:
+                custom_types.append(type)
+        # throw an exception if the type contains more than one custom label
+        if len(custom_types) == 0 and len(standard_types) == 0:
+            raise ValueError("Error: Missing type for %s" % value)
+        elif len(custom_types) > 0 and len(standard_types) > 0:
+            raise ValueError("Error: Mixing of standard and custom types for %s not allowed\nInput: %s" % (value, types))
+        elif len(custom_types) > 1:
+            raise ValueError("Error: Only a single custom type for %s allowed\nInput: %s" % (value, types))
+        return (','.join(standard_types), ','.join(custom_types))
 

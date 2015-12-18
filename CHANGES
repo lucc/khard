@@ -58,14 +58,17 @@ v0.6.2: 2015.10.10
 v0.6.3: 2015.10.24
 - Added note attribute
 
-v0.7.0-b1: 2015.11.19
+v0.7.0: 2015.12.18
 - Support for vobject library version >= 0.8.2 from https://github.com/tBaxter/vobject
+- Contact template syntax switched to yaml
 - alot and mutt actions summarized to new email action (please have a look into the readme file for configuration changes)
+- Support for extended name attributes
+- Create and modify contact from stdin or from template file
+- New action "export" to export data of existing contact in yaml format
+- New argument --open-editor to open the preferred text editor after successful creation of new
+  contact from stdin or template file
+- New argument {-u, --uid} to select contact by uid
+- Added write support for categories attribute
+- Added wrapper script for sdiff
 - Fixed a bug, which prevented the creation of new contacts with the add-email action
-
-v0.7.0-b2: 2015.11.20
-- Categories attribute is also editable now
-
-v0.7.0-b3: 2015.11.25
-- Create contact from stdin
 

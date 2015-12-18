@@ -18,6 +18,7 @@ class Config:
         def __init__(self):
             self.config = None
             self.address_book_list = []
+            self.uid_dict = {}
 
             # load config file
             xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
@@ -81,8 +82,9 @@ class Config:
                 print("Error in config file\nshow_nicknames parameter must be yes or no.")
                 sys.exit(2)
 
-            # load address books
+            # load address books and contacts
             error_counter = 0
+            number_of_contacts = 0
             if self.config.has_key("addressbooks") == False:
                 print("Error in config file\nMissing main section \"[addressbooks]\".")
                 sys.exit(2)
@@ -105,6 +107,7 @@ class Config:
                     try:
                         address_book.add_contact(
                                 CarddavObject.from_file(address_book, filename))
+                        number_of_contacts += 1
                     except IOError as e:
                         print("Error: Could not open file %s\n%s" % (filename, e))
                         error_counter += 1
@@ -117,11 +120,56 @@ class Config:
 
             # check if one or more contacts could not be parsed
             if error_counter > 0:
-                if error_counter == 1:
-                    print("\n1 vcard file could not be parsed")
-                elif error_counter > 1:
-                    print("\n%d vcard files could not be parsed" % error_counter)
+                print("\n%d of %d vcard files could not be parsed" % (error_counter, number_of_contacts))
                 sys.exit(2)
+
+            # check, if multiple contacts have the same uid
+            length_of_shortest_uid = 100
+            number_of_contacts_with_uid = 0
+            for address_book in self.address_book_list:
+                for contact in address_book.get_contact_list():
+                    uid = contact.get_uid()
+                    if uid != "":
+                        matching_contact = self.uid_dict.get(uid)
+                        if matching_contact is None:
+                            self.uid_dict[uid] = contact
+                            number_of_contacts_with_uid += 1
+                            if len(uid) < length_of_shortest_uid:
+                                length_of_shortest_uid = len(uid)
+                        else:
+                            print("The contact %s from address book %s" \
+                                    " and the contact %s from address book %s have the same uid %s" \
+                                    % (matching_contact.get_full_name(),
+                                        matching_contact.get_address_book().get_name(),
+                                        contact.get_full_name(),
+                                        contact.get_address_book().get_name(),
+                                        contact.get_uid())
+                                    )
+                            sys.exit(2)
+
+            # now we can be sure, that all uid's are unique but we don't want to enter
+            # the whole uid, if we choose a contact by the -u / --uid option
+            # so clear previously filled uid_dict and recreate with the shortest possible uid, so
+            # that it's still unique and easier to enter
+            # with around 100 contacts that short id should not be longer then two or three characters
+            length_of_uid = 1
+            while True:
+                self.uid_dict.clear()
+                for address_book in self.address_book_list:
+                    for contact in address_book.get_contact_list():
+                        uid = contact.get_uid()[:length_of_uid]
+                        if uid != "":
+                            self.uid_dict[uid] = contact
+                if len(self.uid_dict.keys()) != number_of_contacts_with_uid:
+                    length_of_uid += 1
+                else:
+                    break
+                if length_of_uid == length_of_shortest_uid:
+                    # prevent infinit loop, 
+                    # should not be necessary, cause we checked the uid uniqueness in the previous step
+                    # so it's just a precaution
+                    print("Could not create the dictionary of the short uid's")
+                    sys.exit(2)
 
 
         def get_editor(self):
@@ -133,7 +181,7 @@ class Config:
 
 
         def get_list_of_actions(self):
-            return ["list", "details", "email", "phone", "source",
+            return ["list", "details", "export", "email", "phone", "source",
                     "new", "add-email", "merge", "modify", "copy", "move", "remove"]
 
 
@@ -154,6 +202,15 @@ class Config:
                 if name == address_book.get_name():
                     return address_book
             return None
+
+        def get_contact_by_uid(self, uid):
+            return self.uid_dict.get(uid[:self.get_length_of_uid()])
+
+        def get_length_of_uid(self):
+            try:
+                return len(self.uid_dict.keys()[0])
+            except IndexError as e:
+                return 0
 
 
     ####################################

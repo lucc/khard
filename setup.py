@@ -10,7 +10,7 @@ import sys
 from setuptools import setup
 from khard.version import khard_version
 
-required_modules = ['configobj', 'vobject']
+required_modules = ['configobj', 'pyyaml', 'vobject']
 if sys.version_info[0] == 2 and sys.version_info[1] <= 6:
     required_modules.append('argparse')
 

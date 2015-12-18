@@ -70,7 +70,7 @@ Khard is installable via pip. You can choose between the following three methods
 
 More information about virtualenv at http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
-To get the example config file and the twinkle plugin you can clone from git:
+To get the example config file and the other extra data, you can clone from git:
 
 ```
 git clone https://github.com/scheibler/khard.git
@@ -90,7 +90,7 @@ Now copy the example config file and adapt it's contents to your needs:
 
 ```
 mkdir ~/.config/khard/
-cp misc/khard.conf.example ~/.config/khard/khard.conf
+cp misc/khard/khard.conf.example ~/.config/khard/khard.conf
 ```
 
 Khard also contains a helper utility called davcontroller. It's designed to create and remove
@@ -125,6 +125,8 @@ ln -s ~/.virtualenvs/khard/bin/davcontroller ~/bin
 Usage
 -----
 
+### Show contacts ###
+
 After you have created a new address book or calendar and you have synced it to your local machine,
 you can list all available contacts with the following command:
 
@@ -132,24 +134,38 @@ you can list all available contacts with the following command:
 khard list
 ```
 
-Or if you have more than one address book and you want to filter the output:
+or if you have more than one address book and you want to filter the output:
 
 ```
 khard list -a addressbook1,addressbook2
 ```
 
-Searching is possible too:
+The resulting contact table only contains the first phone number and email address. If you want to view all contact
+details you can pick one from the list:
 
 ```
-khard list -s "name of contact"
+khard details
 ```
 
-The list only shows the first phone number and email address. If you want to view all contact
-details you type:
+or search for it:
 
 ```
-khard details -a addressbook1 -s "name of contact"
+khard details -s "name of contact"
 ```
+
+or select the contact by it's uid, which you can find at the contacts table:
+
+```
+khard details -u ID
+```
+
+The parameters -a, -s and -u from the examples above are always optional. If you don't use them or
+your input produces unambiguous results, you may pick the contacts from a list instead.
+
+The search parameter searches in all data fields. Therefore you aren't limited to the contact's name
+but you also could for example search for a part of a phone number, email address or post address.
+
+### Create contact ###
 
 Add new contact with the following command:
 
@@ -158,28 +174,59 @@ khard new -a "address book name"
 ```
 
 The template for the new contact opens in the text editor, which you can set in the khard.conf file.
+It follows the yaml syntax.
 
-Alternatively you also could create the contact from stdin. Take the syntax from the contact
-template file. Example:
+Alternatively you can create the contact from stdin. Take the example contact template file from
+misc/khard/template_for_contact_creation.yaml and don't miss the line indentations. Example:
 
 ```
-echo "first name = John\nlast name = Smith\n" \
-    "email1 = work: john.smith@example.org\n" \
-    "phone1 = home: xxx 555 1234\n" \
-    "Categories = cat1, cat2, cat3" \
-| khard new -a "address book name"
+echo """
+First name : John
+Last name  : Smith
+Email :
+    work : john.smith@example.org
+Phone :
+    home : xxx 555 1234
+Categories : cat1, cat2, cat3
+""" | khard new -a "address book name"
 ```
+
+or create from template file:
+
+```
+khard new -a "address book name" -t contact.yaml
+```
+
+### Edit contacts ###
 
 Use the following to modify the contact after successful creation:
 
 ```
-khard modify -s "name of contact"
+khard modify [-a addr_name] [-s search] [-u uid]
 ```
 
-If you wish to merge contacts use the following to select a first and then a second contact:
+If you want to edit the contact elsewhere, you can export the filled contact template:
 
 ```
-khard merge -s "from contact,into contact"
+khard export -t contact.yaml [-a addr_name] [-s search] [-u uid]
+```
+
+Edit the yaml file and re-import either through stdin:
+
+```
+cat contact.yaml | khard modify [-a addr_name] [-s search] [-u uid]
+```
+
+or file name:
+
+```
+khard modify -t contact.yaml [-a addr_name] [-s search] [-u uid]
+```
+
+If you want to merge contacts use the following to select a first and then a second contact:
+
+```
+khard merge [-s "from contact,into contact"]
 ```
 
 You will be launched into your merge_editor ( see the "merge_editor" option in khard.conf)
@@ -189,22 +236,15 @@ Once you are finished, the first contact is deleted and the second one updated.
 Copy or move contact:
 
 ```
-khard copy -s "source contact,target address book"
-khard move -s "source contact,target address book"
+khard copy [-s "source contact,target address book"]
+khard move [-s "source contact,target address book"]
 ```
 
 Remove contact:
 
 ```
-khard remove -s "name of contact"
+khard remove [-a addr_name] [-s search] [-u uid]
 ```
-
-The parameters -a and -s from the examples above are always optional (only exception is -a for the
-new command). If you don't use them or your input produces unambiguous results, you may pick the
-contacts from a list instead.
-
-The search parameter searches in all data fields. Therefore you aren't limited to the contact's name
-but you also could for example search for a part of a phone number, email address or post address.
 
 
 davcontroller
@@ -320,6 +360,17 @@ the following to your zsh main config file:
 fpath=( $HOME/.zsh/completions $fpath )
 autoload -U compinit
 compinit
+```
+
+
+sdiff
+-----
+
+Use the wrapper script misc/sdiff/sdiff_khard_wrapper.sh if you want to use sdiff as your contact
+merging tool. Just make the script executable and set it as your merge editor in khard's config file:
+
+```
+merge_editor = /path/to/sdiff_khard_wrapper.sh
 ```
 
 
