@@ -1,0 +1,39 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:mu5cusrwial7me8se03h6uhngag59w1uwd3g
+itemadr1.ADR:;;Riverlane 1;A City;Region;99A99;Country
+ADR;TYPE=home:;1st Floor;Main street 1;Another City;;12345;
+ADR;TYPE=home:;;Market Street 1\n33333 City\nRegion,Country;;;;
+BDAY:19921221
+CATEGORIES:cat1,cat2,cät3
+CATEGORIES:one more
+EMAIL;TYPE=work:mark@example.com
+EMAIL;TYPE=work:mark@example.org
+FN:Dr. Mark Schröder II
+N:Schröder;Mark;Stephe;Dr.;II
+NICKNAME:nicknames
+NICKNAME:several
+NOTE:multi-line\nnote
+NOTE:single line note
+ORG:Company1;Sub-Company1
+ORG:Company2
+REV:20151230T235428Z
+ROLE:CEO
+ROLE:CTO
+TEL;TYPE=cell:0161 99999999
+TEL;TYPE=work:090 11122200
+TEL;TYPE=work:090 33344400
+TEL;TYPE=work:090 55566600
+TITLE:Manager
+TITLE:research scientist
+URL:http://example.com
+URL:https://example.org
+itemadr1.X-ABLABEL:Custom
+X-JABBER:jabber1
+X-JABBER:jabber2
+X-SKYPE:skype1
+X-SKYPE:skype2
+X-TWITTER:twitter1
+X-TWITTER:twitter2
+X-TWITTER:twitter3
+END:VCARD

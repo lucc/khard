@@ -2,6 +2,18 @@
 
 import random, string
 
+def format_yaml_values(input, indentation, start_character):
+    if "\n" in input:
+        lines = []
+        if start_character is not None:
+            lines.append(start_character)
+        for line in input.split("\n"):
+            lines.append("%s%s" % (' ' * indentation, line))
+        return '\n'.join(lines)
+    else:
+        return input
+
+
 def pretty_print(table, justify = "L"):
     # get width for every column
     column_widths = [0] * table[0].__len__()
@@ -40,77 +52,77 @@ First name :
 Additional : 
 Last name  : 
 Suffix     : 
-Nickname   : 
 
 # organisation, title and role
 Organisation : 
-Title        : 
 Role         : 
-
-# categories or tags
-# format: category1, category2, ...
-Categories : 
+Title        : 
 
 # phone numbers
 # format:
 #   Phone:
-#       standard_type1 : number
-#       standard_type2, standard_type3 : number
-#       custom_type : number
-#       ...: ...
+#       type1, type2: number
+#       type3:
+#           - number1
+#           - number2
+#       custom: number
 # allowed types:
 #   At least one of: bbs, car, cell, fax, home, isdn, msg, modem, pager, pcs, pref, video, voice, work
-#   Alternatively you can use a single custom label (only letters). But maybe not all address book
-#   clients will support that.
+#   Alternatively you may use a single custom label (only letters).
+#   But beware, that not all address book clients will support custom labels.
 Phone :
     cell : 
     work : 
 
 # email addresses
-# format:
-#   Email:
-#       standard_type : address
-#       custom_type   : address
-#       ...: ...
 # allowed types:
 #   At least one of: home, internet, pref, uri, work, x400
-#   Alternatively you can use a single custom label (only letters).
+#   Alternatively you may use a single custom label (only letters).
 Email :
     home : 
     work : 
 
 # post addresses
-# format:
-#   Address:
-#       standard_type :
-#           Street1  :
-#           Code1    :
-#           City1    :
-#           Region1  :
-#           Country1 :
-#       ...:
 # allowed types:
 #   At least one of: home, pref, work
-#   Alternatively you can use a single custom label (only letters).
+#   Alternatively you may use a single custom label (only letters).
 Address :
     home :
-        Street  : 
-        Code    : 
-        City    : 
-        Region  : 
-        Country : 
+        Box      : 
+        Extended : 
+        Street   : 
+        Code     : 
+        City     : 
+        Region   : 
+        Country  : 
+
+# web pages
+# either
+#   Webpage: http://example.com
+# or
+#   Webpage:
+#       - http://example.com
+#       - http://example.org
+Webpage : 
 
 # instant messaging and social networks
+# Warning: may only work with the contacts app of some Android devices
 Jabber  : 
 Skype   : 
 Twitter : 
-Webpage : 
 
 # birthday
 # day.month.year or year.month.day
 Birthday : 
 
-# notes
+# categories or tags
+# format: category1, category2, ...
+Categories : 
+
+# nickname
+Nickname : 
+
+# note
 # for multi-line notes use:
 #   Note : |
 #       line one

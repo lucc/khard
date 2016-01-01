@@ -73,17 +73,6 @@ class CarddavObject:
                     self.write_to_file(overwrite=True)
                 except vobject.base.ParseError as e:
                     raise
-            # organisation value
-            # some newer versions of vobject module don't return a list but a single string
-            # but the library awaits a list, if the vcard is serialized again
-            # so fix that by splitting the organisation value manually at the ";"
-            try:
-                organisation = self.vcard.org.value
-            except AttributeError as e:
-                pass
-            else:
-                if not isinstance(organisation, list):
-                    self.vcard.org.value = organisation.split(";")
 
 
     #######################################
@@ -134,8 +123,25 @@ class CarddavObject:
     # getters and setters
     #####################
 
+    def get_filename(self):
+        return self.filename
+
+    def set_filename(self, filename):
+        self.filename = filename
+
     def get_address_book(self):
         return self.address_book
+
+    def get_rev(self):
+        try:
+            return self.vcard_value_to_string(self.vcard.rev.value)
+        except AttributeError as e:
+            return ""
+
+    def add_rev(self, dt):
+        rev_obj = self.vcard.add('rev')
+        rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
+                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
 
     def get_uid(self):
         try:
@@ -143,20 +149,9 @@ class CarddavObject:
         except AttributeError as e:
             return ""
 
-    def set_uid(self, uid):
-        # try to remove old uid
-        try:
-            self.vcard.remove(self.vcard.uid)
-        except AttributeError as e:
-            pass
+    def add_uid(self, uid):
         uid_obj = self.vcard.add('uid')
         uid_obj.value = self.string_to_vcard_value(uid, output="text")
-
-    def get_filename(self):
-        return self.filename
-
-    def set_filename(self, filename):
-        self.filename = filename
 
     def get_name_prefix(self):
         try:
@@ -194,7 +189,7 @@ class CarddavObject:
         except AttributeError as e:
             return ""
 
-    def set_name(self, prefix, first_name, additional_name, last_name, suffix):
+    def add_name(self, prefix, first_name, additional_name, last_name, suffix):
         # n
         name_obj = self.vcard.add('n')
         name_obj.value = vobject.vcard.Name(
@@ -219,56 +214,62 @@ class CarddavObject:
             name_obj.value = self.string_to_vcard_value(
                     ' '.join(names).replace(",", ""), output="text")
 
-    def get_organisation(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.org.value)
-        except AttributeError as e:
-            return ""
+    def get_organisations(self):
+        organisations = []
+        for child in self.vcard.getChildren():
+            if child.name == "ORG":
+                # some newer versions of vobject module don't return a list but a single string
+                # but the library awaits a list, if the vcard is serialized again
+                # so fix that by splitting the organisation value manually at the ";"
+                if not isinstance(child.value, list):
+                    child.value = child.value.split(";")
+                organisations.append(self.vcard_value_to_string(child.value))
+        return organisations
 
-    def set_organisation(self, organisation):
+    def add_organisation(self, organisation):
         org_obj = self.vcard.add('org')
         org_obj.value = self.string_to_vcard_value(organisation, output="list")
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") \
-                and self.get_organisation() != "":
+                and len(self.get_organisations()) > 0:
             # if not, set fn to organisation name
             name_obj = self.vcard.add('fn')
-            name_obj.value = self.string_to_vcard_value(self.get_organisation(), output="text")
+            name_obj.value = self.string_to_vcard_value(self.get_organisations()[0], output="text")
             showas_obj = self.vcard.add('x-abshowas')
             showas_obj.value = "COMPANY"
 
-    def get_title(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.title.value)
-        except AttributeError as e:
-            return ""
+    def get_titles(self):
+        titles = []
+        for child in self.vcard.getChildren():
+            if child.name == "TITLE":
+                titles.append(self.vcard_value_to_string(child.value))
+        return titles
 
-    def set_title(self, title):
+    def add_title(self, title):
         title_obj = self.vcard.add('title')
         title_obj.value = self.string_to_vcard_value(title, output="text")
 
-    def get_role(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.role.value)
-        except AttributeError as e:
-            return ""
+    def get_roles(self):
+        roles = []
+        for child in self.vcard.getChildren():
+            if child.name == "ROLE":
+                roles.append(self.vcard_value_to_string(child.value))
+        return roles
 
-    def set_role(self, role):
+    def add_role(self, role):
         role_obj = self.vcard.add('role')
         role_obj.value = self.string_to_vcard_value(role, output="text")
 
     def get_phone_numbers(self):
-        phone_list = []
+        phone_dict = {}
         for child in self.vcard.getChildren():
             if child.name == "TEL":
-                type = self.get_type_for_vcard_object(child) or "voice"
-                number = child.value
-                phone_list.append(
-                        {
-                            "type" : self.vcard_value_to_string(type),
-                            "value" : self.vcard_value_to_string(number)
-                        })
-        return sorted(phone_list, key=lambda k: k['type'].lower())
+                type = self.vcard_value_to_string(
+                        self.get_type_for_vcard_object(child) or "voice")
+                if phone_dict.get(type) is None:
+                    phone_dict[type] = []
+                phone_dict[type].append(self.vcard_value_to_string(child.value))
+        return phone_dict
 
     def add_phone_number(self, type, number):
         standard_types, custom_types = self.parse_type_value(
@@ -289,17 +290,15 @@ class CarddavObject:
             label_obj.value = self.string_to_vcard_value(custom_types, output="text")
 
     def get_email_addresses(self):
-        email_list = []
+        email_dict = {}
         for child in self.vcard.getChildren():
             if child.name == "EMAIL":
-                type = self.get_type_for_vcard_object(child) or "internet"
-                address = child.value
-                email_list.append(
-                        {
-                            "type" : self.vcard_value_to_string(type),
-                            "value" : self.vcard_value_to_string(address)
-                        })
-        return sorted(email_list, key=lambda k: k['type'].lower())
+                type = self.vcard_value_to_string(
+                        self.get_type_for_vcard_object(child) or "internet")
+                if email_dict.get(type) is None:
+                    email_dict[type] = []
+                email_dict[type].append(self.vcard_value_to_string(child.value))
+        return email_dict
 
     def add_email_address(self, type, address):
         standard_types, custom_types = self.parse_type_value(
@@ -320,27 +319,61 @@ class CarddavObject:
             label_obj.value = self.string_to_vcard_value(custom_types, output="text")
 
     def get_post_addresses(self):
-        address_list = []
+        post_adr_dict = {}
         for child in self.vcard.getChildren():
             if child.name == "ADR":
-                type = self.get_type_for_vcard_object(child) or "work"
-                address = child.value
-                address_list.append(
+                type = self.vcard_value_to_string(
+                        self.get_type_for_vcard_object(child) or "work")
+                if post_adr_dict.get(type) is None:
+                    post_adr_dict[type] = []
+                post_adr_dict[type].append(
                         {
-                            "type" : self.vcard_value_to_string(type),
-                            "street" : self.vcard_value_to_string(address.street),
-                            "code" : self.vcard_value_to_string(address.code),
-                            "city" : self.vcard_value_to_string(address.city),
-                            "region" : self.vcard_value_to_string(address.region),
-                            "country" : self.vcard_value_to_string(address.country)
+                            "box" : self.vcard_value_to_string(child.value.box),
+                            "extended" : self.vcard_value_to_string(child.value.extended),
+                            "street" : self.vcard_value_to_string(child.value.street),
+                            "code" : self.vcard_value_to_string(child.value.code),
+                            "city" : self.vcard_value_to_string(child.value.city),
+                            "region" : self.vcard_value_to_string(child.value.region),
+                            "country" : self.vcard_value_to_string(child.value.country)
                         })
-        return sorted(address_list, key=lambda k: k['type'].lower())
+        return post_adr_dict
 
-    def add_post_address(self, type, street, code, city, region, country):
+    def get_formatted_post_addresses(self):
+        formatted_post_adr_dict = {}
+        for type, post_adr_list in self.get_post_addresses().items():
+            formatted_post_adr_dict[type] = []
+            for post_adr in post_adr_list:
+                strings = []
+                if post_adr.get("street") != "":
+                    strings.append(post_adr.get("street"))
+                if post_adr.get("box") != "" and post_adr.get("extended") != "":
+                    strings.append("%s %s" % (post_adr.get("box"), post_adr.get("extended")))
+                elif post_adr.get("box") != "":
+                    strings.append(post_adr.get("box"))
+                elif post_adr.get("extended") != "":
+                    strings.append(post_adr.get("extended"))
+                if post_adr.get("code") != "" and post_adr.get("city") != "":
+                    strings.append("%s %s" % (post_adr.get("code"), post_adr.get("city")))
+                elif post_adr.get("code") != "":
+                    strings.append(post_adr.get("code"))
+                elif post_adr.get("city") != "":
+                    strings.append(post_adr.get("city"))
+                if post_adr.get("region") != "" and post_adr.get("country") != "":
+                    strings.append("%s, %s" % (post_adr.get("region"), post_adr.get("country")))
+                elif post_adr.get("region") != "":
+                    strings.append(post_adr.get("region"))
+                elif post_adr.get("country") != "":
+                    strings.append(post_adr.get("country"))
+                formatted_post_adr_dict[type].append('\n'.join(strings))
+        return formatted_post_adr_dict
+
+    def add_post_address(self, type, box, extended, street, code, city, region, country):
         standard_types, custom_types = self.parse_type_value(
                 type, "%s, %s" % (street, city), self.supported_address_types)
         adr_obj = self.vcard.add('adr')
         adr_obj.value = vobject.vcard.Address(
+                box = self.string_to_vcard_value(box, output="list"),
+                extended = self.string_to_vcard_value(extended, output="list"),
                 street = self.string_to_vcard_value(street, output="list"),
                 code = self.string_to_vcard_value(code, output="list"),
                 city = self.string_to_vcard_value(city, output="list"),
@@ -360,72 +393,83 @@ class CarddavObject:
             label_obj.value = self.string_to_vcard_value(custom_types, output="text")
 
     def get_categories(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.categories.value)
-        except AttributeError as e:
-            return ""
+        category_list = []
+        for child in self.vcard.getChildren():
+            if child.name == "CATEGORIES":
+                category_list.append(self.vcard_value_to_string(child.value))
+        return category_list
 
-    def set_categories(self, categories):
+    def add_category(self, categories):
         categories_obj = self.vcard.add('categories')
         categories_obj.value = self.string_to_vcard_value(categories, output="list")
 
-    def get_nickname(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.nickname.value)
-        except AttributeError as e:
-            return ""
+    def get_nicknames(self):
+        nicknames = []
+        for child in self.vcard.getChildren():
+            if child.name == "NICKNAME":
+                nicknames.append(self.vcard_value_to_string(child.value))
+        return nicknames
 
-    def set_nickname(self, nick_name):
+    def add_nickname(self, nick_name):
         nickname_obj = self.vcard.add('nickname')
         nickname_obj.value = self.string_to_vcard_value(nick_name, output="text")
 
-    def get_note(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.note.value)
-        except AttributeError as e:
-            return ""
+    def get_notes(self):
+        notes = []
+        for child in self.vcard.getChildren():
+            if child.name == "NOTE":
+                notes.append(self.vcard_value_to_string(child.value))
+        return notes
 
-    def set_note(self, note):
+    def add_note(self, note):
         note_obj = self.vcard.add('note')
         note_obj.value = self.string_to_vcard_value(note, output="text")
 
-    def get_jabber_id(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.x_jabber.value)
-        except AttributeError as e:
-            return ""
+    def get_jabber_ids(self):
+        jabber_ids = []
+        for child in self.vcard.getChildren():
+            if child.name == "X-JABBER":
+                jabber_ids.append(self.vcard_value_to_string(child.value))
+        return jabber_ids
 
-    def set_jabber_id(self, jabber_id):
+    def add_jabber_id(self, jabber_id):
         jabber_obj = self.vcard.add('x-jabber')
         jabber_obj.value = self.string_to_vcard_value(jabber_id, output="text")
 
-    def get_skype_id(self):
+    def get_skype_ids(self):
+        skype_ids = []
+        for child in self.vcard.getChildren():
+            if child.name == "X-SKYPE":
+                skype_ids.append(self.vcard_value_to_string(child.value))
+        return skype_ids
         try:
             return self.vcard_value_to_string(self.vcard.x_skype.value)
         except AttributeError as e:
             return ""
 
-    def set_skype_id(self, skype_id):
+    def add_skype_id(self, skype_id):
         skype_obj = self.vcard.add('x-skype')
         skype_obj.value = self.string_to_vcard_value(skype_id, output="text")
 
-    def get_twitter_id(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.x_twitter.value)
-        except AttributeError as e:
-            return ""
+    def get_twitter_ids(self):
+        twitter_ids = []
+        for child in self.vcard.getChildren():
+            if child.name == "X-TWITTER":
+                twitter_ids.append(self.vcard_value_to_string(child.value))
+        return twitter_ids
 
-    def set_twitter_id(self, twitter_id):
+    def add_twitter_id(self, twitter_id):
         twitter_obj = self.vcard.add('x-twitter')
         twitter_obj.value = self.string_to_vcard_value(twitter_id, output="text")
 
-    def get_webpage(self):
-        try:
-            return self.vcard_value_to_string(self.vcard.url.value)
-        except AttributeError as e:
-            return ""
+    def get_webpages(self):
+        urls = []
+        for child in self.vcard.getChildren():
+            if child.name == "URL":
+                urls.append(self.vcard_value_to_string(child.value))
+        return urls
 
-    def set_webpage(self, webpage):
+    def add_webpage(self, webpage):
         webpage_obj = self.vcard.add('url')
         webpage_obj.value = self.string_to_vcard_value(webpage, output="text")
 
@@ -442,7 +486,7 @@ class CarddavObject:
         except ValueError as e:
             return None
 
-    def set_birthday(self, date):
+    def add_birthday(self, date):
         bday_obj = self.vcard.add('bday')
         bday_obj.value = "%.4d%.2d%.2d" % (date.year, date.month, date.day)
 
@@ -450,103 +494,6 @@ class CarddavObject:
     #######################
     # object helper methods
     #######################
-
-    def clean_vcard(self):
-        # rev
-        try:
-            self.vcard.remove(self.vcard.rev)
-        except AttributeError as e:
-            pass
-        # n
-        try:
-            self.vcard.remove(self.vcard.n)
-        except AttributeError as e:
-            pass
-        # fn
-        try:
-            self.vcard.remove(self.vcard.fn)
-        except AttributeError as e:
-            pass
-        # nickname
-        try:
-            self.vcard.remove(self.vcard.nickname)
-        except AttributeError as e:
-            pass
-        # organisation
-        try:
-            self.vcard.remove(self.vcard.org)
-        except AttributeError as e:
-            pass
-        try:
-            self.vcard.remove(self.vcard.x_abshowas)
-        except AttributeError as e:
-            pass
-        # title
-        try:
-            self.vcard.remove(self.vcard.title)
-        except AttributeError as e:
-            pass
-        # role
-        try:
-            self.vcard.remove(self.vcard.role)
-        except AttributeError as e:
-            pass
-        # categories
-        try:
-            self.vcard.remove(self.vcard.categories)
-        except AttributeError as e:
-            pass
-        # phone
-        while True:
-            try:
-                self.vcard.remove(self.vcard.tel)
-            except AttributeError as e:
-                break
-        # email addresses
-        while True:
-            try:
-                self.vcard.remove(self.vcard.email)
-            except AttributeError as e:
-                break
-        # addresses
-        while True:
-            try:
-                self.vcard.remove(self.vcard.adr)
-            except AttributeError as e:
-                break
-        # instant messaging and social networks
-        try:
-            self.vcard.remove(self.vcard.x_jabber)
-        except AttributeError as e:
-            pass
-        try:
-            self.vcard.remove(self.vcard.x_skype)
-        except AttributeError as e:
-            pass
-        try:
-            self.vcard.remove(self.vcard.x_twitter)
-        except AttributeError as e:
-            pass
-        try:
-            self.vcard.remove(self.vcard.url)
-        except AttributeError as e:
-            pass
-        # note
-        try:
-            self.vcard.remove(self.vcard.note)
-        except AttributeError as e:
-            pass
-        # birthday
-        try:
-            self.vcard.remove(self.vcard.bday)
-        except AttributeError as e:
-            pass
-        # x-ablabel
-        while True:
-            try:
-                self.vcard.remove(self.vcard.x_ablabel)
-            except AttributeError as e:
-                break
 
     def filter_invalid_tags(self, contents):
         contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM', contents)
@@ -569,15 +516,9 @@ class CarddavObject:
             raise ValueError(e)
         except yaml.scanner.ScannerError as e:
             raise ValueError(e)
-
-        # clean vcard
-        self.clean_vcard()
-
-        # update ref
-        dt = datetime.datetime.now()
-        rev_obj = self.vcard.add('rev')
-        rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
-                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
+        else:
+            if contact_data is None:
+                raise ValueError("Error: Found no contact information")
 
         # check for available data
         # at least enter name or organisation
@@ -585,86 +526,227 @@ class CarddavObject:
                 and not bool(contact_data.get("Last name")) \
                 and not bool(contact_data.get("Organisation")):
             raise ValueError("Error: You must either enter a name or an organisation")
-        else:
-            # set name
-            self.set_name(
-                    contact_data.get("Prefix") or "",
-                    contact_data.get("First name") or "",
-                    contact_data.get("Additional") or "",
-                    contact_data.get("Last name") or "",
-                    contact_data.get("Suffix") or "")
+
+        # update rev
+        self.delete_vcard_object("REV")
+        self.add_rev(datetime.datetime.now())
+
+        # name
+        if isinstance(contact_data.get("Prefix"), list) \
+                or isinstance(contact_data.get("Prefix"), dict) \
+                or isinstance(contact_data.get("First name"), list) \
+                or isinstance(contact_data.get("First name"), dict) \
+                or isinstance(contact_data.get("Additional"), list) \
+                or isinstance(contact_data.get("Additional"), dict) \
+                or isinstance(contact_data.get("Last name"), list) \
+                or isinstance(contact_data.get("Last name"), dict) \
+                or isinstance(contact_data.get("Suffix"), list) \
+                or isinstance(contact_data.get("Suffix"), dict):
+            raise ValueError("Error: Multiple entries for name fields are not allowed. Separate by comma instead.")
+        # although the "n" attribute is not explisitely required by the vcard specification,
+        # the vobject library throws an exception, if it doesn't exist
+        # so add the name regardless if it's empty or not
+        self.delete_vcard_object("FN")
+        self.delete_vcard_object("N")
+        self.add_name(
+                contact_data.get("Prefix") or "",
+                contact_data.get("First name") or "",
+                contact_data.get("Additional") or "",
+                contact_data.get("Last name") or "",
+                contact_data.get("Suffix") or "")
+        # nickname
+        self.delete_vcard_object("NICKNAME")
+        try:
+            nickname_list = contact_data.get("Nickname")
+            if not isinstance(nickname_list, list):
+                nickname_list = [nickname_list]
+            for nickname in sorted(nickname_list):
+                if bool(nickname):
+                    self.add_nickname(nickname)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
 
         # organisation
-        if bool(contact_data.get("Organisation")):
-            self.set_organisation(contact_data.get("Organisation"))
+        self.delete_vcard_object("ORG")
+        self.delete_vcard_object("X-ABSHOWAS")
+        try:
+            organisation_list = contact_data.get("Organisation")
+            if not isinstance(organisation_list, list):
+                organisation_list = [organisation_list]
+            for organisation in sorted(organisation_list):
+                if bool(organisation):
+                    self.add_organisation(organisation)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
         # role
-        if bool(contact_data.get("Role")):
-            self.set_role(contact_data.get("Role"))
+        self.delete_vcard_object("ROLE")
+        try:
+            role_list = contact_data.get("Role")
+            if not isinstance(role_list, list):
+                role_list = [role_list]
+            for role in sorted(role_list):
+                if bool(role):
+                    self.add_role(role)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
         # title
-        if bool(contact_data.get("Title")):
-            self.set_title(contact_data.get("Title"))
+        self.delete_vcard_object("TITLE")
+        try:
+            title_list = contact_data.get("Title")
+            if not isinstance(title_list, list):
+                title_list = [title_list]
+            for title in sorted(title_list):
+                if bool(title):
+                    self.add_title(title)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
 
         # phone
+        self.delete_vcard_object("TEL")
         try:
-            for label, number in contact_data.get("Phone").items():
-                if number != "":
-                    self.add_phone_number(label, number)
+            for type, number_list in sorted(contact_data.get("Phone").items()):
+                if not isinstance(number_list, list):
+                    number_list = [number_list]
+                for number in number_list:
+                    if bool(number):
+                        self.add_phone_number(type, number)
         except AttributeError as e:
             pass
         except KeyError as e:
             pass
 
         # email
+        self.delete_vcard_object("EMAIL")
         try:
-            for label, address in contact_data.get("Email").items():
-                if address != "":
-                    self.add_email_address(label, address)
+            for type, email_list in sorted(contact_data.get("Email").items()):
+                if not isinstance(email_list, list):
+                    email_list = [email_list]
+                for email in email_list:
+                    if bool(email):
+                        self.add_email_address(type, email)
         except AttributeError as e:
             pass
         except KeyError as e:
             pass
 
         # post addresses
+        self.delete_vcard_object("ADR")
         try:
-            for label, address in contact_data.get("Address").items():
-                try:
-                    number_of_non_empty_address_values = 0
-                    for key, value in address.items():
-                        if key in ["Street", "Code", "City", "Region", "Country"] \
-                                and value != "":
-                            number_of_non_empty_address_values += 1
-                    if number_of_non_empty_address_values > 0:
-                        self.add_post_address(
-                                label,
-                                address.get("Street") or "",
-                                address.get("Code") or "",
-                                address.get("City") or "",
-                                address.get("Region") or "",
-                                address.get("Country") or "")
-                except TypeError as e:
-                    raise ValueError("Error during parsing of address with label %s" % label)
+            for type, post_adr_list in sorted(contact_data.get("Address").items()):
+                if not isinstance(post_adr_list, list):
+                    post_adr_list = [post_adr_list]
+                for post_adr in post_adr_list:
+                    try:
+                        number_of_non_empty_address_values = 0
+                        for key, value in post_adr.items():
+                            if key in ["Box", "Extended", "Street", "Code", "City", "Region", "Country"] \
+                                    and bool(value):
+                                number_of_non_empty_address_values += 1
+                        if number_of_non_empty_address_values > 0:
+                            self.add_post_address(
+                                    type,
+                                    post_adr.get("Box") or "",
+                                    post_adr.get("Extended") or "",
+                                    post_adr.get("Street") or "",
+                                    post_adr.get("Code") or "",
+                                    post_adr.get("City") or "",
+                                    post_adr.get("Region") or "",
+                                    post_adr.get("Country") or "")
+                    except TypeError as e:
+                        raise ValueError("Error during parsing of address with type %s" % type)
         except AttributeError as e:
             pass
         except KeyError as e:
             pass
 
-        # instant messaging and social networks
-        if bool(contact_data.get("Jabber")):
-            self.set_jabber_id(contact_data.get("Jabber"))
-        if bool(contact_data.get("Skype")):
-            self.set_skype_id(contact_data.get("Skype"))
-        if bool(contact_data.get("Twitter")):
-            self.set_twitter_id(contact_data.get("Twitter"))
-        if bool(contact_data.get("Webpage")):
-            self.set_webpage(contact_data.get("Webpage"))
+        # categories
+        self.delete_vcard_object("CATEGORIES")
+        try:
+            category_list = contact_data.get("Categories")
+            if not isinstance(category_list, list):
+                category_list = [category_list]
+            for category in sorted(category_list):
+                if bool(category):
+                    self.add_category(category)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
 
-        # miscellaneous stuff
+        # jabber
+        self.delete_vcard_object("X-JABBER")
+        try:
+            jabber_list = contact_data.get("Jabber")
+            if not isinstance(jabber_list, list):
+                jabber_list = [jabber_list]
+            for jabber_id in sorted(jabber_list):
+                if bool(jabber_id):
+                    self.add_jabber_id(jabber_id)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
+
+        # skype
+        self.delete_vcard_object("X-SKYPE")
+        try:
+            skype_list = contact_data.get("Skype")
+            if not isinstance(skype_list, list):
+                skype_list = [skype_list]
+            for skype_id in sorted(skype_list):
+                if bool(skype_id):
+                    self.add_skype_id(skype_id)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
+
+        # twitter
+        self.delete_vcard_object("X-TWITTER")
+        try:
+            twitter_list = contact_data.get("Twitter")
+            if not isinstance(twitter_list, list):
+                twitter_list = [twitter_list]
+            for twitter_id in sorted(twitter_list):
+                if bool(twitter_id):
+                    self.add_twitter_id(twitter_id)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
+
+        # urls
+        self.delete_vcard_object("URL")
+        try:
+            url_list = contact_data.get("Webpage")
+            if not isinstance(url_list, list):
+                url_list = [url_list]
+            for url in sorted(url_list):
+                if bool(url):
+                    self.add_webpage(url)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
+
         # birthday
+        self.delete_vcard_object("BDAY")
         if bool(contact_data.get("Birthday")):
+            if isinstance(contact_data.get("Birthday"), list) \
+                    or isinstance(contact_data.get("Birthday"), dict):
+                raise ValueError("Error: Multiple birthday entries are not allowed")
             supported_date_formats = ["%d-%m-%Y", "%Y-%m-%d"]
             for date_format in supported_date_formats:
                 try:
-                    self.set_birthday(
+                    self.add_birthday(
                             datetime.datetime.strptime(
                                 re.sub("\D", "-", contact_data.get("Birthday")),
                                 date_format)
@@ -675,15 +757,21 @@ class CarddavObject:
                     break
             if not self.get_birthday():
                 raise ValueError("Error: Wrong date format\nExamples: 21.10.1988, 1988.10.21 or 1988-10-21")
-        # categories
-        if bool(contact_data.get("Categories")):
-            self.set_categories(contact_data.get("Categories"))
-        # nickname
-        if bool(contact_data.get("Nickname")):
-            self.set_nickname(contact_data.get("Nickname"))
-        # note
-        if bool(contact_data.get("Note")):
-            self.set_note(contact_data.get("Note"))
+
+        # notes
+        self.delete_vcard_object("NOTE")
+        try:
+            note_list = contact_data.get("Note")
+            if not isinstance(note_list, list):
+                note_list = [note_list]
+            for note in sorted(note_list):
+                if bool(note):
+                    self.add_note(note)
+        except AttributeError as e:
+            pass
+        except KeyError as e:
+            pass
+
 
     def get_template(self):
         strings = []
@@ -694,85 +782,209 @@ class CarddavObject:
                 strings.append(line)
 
             elif line.lower().startswith("prefix"):
-                strings.append("Prefix     : %s" % self.get_name_prefix())
+                strings.append("Prefix     : %s" % \
+                        helpers.format_yaml_values(self.get_name_prefix(), 4, "|"))
             elif line.lower().startswith("first name"):
-                strings.append("First name : %s" % self.get_first_name())
+                strings.append("First name : %s" % \
+                        helpers.format_yaml_values(self.get_first_name(), 4, "|"))
             elif line.lower().startswith("additional"):
-                strings.append("Additional : %s" % self.get_additional_name())
+                strings.append("Additional : %s" % \
+                        helpers.format_yaml_values(self.get_additional_name(), 4, "|"))
             elif line.lower().startswith("last name"):
-                strings.append("Last name  : %s" % self.get_last_name())
+                strings.append("Last name  : %s" % \
+                        helpers.format_yaml_values(self.get_last_name(), 4, "|"))
             elif line.lower().startswith("suffix"):
-                strings.append("Suffix     : %s" % self.get_name_suffix())
+                strings.append("Suffix     : %s" % \
+                        helpers.format_yaml_values(self.get_name_suffix(), 4, "|"))
             elif line.lower().startswith("nickname"):
-                strings.append("Nickname   : %s" % self.get_nickname())
+                if len(self.get_nicknames()) == 0:
+                    strings.append("Nickname : ")
+                elif len(self.get_nicknames()) == 1:
+                    strings.append("Nickname : %s" \
+                            % helpers.format_yaml_values(self.get_nicknames()[0], 4, "|"))
+                else:
+                    strings.append("Nickname : ")
+                    for nickname in sorted(self.get_nicknames()):
+                        strings.append("    - %s" % helpers.format_yaml_values(nickname, 8, "|"))
 
             elif line.lower().startswith("organisation"):
-                strings.append("Organisation : %s" % self.get_organisation())
+                if len(self.get_organisations()) == 0:
+                    strings.append("Organisation : ")
+                elif len(self.get_organisations()) == 1:
+                    strings.append("Organisation : %s" \
+                            % helpers.format_yaml_values(self.get_organisations()[0], 4, "|"))
+                else:
+                    strings.append("Organisation : ")
+                    for organisation in sorted(self.get_organisations()):
+                        strings.append("    - %s" % helpers.format_yaml_values(organisation, 8, "|"))
             elif line.lower().startswith("title"):
-                strings.append("Title        : %s" % self.get_title())
+                if len(self.get_titles()) == 0:
+                    strings.append("Title        : ")
+                elif len(self.get_titles()) == 1:
+                    strings.append("Title        : %s" \
+                            % helpers.format_yaml_values(self.get_titles()[0], 4, "|"))
+                else:
+                    strings.append("Title        : ")
+                    for title in sorted(self.get_titles()):
+                        strings.append("    - %s" % helpers.format_yaml_values(title, 8, "|"))
             elif line.lower().startswith("role"):
-                strings.append("Role         : %s" % self.get_role())
-            elif line.lower().startswith("categories"):
-                strings.append("Categories : %s" % self.get_categories())
+                if len(self.get_roles()) == 0:
+                    strings.append("Role         : ")
+                elif len(self.get_roles()) == 1:
+                    strings.append("Role         : %s" \
+                            % helpers.format_yaml_values(self.get_roles()[0], 4, "|"))
+                else:
+                    strings.append("Role         : ")
+                    for role in sorted(self.get_roles()):
+                        strings.append("    - %s" % helpers.format_yaml_values(role, 8, "|"))
 
             elif line.lower().startswith("phone"):
                 strings.append("Phone :")
-                if len(self.get_phone_numbers()) == 0:
+                if len(self.get_phone_numbers().keys()) == 0:
                     strings.append("    cell : ")
                     strings.append("    work : ")
                 else:
-                    for entry in self.get_phone_numbers():
-                        strings.append("    %s : %s" % (entry['type'], entry['value']))
+                    for type, number_list in sorted(self.get_phone_numbers().items(), key=lambda k: k[0].lower()):
+                        if len(number_list) == 1:
+                            strings.append("    %s : %s" \
+                                    % (type, helpers.format_yaml_values(number_list[0], 8, "|")))
+                        else:
+                            strings.append("    %s:" % type)
+                            for number in sorted(number_list):
+                                strings.append("        - %s" \
+                                        % helpers.format_yaml_values(number, 12, "|"))
 
             elif line.lower().startswith("email"):
                 strings.append("Email :")
-                if len(self.get_email_addresses()) == 0:
+                if len(self.get_email_addresses().keys()) == 0:
                     strings.append("    home : ")
                     strings.append("    work : ")
                 else:
-                    for entry in self.get_email_addresses():
-                        strings.append("    %s : %s" % (entry['type'], entry['value']))
+                    for type, email_list in sorted(self.get_email_addresses().items(), key=lambda k: k[0].lower()):
+                        if len(email_list) == 1:
+                            strings.append("    %s : %s" \
+                                    % (type, helpers.format_yaml_values(email_list[0], 8, "|")))
+                        else:
+                            strings.append("    %s:" % type)
+                            for email in sorted(email_list):
+                                strings.append("        - %s" \
+                                        % helpers.format_yaml_values(email, 12, "|"))
 
             elif line.lower().startswith("address"):
                 strings.append("Address :")
-                if len(self.get_post_addresses()) == 0:
+                if len(self.get_post_addresses().keys()) == 0:
                     strings.append("    home :")
-                    strings.append("        Street  : ")
-                    strings.append("        Code    : ")
-                    strings.append("        City    : ")
-                    strings.append("        Region  : ")
-                    strings.append("        Country : ")
+                    strings.append("        Box      : ")
+                    strings.append("        Extended : ")
+                    strings.append("        Street   : ")
+                    strings.append("        Code     : ")
+                    strings.append("        City     : ")
+                    strings.append("        Region   : ")
+                    strings.append("        Country  : ")
                 else:
-                    for entry in self.get_post_addresses():
-                        strings.append("    %s :" % entry['type'])
-                        strings.append("        Street  : %s" % entry['street'])
-                        strings.append("        Code    : %s" % entry['code'])
-                        strings.append("        City    : %s" % entry['city'])
-                        strings.append("        Region  : %s" % entry['region'])
-                        strings.append("        Country : %s" % entry['country'])
+                    for type, post_adr_list in sorted(self.get_post_addresses().items(), key=lambda k: k[0].lower()):
+                        strings.append("    %s:" % type)
+                        if len(post_adr_list) == 1:
+                            post_adr = post_adr_list[0]
+                            strings.append("        Box      : %s" \
+                                    % helpers.format_yaml_values(post_adr.get("box"), 12, "|"))
+                            strings.append("        Extended : %s" \
+                                    % helpers.format_yaml_values(post_adr.get("extended"), 12, "|"))
+                            strings.append("        Street   : %s" \
+                                    % helpers.format_yaml_values(post_adr.get("street"), 12, "|"))
+                            strings.append("        Code     : %s" \
+                                    % helpers.format_yaml_values(post_adr.get("code"), 12, "|"))
+                            strings.append("        City     : %s" \
+                                    % helpers.format_yaml_values(post_adr.get("city"), 12, "|"))
+                            strings.append("        Region   : %s" \
+                                    % helpers.format_yaml_values(post_adr.get("region"), 12, "|"))
+                            strings.append("        Country  : %s" \
+                                    % helpers.format_yaml_values(post_adr.get("country"), 12, "|"))
+                        else:
+                            for post_adr in sorted(post_adr_list):
+                                strings.append("        -")
+                                strings.append("            Box      : %s" \
+                                        % helpers.format_yaml_values(post_adr.get("box"), 16, "|"))
+                                strings.append("            Extended : %s" \
+                                        % helpers.format_yaml_values(post_adr.get("extended"), 16, "|"))
+                                strings.append("            Street   : %s" \
+                                        % helpers.format_yaml_values(post_adr.get("street"), 16, "|"))
+                                strings.append("            Code     : %s" \
+                                        % helpers.format_yaml_values(post_adr.get("code"), 16, "|"))
+                                strings.append("            City     : %s" \
+                                        % helpers.format_yaml_values(post_adr.get("city"), 16, "|"))
+                                strings.append("            Region   : %s" \
+                                        % helpers.format_yaml_values(post_adr.get("region"), 16, "|"))
+                                strings.append("            Country  : %s" \
+                                        % helpers.format_yaml_values(post_adr.get("country"), 16, "|"))
 
             elif line.lower().startswith("jabber"):
-                strings.append("Jabber  : %s" % self.get_jabber_id())
+                if len(self.get_jabber_ids()) == 0:
+                    strings.append("Jabber  : ")
+                elif len(self.get_jabber_ids()) == 1:
+                    strings.append("Jabber  : %s" \
+                            % helpers.format_yaml_values(self.get_jabber_ids()[0], 4, "|"))
+                else:
+                    strings.append("Jabber  : ")
+                    for jabber_id in sorted(self.get_jabber_ids()):
+                        strings.append("    - %s" % helpers.format_yaml_values(jabber_id, 8, "|"))
             elif line.lower().startswith("skype"):
-                strings.append("Skype   : %s" % self.get_skype_id())
+                if len(self.get_skype_ids()) == 0:
+                    strings.append("Skype   : ")
+                elif len(self.get_skype_ids()) == 1:
+                    strings.append("Skype   : %s" \
+                            % helpers.format_yaml_values(self.get_skype_ids()[0], 4, "|"))
+                else:
+                    strings.append("Skype   : ")
+                    for skype_id in sorted(self.get_skype_ids()):
+                        strings.append("    - %s" % helpers.format_yaml_values(skype_id, 8, "|"))
             elif line.lower().startswith("twitter"):
-                strings.append("Twitter : %s" % self.get_twitter_id())
+                if len(self.get_twitter_ids()) == 0:
+                    strings.append("Twitter : ")
+                elif len(self.get_twitter_ids()) == 1:
+                    strings.append("Twitter : %s" \
+                            % helpers.format_yaml_values(self.get_twitter_ids()[0], 4, "|"))
+                else:
+                    strings.append("Twitter : ")
+                    for twitter_id in sorted(self.get_twitter_ids()):
+                        strings.append("    - %s" % helpers.format_yaml_values(twitter_id, 8, "|"))
             elif line.lower().startswith("webpage"):
-                strings.append("Webpage : %s" % self.get_webpage())
+                if len(self.get_webpages()) == 0:
+                    strings.append("Webpage : ")
+                elif len(self.get_webpages()) == 1:
+                    strings.append("Webpage : %s" \
+                            % helpers.format_yaml_values(self.get_webpages()[0], 4, "|"))
+                else:
+                    strings.append("Webpage : ")
+                    for webpage in sorted(self.get_webpages()):
+                        strings.append("    - %s" % helpers.format_yaml_values(webpage, 8, "|"))
+
             elif line.lower().startswith("birthday"):
                 date = self.get_birthday()
                 if not date:
                     strings.append("Birthday : ")
                 else:
                     strings.append("Birthday : %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
-            elif line.lower().startswith("note"):
-                note = self.get_note()
-                if note == "":
-                    strings.append("Note : ")
+            elif line.lower().startswith("categories"):
+                if len(self.get_categories()) == 0:
+                    strings.append("Categories : ")
+                elif len(self.get_categories()) == 1:
+                    strings.append("Categories : %s" \
+                            % helpers.format_yaml_values(self.get_categories()[0], 4, "|"))
                 else:
-                    strings.append("Note : |")
-                    for note_line in note.split("\n"):
-                        strings.append("    %s" % note_line)
+                    strings.append("Categories : ")
+                    for category in sorted(self.get_categories()):
+                        strings.append("    - %s" % helpers.format_yaml_values(category, 8, "|"))
+            elif line.lower().startswith("note"):
+                if len(self.get_notes()) == 0:
+                    strings.append("Note : ")
+                elif len(self.get_notes()) == 1:
+                    strings.append("Note : %s" \
+                            % helpers.format_yaml_values(self.get_notes()[0], 4, "|"))
+                else:
+                    strings.append("Note : ")
+                    for note in sorted(self.get_notes()):
+                        strings.append("    - %s" % helpers.format_yaml_values(note, 8, "|"))
         return '\n'.join(strings)
 
     def print_vcard(self, show_address_book = True, show_uid = True):
@@ -791,75 +1003,156 @@ class CarddavObject:
             if self.get_name_suffix() != "":
                 names.append(self.get_name_suffix())
             strings.append("Name: %s" % ' '.join(names).replace(",", ""))
-            if self.get_nickname() != "":
-                strings.append("    Nickname: %s" % self.get_nickname())
         # organisation
-        if self.get_organisation() != "":
-            strings.append("Organisation: %s" % self.get_organisation())
-            if self.get_title() != "":
-                strings.append("    Title: %s" % self.get_title())
-            if self.get_role() != "":
-                strings.append("    Role: %s" % self.get_role())
-        if show_address_book:
-            strings.append("Address book: %s" % self.address_book.get_name())
-        if self.get_categories() != "":
-            strings.append("Categories\n    %s" % self.get_categories())
-        if len(self.get_phone_numbers()) > 0:
-            strings.append("Phone")
-            for entry in self.get_phone_numbers():
-                strings.append("    %s: %s" % (entry['type'], entry['value']))
-        if len(self.get_email_addresses()) > 0:
-            strings.append("E-Mail")
-            for entry in self.get_email_addresses():
-                strings.append("    %s: %s" % (entry['type'], entry['value']))
-        if len(self.get_post_addresses()) > 0:
-            strings.append("Address")
-            for entry in self.get_post_addresses():
-                strings.append("    %s:" % entry['type'])
-                if entry['street'] != "":
-                    strings.append("        %s" % entry['street'])
-                if entry['code'] != "" and entry['city'] != "":
-                    strings.append("        %s %s" % (entry['code'], entry['city']))
-                elif entry['code'] != "":
-                    strings.append("        %s" % entry['code'])
-                elif entry['city'] != "":
-                    strings.append("        %s" % entry['city'])
-                if entry['region'] != "" and entry['country'] != "":
-                    strings.append("        %s, %s" % (entry['region'], entry['country']))
-                elif entry['region'] != "":
-                    strings.append("        %s" % entry['region'])
-                elif entry['country'] != "":
-                    strings.append("        %s" % entry['country'])
-        if self.get_jabber_id() != "" \
-                or self.get_skype_id() != "" \
-                or self.get_twitter_id() != "" \
-                or self.get_webpage() != "":
-            strings.append("Instant messaging and social networks")
-            if self.get_jabber_id() != "":
-                strings.append("    Jabber:  %s" % self.get_jabber_id())
-            if self.get_skype_id() != "":
-                strings.append("    Skype:   %s" % self.get_skype_id())
-            if self.get_twitter_id() != "":
-                strings.append("    Twitter: %s" % self.get_twitter_id())
-            if self.get_webpage() != "":
-                strings.append("    Webpage: %s" % self.get_webpage())
+        if len(self.get_organisations()) > 0:
+            if len(self.get_organisations()) == 1:
+                strings.append("Organisation: %s" \
+                        % helpers.format_yaml_values(self.get_organisations()[0], 4, ""))
+            else:
+                strings.append("Organisations:")
+                for organisation in sorted(self.get_organisations()):
+                    strings.append("    - %s" % helpers.format_yaml_values(organisation, 8, ""))
+
+        # person related information
         if self.get_birthday() != None \
-                or self.get_note() != "" \
-                or show_uid:
-            strings.append("Miscellaneous")
-            if show_uid and self.get_uid() != "":
-                strings.append("    UID: %s" % self.get_uid())
+                or len(self.get_nicknames()) > 0 \
+                or len(self.get_roles()) > 0 \
+                or len(self.get_titles()) > 0:
+            strings.append("General:")
             if self.get_birthday() != None:
                 date = self.get_birthday()
                 strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
-            if self.get_note() != "":
-                if len(self.get_note().split("\n")) == 1:
-                    strings.append("    Note: %s" % self.get_note())
+            if len(self.get_nicknames()) > 0:
+                if len(self.get_nicknames()) == 1:
+                    strings.append("    Nickname: %s" \
+                            % helpers.format_yaml_values(self.get_nicknames()[0], 8, ""))
                 else:
-                    strings.append("    Note:")
-                    for note_line in self.get_note().split("\n"):
-                        strings.append("        %s" % note_line)
+                    strings.append("    Nicknames:")
+                    for nickname in sorted(self.get_nicknames()):
+                        strings.append("        - %s" % helpers.format_yaml_values(nickname, 12, ""))
+            if len(self.get_roles()) > 0:
+                if len(self.get_roles()) == 1:
+                    strings.append("    Role: %s" \
+                            % helpers.format_yaml_values(self.get_roles()[0], 8, ""))
+                else:
+                    strings.append("    Roles:")
+                    for role in sorted(self.get_roles()):
+                        strings.append("        - %s" % helpers.format_yaml_values(role, 12, ""))
+            if len(self.get_titles()) > 0:
+                if len(self.get_titles()) == 1:
+                    strings.append("    Title: %s" \
+                            % helpers.format_yaml_values(self.get_titles()[0], 8, ""))
+                else:
+                    strings.append("    Titles:")
+                    for title in sorted(self.get_titles()):
+                        strings.append("        - %s" % helpers.format_yaml_values(title, 12, ""))
+
+        # phone numbers
+        if len(self.get_phone_numbers().keys()) > 0:
+            strings.append("Phone")
+            for type, number_list in sorted(self.get_phone_numbers().items(), key=lambda k: k[0].lower()):
+                if len(number_list) == 1:
+                    strings.append("    %s: %s" \
+                            % (type, helpers.format_yaml_values(number_list[0], 8, "")))
+                else:
+                    strings.append("    %s:" % type)
+                    for number in sorted(number_list):
+                        strings.append("        - %s" \
+                                % helpers.format_yaml_values(number, 12, ""))
+
+        # email addresses
+        if len(self.get_email_addresses().keys()) > 0:
+            strings.append("E-Mail")
+            for type, email_list in sorted(self.get_email_addresses().items(), key=lambda k: k[0].lower()):
+                if len(email_list) == 1:
+                    strings.append("    %s: %s" \
+                            % (type, helpers.format_yaml_values(email_list[0], 8, "")))
+                else:
+                    strings.append("    %s:" % type)
+                    for email in sorted(email_list):
+                        strings.append("        - %s" \
+                                % helpers.format_yaml_values(email, 12, ""))
+
+        # post addresses
+        if len(self.get_post_addresses().keys()) > 0:
+            strings.append("Address")
+            for type, post_adr_list in sorted(self.get_formatted_post_addresses().items(), key=lambda k: k[0].lower()):
+                if len(post_adr_list) == 1:
+                    strings.append("    %s: %s" \
+                            % (type, helpers.format_yaml_values(post_adr_list[0], 8, "")))
+                else:
+                    strings.append("    %s:" % type)
+                    for post_adr in sorted(post_adr_list):
+                        strings.append("        - %s" \
+                                % helpers.format_yaml_values(post_adr, 12, ""))
+
+        # im and webpages
+        if len(self.get_jabber_ids()) > 0 \
+                or len(self.get_skype_ids()) > 0 \
+                or len(self.get_twitter_ids()) > 0 \
+                or len(self.get_webpages()) > 0:
+            strings.append("Instant messaging and social networks")
+            if len(self.get_jabber_ids()) > 0:
+                if len(self.get_jabber_ids()) == 1:
+                    strings.append("    Jabber: %s" \
+                            % helpers.format_yaml_values(self.get_jabber_ids()[0], 8, ""))
+                else:
+                    strings.append("    Jabber:")
+                    for jabber_id in sorted(self.get_jabber_ids()):
+                        strings.append("        - %s" % helpers.format_yaml_values(jabber_id, 12, ""))
+            if len(self.get_skype_ids()) > 0:
+                if len(self.get_skype_ids()) == 1:
+                    strings.append("    Skype: %s" \
+                            % helpers.format_yaml_values(self.get_skype_ids()[0], 8, ""))
+                else:
+                    strings.append("    Skype:")
+                    for skype_id in sorted(self.get_skype_ids()):
+                        strings.append("        - %s" % helpers.format_yaml_values(skype_id, 12, ""))
+            if len(self.get_twitter_ids()) > 0:
+                if len(self.get_twitter_ids()) == 1:
+                    strings.append("    Twitter: %s" \
+                            % helpers.format_yaml_values(self.get_twitter_ids()[0], 8, ""))
+                else:
+                    strings.append("    Twitter:")
+                    for twitter_id in sorted(self.get_twitter_ids()):
+                        strings.append("        - %s" % helpers.format_yaml_values(twitter_id, 12, ""))
+            if len(self.get_webpages()) > 0:
+                if len(self.get_webpages()) == 1:
+                    strings.append("    Webpage: %s" \
+                            % helpers.format_yaml_values(self.get_webpages()[0], 8, ""))
+                else:
+                    strings.append("    Webpages:")
+                    for webpage in sorted(self.get_webpages()):
+                        strings.append("        - %s" % helpers.format_yaml_values(webpage, 12, ""))
+
+        # misc stuff
+        if show_address_book \
+                or len(self.get_categories()) > 0 \
+                or len(self.get_notes()) > 0 \
+                or (show_uid and self.get_uid() != ""):
+            strings.append("Miscellaneous")
+            if show_address_book:
+                strings.append("    Address book: %s" % self.address_book.get_name())
+            if len(self.get_categories()) > 0:
+                if len(self.get_categories()) == 1:
+                    strings.append("    Categories: %s" \
+                            % helpers.format_yaml_values(self.get_categories()[0], 8, ""))
+                else:
+                    strings.append("    Categories:")
+                    for category in sorted(self.get_categories()):
+                        strings.append("        - %s" % helpers.format_yaml_values(category, 12, ""))
+            if len(self.get_notes()) > 0:
+                if len(self.get_notes()) == 1:
+                    strings.append("    Note: %s" \
+                            % helpers.format_yaml_values(self.get_notes()[0], 8, ""))
+                else:
+                    strings.append("    Notes:")
+                    for note in sorted(self.get_notes()):
+                        strings.append("        - %s" % helpers.format_yaml_values(note, 12, ""))
+            if show_uid and self.get_uid() != "":
+                strings.append("    UID: %s" % helpers.format_yaml_values(self.get_uid(), 8, ""))
         return '\n'.join(strings)
+
 
     def write_to_file(self, overwrite=False):
         if os.path.exists(self.filename) and overwrite == False:
@@ -877,6 +1170,20 @@ class CarddavObject:
         except IOError as e:
             print("Error: Can't write\n%s" % e)
             sys.exit(4)
+
+    def delete_vcard_object(self, object_name):
+        # first collect all vcard items, which should be removed
+        to_be_removed = []
+        for child in self.vcard.getChildren():
+            if child.name == object_name:
+                if child.group:
+                    for label in self.vcard.getChildren():
+                        if label.name == "X-ABLABEL" and label.group == child.group:
+                            to_be_removed.append(label)
+                to_be_removed.append(child)
+        # then delete them one by one
+        for item in to_be_removed:
+            self.vcard.remove(item)
 
     def delete_vcard_file(self):
         if os.path.exists(self.filename):

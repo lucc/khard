@@ -5,16 +5,16 @@
 #   or with: cat template_for_contact_creation.yaml | khard new -a address_book
 
 # name components
-Prefix     : 
-First name : 
-Additional : 
-Last name  : 
-Suffix     : 
+Prefix     : Dr.
+First name : Paula
+Additional : Darleen, Marie
+Last name  : Smith
+Suffix     : II
 
 # organisation, title and role
-Organisation : 
-Role         : 
-Title        : 
+Organisation : Example Company
+Role         : CTO
+Title        : research scientist
 
 # phone numbers
 # format:
@@ -29,16 +29,15 @@ Title        :
 #   Alternatively you may use a single custom label (only letters).
 #   But beware, that not all address book clients will support custom labels.
 Phone :
-    cell : 
-    work : 
+    cell : 0152 12345678
+    work : 090 87654321
 
 # email addresses
 # allowed types:
 #   At least one of: home, internet, pref, uri, work, x400
 #   Alternatively you may use a single custom label (only letters).
 Email :
-    home : 
-    work : 
+    work : paula.smith@example.com
 
 # post addresses
 # allowed types:
@@ -48,11 +47,11 @@ Address :
     home :
         Box      : 
         Extended : 
-        Street   : 
-        Code     : 
-        City     : 
-        Region   : 
-        Country  : 
+        Street   : Mainstreet 123
+        Code     : 31415
+        City     : A City
+        Region   : Region
+        Country  : Country
 
 # web pages
 # either
@@ -61,28 +60,30 @@ Address :
 #   Webpage:
 #       - http://example.com
 #       - http://example.org
-Webpage : 
+Webpage : http://example.com
 
 # instant messaging and social networks
 # Warning: may only work with the contacts app of some Android devices
-Jabber  : 
-Skype   : 
-Twitter : 
+Jabber  : paula@jabber.org
+Skype   : sky_paula
+Twitter : twi_paula
 
 # birthday
 # day.month.year or year.month.day
-Birthday : 
+Birthday : 01.02.1983
 
 # categories or tags
 # format: category1, category2, ...
-Categories : 
+Categories : cat1, cat2, cät3
 
 # nickname
-Nickname : 
+Nickname : myNick
 
 # note
 # for multi-line notes use:
 #   Note : |
 #       line one
 #       line two
-Note : 
+Note : |
+    first line
+    second line

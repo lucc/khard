@@ -1,0 +1,22 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:tcxgov01nvszxb7m2qe9k0ebn01wvoq5a7bo
+ADR;TYPE=home:;;Mainstreet 123;A City;Region;31415;Country
+BDAY:19830201
+CATEGORIES:cat1,cat2,cät3
+EMAIL;TYPE=work:paula.smith@example.com
+FN:Dr. Paula Smith II
+N:Smith;Paula;Darleen,Marie;Dr.;II
+NICKNAME:myNick
+NOTE:first line\nsecond line
+ORG:Example Company
+REV:20151230T235906Z
+ROLE:CTO
+TEL;TYPE=cell:0152 12345678
+TEL;TYPE=work:090 87654321
+TITLE:research scientist
+URL:http://example.com
+X-JABBER:paula@jabber.org
+X-SKYPE:sky_paula
+X-TWITTER:twi_paula
+END:VCARD

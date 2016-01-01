@@ -12,6 +12,14 @@ all Unix-like systems.
 
 If you encounter bugs, please contact me via email: email (at) eric-scheibler (dot) de.
 
+Warning: If you want to create or modify contacts with khard, beware that the vcard standard is very
+inconsistent and lacks interoperability. Different actors in that sector have defined their own
+extensions and even produce non-standard output. A good example is the type value, which is tied to
+phone numbers, email and post addresses. Khard tries to avoid such incompatibilities but if you sync
+your contacts with an Android or iOS device, expect problems. You are on the save side, if you only
+use khard to read contacts. For further information about the vcard compatibility issues have a look
+into [this blog post])http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/).
+
 
 Prerequisites
 -------------

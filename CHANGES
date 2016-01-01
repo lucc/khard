@@ -72,3 +72,6 @@ v0.7.0: 2015.12.18
 - Added wrapper script for sdiff
 - Fixed a bug, which prevented the creation of new contacts with the add-email action
 
+v0.7.1: 2016.01.01
+- Added support for multiple instances of one vcard attribute
+

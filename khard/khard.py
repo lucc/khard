@@ -185,8 +185,9 @@ def copy_contact(source_contact, target_address_book, delete_source_contact):
                 )
     else:
         # copy contact to new address book and create a new uid for the copied entry
+        source_contact.delete_vcard_object("UID")
         new_uid = helpers.get_random_uid()
-        source_contact.set_uid(new_uid)
+        source_contact.add_uid(new_uid)
         source_contact.set_filename(
                 os.path.join(
                     target_address_book.get_path(), "%s.vcf" % new_uid)
@@ -211,19 +212,21 @@ def list_contacts(vcard_list):
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index+1)
-        if vcard.get_nickname() != "" \
+        if len(vcard.get_nicknames()) > 0 \
                 and Config().show_nicknames():
-            row.append("%s (Nickname: %s)" % (vcard.get_full_name(), vcard.get_nickname()))
+            row.append("%s (Nickname: %s)" % (vcard.get_full_name(), vcard.get_nicknames()[0]))
         else:
             row.append(vcard.get_full_name())
-        if vcard.get_phone_numbers().__len__() > 0:
-            phone1 = vcard.get_phone_numbers()[0]
-            row.append("%s: %s" % (phone1['type'], phone1['value']))
+        if len(vcard.get_phone_numbers().keys()) > 0:
+            phone_dict = vcard.get_phone_numbers()
+            first_type = sorted(phone_dict.keys(), key=lambda k: k[0].lower())[0]
+            row.append("%s: %s" % (first_type, sorted(phone_dict.get(first_type))[0]))
         else:
             row.append("")
-        if vcard.get_email_addresses().__len__() > 0:
-            email1 = vcard.get_email_addresses()[0]
-            row.append("%s: %s" % (email1['type'], email1['value']))
+        if len(vcard.get_email_addresses().keys()) > 0:
+            email_dict = vcard.get_email_addresses()
+            first_type = sorted(email_dict.keys(), key=lambda k: k[0].lower())[0]
+            row.append("%s: %s" % (first_type, sorted(email_dict.get(first_type))[0]))
         else:
             row.append("")
         if vcard.get_uid():
@@ -286,10 +289,11 @@ def get_contact_list_by_user_selection(address_books, sort_criteria, reverse, se
                     contact_list.append(contact)
                 else:
                     # special case for phone numbers without a space between prefix and number
-                    for phone_entry in contact.get_phone_numbers():
-                        if regexp.search(re.sub("\D", "", phone_entry['value'])) != None:
-                            contact_list.append(contact)
-                            break
+                    for type, number_list in sorted(contact.get_phone_numbers().items()):
+                        for number in number_list:
+                            if regexp.search(re.sub("\D", "", number)) != None:
+                                contact_list.append(contact)
+                                break
     if sort_criteria == "addressbook":
         return sorted(contact_list,
                 key = lambda x: (x.get_address_book().get_name().lower(),
@@ -408,7 +412,7 @@ def main():
                         print("")
                         break
             else:
-                print("Please enter only a single name for the address book")
+                print("Please enter only a single address book name")
                 sys.exit(1)
         # if there is some data in stdin
         if input_from_stdin_or_file:
@@ -495,10 +499,11 @@ def main():
                     "First name : %s\nLast name : %s\nOrganisation : %s" % (first_name, last_name, organisation))
 
         # check if the contact already contains the email address
-        for email_entry in selected_vcard.get_email_addresses():
-            if email_entry['value'] == email_address:
-                print("The contact %s already contains the email address %s" % (selected_vcard, email_address))
-                sys.exit(0)
+        for type, email_list in sorted(selected_vcard.get_email_addresses().items(), key=lambda k: k[0].lower()):
+            for email in email_list:
+                if email == email_address:
+                    print("The contact %s already contains the email address %s" % (selected_vcard, email_address))
+                    sys.exit(0)
 
         # ask for confirmation again
         while True:
@@ -533,22 +538,22 @@ def main():
         matching_phone_number_list = []
         regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"), re.IGNORECASE)
         for vcard in vcard_list:
-            for tel_entry in vcard.get_phone_numbers():
-                phone_number_line = "%s\t%s\t%s" \
-                        % (tel_entry['value'], vcard.get_full_name(), tel_entry['type'])
-                if len(re.sub("\D", "", search_terms[0])) >= 3:
-                    # the user likely searches for a phone number cause the search string contains
-                    # at least three digits
-                    # so we remove all non-digit chars from the phone number field and match against that
-                    if regexp.search(re.sub("\D", "", tel_entry['value'])) != None:
-                        matching_phone_number_list.append(phone_number_line)
-                else:
-                    # the user doesn't search for a phone number so we can perform a standard search
-                    # without removing all non-digit chars from the phone number string
-                    if regexp.search(phone_number_line) != None:
-                        matching_phone_number_list.append(phone_number_line)
-                # collect all phone numbers in a different list as fallback
-                all_phone_numbers_list.append(phone_number_line)
+            for type, number_list in sorted(vcard.get_phone_numbers().items(), key=lambda k: k[0].lower()):
+                for number in sorted(number_list):
+                    phone_number_line = "%s\t%s\t%s" % (number, vcard.get_full_name(), type)
+                    if len(re.sub("\D", "", search_terms[0])) >= 3:
+                        # the user likely searches for a phone number cause the search string contains
+                        # at least three digits
+                        # so we remove all non-digit chars from the phone number field and match against that
+                        if regexp.search(re.sub("\D", "", number)) != None:
+                            matching_phone_number_list.append(phone_number_line)
+                    else:
+                        # the user doesn't search for a phone number so we can perform a standard search
+                        # without removing all non-digit chars from the phone number string
+                        if regexp.search(phone_number_line) != None:
+                            matching_phone_number_list.append(phone_number_line)
+                    # collect all phone numbers in a different list as fallback
+                    all_phone_numbers_list.append(phone_number_line)
         if len(matching_phone_number_list) > 0:
             print('\n'.join(matching_phone_number_list))
         elif len(all_phone_numbers_list) > 0:
@@ -568,13 +573,14 @@ def main():
         all_email_address_list = []
         regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"), re.IGNORECASE)
         for vcard in vcard_list:
-            for email_entry in vcard.get_email_addresses():
-                email_address_line = "%s\t%s\t%s" \
-                        % (email_entry['value'], vcard.get_full_name(), email_entry['type'])
-                if regexp.search(email_address_line) != None:
-                    matching_email_address_list.append(email_address_line)
-                # collect all email addresses in a different list as fallback
-                all_email_address_list.append(email_address_line)
+            for type, email_list in sorted(vcard.get_email_addresses().items(), key=lambda k: k[0].lower()):
+                for email in sorted(email_list):
+                    email_address_line = "%s\t%s\t%s" \
+                            % (email, vcard.get_full_name(), type)
+                    if regexp.search(email_address_line) != None:
+                        matching_email_address_list.append(email_address_line)
+                    # collect all email addresses in a different list as fallback
+                    all_email_address_list.append(email_address_line)
         print("searching for '%s' ..." % search_terms[0])
         if len(matching_email_address_list) > 0:
             print('\n'.join(matching_email_address_list))
