@@ -5,6 +5,7 @@
 
 import os, sys, string, datetime, re
 import vobject, yaml
+from atomicwrites import atomic_write
 from pkg_resources import parse_version, get_distribution
 import helpers
 
@@ -278,7 +279,7 @@ class CarddavObject:
         phone_obj.value = number
         if standard_types != "":
             phone_obj.type_param = self.string_to_vcard_value(standard_types, output="list")
-        else:
+        if custom_types != "":
             number_of_custom_phone_number_labels = 0
             for label in self.vcard.getChildren():
                 if label.name == "X-ABLABEL" and label.group.startswith("itemtel"):
@@ -307,7 +308,7 @@ class CarddavObject:
         email_obj.value = address
         if standard_types != "":
             email_obj.type_param = self.string_to_vcard_value(standard_types, output="list")
-        else:
+        if custom_types != "":
             number_of_custom_email_labels = 0
             for label in self.vcard.getChildren():
                 if label.name == "X-ABLABEL" and label.group.startswith("itememail"):
@@ -381,7 +382,7 @@ class CarddavObject:
                 country = self.string_to_vcard_value(country, output="list"))
         if standard_types != "":
             adr_obj.type_param = self.string_to_vcard_value(standard_types, output="list")
-        else:
+        if custom_types != "":
             number_of_custom_post_address_labels = 0
             for label in self.vcard.getChildren():
                 if label.name == "X-ABLABEL" and label.group.startswith("itemadr"):
@@ -1155,20 +1156,18 @@ class CarddavObject:
 
 
     def write_to_file(self, overwrite=False):
-        if os.path.exists(self.filename) and overwrite == False:
-            print("Error: vcard with the file name %s already exists" \
-                    % os.path.basename(self.filename))
-            sys.exit(4)
         try:
-            vcard_output = self.vcard.serialize()
-            file = open(self.filename, "w")
-            file.write(vcard_output)
-            file.close()
+            with atomic_write(self.filename, overwrite=overwrite) as f:
+                f.write(self.vcard.serialize())
         except vobject.base.ValidateError as e:
             print("Error: Vcard is not valid.\n%s" % e)
             sys.exit(4)
         except IOError as e:
             print("Error: Can't write\n%s" % e)
+            sys.exit(4)
+        except OSError as e:
+            print("Error: vcard with the file name %s already exists\n%s" \
+                    % (os.path.basename(self.filename), e))
             sys.exit(4)
 
     def delete_vcard_object(self, object_name):
@@ -1233,17 +1232,25 @@ class CarddavObject:
             return string
 
     def get_type_for_vcard_object(self, object):
+        type_list = []
         # try to find label group for custom value type
         if object.group:
             for label in self.vcard.getChildren():
                 if label.name == "X-ABLABEL" and label.group == object.group:
-                    return label.value
-        # if that fails, try to load type from params dict
-        type = object.params.get("TYPE")
-        if type:
-            if isinstance(type, list):
-                return sorted(type)
-            return type
+                    for custom_type in label.value.split(","):
+                        type_list.append(custom_type)
+        # then load type from params dict
+        standard_types = object.params.get("TYPE")
+        if standard_types is not None:
+            if not isinstance(standard_types, list):
+                standard_types = [standard_types]
+            for type in standard_types:
+                if not type.lower().startswith("x-"):
+                    type_list.append(type)
+                elif type[2:] not in type_list:
+                    type_list.append(type[2:])
+        if len(type_list) > 0:
+            return sorted(type_list)
         return None
 
     def parse_type_value(self, types, value, supported_types):
@@ -1265,16 +1272,18 @@ class CarddavObject:
         standard_types = []
         for type in types.split(","):
             type = type.strip()
-            if type.lower() in supported_types:
-                standard_types.append(type)
-            else:
-                custom_types.append(type)
-        # throw an exception if the type contains more than one custom label
+            if type != "":
+                if type.lower() in supported_types:
+                    standard_types.append(type)
+                else:
+                    if type.lower().startswith("x-"):
+                        custom_types.append(type[2:])
+                        standard_types.append(type)
+                    else:
+                        custom_types.append(type)
+                        standard_types.append("X-%s" % type)
+        # throw an exception, if no label is given
         if len(custom_types) == 0 and len(standard_types) == 0:
             raise ValueError("Error: Missing type for %s" % value)
-        elif len(custom_types) > 0 and len(standard_types) > 0:
-            raise ValueError("Error: Mixing of standard and custom types for %s not allowed\nInput: %s" % (value, types))
-        elif len(custom_types) > 1:
-            raise ValueError("Error: Only a single custom type for %s allowed\nInput: %s" % (value, types))
         return (','.join(standard_types), ','.join(custom_types))
 
