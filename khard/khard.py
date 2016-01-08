@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import tempfile, subprocess, os, sys, re, argparse
+import tempfile, subprocess, os, sys, re, argparse, datetime
 import helpers
 from email.header import decode_header
 from config import Config
@@ -21,6 +21,13 @@ def create_new_contact(address_book):
         # start vim to edit contact template
         child = subprocess.Popen([Config().get_editor(), temp_file_name])
         streamdata = child.communicate()[0]
+
+        # time diff
+        time_diff = datetime.datetime.now() - helpers.file_modification_date(temp_file_name)
+        if time_diff.total_seconds() > 0.3:
+            new_contact = None
+            os.remove(temp_file_name)
+            break
 
         # read temp file contents after editing
         tf = open(temp_file_name, "r")
@@ -45,7 +52,8 @@ def create_new_contact(address_book):
             break
 
     # create carddav object from temp file
-    if old_contact_template == new_contact_template:
+    if new_contact is None \
+            or old_contact_template == new_contact_template:
         print("Canceled")
     else:
         new_contact.write_to_file()
@@ -64,6 +72,13 @@ def modify_existing_contact(old_contact):
         # start editor to edit contact template
         child = subprocess.Popen([Config().get_editor(), temp_file_name])
         streamdata = child.communicate()[0]
+
+        # time diff
+        time_diff = datetime.datetime.now() - helpers.file_modification_date(temp_file_name)
+        if time_diff.total_seconds() > 0.3:
+            new_contact = None
+            os.remove(temp_file_name)
+            break
 
         # read temp file contents after editing
         tf = open(temp_file_name, "r")
@@ -89,8 +104,9 @@ def modify_existing_contact(old_contact):
             break
 
     # check if the user changed anything
-    if old_contact == new_contact:
-        print("Nothing changed\n\n%s" % new_contact.print_vcard())
+    if new_contact is None \
+            or old_contact == new_contact:
+        print("Nothing changed\n\n%s" % old_contact.print_vcard())
     else:
         new_contact.write_to_file(overwrite=True)
         print("Modification successful\n\n%s" % new_contact.print_vcard())
@@ -116,6 +132,14 @@ def merge_existing_contacts(source_contact, target_contact, delete_source_contac
         # start editor to edit contact template
         child = subprocess.Popen([Config().get_merge_editor(), source_temp_file_name, target_temp_file_name])
         streamdata = child.communicate()[0]
+
+        # time diff
+        time_diff = datetime.datetime.now() - helpers.file_modification_date(target_temp_file_name)
+        if time_diff.total_seconds() > 0.3:
+            merged_contact = None
+            os.remove(source_temp_file_name)
+            os.remove(target_temp_file_name)
+            break
 
         # load target template contents
         target_tf = open(target_temp_file_name, "r")
@@ -143,8 +167,9 @@ def merge_existing_contacts(source_contact, target_contact, delete_source_contac
             break
 
     # compare them
-    if target_contact == merged_contact:
-        print("Target contact unmodified\n\n%s" % merged_contact.print_vcard())
+    if merged_contact is None \
+            or target_contact == merged_contact:
+        print("Target contact unmodified\n\n%s" % target_contact.print_vcard())
         sys.exit(0)
 
     while True:

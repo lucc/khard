@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import random, string
+import datetime, os, random, string
 
 def format_yaml_values(input, indentation, start_character):
     if "\n" in input:
@@ -40,6 +40,11 @@ def pretty_print(table, justify = "L"):
 
 def get_random_uid():
     return ''.join([ random.choice(string.ascii_lowercase + string.digits) for _ in range(36) ])
+
+
+def file_modification_date(filename):
+    t = os.path.getmtime(filename)
+    return datetime.datetime.fromtimestamp(t)
 
 
 def get_new_contact_template(addressbook_name):

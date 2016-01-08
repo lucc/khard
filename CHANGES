@@ -78,3 +78,7 @@ v0.7.1: 2016.01.01
 v0.7.2: 2016.01.03
 - Use of module atomicwrites to securely write vcards to disk
 
+v0.7.3: 2016.01.08
+- Cancel without further actions if the opened contacts editor is closed without saving (determined
+  by modification date of template file)
+
