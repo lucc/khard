@@ -17,14 +17,12 @@ def create_new_contact(address_book):
     tf.write(old_contact_template)
     tf.close()
 
+    temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start vim to edit contact template
         child = subprocess.Popen([Config().get_editor(), temp_file_name])
         streamdata = child.communicate()[0]
-
-        # time diff
-        time_diff = datetime.datetime.now() - helpers.file_modification_date(temp_file_name)
-        if time_diff.total_seconds() > 0.3:
+        if temp_file_creation == helpers.file_modification_date(temp_file_name):
             new_contact = None
             os.remove(temp_file_name)
             break
@@ -68,14 +66,13 @@ def modify_existing_contact(old_contact):
             % (old_contact.get_full_name(), old_contact.get_template()))
     tf.close()
 
+    temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start editor to edit contact template
         child = subprocess.Popen([Config().get_editor(), temp_file_name])
         streamdata = child.communicate()[0]
-
-        # time diff
-        time_diff = datetime.datetime.now() - helpers.file_modification_date(temp_file_name)
-        if time_diff.total_seconds() > 0.3:
+        if temp_file_creation == helpers.file_modification_date(temp_file_name):
+            print "not modified"
             new_contact = None
             os.remove(temp_file_name)
             break
@@ -128,14 +125,12 @@ def merge_existing_contacts(source_contact, target_contact, delete_source_contac
             % (target_contact.get_full_name(), target_contact.get_template()))
     target_tf.close()
 
+    target_temp_file_creation = helpers.file_modification_date(target_temp_file_name)
     while True:
         # start editor to edit contact template
         child = subprocess.Popen([Config().get_merge_editor(), source_temp_file_name, target_temp_file_name])
         streamdata = child.communicate()[0]
-
-        # time diff
-        time_diff = datetime.datetime.now() - helpers.file_modification_date(target_temp_file_name)
-        if time_diff.total_seconds() > 0.3:
+        if target_temp_file_creation == helpers.file_modification_date(target_temp_file_name):
             merged_contact = None
             os.remove(source_temp_file_name)
             os.remove(target_temp_file_name)
