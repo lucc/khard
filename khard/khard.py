@@ -72,7 +72,6 @@ def modify_existing_contact(old_contact):
         child = subprocess.Popen([Config().get_editor(), temp_file_name])
         streamdata = child.communicate()[0]
         if temp_file_creation == helpers.file_modification_date(temp_file_name):
-            print "not modified"
             new_contact = None
             os.remove(temp_file_name)
             break
@@ -249,8 +248,8 @@ def list_contacts(vcard_list):
             row.append("%s: %s" % (first_type, sorted(email_dict.get(first_type))[0]))
         else:
             row.append("")
-        if vcard.get_uid():
-            row.append(vcard.get_uid()[:Config().get_length_of_uid()])
+        if Config().get_shortened_uid(vcard.get_uid()):
+            row.append(Config().get_shortened_uid(vcard.get_uid()))
         else:
             row.append("")
         if selected_address_books.__len__() > 1:
@@ -392,11 +391,25 @@ def main():
 
     # create a list of all found vcard objects
     if args.uid:
-        contact = Config().get_contact_by_uid(args.uid)
-        if contact:
-            vcard_list = [contact]
-        else:
-            print("Found no contact for uid %s" % args.uid)
+        vcard_list = []
+        # check if contacts uid == args.uid
+        for address_book in Config().get_all_address_books():
+            for contact in address_book.get_contact_list():
+                if contact.get_uid() == args.uid:
+                    vcard_list.append(contact)
+        # if that fails, check if contacts uid starts with args.uid
+        if len(vcard_list) == 0:
+            for address_book in Config().get_all_address_books():
+                for contact in address_book.get_contact_list():
+                    if contact.get_uid().startswith(args.uid):
+                        vcard_list.append(contact)
+        if len(vcard_list) != 1:
+            if len(vcard_list) == 0:
+                print("Found no contact for uid %s" % args.uid)
+            else:
+                print("Found multiple contacts for uid %s" % args.uid)
+                for vcard in vcard_list:
+                    print("    %s: %s" % (vcard.get_full_name(), vcard.get_uid()))
             sys.exit(1)
     else:
         vcard_list = get_contact_list_by_user_selection(

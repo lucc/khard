@@ -42,6 +42,16 @@ def get_random_uid():
     return ''.join([ random.choice(string.ascii_lowercase + string.digits) for _ in range(36) ])
 
 
+def compare_uids(uid1, uid2):
+    sum = 0
+    for c1, c2 in zip(uid1, uid2):
+        if c1 == c2:
+            sum += 1
+        else:
+            break
+    return sum
+
+
 def file_modification_date(filename):
     t = os.path.getmtime(filename)
     return datetime.datetime.fromtimestamp(t)

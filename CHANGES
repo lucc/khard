@@ -82,3 +82,6 @@ v0.7.3: 2016.01.08
 - Cancel without further actions if the opened contacts editor is closed without saving (determined
   by modification date of template file)
 
+v0.7.4: 2016.01.11
+- Fixed uid dictionary creation
+

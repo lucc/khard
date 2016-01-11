@@ -3,8 +3,8 @@
 # singleton code comes from:
 # http://code.activestate.com/recipes/52558/#as_content
 
-import os, sys, glob, re, operator
-import vobject
+import os, sys, glob, re, operator, vobject
+import helpers
 from configobj import ConfigObj
 from distutils.spawn import find_executable
 from address_book import AddressBook
@@ -19,6 +19,7 @@ class Config:
             self.config = None
             self.address_book_list = []
             self.uid_dict = {}
+            self.length_of_longest_uid = 0
 
             # load config file
             xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
@@ -124,18 +125,16 @@ class Config:
                 sys.exit(2)
 
             # check, if multiple contacts have the same uid
-            length_of_shortest_uid = 100
-            number_of_contacts_with_uid = 0
+            flat_contact_list = []
             for address_book in self.address_book_list:
                 for contact in address_book.get_contact_list():
                     uid = contact.get_uid()
-                    if uid != "":
+                    if bool(uid):
                         matching_contact = self.uid_dict.get(uid)
                         if matching_contact is None:
                             self.uid_dict[uid] = contact
-                            number_of_contacts_with_uid += 1
-                            if len(uid) < length_of_shortest_uid:
-                                length_of_shortest_uid = len(uid)
+                            if len(uid) > self.length_of_longest_uid:
+                                self.length_of_longest_uid = len(uid)
                         else:
                             print("The contact %s from address book %s" \
                                     " and the contact %s from address book %s have the same uid %s" \
@@ -146,30 +145,39 @@ class Config:
                                         contact.get_uid())
                                     )
                             sys.exit(2)
+                        # add to flat contact list
+                        flat_contact_list.append(contact)
 
             # now we can be sure, that all uid's are unique but we don't want to enter
             # the whole uid, if we choose a contact by the -u / --uid option
             # so clear previously filled uid_dict and recreate with the shortest possible uid, so
             # that it's still unique and easier to enter
             # with around 100 contacts that short id should not be longer then two or three characters
-            length_of_uid = 1
-            while True:
-                self.uid_dict.clear()
-                for address_book in self.address_book_list:
-                    for contact in address_book.get_contact_list():
-                        uid = contact.get_uid()[:length_of_uid]
-                        if uid != "":
-                            self.uid_dict[uid] = contact
-                if len(self.uid_dict.keys()) != number_of_contacts_with_uid:
-                    length_of_uid += 1
-                else:
-                    break
-                if length_of_uid == length_of_shortest_uid:
-                    # prevent infinit loop, 
-                    # should not be necessary, cause we checked the uid uniqueness in the previous step
-                    # so it's just a precaution
-                    print("Could not create the dictionary of the short uid's")
-                    sys.exit(2)
+            self.uid_dict.clear()
+            flat_contact_list.sort(key = lambda x: x.get_uid())
+            if len(flat_contact_list) == 1:
+                current = flat_contact_list[0]
+                self.uid_dict[current.get_uid()[:1]] = current
+            elif len(flat_contact_list) > 1:
+                # first list element
+                current = flat_contact_list[0]
+                next = flat_contact_list[1]
+                same = helpers.compare_uids(current.get_uid(), next.get_uid())
+                self.uid_dict[current.get_uid()[:same+1]] = current
+                # list elements 1 to len(flat_contact_list)-1
+                for index in range(1, len(flat_contact_list)-1):
+                    prev = flat_contact_list[index-1]
+                    current = flat_contact_list[index]
+                    next = flat_contact_list[index+1]
+                    same = max(
+                            helpers.compare_uids(prev.get_uid(), current.get_uid()),
+                            helpers.compare_uids(current.get_uid(), next.get_uid()))
+                    self.uid_dict[current.get_uid()[:same+1]] = current
+                # last list element
+                prev = flat_contact_list[-2]
+                current = flat_contact_list[-1]
+                same = helpers.compare_uids(prev.get_uid(), current.get_uid())
+                self.uid_dict[current.get_uid()[:same+1]] = current
 
 
         def get_editor(self):
@@ -203,14 +211,12 @@ class Config:
                     return address_book
             return None
 
-        def get_contact_by_uid(self, uid):
-            return self.uid_dict.get(uid[:self.get_length_of_uid()])
-
-        def get_length_of_uid(self):
-            try:
-                return len(self.uid_dict.keys()[0])
-            except IndexError as e:
-                return 0
+        def get_shortened_uid(self, uid):
+            if bool(uid):
+                for length_of_uid in range(self.length_of_longest_uid, 0, -1):
+                    if self.uid_dict.get(uid[:length_of_uid]) is not None:
+                        return uid[:length_of_uid]
+            return ""
 
 
     ####################################
