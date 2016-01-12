@@ -316,10 +316,12 @@ def get_contact_list_by_user_selection(address_books, sort_criteria, reverse, se
     if sort_criteria == "addressbook":
         return sorted(contact_list,
                 key = lambda x: (x.get_address_book().get_name().lower(),
-                    x.get_full_name().lower()),
+                    x.get_last_name().lower(), x.get_first_name().lower()),
                 reverse=reverse)
+    elif sort_criteria == "lastname":
+        return sorted(contact_list, key = lambda x: (x.get_last_name().lower(), x.get_first_name().lower()), reverse=reverse)
     else:
-        return sorted(contact_list, key = lambda x: x.get_full_name().lower(), reverse=reverse)
+        return sorted(contact_list, key = lambda x: (x.get_first_name().lower(), x.get_last_name().lower()), reverse=reverse)
 
 
 def main():
@@ -337,8 +339,8 @@ def main():
                     "    default:   -s \"contact\"\n" \
                     "    merge:     -s \"source contact,target contact\"\n" \
                     "    copy/move: -s \"source contact,target address book\"")
-    parser.add_argument("--sort", default="alphabetical", 
-            help="Sort contacts list. Possible values: alphabetical, addressbook")
+    parser.add_argument("--sort", default="lastname",
+        help="Sort contacts list. Possible values: firstname, lastname, addressbook")
     parser.add_argument("-t", "--template-file", default="",
             help="Specify template file name\n" \
                     "    new:     khard -a addr_name -t input.yaml\n" \
@@ -385,8 +387,8 @@ def main():
         search_terms.append("")
 
     # sort criteria
-    if args.sort not in ["alphabetical", "addressbook"]:
-        print("Unsupported sort criteria. Possible values: alphabetical, addressbook")
+    if args.sort not in ["firstname", "lastname", "addressbook"]:
+        print("Unsupported sort criteria. Possible values: firstname, lastname, addressbook")
         sys.exit(1)
 
     # create a list of all found vcard objects
