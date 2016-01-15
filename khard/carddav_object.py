@@ -190,6 +190,26 @@ class CarddavObject:
         except AttributeError as e:
             return ""
 
+    def get_first_name_last_name(self):
+        if self.get_first_name() != "" and self.get_last_name() != "":
+            return "%s %s" % (self.get_first_name(), self.get_last_name())
+        elif self.get_first_name() != "":
+            return self.get_first_name()
+        elif self.get_last_name() != "":
+            return self.get_last_name()
+        else:
+            return self.get_full_name()
+
+    def get_last_name_first_name(self):
+        if self.get_first_name() != "" and self.get_last_name() != "":
+            return "%s, %s" % (self.get_last_name(), self.get_first_name())
+        elif self.get_first_name() != "":
+            return self.get_first_name()
+        elif self.get_last_name() != "":
+            return self.get_last_name()
+        else:
+            return self.get_full_name()
+
     def add_name(self, prefix, first_name, additional_name, last_name, suffix):
         # n
         name_obj = self.vcard.add('n')

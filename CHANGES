@@ -85,3 +85,12 @@ v0.7.3: 2016.01.08
 v0.7.4: 2016.01.11
 - Fixed uid dictionary creation
 
+v0.8.0: 2016.01.15
+- Sort contact table by first or last name (take note of changed behaviour of "sort" option)
+- New option -g, --group-by-addressbook to group contact table by address book
+- Changes in config file:
+    - New group: contact table
+        - new option: sort to sort contact table by first or last name
+        - New option: group_by_addressbook to group contact table by address book
+    - Moved show_nicknames option from group "general" to group "contact table"
+

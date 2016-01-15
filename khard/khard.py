@@ -222,20 +222,34 @@ def list_contacts(vcard_list):
     for contact in vcard_list:
         if contact.get_address_book() not in selected_address_books:
             selected_address_books.append(contact.get_address_book())
+    table = []
+    # table header
     if len(selected_address_books) == 1:
         print("Address book: %s" % str(selected_address_books[0]))
-        table = [["Index", "Name", "Phone", "E-Mail", "uid"]]
+        table_header = ["Index", "Name", "Phone", "E-Mail"]
     else:
         print("Address books: %s" % ', '.join([str(book) for book in selected_address_books]))
-        table = [["Index", "Name", "Phone", "E-Mail", "uid", "Address book"]]
+        table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
+    if Config().has_uids():
+        table_header.append("UID")
+    table.append(table_header)
+    # table body
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index+1)
         if len(vcard.get_nicknames()) > 0 \
                 and Config().show_nicknames():
-            row.append("%s (Nickname: %s)" % (vcard.get_full_name(), vcard.get_nicknames()[0]))
+            if Config().sort_by_name() == "first_name":
+                row.append("%s (Nickname: %s)" \
+                        % (vcard.get_first_name_last_name(), vcard.get_nicknames()[0]))
+            else:
+                row.append("%s (Nickname: %s)" \
+                        % (vcard.get_last_name_first_name(), vcard.get_nicknames()[0]))
         else:
-            row.append(vcard.get_full_name())
+            if Config().sort_by_name() == "first_name":
+                row.append(vcard.get_first_name_last_name())
+            else:
+                row.append(vcard.get_last_name_first_name())
         if len(vcard.get_phone_numbers().keys()) > 0:
             phone_dict = vcard.get_phone_numbers()
             first_type = sorted(phone_dict.keys(), key=lambda k: k[0].lower())[0]
@@ -248,12 +262,13 @@ def list_contacts(vcard_list):
             row.append("%s: %s" % (first_type, sorted(email_dict.get(first_type))[0]))
         else:
             row.append("")
-        if Config().get_shortened_uid(vcard.get_uid()):
-            row.append(Config().get_shortened_uid(vcard.get_uid()))
-        else:
-            row.append("")
-        if selected_address_books.__len__() > 1:
+        if len(selected_address_books) > 1:
             row.append(vcard.get_address_book().get_name())
+        if Config().has_uids():
+            if Config().get_shortened_uid(vcard.get_uid()):
+                row.append(Config().get_shortened_uid(vcard.get_uid()))
+            else:
+                row.append("")
         table.append(row)
     print(helpers.pretty_print(table))
 
@@ -281,12 +296,10 @@ def choose_vcard_from_list(vcard_list):
         return vcard_list[vcard_index-1]
 
 
-def get_contact_list_by_user_selection(address_books, sort_criteria, reverse, search, strict_search):
+def get_contact_list_by_user_selection(address_books, reverse, search, strict_search):
     """returns a list of CarddavObject objects 
     :param address_books: list of selected address books
     :type address_books: list(AddressBook)
-    :param sort_criteria: sort list by given criteria
-    :type sort_criteria: str
     :param reverse: reverse ordering
     :type reverse: bool
     :param search: filter contact list
@@ -313,13 +326,24 @@ def get_contact_list_by_user_selection(address_books, sort_criteria, reverse, se
                             if regexp.search(re.sub("\D", "", number)) != None:
                                 contact_list.append(contact)
                                 break
-    if sort_criteria == "addressbook":
-        return sorted(contact_list,
-                key = lambda x: (x.get_address_book().get_name().lower(),
-                    x.get_full_name().lower()),
-                reverse=reverse)
+    if Config().group_by_addressbook():
+        if Config().sort_by_name() == "first_name":
+            return sorted(contact_list,
+                    key = lambda x: (
+                        x.get_address_book().get_name().lower(),
+                        x.get_first_name_last_name().lower()
+                    ), reverse=reverse)
+        else:
+            return sorted(contact_list,
+                    key = lambda x: (
+                        x.get_address_book().get_name().lower(),
+                        x.get_last_name_first_name().lower()
+                    ), reverse=reverse)
     else:
-        return sorted(contact_list, key = lambda x: x.get_full_name().lower(), reverse=reverse)
+        if Config().sort_by_name() == "first_name":
+            return sorted(contact_list, key = lambda x: x.get_first_name_last_name().lower(), reverse=reverse)
+        else:
+            return sorted(contact_list, key = lambda x: x.get_last_name_first_name().lower(), reverse=reverse)
 
 
 def main():
@@ -329,16 +353,20 @@ def main():
             formatter_class = argparse.RawTextHelpFormatter)
     parser.add_argument("-a", "--addressbook", default="",
             help="Specify address book names as comma separated list")
+    parser.add_argument("-g", "--group-by-addressbook", action="store_true",
+            help="Group contact table by address book")
     parser.add_argument("--open-editor", action="store_true",
             help="Open the default text editor after successful creation of new contact from stdin or template file")
-    parser.add_argument("-r", "--reverse", action="store_true", help="Sort contacts in reverse order")
+    parser.add_argument("-r", "--reverse", action="store_true",
+            help="Reverse order of contact table")
     parser.add_argument("-s", "--search", default="",
             help="Search in all contact data fields\n" \
                     "    default:   -s \"contact\"\n" \
                     "    merge:     -s \"source contact,target contact\"\n" \
                     "    copy/move: -s \"source contact,target address book\"")
-    parser.add_argument("--sort", default="alphabetical", 
-            help="Sort contacts list. Possible values: alphabetical, addressbook")
+    parser.add_argument("--sort", default="", 
+            help="Sort contact table by first or last name\n" \
+                    "    Possible values: first_name, last_name")
     parser.add_argument("-t", "--template-file", default="",
             help="Specify template file name\n" \
                     "    new:     khard -a addr_name -t input.yaml\n" \
@@ -384,10 +412,17 @@ def main():
     if len(search_terms) == 1:
         search_terms.append("")
 
-    # sort criteria
-    if args.sort not in ["alphabetical", "addressbook"]:
-        print("Unsupported sort criteria. Possible values: alphabetical, addressbook")
-        sys.exit(1)
+    # group by address book
+    if args.group_by_addressbook:
+        Config().set_group_by_addressbook()
+
+    # sort criteria: first or last name
+    if args.sort:
+        if args.sort in ["first_name", "last_name"]:
+            Config().set_sort_by_name(args.sort)
+        else:
+            print("Unsupported sort criteria. Possible values: first_name, last_name")
+            sys.exit(1)
 
     # create a list of all found vcard objects
     if args.uid:
@@ -413,7 +448,7 @@ def main():
             sys.exit(1)
     else:
         vcard_list = get_contact_list_by_user_selection(
-                selected_address_books, args.sort, args.reverse, search_terms[0], False)
+                selected_address_books, args.reverse, search_terms[0], False)
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
@@ -500,7 +535,7 @@ def main():
         # search for an existing contact
         selected_vcard = choose_vcard_from_list(
                 get_contact_list_by_user_selection(
-                    selected_address_books, args.sort, args.reverse, name, True))
+                    selected_address_books, args.reverse, name, True))
         if selected_vcard is None:
             # create new contact
             while True:
@@ -702,7 +737,7 @@ def main():
                 % (source_vcard.get_full_name(), source_vcard.get_address_book().get_name()))
         target_vcard = choose_vcard_from_list(
                 get_contact_list_by_user_selection(
-                    selected_address_books, args.sort, args.reverse, search_terms[1], False))
+                    selected_address_books, args.reverse, search_terms[1], False))
         if target_vcard is None:
             print("Found no target contact for merging")
             sys.exit(1)
@@ -750,7 +785,7 @@ def main():
         # check if a contact already exists in the target address book
         target_vcard = choose_vcard_from_list(
                 get_contact_list_by_user_selection(
-                    [target_address_book], args.sort, args.reverse, source_vcard.get_full_name(), True))
+                    [target_address_book], args.reverse, source_vcard.get_full_name(), True))
 
         # if the target contact doesn't exist, move or copy the source contact into the target
         # address book without further questions

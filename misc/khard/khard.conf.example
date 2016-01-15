@@ -9,4 +9,8 @@ path = ~/.contacts/friends/
 editor = vim
 merge_editor = vimdiff
 default_action = list
+
+[contact table]
+sort = last_name
+group_by_addressbook = no
 show_nicknames = no

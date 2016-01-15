@@ -18,10 +18,11 @@ local -A opt_args
 
 _arguments -s \
     {-a+,--addressbook=}'[specify addressbook]:addressbook:->addressbooks' \
+    {-g,--group-by-addressbook}'[Group contact table by address book]' \
     '--open-editor[Open text editor after successful creation of new contact from stdin or template]' \
-    {-r,--reverse}'[sort contacts in reverse order]' \
+    {-r,--reverse}'[Reverse order of contact table]' \
     {-s+,--search=}'[search for contacts]:search string' \
-    '--sort=[sort contacts list]:order:(alphabetical addressbook)' \
+    '--sort=[sort contact table]:order:(first_name last_name)' \
     {-t+,--template-file=}'[Specify template file to create, modify or export contacts]:template file:_files' \
     {-u+,--uid=}'[Select contact by uid]:uid' \
     '(- 1)'{-h,--help}'[show help information]' \

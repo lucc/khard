@@ -19,7 +19,6 @@ class Config:
             self.config = None
             self.address_book_list = []
             self.uid_dict = {}
-            self.length_of_longest_uid = 0
 
             # load config file
             xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
@@ -64,23 +63,53 @@ class Config:
                 print("Error in config file\nInvalid merge editor path or executable not found.")
                 sys.exit(2)
 
-            # default values for action and nickname settings
+            # default action
             if self.config['general'].has_key("default_action") == False:
                 print("Error in config file\nMissing default action parameter.")
                 sys.exit(2)
             elif self.config['general']['default_action'] not in self.get_list_of_actions():
                 print("Error in config file\n" \
-                        "Non existing value for default action parameter\n" \
-                        "Possible values are: %s" % ', '.join(self.get_list_of_actions()))
+                        "Invalid value for default_action parameter\n" \
+                        "Possible values: %s" % ', '.join(self.get_list_of_actions()))
                 sys.exit(2)
-            if self.config['general'].has_key("show_nicknames") == False:
-                self.config['general']['show_nicknames'] = False
-            elif self.config['general']['show_nicknames'] == "yes":
-                self.config['general']['show_nicknames'] = True
-            elif self.config['general']['show_nicknames'] == "no":
-                self.config['general']['show_nicknames'] = False
+
+            # contact table settings
+            if self.config.has_key("contact table") == False:
+                self.config['contact table'] = {}
+
+            # sort contacts table by first or last name
+            if self.config['contact table'].has_key("sort") == False:
+                self.config['contact table']['sort'] = "first_name"
+            elif self.config['contact table']['sort'] not in ["first_name", "last_name"]:
+                print("Error in config file\n" \
+                        "Invalid value for sort parameter\n" \
+                        "Possible values: first_name, last_name")
+                sys.exit(2)
+
+            # group contact table by address book
+            if self.config['contact table'].has_key("group_by_addressbook") == False:
+                self.config['contact table']['group_by_addressbook'] = False
+            elif self.config['contact table']['group_by_addressbook'] == "yes":
+                self.config['contact table']['group_by_addressbook'] = True
+            elif self.config['contact table']['group_by_addressbook'] == "no":
+                self.config['contact table']['group_by_addressbook'] = False
             else:
-                print("Error in config file\nshow_nicknames parameter must be yes or no.")
+                print("Error in config file\n" \
+                        "Invalid value for group_by_addressbook parameter\n" \
+                        "Possible values: yes, no")
+                sys.exit(2)
+
+            # nickname
+            if self.config['contact table'].has_key("show_nicknames") == False:
+                self.config['contact table']['show_nicknames'] = False
+            elif self.config['contact table']['show_nicknames'] == "yes":
+                self.config['contact table']['show_nicknames'] = True
+            elif self.config['contact table']['show_nicknames'] == "no":
+                self.config['contact table']['show_nicknames'] = False
+            else:
+                print("Error in config file\n" \
+                        "Invalid value for show_nicknames parameter\n" \
+                        "Possible values: yes, no")
                 sys.exit(2)
 
             # load address books and contacts
@@ -133,8 +162,6 @@ class Config:
                         matching_contact = self.uid_dict.get(uid)
                         if matching_contact is None:
                             self.uid_dict[uid] = contact
-                            if len(uid) > self.length_of_longest_uid:
-                                self.length_of_longest_uid = len(uid)
                         else:
                             print("The contact %s from address book %s" \
                                     " and the contact %s from address book %s have the same uid %s" \
@@ -188,17 +215,33 @@ class Config:
             return self.config['general']['merge_editor']
 
 
+        def get_default_action(self):
+            return self.config['general']['default_action']
+
+
         def get_list_of_actions(self):
             return ["list", "details", "export", "email", "phone", "source",
                     "new", "add-email", "merge", "modify", "copy", "move", "remove"]
 
 
-        def get_default_action(self):
-            return self.config['general']['default_action']
+        def sort_by_name(self):
+            return self.config['contact table']['sort']
+
+
+        def set_sort_by_name(self, criteria):
+            self.config['contact table']['sort'] = criteria
+
+
+        def group_by_addressbook(self):
+            return self.config['contact table']['group_by_addressbook']
+
+
+        def set_group_by_addressbook(self):
+            self.config['contact table']['group_by_addressbook'] = True
 
 
         def show_nicknames(self):
-            return self.config['general']['show_nicknames']
+            return self.config['contact table']['show_nicknames']
 
 
         def get_all_address_books(self):
@@ -211,9 +254,14 @@ class Config:
                     return address_book
             return None
 
+
+        def has_uids(self):
+            return len(self.uid_dict.keys()) > 0
+
+
         def get_shortened_uid(self, uid):
             if bool(uid):
-                for length_of_uid in range(self.length_of_longest_uid, 0, -1):
+                for length_of_uid in range(len(uid), 0, -1):
                     if self.uid_dict.get(uid[:length_of_uid]) is not None:
                         return uid[:length_of_uid]
             return ""
