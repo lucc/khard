@@ -1,7 +1,6 @@
 [addressbooks]
 [[family]]
 path = ~/.contacts/family/
-
 [[friends]]
 path = ~/.contacts/friends/
 
@@ -14,3 +13,4 @@ default_action = list
 sort = last_name
 group_by_addressbook = no
 show_nicknames = no
+show_uids = yes

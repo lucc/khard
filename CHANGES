@@ -94,3 +94,6 @@ v0.8.0: 2016.01.15
         - New option: group_by_addressbook to group contact table by address book
     - Moved show_nicknames option from group "general" to group "contact table"
 
+v0.8.1: 2016.01.16
+- New option "show_uids" in config file to disable uid column in contact table
+

@@ -112,6 +112,19 @@ class Config:
                         "Possible values: yes, no")
                 sys.exit(2)
 
+            # show uids
+            if self.config['contact table'].has_key("show_uids") == False:
+                self.config['contact table']['show_uids'] = True
+            elif self.config['contact table']['show_uids'] == "yes":
+                self.config['contact table']['show_uids'] = True
+            elif self.config['contact table']['show_uids'] == "no":
+                self.config['contact table']['show_uids'] = False
+            else:
+                print("Error in config file\n" \
+                        "Invalid value for show_uids parameter\n" \
+                        "Possible values: yes, no")
+                sys.exit(2)
+
             # load address books and contacts
             error_counter = 0
             number_of_contacts = 0
@@ -153,58 +166,61 @@ class Config:
                 print("\n%d of %d vcard files could not be parsed" % (error_counter, number_of_contacts))
                 sys.exit(2)
 
-            # check, if multiple contacts have the same uid
-            flat_contact_list = []
-            for address_book in self.address_book_list:
-                for contact in address_book.get_contact_list():
-                    uid = contact.get_uid()
-                    if bool(uid):
-                        matching_contact = self.uid_dict.get(uid)
-                        if matching_contact is None:
-                            self.uid_dict[uid] = contact
-                        else:
-                            print("The contact %s from address book %s" \
-                                    " and the contact %s from address book %s have the same uid %s" \
-                                    % (matching_contact.get_full_name(),
-                                        matching_contact.get_address_book().get_name(),
-                                        contact.get_full_name(),
-                                        contact.get_address_book().get_name(),
-                                        contact.get_uid())
-                                    )
-                            sys.exit(2)
-                        # add to flat contact list
-                        flat_contact_list.append(contact)
+            # check uniqueness of vcard uids and create short uid dictionary
+            # that can be disabled with the show_uids option in the config file, if desired
+            if self.config['contact table']['show_uids']:
+                # check, if multiple contacts have the same uid
+                flat_contact_list = []
+                for address_book in self.address_book_list:
+                    for contact in address_book.get_contact_list():
+                        uid = contact.get_uid()
+                        if bool(uid):
+                            matching_contact = self.uid_dict.get(uid)
+                            if matching_contact is None:
+                                self.uid_dict[uid] = contact
+                            else:
+                                print("The contact %s from address book %s" \
+                                        " and the contact %s from address book %s have the same uid %s" \
+                                        % (matching_contact.get_full_name(),
+                                            matching_contact.get_address_book().get_name(),
+                                            contact.get_full_name(),
+                                            contact.get_address_book().get_name(),
+                                            contact.get_uid())
+                                        )
+                                sys.exit(2)
+                            # add to flat contact list
+                            flat_contact_list.append(contact)
 
-            # now we can be sure, that all uid's are unique but we don't want to enter
-            # the whole uid, if we choose a contact by the -u / --uid option
-            # so clear previously filled uid_dict and recreate with the shortest possible uid, so
-            # that it's still unique and easier to enter
-            # with around 100 contacts that short id should not be longer then two or three characters
-            self.uid_dict.clear()
-            flat_contact_list.sort(key = lambda x: x.get_uid())
-            if len(flat_contact_list) == 1:
-                current = flat_contact_list[0]
-                self.uid_dict[current.get_uid()[:1]] = current
-            elif len(flat_contact_list) > 1:
-                # first list element
-                current = flat_contact_list[0]
-                next = flat_contact_list[1]
-                same = helpers.compare_uids(current.get_uid(), next.get_uid())
-                self.uid_dict[current.get_uid()[:same+1]] = current
-                # list elements 1 to len(flat_contact_list)-1
-                for index in range(1, len(flat_contact_list)-1):
-                    prev = flat_contact_list[index-1]
-                    current = flat_contact_list[index]
-                    next = flat_contact_list[index+1]
-                    same = max(
-                            helpers.compare_uids(prev.get_uid(), current.get_uid()),
-                            helpers.compare_uids(current.get_uid(), next.get_uid()))
+                # now we can be sure, that all uid's are unique but we don't want to enter
+                # the whole uid, if we choose a contact by the -u / --uid option
+                # so clear previously filled uid_dict and recreate with the shortest possible uid, so
+                # that it's still unique and easier to enter
+                # with around 100 contacts that short id should not be longer then two or three characters
+                self.uid_dict.clear()
+                flat_contact_list.sort(key = lambda x: x.get_uid())
+                if len(flat_contact_list) == 1:
+                    current = flat_contact_list[0]
+                    self.uid_dict[current.get_uid()[:1]] = current
+                elif len(flat_contact_list) > 1:
+                    # first list element
+                    current = flat_contact_list[0]
+                    next = flat_contact_list[1]
+                    same = helpers.compare_uids(current.get_uid(), next.get_uid())
                     self.uid_dict[current.get_uid()[:same+1]] = current
-                # last list element
-                prev = flat_contact_list[-2]
-                current = flat_contact_list[-1]
-                same = helpers.compare_uids(prev.get_uid(), current.get_uid())
-                self.uid_dict[current.get_uid()[:same+1]] = current
+                    # list elements 1 to len(flat_contact_list)-1
+                    for index in range(1, len(flat_contact_list)-1):
+                        prev = flat_contact_list[index-1]
+                        current = flat_contact_list[index]
+                        next = flat_contact_list[index+1]
+                        same = max(
+                                helpers.compare_uids(prev.get_uid(), current.get_uid()),
+                                helpers.compare_uids(current.get_uid(), next.get_uid()))
+                        self.uid_dict[current.get_uid()[:same+1]] = current
+                    # last list element
+                    prev = flat_contact_list[-2]
+                    current = flat_contact_list[-1]
+                    same = helpers.compare_uids(prev.get_uid(), current.get_uid())
+                    self.uid_dict[current.get_uid()[:same+1]] = current
 
 
         def get_editor(self):
