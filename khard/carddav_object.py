@@ -548,6 +548,10 @@ class CarddavObject:
                 and not bool(contact_data.get("Organisation")):
             raise ValueError("Error: You must either enter a name or an organisation")
 
+        # delete vcard version
+        # the correct version is added automatically on saving again
+        self.delete_vcard_object("VERSION")
+
         # update rev
         self.delete_vcard_object("REV")
         self.add_rev(datetime.datetime.now())
