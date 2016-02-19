@@ -370,27 +370,33 @@ def main():
     parser.add_argument("--sort", default="",
                         help="Sort contact table by first or last name\n"
                         "    Possible values: first_name, last_name")
-    parser.add_argument("-t", "--template-file", default="",
-                        help="Specify template file name\n"
-                        "    new:     khard -a addr_name -t input.yaml\n"
-                        "    modify:  khard -s anything -t input.yaml\n"
-                        "    export:  khard -s anything -t export.yaml")
     parser.add_argument("-u", "--uid", default="",
                         help="Select contact by uid")
     parser.add_argument("-v", "--version", action="store_true",
                         help="Get current program version")
 
+    template_file_parser = argparse.ArgumentParser(add_help=False)
+    template_file_parser.add_argument(
+            "-t", "--template-file", default=sys.stdin, type=argparse.FileType,
+            help="Specify input template file name (use stdin by default)")
+
     subparsers = parser.add_subparsers(dest="action")
     list_parser = subparsers.add_parser("list")
     details_parser = subparsers.add_parser("details")
     export_parser = subparsers.add_parser("export")
+    export_parser.add_argument(
+            "-o", "--output-file", default=sys.stdout,
+            type=argparse.FileType("w"),
+            help="Specify output file name (default is to write to stdout)")
     email_parser = subparsers.add_parser("email")
     phone_parser = subparsers.add_parser("phone")
     source_parser = subparsers.add_parser("source")
-    new_parser = subparsers.add_parser("new")
-    add_email_parser = subparsers.add_parser("add-email")
+    new_parser = subparsers.add_parser("new", parents=[template_file_parser])
+    add_email_parser = subparsers.add_parser("add-email",
+                                             parents=[template_file_parser])
     merge_parser = subparsers.add_parser("merge")
-    modify_parser = subparsers.add_parser("modify")
+    modify_parser = subparsers.add_parser("modify",
+                                          parents=[template_file_parser])
     copy_parser = subparsers.add_parser("copy")
     move_parser = subparsers.add_parser("move")
     remove_parser = subparsers.add_parser("remove")
@@ -469,13 +475,10 @@ def main():
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
-    if args.action in ["add-email", "new", "modify"]:
-        if args.template_file:
-            with open(args.template_file, "r") as f:
-                input_from_stdin_or_file = f.read()
-        elif not sys.stdin.isatty():
-            input_from_stdin_or_file = sys.stdin.read()
-            sys.stdin = open('/dev/tty')
+    if hasattr(args, "template_file") and not args.template_file.isatty():
+        input_from_stdin_or_file = args.template_file.read()
+        # Reopen stdin in case it was used here.
+        sys.stdin = open('/dev/tty')
 
     # create new contact
     if args.action == "new":
@@ -692,11 +695,7 @@ def main():
             print selected_vcard.print_vcard()
 
         elif args.action == "export":
-            if args.template_file:
-                with open(args.template_file, "w") as f:
-                    f.write(selected_vcard.get_template())
-            else:
-                print selected_vcard.get_template()
+            args.output_file.write(selected_vcard.get_template())
 
         elif args.action == "modify":
             # if there is some data in stdin
