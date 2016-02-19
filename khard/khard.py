@@ -356,9 +356,6 @@ def main():
                         "list")
     parser.add_argument("-g", "--group-by-addressbook", action="store_true",
                         help="Group contact table by address book")
-    parser.add_argument("--open-editor", action="store_true",
-                        help="Open the default text editor after successful "
-                        "creation of new contact from stdin or template file")
     parser.add_argument("-r", "--reverse", action="store_true",
                         help="Reverse order of contact table")
     parser.add_argument("-s", "--search", default="",
@@ -392,6 +389,9 @@ def main():
     phone_parser = subparsers.add_parser("phone")
     source_parser = subparsers.add_parser("source")
     new_parser = subparsers.add_parser("new", parents=[template_file_parser])
+    new_parser.add_argument("--open-editor", action="store_true",
+                            help="Open the default text editor after "
+                            "successful creation of new contact")
     add_email_parser = subparsers.add_parser("add-email",
                                              parents=[template_file_parser])
     merge_parser = subparsers.add_parser("merge")
