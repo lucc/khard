@@ -5,12 +5,13 @@ path = ~/.contacts/family/
 path = ~/.contacts/friends/
 
 [general]
+default_action = list
 editor = vim
 merge_editor = vimdiff
-default_action = list
 
 [contact table]
-sort = last_name
 group_by_addressbook = no
+reverse = no
 show_nicknames = no
 show_uids = yes
+sort = last_name

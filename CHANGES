@@ -97,3 +97,12 @@ v0.8.0: 2016.01.15
 v0.8.1: 2016.01.16
 - New option "show_uids" in config file to disable uid column in contact table
 
+v0.9.0: 2016.03.17
+- Fully restructured command line interface for better usability:
+    - general help with: khard -h
+    - help for a specific action: khard action -h
+- Updated zsh completion function
+- New Action addressbooks
+- New option -p|--pretty for email and phone actions to get pretty formatted output
+- Fix: Only delete contact after modify, copy or move action was completed successfully
+

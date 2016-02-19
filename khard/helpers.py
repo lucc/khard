@@ -57,11 +57,8 @@ def file_modification_date(filename):
     return datetime.datetime.fromtimestamp(t)
 
 
-def get_new_contact_template(addressbook_name):
-    return """# Address book: %s
-# if you want to cancel, exit without saving
-
-# name components
+def get_new_contact_template():
+    return """# name components
 Prefix     : 
 First name : 
 Additional : 
@@ -142,5 +139,5 @@ Nickname :
 #   Note : |
 #       line one
 #       line two
-Note : """ % addressbook_name
+Note : """
 

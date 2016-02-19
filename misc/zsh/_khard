@@ -1,6 +1,6 @@
 #compdef khard
 
-# Zsh completion definition for khard
+# Zsh completion definition for khard version >= 0.9.0
 # Install by copying to a directory where zsh searches for completion
 # functions (the $fpath array).
 #
@@ -12,24 +12,156 @@
 #
 # More information at http://is.muni.cz/www/xsiska2/2014/08/05/generating-completing-functions.html
 
+
+# Define a helper function to complete addressbook names.
+function _khard_addressbook_names () {
+  local expl
+  _sequence _wanted addressbooks expl "addressbook" compadd - \
+      ${(f)"$(_call_program addresses khard addressbooks)"}
+}
+
 local curcontext="$curcontext"
 local -a state line expl
 local -A opt_args
+local ret=1
 
-_arguments -s \
-    {-a+,--addressbook=}'[specify addressbook]:addressbook:->addressbooks' \
-    {-g,--group-by-addressbook}'[Group contact table by address book]' \
-    '--open-editor[Open text editor after successful creation of new contact from stdin or template]' \
-    {-r,--reverse}'[Reverse order of contact table]' \
-    {-s+,--search=}'[search for contacts]:search string' \
-    '--sort=[sort contact table]:order:(first_name last_name)' \
-    {-t+,--template-file=}'[Specify template file to create, modify or export contacts]:template file:_files' \
-    {-u+,--uid=}'[Select contact by uid]:uid' \
-    '(- 1)'{-h,--help}'[show help information]' \
-    '(- 1)'{-v,--version}'[show version information]' \
-    '1:action:(list details export email phone source new add-email merge modify copy move remove)' && return
+# Define options for the different subcommands.
+local -a options
+options=(
+  '(- *)'{-h,--help}'[show a short help message]'
+)
 
-if [[ -n $state ]]; then
-    _sequence _wanted addressbooks expl "addressbook" compadd - \
-        ${${=${"$(_call_program addressbooks ${words[1]} -a , 2>&1)"}##*:}//,/}
-fi
+# First handle global options.  Everything that does not match a global option
+# as defined here is handled later.  The $state is set to "subcommand" or
+# "options" in order to do that.
+_arguments -C -s \
+  $options \
+  '(- *)'{-v,--version}'[show version information]' \
+  '(-d)'{-d,--debug}'[enable debug output]' \
+  ':subcommand:->subcommand' \
+  '*::options:->options' && ret=0
+
+case $state in
+  subcommand)
+    # Define an array with the subcommands and the description.
+    local -a subcommands_array
+    subcommands_array=(
+      'list:list all (selected) contacts'
+      'details:show details for a contact'
+      'export:export a contact'
+      'email:list email addresses'
+      'phone:list phone numbers'
+      'source:edit the source vcard of a contact'
+      'new:add a new contact'
+      'add-email:add email address from email header to a contact'
+      'merge:merge two contacts'
+      'modify:edit a contact'
+      'copy:copy a contact to another addressbook'
+      'move:move a contact to another addressbook'
+      'remove:delete a contact'
+      'addressbooks:list available addressbooks'
+    )
+    # Use this array to complete the subcommands.
+    _describe -t subcommands 'khard subcommands' subcommands_array && ret=0
+    ;;
+
+  options)
+    # Define different option groups.
+    # address book options
+    local -a default_addressbook_options new_addressbook_options copy_move_addressbook_options merge_addressbook_options
+    default_addressbook_options=(
+      '(-a)'{-a+,--addressbook=}'[specify addressbooks to narrow the list of contacts]:addressbook:_khard_addressbook_names'
+    )
+    new_addressbook_options=(
+      '(-a)'{-a+,--addressbook=}'[specify addressbook in which to create new contact]:addressbook:_khard_addressbook_names'
+    )
+    copy_move_addressbook_options=(
+      '(-a)'{-a+,--addressbook=}'[specify addressbooks to narrow the list of contacts]:addressbook:_khard_addressbook_names'
+      '(-A)'{-A+,--target-addressbook=}'[specify target addressbook in which to copy / move]:addressbook:_khard_addressbook_names'
+    )
+    merge_addressbook_options=(
+      '(-a)'{-a+,--addressbook=}'[specify addressbooks to narrow the list of source contacts]:addressbook:_khard_addressbook_names'
+      '(-A)'{-A+,--target-addressbook=}'[specify addressbooks to narrow the list of target contacts]:addressbook:_khard_addressbook_names'
+    )
+    # input file options
+    local -a email_header_input_options template_file_input_options
+    email_header_input_options=(
+      '(-i)'{-i+,--input-file=}'[Specify input email header file name or use stdin]:input file:_files'
+    )
+    template_file_input_options=(
+      '(-i)'{-i+,--input-file=}'[Specify input template file name or use stdin]:input file:_files'
+      '--open-editor[Open text editor after successful creation of new contact from stdin or template]'
+    )
+    # search options
+    local -a default_search_options merge_search_options
+    default_search_options=(
+      '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
+      '(-r)'{-r,--reverse}'[reverse order of contact table]'
+      '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name)'
+      '(-u)'{-u+,--uid=}'[select contact by uid]:uid'
+      '*::search terms'
+    )
+    merge_search_options=(
+      '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
+      '(-r)'{-r,--reverse}'[reverse order of contact table]'
+      '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name)'
+      '(-t)'{-t+,--target-contact=}'[search in all fields to find matching target contact]:search string'
+      '(-u)'{-u+,--uid=}'[select source contact by uid]:uid'
+      '(-U)'{-U+,--target-uid=}'[select target contact by uid]:uid'
+      '*::search terms'
+    )
+
+    curcontext="${curcontext%:*}-${words[1]}:"
+    # Add the correct options for the subcommand to $options, depending on the
+    # subcommand found in $word[1].
+    case $words[1] in
+      addressbooks)
+        options+=();;
+      list|details|source|remove)
+        options+=(
+          $default_addressbook_options $default_search_options
+        );;
+      email)
+        options+=(
+          $default_addressbook_options $default_search_options
+          '(-p)'{-p,--pretty}'[Pretty format email address table]'
+          '--remove-first-line[remove first line from output]'
+        );;
+      phone)
+        options+=(
+          $default_addressbook_options $default_search_options
+          '(-p)'{-p,--pretty}'[Pretty format phone number table]'
+        );;
+      export)
+	    options+=(
+          $default_addressbook_options $default_search_options
+          '--empty-contact-template[export empty contact template]'
+          '(-o)'{-o+,--output-file=}'[Specify output template file name or use stdout]:output file:_files'
+        );;
+      new)
+    	options+=(
+          $new_addressbook_options $template_file_input_options
+        );;
+      add-email)
+        options+=(
+          $default_addressbook_options $email_header_input_options $default_search_options
+        );;
+      copy|move)
+        options+=(
+          $copy_move_addressbook_options $default_search_options
+        );;
+      modify)
+        options+=(
+          $default_addressbook_options $template_file_input_options $default_search_options
+        );;
+      merge)
+        options+=(
+          $merge_addressbook_options $merge_search_options
+        );;
+    esac
+    # Complete the subcommand options.
+    _arguments -A "-*" $options && ret=0
+    ;;
+esac
+
+return ret

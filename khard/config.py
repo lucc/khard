@@ -86,6 +86,19 @@ class Config:
                         "Possible values: first_name, last_name")
                 sys.exit(2)
 
+            # reverse contact table
+            if self.config['contact table'].has_key("reverse") == False:
+                self.config['contact table']['reverse'] = False
+            elif self.config['contact table']['reverse'] == "yes":
+                self.config['contact table']['reverse'] = True
+            elif self.config['contact table']['reverse'] == "no":
+                self.config['contact table']['reverse'] = False
+            else:
+                print("Error in config file\n" \
+                        "Invalid value for reverse parameter\n" \
+                        "Possible values: yes, no")
+                sys.exit(2)
+
             # group contact table by address book
             if self.config['contact table'].has_key("group_by_addressbook") == False:
                 self.config['contact table']['group_by_addressbook'] = False
@@ -252,8 +265,16 @@ class Config:
             return self.config['contact table']['group_by_addressbook']
 
 
-        def set_group_by_addressbook(self):
-            self.config['contact table']['group_by_addressbook'] = True
+        def set_group_by_addressbook(self, bool):
+            self.config['contact table']['group_by_addressbook'] = bool
+
+
+        def reverse(self):
+            return self.config['contact table']['reverse']
+
+
+        def set_reverse(self, bool):
+            self.config['contact table']['reverse'] = bool
 
 
         def show_nicknames(self):

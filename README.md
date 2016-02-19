@@ -7,7 +7,7 @@ alot and the SIP client twinkle. You can find more information about khard and t
 synchronization process
 [here](http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/).
 
-Khard is developed and tested on Debian operating system, version 7 and 8 but should run on 
+Khard is developed and tested on Debian operating system, version 7 and 8 but should run on
 all Unix-like systems.
 
 If you encounter bugs, please contact me via email: email (at) eric-scheibler (dot) de.
@@ -158,7 +158,7 @@ khard details
 or search for it:
 
 ```
-khard details -s "name of contact"
+khard details name of contact
 ```
 
 or select the contact by it's uid, which you can find at the contacts table:
@@ -167,8 +167,8 @@ or select the contact by it's uid, which you can find at the contacts table:
 khard details -u ID
 ```
 
-The parameters -a, -s and -u from the examples above are always optional. If you don't use them or
-your input produces unambiguous results, you may pick the contacts from a list instead.
+The parameters -a and -u from the examples above are always optional. If you don't use them or your
+input produces unambiguous results, you may pick the contacts from a list instead.
 
 The search parameter searches in all data fields. Therefore you aren't limited to the contact's name
 but you also could for example search for a part of a phone number, email address or post address.
@@ -184,8 +184,7 @@ khard new -a "address book name"
 The template for the new contact opens in the text editor, which you can set in the khard.conf file.
 It follows the yaml syntax.
 
-Alternatively you can create the contact from stdin. Take the example contact template file from
-misc/khard/template_for_contact_creation.yaml and don't miss the line indentations. Example:
+Alternatively you can create the contact from stdin:
 
 ```
 echo """
@@ -199,10 +198,16 @@ Categories : cat1, cat2, cat3
 """ | khard new -a "address book name"
 ```
 
-or create from template file:
+or create from input template file:
 
 ```
-khard new -a "address book name" -t contact.yaml
+khard new -a "address book name" -i contact.yaml
+```
+
+You may get an empty contact template with the following command:
+
+```
+khard export --empty-contact-template -o empty.yaml
 ```
 
 ### Edit contacts ###
@@ -210,31 +215,31 @@ khard new -a "address book name" -t contact.yaml
 Use the following to modify the contact after successful creation:
 
 ```
-khard modify [-a addr_name] [-s search] [-u uid]
+khard modify [-a addr_name] [-u uid|search terms [search terms ...]]
 ```
 
 If you want to edit the contact elsewhere, you can export the filled contact template:
 
 ```
-khard export -t contact.yaml [-a addr_name] [-s search] [-u uid]
+khard export -o contact.yaml [-a addr_name] [-u uid|search terms [search terms ...]]
 ```
 
 Edit the yaml file and re-import either through stdin:
 
 ```
-cat contact.yaml | khard modify [-a addr_name] [-s search] [-u uid]
+cat contact.yaml | khard modify [-a addr_name] [-u uid|search terms [search terms ...]]
 ```
 
 or file name:
 
 ```
-khard modify -t contact.yaml [-a addr_name] [-s search] [-u uid]
+khard modify -i contact.yaml [-a addr_name] [-u uid|search terms [search terms ...]]
 ```
 
 If you want to merge contacts use the following to select a first and then a second contact:
 
 ```
-khard merge [-s "from contact,into contact"]
+khard merge [-a source_abook] [-u uid|search terms [search terms ...]] [-A target_abook] [-U target_uid|-t target_search_terms]
 ```
 
 You will be launched into your merge_editor ( see the "merge_editor" option in khard.conf)
@@ -244,14 +249,14 @@ Once you are finished, the first contact is deleted and the second one updated.
 Copy or move contact:
 
 ```
-khard copy [-s "source contact,target address book"]
-khard move [-s "source contact,target address book"]
+khard copy [-a source_abook] [-u uid|search terms [search terms ...]] [-A target_abook]
+khard move [-a source_abook] [-u uid|search terms [search terms ...]] [-A target_abook]
 ```
 
 Remove contact:
 
 ```
-khard remove [-a addr_name] [-s search] [-u uid]
+khard remove [-a addr_name] [-u uid|search terms [search terms ...]]
 ```
 
 
@@ -278,7 +283,7 @@ Khard may be used as an external address book for the email client mutt. To acco
 following to your mutt config file (mostly ~/.mutt/muttrc):
 
 ```
-set query_command= "khard email --search %s"
+set query_command= "khard email %s"
 bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
@@ -306,7 +311,7 @@ Add the following lines to your alot config file:
     [[youraccount]]
         [[[abook]]]
             type = shellcommand
-            command = khard email -s
+            command = khard email
             regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
             ignorecase = True
 ```

@@ -243,7 +243,8 @@ class CarddavObject:
                 # but the library awaits a list, if the vcard is serialized again
                 # so fix that by splitting the organisation value manually at the ";"
                 if not isinstance(child.value, list):
-                    child.value = child.value.split(";")
+                    child.value = [ x.replace("\\;", ";") \
+                            for x in re.split("[^\\\\];", child.value) ]
                 organisations.append(self.vcard_value_to_string(child.value))
         return organisations
 
@@ -800,7 +801,7 @@ class CarddavObject:
 
     def get_template(self):
         strings = []
-        for line in helpers.get_new_contact_template(self.get_address_book().get_name()).splitlines():
+        for line in helpers.get_new_contact_template().splitlines():
             if line.startswith("#"):
                 strings.append(line)
             elif line == "":
