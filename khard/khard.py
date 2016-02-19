@@ -369,8 +369,8 @@ def main():
                         "    Possible values: first_name, last_name")
     parser.add_argument("-u", "--uid", default="",
                         help="Select contact by uid")
-    parser.add_argument("-v", "--version", action="store_true",
-                        help="Get current program version")
+    parser.add_argument("-v", "--version", action="version",
+                        version="Khard version %s" % khard_version)
 
     template_file_parser = argparse.ArgumentParser(add_help=False)
     template_file_parser.add_argument(
@@ -402,11 +402,6 @@ def main():
     remove_parser = subparsers.add_parser("remove")
 
     args = parser.parse_args()
-
-    # version
-    if args.version == True:
-        print("Khard version %s" % khard_version)
-        sys.exit(0)
 
     # validate value for action
     if args.action == "":
