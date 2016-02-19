@@ -378,28 +378,41 @@ def main():
             help="Specify input template file name (use stdin by default)")
 
     subparsers = parser.add_subparsers(dest="action")
-    list_parser = subparsers.add_parser("list")
-    details_parser = subparsers.add_parser("details")
-    export_parser = subparsers.add_parser("export")
+    list_parser = subparsers.add_parser("list",
+                                        help="list all (selected) contacts")
+    details_parser = subparsers.add_parser(
+            "details", help="display detailed information about one contact")
+    export_parser = subparsers.add_parser(
+            "export", help="export a contact to the custom yaml format that "
+            "is also used for editing and creating contacts")
     export_parser.add_argument(
             "-o", "--output-file", default=sys.stdout,
             type=argparse.FileType("w"),
             help="Specify output file name (default is to write to stdout)")
-    email_parser = subparsers.add_parser("email")
-    phone_parser = subparsers.add_parser("phone")
-    source_parser = subparsers.add_parser("source")
-    new_parser = subparsers.add_parser("new", parents=[template_file_parser])
+    email_parser = subparsers.add_parser(
+            "email", help="list names and emails in a parsable format (usable "
+            "by e.g. mutt)")
+    phone_parser = subparsers.add_parser("phone",
+                                         help="list names and phone numbers")
+    source_parser = subparsers.add_parser(
+            "source", help="edit the vcard file of a contact directly")
+    new_parser = subparsers.add_parser("new", parents=[template_file_parser],
+                                       help="create a new contact")
     new_parser.add_argument("--open-editor", action="store_true",
                             help="Open the default text editor after "
                             "successful creation of new contact")
-    add_email_parser = subparsers.add_parser("add-email",
-                                             parents=[template_file_parser])
-    merge_parser = subparsers.add_parser("merge")
-    modify_parser = subparsers.add_parser("modify",
-                                          parents=[template_file_parser])
-    copy_parser = subparsers.add_parser("copy")
-    move_parser = subparsers.add_parser("move")
-    remove_parser = subparsers.add_parser("remove")
+    add_email_parser = subparsers.add_parser(
+            "add-email", parents=[template_file_parser],
+            help="add an email address to the address book (e.g. from mutt)")
+    merge_parser = subparsers.add_parser("merge", help="merge two contacts")
+    modify_parser = subparsers.add_parser(
+            "modify", parents=[template_file_parser],
+            help="edit the data of a contact")
+    copy_parser = subparsers.add_parser(
+            "copy", help="copy a contact to a different addressbook")
+    move_parser = subparsers.add_parser(
+            "move", help="move a contact to a different addressbook")
+    remove_parser = subparsers.add_parser("remove", help="remove a contact")
 
     args = parser.parse_args()
 
