@@ -349,31 +349,36 @@ def get_contact_list_by_user_selection(address_books, reverse, search, strict_se
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
-            description = "Khard is a carddav address book for the console",
-            formatter_class = argparse.RawTextHelpFormatter)
+            description="Khard is a carddav address book for the console",
+            formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-a", "--addressbook", default="",
-            help="Specify address book names as comma separated list")
+                        help="Specify address book names as comma separated "
+                        "list")
     parser.add_argument("-g", "--group-by-addressbook", action="store_true",
-            help="Group contact table by address book")
+                        help="Group contact table by address book")
     parser.add_argument("--open-editor", action="store_true",
-            help="Open the default text editor after successful creation of new contact from stdin or template file")
+                        help="Open the default text editor after successful "
+                        "creation of new contact from stdin or template file")
     parser.add_argument("-r", "--reverse", action="store_true",
-            help="Reverse order of contact table")
+                        help="Reverse order of contact table")
     parser.add_argument("-s", "--search", default="",
-            help="Search in all contact data fields\n" \
-                    "    default:   -s \"contact\"\n" \
-                    "    merge:     -s \"source contact,target contact\"\n" \
-                    "    copy/move: -s \"source contact,target address book\"")
+                        help="Search in all contact data fields\n"
+                        "    default:   -s \"contact\"\n"
+                        "    merge:     -s \"source contact,target contact\"\n"
+                        "    copy/move: -s \"source contact,target address "
+                        "book\"")
     parser.add_argument("--sort", default="",
-            help="Sort contact table by first or last name\n" \
-                    "    Possible values: first_name, last_name")
+                        help="Sort contact table by first or last name\n"
+                        "    Possible values: first_name, last_name")
     parser.add_argument("-t", "--template-file", default="",
-            help="Specify template file name\n" \
-                    "    new:     khard -a addr_name -t input.yaml\n" \
-                    "    modify:  khard -s anything -t input.yaml\n" \
-                    "    export:  khard -s anything -t export.yaml")
-    parser.add_argument("-u", "--uid", default="", help="Select contact by uid")
-    parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
+                        help="Specify template file name\n"
+                        "    new:     khard -a addr_name -t input.yaml\n"
+                        "    modify:  khard -s anything -t input.yaml\n"
+                        "    export:  khard -s anything -t export.yaml")
+    parser.add_argument("-u", "--uid", default="",
+                        help="Select contact by uid")
+    parser.add_argument("-v", "--version", action="store_true",
+                        help="Get current program version")
 
     subparsers = parser.add_subparsers()
     list_parser = subparsers.add_parser("list")
