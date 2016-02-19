@@ -215,7 +215,7 @@ def copy_contact(source_contact, target_address_book, delete_source_contact):
     print("%s contact %s from address book %s to %s" \
             % ("Moved" if delete_source_contact else "Copied", source_contact.get_full_name(),
                 source_contact.get_address_book().get_name(), target_address_book.get_name()))
- 
+
 
 def list_contacts(vcard_list):
     selected_address_books = []
@@ -297,7 +297,7 @@ def choose_vcard_from_list(vcard_list):
 
 
 def get_contact_list_by_user_selection(address_books, reverse, search, strict_search):
-    """returns a list of CarddavObject objects 
+    """returns a list of CarddavObject objects
     :param address_books: list of selected address books
     :type address_books: list(AddressBook)
     :param reverse: reverse ordering
@@ -364,7 +364,7 @@ def main():
                     "    default:   -s \"contact\"\n" \
                     "    merge:     -s \"source contact,target contact\"\n" \
                     "    copy/move: -s \"source contact,target address book\"")
-    parser.add_argument("--sort", default="", 
+    parser.add_argument("--sort", default="",
             help="Sort contact table by first or last name\n" \
                     "    Possible values: first_name, last_name")
     parser.add_argument("-t", "--template-file", default="",
