@@ -374,10 +374,35 @@ def main():
                     "    export:  khard -s anything -t export.yaml")
     parser.add_argument("-u", "--uid", default="", help="Select contact by uid")
     parser.add_argument("-v", "--version", action="store_true", help="Get current program version")
-    parser.add_argument("action", nargs="?", default="",
-            help="Possible actions:\n" \
-                    "    list, details, export, email, phone, source,\n" \
-                    "    new, add-email, merge, modify, copy, move and remove")
+
+    subparsers = parser.add_subparsers()
+    list_parser = subparsers.add_parser("list")
+    list_parser.set_defaults(action="list")
+    details_parser = subparsers.add_parser("details")
+    details_parser.set_defaults(action="details")
+    export_parser = subparsers.add_parser("export")
+    export_parser.set_defaults(action="export")
+    email_parser = subparsers.add_parser("email")
+    email_parser.set_defaults(action="email")
+    phone_parser = subparsers.add_parser("phone")
+    phone_parser.set_defaults(action="phone")
+    source_parser = subparsers.add_parser("source")
+    source_parser.set_defaults(action="source")
+    new_parser = subparsers.add_parser("new")
+    new_parser.set_defaults(action="new")
+    add_email_parser = subparsers.add_parser("add-email")
+    add_email_parser.set_defaults(action="add-email")
+    merge_parser = subparsers.add_parser("merge")
+    merge_parser.set_defaults(action="merge")
+    modify_parser = subparsers.add_parser("modify")
+    modify_parser.set_defaults(action="modify")
+    copy_parser = subparsers.add_parser("copy")
+    copy_parser.set_defaults(action="copy")
+    move_parser = subparsers.add_parser("move")
+    move_parser.set_defaults(action="move")
+    remove_parser = subparsers.add_parser("remove")
+    remove_parser.set_defaults(action="remove")
+
     args = parser.parse_args()
 
     # version
