@@ -346,6 +346,52 @@ def get_contact_list_by_user_selection(address_books, reverse, search, strict_se
             return sorted(contact_list, key = lambda x: x.get_last_name_first_name().lower(), reverse=reverse)
 
 
+def phone_subcommand(search_terms, vcard_list):
+    """Print a phone application friendly contact table.
+
+    :param search_terms: the first element is used as search term to filter the
+        contacts before printing
+    :type search_terms: list of str
+    :param vcard_list: the vcards to search for matching entries which should
+        be printed
+    :type vcard_list: list of carddav_object.CarddavObject
+    :returns: None
+    :rtype: None
+
+    """
+    all_phone_numbers_list = []
+    matching_phone_number_list = []
+    regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"),
+                        re.IGNORECASE)
+    for vcard in vcard_list:
+        for type, number_list in sorted(vcard.get_phone_numbers().items(),
+                                        key=lambda k: k[0].lower()):
+            for number in sorted(number_list):
+                phone_number_line = "%s\t%s\t%s" % \
+                        (number, vcard.get_full_name(), type)
+                if len(re.sub("\D", "", search_terms[0])) >= 3:
+                    # The user likely searches for a phone number cause the
+                    # search string contains at least three digits.  So we
+                    # remove all non-digit chars from the phone number field
+                    # and match against that.
+                    if regexp.search(re.sub("\D", "", number)) is not None:
+                        matching_phone_number_list.append(phone_number_line)
+                else:
+                    # The user doesn't search for a phone number so we can
+                    # perform a standard search without removing all non-digit
+                    # chars from the phone number string
+                    if regexp.search(phone_number_line) is not None:
+                        matching_phone_number_list.append(phone_number_line)
+                # collect all phone numbers in a different list as fallback
+                all_phone_numbers_list.append(phone_number_line)
+    if len(matching_phone_number_list) > 0:
+        print('\n'.join(matching_phone_number_list))
+    elif len(all_phone_numbers_list) > 0:
+        print('\n'.join(all_phone_numbers_list))
+    else:
+        sys.exit(1)
+
+
 def email_subcommand(search_terms, vcard_list):
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
@@ -670,34 +716,8 @@ def main():
         selected_vcard.write_to_file(overwrite=True)
         print("Done.\n\n%s" % selected_vcard.print_vcard())
 
-    # print phone application  friendly contacts table
     if args.action == "phone":
-        all_phone_numbers_list = []
-        matching_phone_number_list = []
-        regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"), re.IGNORECASE)
-        for vcard in vcard_list:
-            for type, number_list in sorted(vcard.get_phone_numbers().items(), key=lambda k: k[0].lower()):
-                for number in sorted(number_list):
-                    phone_number_line = "%s\t%s\t%s" % (number, vcard.get_full_name(), type)
-                    if len(re.sub("\D", "", search_terms[0])) >= 3:
-                        # the user likely searches for a phone number cause the search string contains
-                        # at least three digits
-                        # so we remove all non-digit chars from the phone number field and match against that
-                        if regexp.search(re.sub("\D", "", number)) != None:
-                            matching_phone_number_list.append(phone_number_line)
-                    else:
-                        # the user doesn't search for a phone number so we can perform a standard search
-                        # without removing all non-digit chars from the phone number string
-                        if regexp.search(phone_number_line) != None:
-                            matching_phone_number_list.append(phone_number_line)
-                    # collect all phone numbers in a different list as fallback
-                    all_phone_numbers_list.append(phone_number_line)
-        if len(matching_phone_number_list) > 0:
-            print('\n'.join(matching_phone_number_list))
-        elif len(all_phone_numbers_list) > 0:
-            print('\n'.join(all_phone_numbers_list))
-        else:
-            sys.exit(1)
+        phone_subcommand(search_terms, vcard_list)
 
     if args.action == "email":
         email_subcommand(search_terms[0], vcard_list)
