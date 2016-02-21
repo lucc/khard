@@ -355,9 +355,9 @@ def email_subcommand(search_terms, vcard_list):
         email_address\tname\ttype
         [...]
 
-    :param search_terms: the first element is used as search term to filter the
-        contacts before printing
-    :type search_terms: list of str
+    :param search_terms: used as search term to filter the contacts before
+        printing
+    :type search_terms: str
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :type vcard_list: list of carddav_object.CarddavObject
@@ -367,7 +367,7 @@ def email_subcommand(search_terms, vcard_list):
     """
     matching_email_address_list = []
     all_email_address_list = []
-    regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"),
+    regexp = re.compile(search_terms.replace("*", ".*").replace(" ", ".*"),
                         re.IGNORECASE)
     for vcard in vcard_list:
         for type, email_list in sorted(vcard.get_email_addresses().items(),
@@ -379,7 +379,7 @@ def email_subcommand(search_terms, vcard_list):
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
                 all_email_address_list.append(email_address_line)
-    print("searching for '%s' ..." % search_terms[0])
+    print("searching for '%s' ..." % search_terms)
     if len(matching_email_address_list) > 0:
         print('\n'.join(matching_email_address_list))
     elif len(all_email_address_list) > 0:
@@ -700,7 +700,7 @@ def main():
             sys.exit(1)
 
     if args.action == "email":
-        email_subcommand(search_terms, vcard_list)
+        email_subcommand(search_terms[0], vcard_list)
 
     # print user friendly contacts table
     if args.action == "list":
