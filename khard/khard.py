@@ -349,9 +349,9 @@ def get_contact_list_by_user_selection(address_books, reverse, search, strict_se
 def phone_subcommand(search_terms, vcard_list):
     """Print a phone application friendly contact table.
 
-    :param search_terms: the first element is used as search term to filter the
-        contacts before printing
-    :type search_terms: list of str
+    :param search_terms: used as search term to filter the contacts before
+        printing
+    :type search_terms: str
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :type vcard_list: list of carddav_object.CarddavObject
@@ -361,7 +361,7 @@ def phone_subcommand(search_terms, vcard_list):
     """
     all_phone_numbers_list = []
     matching_phone_number_list = []
-    regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"),
+    regexp = re.compile(search_terms.replace("*", ".*").replace(" ", ".*"),
                         re.IGNORECASE)
     for vcard in vcard_list:
         for type, number_list in sorted(vcard.get_phone_numbers().items(),
@@ -369,7 +369,7 @@ def phone_subcommand(search_terms, vcard_list):
             for number in sorted(number_list):
                 phone_number_line = "%s\t%s\t%s" % \
                         (number, vcard.get_full_name(), type)
-                if len(re.sub("\D", "", search_terms[0])) >= 3:
+                if len(re.sub("\D", "", search_terms)) >= 3:
                     # The user likely searches for a phone number cause the
                     # search string contains at least three digits.  So we
                     # remove all non-digit chars from the phone number field
@@ -717,7 +717,7 @@ def main():
         print("Done.\n\n%s" % selected_vcard.print_vcard())
 
     if args.action == "phone":
-        phone_subcommand(search_terms, vcard_list)
+        phone_subcommand(search_terms[0], vcard_list)
 
     if args.action == "email":
         email_subcommand(search_terms[0], vcard_list)
