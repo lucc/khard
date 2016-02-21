@@ -408,6 +408,128 @@ def new_subcommand(selected_address_books, addressbook,
         create_new_contact(selected_address_book)
 
 
+def add_email_subcommand(input_from_stdin_or_file, selected_address_books,
+                         reverse):
+    """Add a new email address to contacts, creating new contacts if necessary.
+
+    :param input_from_stdin_or_file: the input text to search for the new email
+    :type input_from_stdin_or_file: str
+    :param selected_address_books: the addressbooks that were selected on the
+        command line
+    :type selected_address_books: list of address_book.AddressBook
+    :param reverse: order contact list in reverse
+    :type reverse: bool
+    :returns: None
+    :rtype: None
+
+    """
+    # get name and email address
+    email_address = ""
+    name = ""
+    for line in input_from_stdin_or_file.splitlines():
+        if line.startswith("From:"):
+            try:
+                name = line[6:line.index("<")-1]
+                email_address = line[line.index("<")+1:line.index(">")]
+            except ValueError:
+                email_address = line[6:].strip()
+            break
+    print("Khard: Add email address to contact")
+    if not email_address:
+        print("Found no email address")
+        sys.exit(1)
+    print("Email address: %s" % email_address)
+    if not name:
+        name = raw_input("Contact's name: ")
+    else:
+        # remove quotes from name string, otherwise decoding fails
+        name = name.replace("\"", "")
+        # fix encoding of senders name
+        name, encoding = decode_header(name)[0]
+        if encoding:
+            name = name.decode(encoding).encode("utf-8").replace("\"", "")
+        # query user input.
+        user_input = raw_input("Contact's name [%s]: " % name)
+        # if empty, use the extracted name from above
+        name = user_input or name
+
+    # search for an existing contact
+    selected_vcard = choose_vcard_from_list(
+            get_contact_list_by_user_selection(
+                selected_address_books, reverse, name, True))
+    if selected_vcard is None:
+        # create new contact
+        while True:
+            input_string = raw_input("Contact %s does not exist. Do you want "
+                                     "to create it (y/n)? " % name)
+            if input_string.lower() in ["", "n", "q"]:
+                print("Canceled")
+                sys.exit(0)
+            if input_string.lower() == "y":
+                break
+        # ask for address book, in which to create the new contact
+        print("Available address books: %s" % ', '.join(
+            [str(book) for book in Config().get_all_address_books()]))
+        while True:
+            book_name = raw_input("Address book [%s]: " %
+                                  selected_address_books[0].get_name()) or \
+                    selected_address_books[0].get_name()
+            if Config().get_address_book(book_name) is not None:
+                break
+        # ask for name and organisation of new contact
+        while True:
+            first_name = raw_input("First name: ")
+            last_name = raw_input("Last name: ")
+            organisation = raw_input("Organisation: ")
+            if not first_name and not last_name and not organisation:
+                print("Error: All fields are empty.")
+            else:
+                break
+        selected_vcard = CarddavObject.from_user_input(
+                Config().get_address_book(book_name),
+                "First name : %s\nLast name : %s\nOrganisation : %s" %
+                (first_name, last_name, organisation))
+
+    # check if the contact already contains the email address
+    for type, email_list in sorted(
+            selected_vcard.get_email_addresses().items(),
+            key=lambda k: k[0].lower()):
+        for email in email_list:
+            if email == email_address:
+                print("The contact %s already contains the email address %s" %
+                      (selected_vcard, email_address))
+                sys.exit(0)
+
+    # ask for confirmation again
+    while True:
+        input_string = raw_input(
+                "Do you want to add the email address %s to the contact %s "
+                "(y/n)? " % (email_address, selected_vcard.get_full_name()))
+        if input_string.lower() in ["", "n", "q"]:
+            print("Canceled")
+            sys.exit(0)
+        if input_string.lower() == "y":
+            break
+
+    # ask for the email label
+    print("\nAdding email address %s to contact %s\n"
+          "Enter email label\n"
+          "    At least one of: home, internet, pref, uri, work, x400\n"
+          "    Or a custom label (only letters" %
+          (email_address, selected_vcard))
+    while True:
+        label = raw_input("email label [internet]: ") or "internet"
+        try:
+            selected_vcard.add_email_address(label, email_address)
+        except ValueError as e:
+            print(e)
+        else:
+            break
+    # save to disk
+    selected_vcard.write_to_file(overwrite=True)
+    print("Done.\n\n%s" % selected_vcard.print_vcard())
+
+
 def phone_subcommand(search_terms, vcard_list):
     """Print a phone application friendly contact table.
 
@@ -644,103 +766,8 @@ def main():
 
     # add email address to contact or create a new one if necessary
     if args.action == "add-email":
-        # get name and email address
-        email_address = ""
-        name = ""
-        for line in input_from_stdin_or_file.splitlines():
-            if line.startswith("From:"):
-                try:
-                    name = line[6:line.index("<")-1]
-                    email_address = line[line.index("<")+1:line.index(">")]
-                except ValueError as e:
-                    email_address = line[6:].strip()
-                break
-        print("Khard: Add email address to contact")
-        if not email_address:
-            print("Found no email address")
-            sys.exit(1)
-        print("Email address: %s" % email_address)
-        if not name:
-            name = raw_input("Contact's name: ")
-        else:
-            # remove quotes from name string, otherwise decoding fails
-            name = name.replace("\"", "")
-            # fix encoding of senders name
-            name, encoding = decode_header(name)[0]
-            if encoding:
-                name = name.decode(encoding).encode("utf-8").replace("\"", "")
-            # query user input.
-            user_input = raw_input("Contact's name [%s]: " % name)
-            # if empty, use the extracted name from above
-            name = user_input or name
-
-        # search for an existing contact
-        selected_vcard = choose_vcard_from_list(
-                get_contact_list_by_user_selection(
-                    selected_address_books, args.reverse, name, True))
-        if selected_vcard is None:
-            # create new contact
-            while True:
-                input_string = raw_input("Contact %s does not exist. Do you want to create it (y/n)? " % name)
-                if input_string.lower() in ["", "n", "q"]:
-                    print("Canceled")
-                    sys.exit(0)
-                if input_string.lower() == "y":
-                    break
-            # ask for address book, in which to create the new contact
-            print("Available address books: %s" \
-                    % ', '.join([ str(book) for book in Config().get_all_address_books() ]))
-            while True:
-                book_name = raw_input("Address book [%s]: " % selected_address_books[0].get_name()) \
-                        or selected_address_books[0].get_name()
-                if Config().get_address_book(book_name) is not None:
-                    break
-            # ask for name and organisation of new contact
-            while True:
-                first_name = raw_input("First name: ")
-                last_name = raw_input("Last name: ")
-                organisation = raw_input("Organisation: ")
-                if not first_name and not last_name and not organisation:
-                    print("Error: All fields are empty.")
-                else:
-                    break
-            selected_vcard = CarddavObject.from_user_input(
-                    Config().get_address_book(book_name),
-                    "First name : %s\nLast name : %s\nOrganisation : %s" % (first_name, last_name, organisation))
-
-        # check if the contact already contains the email address
-        for type, email_list in sorted(selected_vcard.get_email_addresses().items(), key=lambda k: k[0].lower()):
-            for email in email_list:
-                if email == email_address:
-                    print("The contact %s already contains the email address %s" % (selected_vcard, email_address))
-                    sys.exit(0)
-
-        # ask for confirmation again
-        while True:
-            input_string = raw_input("Do you want to add the email address %s to the contact %s (y/n)? " \
-                    % (email_address, selected_vcard.get_full_name()))
-            if input_string.lower() in ["", "n", "q"]:
-                print("Canceled")
-                sys.exit(0)
-            if input_string.lower() == "y":
-                break
-
-        # ask for the email label
-        print("\nAdding email address %s to contact %s\n" \
-                "Enter email label\n" \
-                "    At least one of: home, internet, pref, uri, work, x400\n" \
-                "    Or a custom label (only letters" % (email_address, selected_vcard))
-        while True:
-            label = raw_input("email label [internet]: ") or "internet"
-            try:
-                selected_vcard.add_email_address(label, email_address)
-            except ValueError as e:
-                print(e)
-            else:
-                break
-        # save to disk
-        selected_vcard.write_to_file(overwrite=True)
-        print("Done.\n\n%s" % selected_vcard.print_vcard())
+        add_email_subcommand(input_from_stdin_or_file, selected_address_books,
+                             args.reverse)
 
     if args.action == "phone":
         phone_subcommand(search_terms[0], vcard_list)
