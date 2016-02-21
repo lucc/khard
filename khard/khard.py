@@ -346,6 +346,68 @@ def get_contact_list_by_user_selection(address_books, reverse, search, strict_se
             return sorted(contact_list, key = lambda x: x.get_last_name_first_name().lower(), reverse=reverse)
 
 
+def new_subcommand(selected_address_books, addressbook,
+                   input_from_stdin_or_file, open_editor):
+    """Create a new contact.
+
+    :param selected_address_books: a list of addressbooks that were selected on
+        the command line
+    :type selected_address_books: list of address_book.AddressBook
+    :param addressbook: This will only be checked if it is the empty string if
+        and only if selected_address_books is not of length 1.  In this case
+        the user will be asked to select an addressbook from a list.
+    :type addressbook: str
+    :param input_from_stdin_or_file: the data for the new contact as a yaml
+        formatted string
+    :type input_from_stdin_or_file: str
+    :param open_editor: whether to open the new contact in the edior after
+        creation
+    :type open_editor: bool
+    :returns: None
+    :rtype: None
+
+    """
+    if len(selected_address_books) == 1:
+        selected_address_book = selected_address_books[0]
+    else:
+        if addressbook == "":
+            # ask for address book
+            print("Create new contact\nEnter address book name")
+            for book in Config().get_all_address_books():
+                print("  %s" % book.get_name())
+            while True:
+                input_string = raw_input("Address book: ")
+                if input_string == "":
+                    print("Canceled")
+                    sys.exit(0)
+                if Config().get_address_book(input_string) in \
+                        Config().get_all_address_books():
+                    selected_address_book = Config().get_address_book(
+                            input_string)
+                    print("")
+                    break
+        else:
+            print("Please enter only a single address book name")
+            sys.exit(1)
+    # if there is some data in stdin
+    if input_from_stdin_or_file:
+        # create new contact from stdin
+        try:
+            new_contact = CarddavObject.from_user_input(
+                    selected_address_book, input_from_stdin_or_file)
+        except ValueError as e:
+            print(e)
+            sys.exit(1)
+        else:
+            new_contact.write_to_file()
+        if open_editor:
+            modify_existing_contact(new_contact)
+        else:
+            print("Creation successful\n\n%s" % new_contact.print_vcard())
+    else:
+        create_new_contact(selected_address_book)
+
+
 def phone_subcommand(search_terms, vcard_list):
     """Print a phone application friendly contact table.
 
@@ -576,45 +638,9 @@ def main():
         # Reopen stdin in case it was used here.
         sys.stdin = open('/dev/tty')
 
-    # create new contact
     if args.action == "new":
-        if len(selected_address_books) == 1:
-            selected_address_book = selected_address_books[0]
-        else:
-            if args.addressbook == "":
-                # ask for address book
-                print("Create new contact\nEnter address book name")
-                for book in Config().get_all_address_books():
-                    print("  %s" % book.get_name())
-                while True:
-                    input_string = raw_input("Address book: ")
-                    if input_string == "":
-                        print("Canceled")
-                        sys.exit(0)
-                    if Config().get_address_book(input_string) in Config().get_all_address_books():
-                        selected_address_book = Config().get_address_book(input_string)
-                        print("")
-                        break
-            else:
-                print("Please enter only a single address book name")
-                sys.exit(1)
-        # if there is some data in stdin
-        if input_from_stdin_or_file:
-            # create new contact from stdin
-            try:
-                new_contact = CarddavObject.from_user_input(
-                        selected_address_book, input_from_stdin_or_file)
-            except ValueError as e:
-                print(e)
-                sys.exit(1)
-            else:
-                new_contact.write_to_file()
-            if args.open_editor:
-                modify_existing_contact(new_contact)
-            else:
-                print("Creation successful\n\n%s" % new_contact.print_vcard())
-        else:
-            create_new_contact(selected_address_book)
+        new_subcommand(selected_address_books, args.addressbook,
+                       input_from_stdin_or_file, args.open_editor)
 
     # add email address to contact or create a new one if necessary
     if args.action == "add-email":
