@@ -346,6 +346,48 @@ def get_contact_list_by_user_selection(address_books, reverse, search, strict_se
             return sorted(contact_list, key = lambda x: x.get_last_name_first_name().lower(), reverse=reverse)
 
 
+def email_subcommand(search_terms, vcard_list):
+    """Print a mail client friendly contacts table that is compatible with the
+    default format used by mutt.
+    Output format:
+        single line of text
+        email_address\tname\ttype
+        email_address\tname\ttype
+        [...]
+
+    :param search_terms: the first element is used as search term to filter the
+        contacts before printing
+    :type search_terms: list of str
+    :param vcard_list: the vcards to search for matching entries which should
+        be printed
+    :type vcard_list: list of carddav_object.CarddavObject
+    :returns: None
+    :rtype: None
+
+    """
+    matching_email_address_list = []
+    all_email_address_list = []
+    regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"),
+                        re.IGNORECASE)
+    for vcard in vcard_list:
+        for type, email_list in sorted(vcard.get_email_addresses().items(),
+                                       key=lambda k: k[0].lower()):
+            for email in sorted(email_list):
+                email_address_line = "%s\t%s\t%s" \
+                        % (email, vcard.get_full_name(), type)
+                if regexp.search(email_address_line) is not None:
+                    matching_email_address_list.append(email_address_line)
+                # collect all email addresses in a different list as fallback
+                all_email_address_list.append(email_address_line)
+    print("searching for '%s' ..." % search_terms[0])
+    if len(matching_email_address_list) > 0:
+        print('\n'.join(matching_email_address_list))
+    elif len(all_email_address_list) > 0:
+        print('\n'.join(all_email_address_list))
+    else:
+        sys.exit(1)
+
+
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
@@ -657,33 +699,8 @@ def main():
         else:
             sys.exit(1)
 
-    # print mail client friendly contacts table
-    # compatible to mutt and alot
-    # output format:
-    #   single line of text
-    #   email_address\tname\ttype
-    #   email_address\tname\ttype
-    #   [...]
     if args.action == "email":
-        matching_email_address_list = []
-        all_email_address_list = []
-        regexp = re.compile(search_terms[0].replace("*", ".*").replace(" ", ".*"), re.IGNORECASE)
-        for vcard in vcard_list:
-            for type, email_list in sorted(vcard.get_email_addresses().items(), key=lambda k: k[0].lower()):
-                for email in sorted(email_list):
-                    email_address_line = "%s\t%s\t%s" \
-                            % (email, vcard.get_full_name(), type)
-                    if regexp.search(email_address_line) != None:
-                        matching_email_address_list.append(email_address_line)
-                    # collect all email addresses in a different list as fallback
-                    all_email_address_list.append(email_address_line)
-        print("searching for '%s' ..." % search_terms[0])
-        if len(matching_email_address_list) > 0:
-            print('\n'.join(matching_email_address_list))
-        elif len(all_email_address_list) > 0:
-            print('\n'.join(all_email_address_list))
-        else:
-            sys.exit(1)
+        email_subcommand(search_terms, vcard_list)
 
     # print user friendly contacts table
     if args.action == "list":
