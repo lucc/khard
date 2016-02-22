@@ -1001,48 +1001,34 @@ def main():
     if args.action == "new":
         new_subcommand(selected_address_books, args.addressbook,
                        input_from_stdin_or_file, args.open_editor)
-
-    # add email address to contact or create a new one if necessary
-    if args.action == "add-email":
+    elif args.action == "add-email":
         add_email_subcommand(input_from_stdin_or_file, selected_address_books,
                              args.reverse)
-
-    if args.action == "phone":
+    elif args.action == "phone":
         phone_subcommand(search_terms[0], vcard_list)
-
-    if args.action == "email":
+    elif args.action == "email":
         email_subcommand(search_terms[0], vcard_list)
-
-    if args.action == "list":
+    elif args.action == "list":
         list_subcommand(vcard_list)
-
-    # show source or details, modify or remove contact
-    if args.action in ["details", "modify", "remove", "source", "export"]:
+    elif args.action in ["details", "modify", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(vcard_list)
         if selected_vcard is None:
             print("Found no contact")
             sys.exit(1)
-
         if args.action == "details":
-            print selected_vcard.print_vcard()
-
+            print(selected_vcard.print_vcard())
         elif args.action == "export":
             args.output_file.write(selected_vcard.get_template())
-
         elif args.action == "modify":
             modify_subcommand(selected_vcard, input_from_stdin_or_file)
-
         elif args.action == "remove":
             remove_subcommand(selected_vcard)
-
         elif args.action == "source":
             source_subcommand(selected_vcard, Config().get_editor())
-
-    if args.action == "merge":
+    elif args.action == "merge":
         merge_subcommand(vcard_list, selected_address_books, args.reverse,
                          search_terms[1])
-
-    if args.action in ["copy", "move"]:
+    elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(args.action, vcard_list, search_terms,
                                 args.reverse)
 
