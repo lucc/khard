@@ -633,6 +633,45 @@ def list_subcommand(vcard_list):
     list_contacts(vcard_list)
 
 
+def merge_subcommand(vcard_list, selected_address_books, reverse,
+                     search_terms):
+    """Merge two contacts into one.
+
+    :param vcard_list: the vcards from which to choose contacts for mergeing
+    :type vcard_list: list of carddav_object.CarddavObject
+    :param selected_address_books: the addressbooks to use to find the target
+        contact
+    :type selected_address_books: list of address_book.AddressBook
+    :param reverse: order contact list in reverse
+    :type reverse: bool
+    :param search_terms: the search terms to find the target contact
+    :type search_terms: str
+    :returns: None
+    :rtype: None
+
+    """
+    # get the source vcard, from which to merge
+    source_vcard = choose_vcard_from_list(vcard_list)
+    if source_vcard is None:
+        print("Found no source contact for merging")
+        sys.exit(1)
+    # get the target vcard, into which to merge
+    print("Merge from %s from address book %s\n\n"
+          "Now choose the contact into which to merge:"
+          % (source_vcard.get_full_name(),
+             source_vcard.get_address_book().get_name()))
+    target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
+                selected_address_books, reverse, search_terms, False))
+    if target_vcard is None:
+        print("Found no target contact for merging")
+        sys.exit(1)
+    # merging
+    if source_vcard == target_vcard:
+        print("The selected contacts are already identical")
+    else:
+        merge_existing_contacts(source_vcard, target_vcard, True)
+
+
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
@@ -849,29 +888,9 @@ def main():
                     selected_vcard.get_filename()])
             streamdata = child.communicate()[0]
 
-    # merge contacts
     if args.action == "merge":
-        # get the source vcard, from which to merge
-        source_vcard = choose_vcard_from_list(vcard_list)
-        if source_vcard is None:
-            print("Found no source contact for merging")
-            sys.exit(1)
-
-        # get the target vcard, into which to merge
-        print("Merge from %s from address book %s\n\nNow choose the contact into which to merge:" \
-                % (source_vcard.get_full_name(), source_vcard.get_address_book().get_name()))
-        target_vcard = choose_vcard_from_list(
-                get_contact_list_by_user_selection(
-                    selected_address_books, args.reverse, search_terms[1], False))
-        if target_vcard is None:
-            print("Found no target contact for merging")
-            sys.exit(1)
-
-        # merging
-        if source_vcard == target_vcard:
-            print("The selected contacts are already identical")
-        else:
-            merge_existing_contacts(source_vcard, target_vcard, True)
+        merge_subcommand(vcard_list, selected_address_books, args.reverse,
+                         search_terms[1])
 
     # copy or move contact
     if args.action in ["copy", "move"]:
