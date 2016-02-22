@@ -673,6 +673,29 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file):
         modify_existing_contact(selected_vcard)
 
 
+def remove_subcommand(selected_vcard):
+    """Remove a contact from the addressbook.
+
+    :param selected_vcard: the contact to delete
+    :type selected_vcard: carddav_object.CarddavObject
+    :returns: None
+    :rtype: None
+
+    """
+    while True:
+        input_string = raw_input(
+                "Deleting contact %s from address book %s. Are you sure? "
+                "(y/n): " % (selected_vcard.get_full_name(),
+                             selected_vcard.get_address_book().get_name()))
+        if input_string.lower() in ["", "n", "q"]:
+            print("Canceled")
+            sys.exit(0)
+        if input_string.lower() == "y":
+            break
+    selected_vcard.delete_vcard_file()
+    print("Contact deleted successfully")
+
+
 def merge_subcommand(vcard_list, selected_address_books, reverse,
                      search_terms):
     """Merge two contacts into one.
@@ -889,16 +912,7 @@ def main():
             modify_subcommand(selected_vcard, input_from_stdin_or_file)
 
         elif args.action == "remove":
-            while True:
-                input_string = raw_input("Deleting contact %s from address book %s. Are you sure? (y/n): " \
-                        % (selected_vcard.get_full_name(), selected_vcard.get_address_book().get_name()))
-                if input_string.lower() in ["", "n", "q"]:
-                    print("Canceled")
-                    sys.exit(0)
-                if input_string.lower() == "y":
-                    break
-            selected_vcard.delete_vcard_file()
-            print("Contact deleted successfully")
+            remove_subcommand(selected_vcard)
 
         elif args.action == "source":
             child = subprocess.Popen([Config().get_editor(),
