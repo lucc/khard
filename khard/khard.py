@@ -930,7 +930,8 @@ def main():
     if args.action == "":
         args.action = Config().get_default_action()
     if args.action not in Config().get_list_of_actions():
-        print("Unsupported action. Possible values are: %s" % ', '.join(Config().get_list_of_actions()))
+        print("Unsupported action. Possible values are: %s" %
+              ', '.join(Config().get_list_of_actions()))
         sys.exit(1)
 
     # load address books which are defined in the configuration file
@@ -940,15 +941,17 @@ def main():
     else:
         for name in args.addressbook.split(","):
             if Config().get_address_book(name) is None:
-                print("Error: The entered address book \"%s\" does not exist.\nPossible values are: %s" \
-                        % (name, ', '.join([ str(book) for book in Config().get_all_address_books() ])))
+                print("Error: The entered address book \"%s\" does not exist."
+                      "\nPossible values are: %s" % (
+                          name, ', '.join([str(book) for book in
+                                          Config().get_all_address_books()])))
                 sys.exit(1)
             else:
                 selected_address_books.append(Config().get_address_book(name))
 
-    # search parameter
-    # may either contain one search term for a standard search or two terms, devided by a "," to
-    # search for two contacts to merge them
+    # The search parameter may either contain one search term for a standard
+    # search or two terms, devided by a "," to search for two contacts to merge
+    # them.
     search_terms = args.search.split(",")
     if len(search_terms) == 1:
         search_terms.append("")
@@ -962,7 +965,8 @@ def main():
         if args.sort in ["first_name", "last_name"]:
             Config().set_sort_by_name(args.sort)
         else:
-            print("Unsupported sort criteria. Possible values: first_name, last_name")
+            print("Unsupported sort criteria. Possible values: first_name, "
+                  "last_name")
             sys.exit(1)
 
     # create a list of all found vcard objects
@@ -985,7 +989,8 @@ def main():
             else:
                 print("Found multiple contacts for uid %s" % args.uid)
                 for vcard in vcard_list:
-                    print("    %s: %s" % (vcard.get_full_name(), vcard.get_uid()))
+                    print("    %s: %s" % (vcard.get_full_name(),
+                                          vcard.get_uid()))
             sys.exit(1)
     else:
         vcard_list = get_contact_list_by_user_selection(
