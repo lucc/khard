@@ -696,6 +696,21 @@ def remove_subcommand(selected_vcard):
     print("Contact deleted successfully")
 
 
+def source_subcommand(selected_vcard, editor):
+    """Open the vcard file for a contact in an external editor.
+
+    :param selected_vcard: the contact to edit
+    :type selected_vcard: carddav_object.CarddavObject
+    :param editor: the eitor command to use
+    :type editor: str
+    :returns: None
+    :rtype: None
+
+    """
+    child = subprocess.Popen([editor, selected_vcard.get_filename()])
+    streamdata = child.communicate()[0]
+
+
 def merge_subcommand(vcard_list, selected_address_books, reverse,
                      search_terms):
     """Merge two contacts into one.
@@ -915,9 +930,7 @@ def main():
             remove_subcommand(selected_vcard)
 
         elif args.action == "source":
-            child = subprocess.Popen([Config().get_editor(),
-                    selected_vcard.get_filename()])
-            streamdata = child.communicate()[0]
+            source_subcommand(selected_vcard, Config().get_editor())
 
     if args.action == "merge":
         merge_subcommand(vcard_list, selected_address_books, args.reverse,
