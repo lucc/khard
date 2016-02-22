@@ -618,6 +618,21 @@ def email_subcommand(search_terms, vcard_list):
         sys.exit(1)
 
 
+def list_subcommand(vcard_list):
+    """Print a user friendly contacts table.
+
+    :param vcard_list: the vcards to print
+    :type vcard_list: list of carddav_object.CarddavObject
+    :returns: None
+    :rtype: None
+
+    """
+    if len(vcard_list) == 0:
+        print("Found no contacts")
+        sys.exit(1)
+    list_contacts(vcard_list)
+
+
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
@@ -775,12 +790,8 @@ def main():
     if args.action == "email":
         email_subcommand(search_terms[0], vcard_list)
 
-    # print user friendly contacts table
     if args.action == "list":
-        if len(vcard_list) == 0:
-            print("Found no contacts")
-            sys.exit(1)
-        list_contacts(vcard_list)
+        list_subcommand(vcard_list)
 
     # show source or details, modify or remove contact
     if args.action in ["details", "modify", "remove", "source", "export"]:
