@@ -633,6 +633,46 @@ def list_subcommand(vcard_list):
     list_contacts(vcard_list)
 
 
+def modify_subcommand(selected_vcard, input_from_stdin_or_file):
+    """Modify a contact in an external editor.
+
+    :param selected_vcard: the contact to modify
+    :type selected_vcard: carddav_object.CarddavObject
+    :param input_from_stdin_or_file: new data from stdin (or a file) that
+        should be incorperated into the contact, this should be a yaml
+        formatted string
+    :type input_from_stdin_or_file: str
+    :returns: None
+    :rtype: None
+
+    """
+    # if there is some data in stdin
+    if input_from_stdin_or_file:
+        # create new contact from stdin
+        try:
+            new_contact = \
+                    CarddavObject.from_existing_contact_with_new_user_input(
+                        selected_vcard, input_from_stdin_or_file)
+        except ValueError as e:
+            print(e)
+            sys.exit(1)
+        if selected_vcard == new_contact:
+            print("Nothing changed\n\n%s" % new_contact.print_vcard())
+        else:
+            print("Modification\n\n%s\n" % new_contact.print_vcard())
+            while True:
+                input_string = raw_input("Do you want to proceed (y/n)? ")
+                if input_string.lower() in ["", "n", "q"]:
+                    print("Canceled")
+                    break
+                if input_string.lower() == "y":
+                    new_contact.write_to_file(overwrite=True)
+                    print("Done")
+                    break
+    else:
+        modify_existing_contact(selected_vcard)
+
+
 def merge_subcommand(vcard_list, selected_address_books, reverse,
                      search_terms):
     """Merge two contacts into one.
@@ -846,30 +886,7 @@ def main():
             args.output_file.write(selected_vcard.get_template())
 
         elif args.action == "modify":
-            # if there is some data in stdin
-            if input_from_stdin_or_file:
-                # create new contact from stdin
-                try:
-                    new_contact = CarddavObject.from_existing_contact_with_new_user_input(
-                            selected_vcard, input_from_stdin_or_file)
-                except ValueError as e:
-                    print(e)
-                    sys.exit(1)
-                if selected_vcard == new_contact:
-                    print("Nothing changed\n\n%s" % new_contact.print_vcard())
-                else:
-                    print("Modification\n\n%s\n" % new_contact.print_vcard())
-                    while True:
-                        input_string = raw_input("Do you want to proceed (y/n)? ")
-                        if input_string.lower() in ["", "n", "q"]:
-                            print("Canceled")
-                            break
-                        if input_string.lower() == "y":
-                            new_contact.write_to_file(overwrite=True)
-                            print("Done")
-                            break
-            else:
-                modify_existing_contact(selected_vcard)
+            modify_subcommand(selected_vcard, input_from_stdin_or_file)
 
         elif args.action == "remove":
             while True:
