@@ -750,6 +750,112 @@ def merge_subcommand(vcard_list, selected_address_books, reverse,
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
+def copy_or_move_subcommand(action, vcard_list, search_terms, reverse):
+    """Copy or move a contact to a different address book.
+
+    :action: the string "copy" or "move" to indicate what to do
+    :type action: str
+    :param vcard_list: the contact list from which to select one for the action
+    :type vcard_list: list of carddav_object.CarddavObject
+    :param search_terms: a list of two strings, the first is a search tearm for
+        the source contact, the second a search term for the target addressbook
+    :type search_terms: list of str
+    :param reverse: reverse order when listing
+    :type reverse: bool
+    :returns: None
+    :rtype: None
+
+    """
+    # get the source vcard, which to copy or move
+    source_vcard = choose_vcard_from_list(vcard_list)
+    if source_vcard is None:
+        print("Found no contact")
+        sys.exit(1)
+
+    # get target address book from search query if provided
+    available_address_books = [
+            book for book in Config().get_all_address_books()
+            if book != source_vcard.get_address_book()]
+    target_address_book = None
+    if search_terms[1] != "":
+        target_address_book = Config().get_address_book(search_terms[1])
+        if target_address_book is None:
+            print("The given target address book %s does not exist\n" %
+                  search_terms[1])
+        elif target_address_book not in available_address_books:
+            print("The contact %s is already in the address book %s" %
+                  (source_vcard.get_full_name(),
+                   target_address_book.get_name()))
+            sys.exit(1)
+
+    # otherwise query the target address book name from user
+    if target_address_book is None:
+        print("%s contact %s from address book %s\n\nAvailable address books:"
+              "\n  %s" % (action.title(), source_vcard.get_full_name(),
+                          source_vcard.get_address_book().get_name(),
+                          '\n  '.join([str(book)
+                                      for book in available_address_books])))
+    while target_address_book is None:
+        input_string = raw_input("Into address book: ")
+        if input_string == "":
+            print("Canceled")
+            sys.exit(0)
+        if Config().get_address_book(input_string) in available_address_books:
+            print("")
+            target_address_book = Config().get_address_book(input_string)
+
+    # check if a contact already exists in the target address book
+    target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
+            [target_address_book], reverse, source_vcard.get_full_name(),
+            True))
+
+    # If the target contact doesn't exist, move or copy the source contact into
+    # the target address book without further questions.
+    print(target_address_book)
+    print(target_vcard)
+    if target_vcard is None:
+        copy_contact(source_vcard, target_address_book, action == "move")
+    else:
+        if source_vcard == target_vcard:
+            # source and target contact are identical
+            if action == "move":
+                copy_contact(source_vcard, target_address_book, True)
+            else:
+                print("The selected contacts are already identical")
+        else:
+            # source and target contacts are different
+            # either overwrite the target one or merge into target contact
+            print("The address book %s already contains the contact %s\n\n"
+                  "Source\n\n%s\n\nTarget\n\n%s\n\n"
+                  "Possible actions:\n"
+                  "  a: %s anyway\n"
+                  "m: Merge from source into target contact\n"
+                  "o: Overwrite target contact\n"
+                  "q: Quit" % (
+                      target_vcard.get_address_book().get_name(),
+                      source_vcard.get_full_name(), source_vcard.print_vcard(),
+                      target_vcard.print_vcard(),
+                      "Move" if action == "move" else "Copy"))
+            while True:
+                input_string = raw_input("Your choice: ")
+                if input_string.lower() == "a":
+                    copy_contact(source_vcard, target_address_book,
+                                 action == "move")
+                    break
+                if input_string.lower() == "o":
+                    target_vcard.delete_vcard_file()
+                    copy_contact(source_vcard, target_address_book,
+                                 action == "move")
+                    break
+                if input_string.lower() == "m":
+                    merge_existing_contacts(source_vcard, target_vcard,
+                                            action == "move")
+                    break
+                if input_string.lower() in ["", "q"]:
+                    print("Canceled")
+                    break
+
+
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
@@ -936,83 +1042,9 @@ def main():
         merge_subcommand(vcard_list, selected_address_books, args.reverse,
                          search_terms[1])
 
-    # copy or move contact
     if args.action in ["copy", "move"]:
-        # get the source vcard, which to copy or move
-        source_vcard = choose_vcard_from_list(vcard_list)
-        if source_vcard is None:
-            print("Found no contact")
-            sys.exit(1)
-
-        # get target address book from search query if provided
-        available_address_books = [ book for book in Config().get_all_address_books() if book != source_vcard.get_address_book() ]
-        target_address_book = None
-        if search_terms[1] != "":
-            target_address_book = Config().get_address_book(search_terms[1])
-            if target_address_book == None:
-                print("The given target address book %s does not exist\n" % search_terms[1])
-            elif target_address_book not in available_address_books:
-                print("The contact %s is already in the address book %s" \
-                        % (source_vcard.get_full_name(), target_address_book.get_name()))
-                sys.exit(1)
-
-        # otherwise query the target address book name from user
-        if target_address_book == None:
-            print("%s contact %s from address book %s\n\nAvailable address books:\n  %s" % (args.action.title(),
-                    source_vcard.get_full_name(), source_vcard.get_address_book().get_name(),
-                    '\n  '.join([ str(book) for book in available_address_books ])))
-        while target_address_book is None:
-            input_string = raw_input("Into address book: ")
-            if input_string == "":
-                print("Canceled")
-                sys.exit(0)
-            if Config().get_address_book(input_string) in available_address_books:
-                print("")
-                target_address_book = Config().get_address_book(input_string)
-
-        # check if a contact already exists in the target address book
-        target_vcard = choose_vcard_from_list(
-                get_contact_list_by_user_selection(
-                    [target_address_book], args.reverse, source_vcard.get_full_name(), True))
-
-        # if the target contact doesn't exist, move or copy the source contact into the target
-        # address book without further questions
-        print target_address_book
-        print target_vcard
-        if target_vcard is None:
-            copy_contact(source_vcard, target_address_book, args.action == "move")
-        else:
-            if source_vcard == target_vcard:
-                # source and target contact are identical
-                if args.action == "move":
-                    copy_contact(source_vcard, target_address_book, True)
-                else:
-                    print("The selected contacts are already identical")
-            else:
-                # source and target contacts are different
-                # either overwrite the target one or merge into target contact
-                print("The address book %s already contains the contact %s\n\n" \
-                        "Source\n\n%s\n\nTarget\n\n%s\n\n" \
-                        "Possible actions:\n" \
-                        "  a: %s anyway\n  m: Merge from source into target contact\n  o: Overwrite target contact\n  q: Quit" \
-                        % (target_vcard.get_address_book().get_name(), source_vcard.get_full_name(),
-                            source_vcard.print_vcard(), target_vcard.print_vcard(),
-                            "Move" if args.action == "move" else "Copy"))
-                while True:
-                    input_string = raw_input("Your choice: ")
-                    if input_string.lower() == "a":
-                        copy_contact(source_vcard, target_address_book, args.action == "move")
-                        break
-                    if input_string.lower() == "o":
-                        target_vcard.delete_vcard_file()
-                        copy_contact(source_vcard, target_address_book, args.action == "move")
-                        break
-                    if input_string.lower() == "m":
-                        merge_existing_contacts(source_vcard, target_vcard, args.action == "move")
-                        break
-                    if input_string.lower() in ["", "q"]:
-                        print("Canceled")
-                        break
+        copy_or_move_subcommand(args.action, vcard_list, search_terms,
+                                args.reverse)
 
 
 if __name__ == "__main__":
