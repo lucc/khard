@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import tempfile, subprocess, os, sys, re, argparse, datetime
+import logging
 import helpers
 from email.header import decode_header
 from config import Config
@@ -861,6 +862,8 @@ def main():
     parser = argparse.ArgumentParser(
             description="Khard is a carddav address book for the console",
             formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-d", "--debug", action="store_true",
+                        help="enable debug output")
     parser.add_argument("-a", "--addressbook", default="",
                         help="Specify address book names as comma separated "
                         "list")
@@ -925,6 +928,10 @@ def main():
     remove_parser = subparsers.add_parser("remove", help="remove a contact")
 
     args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    logging.debug("args={}".format(args))
 
     # validate value for action
     if args.action == "":
