@@ -877,7 +877,7 @@ def main():
                         "    merge:     -s \"source contact,target contact\"\n"
                         "    copy/move: -s \"source contact,target address "
                         "book\"")
-    parser.add_argument("--sort", default="",
+    parser.add_argument("--sort", choices=("first_name", "last_name"),
                         help="Sort contact table by first or last name\n"
                         "    Possible values: first_name, last_name")
     parser.add_argument("-u", "--uid", default="",
@@ -969,12 +969,7 @@ def main():
 
     # sort criteria: first or last name
     if args.sort:
-        if args.sort in ["first_name", "last_name"]:
-            Config().set_sort_by_name(args.sort)
-        else:
-            print("Unsupported sort criteria. Possible values: first_name, "
-                  "last_name")
-            sys.exit(1)
+        Config().set_sort_by_name(args.sort)
 
     # create a list of all found vcard objects
     if args.uid:
