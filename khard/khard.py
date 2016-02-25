@@ -297,7 +297,8 @@ def choose_vcard_from_list(vcard_list):
         return vcard_list[vcard_index-1]
 
 
-def get_contact_list_by_user_selection(address_books, reverse, search, strict_search):
+def get_contact_list_by_user_selection(address_books, reverse, search,
+                                       strict_search):
     """returns a list of CarddavObject objects
     :param address_books: list of selected address books
     :type address_books: list(AddressBook)
@@ -310,41 +311,81 @@ def get_contact_list_by_user_selection(address_books, reverse, search, strict_se
     :returns: list of CarddavObject objects
     :rtype: list(CarddavObject)
     """
-    contact_list = []
-    regexp = re.compile(search.replace("*", ".*").replace(" ", ".*"), re.IGNORECASE | re.DOTALL)
+    return get_contacts(
+            address_books, search, "name" if strict_search else "all", reverse,
+            Config().group_by_addressbook(), Config().sort_by_name())
+
+
+def get_contacts(address_books, query, method="all", reverse=False,
+                 group=False, sort="first_name"):
+    """Get a list of contacts from one or more address books.
+
+    :param address_books: the address books to search
+    :type address_books: list(address_book.AddressBook)
+    :param query: a search query to select contacts
+    :type quer: str
+    :param method: the search method, one of "all", "name", "phone"
+    :type method: str
+    :param reverse: reverse the order of the returned contacts
+    :type reverse: bool
+    :param group: group results by address book
+    :type group: bool
+    :param sort: the field to use for sorting, one of "first_name", "last_name"
+    :type sort: str
+    :returns: contacts from the address_books that match the query
+    :rtype: list(CarddavObject)
+
+    """
+    regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
+                        re.IGNORECASE | re.DOTALL)
+    # Search for the contacts.
+    contacts = []
     for address_book in address_books:
         for contact in address_book.get_contact_list():
-            if strict_search:
-                if regexp.search(contact.get_full_name()) != None:
-                    contact_list.append(contact)
-            else:
-                if regexp.search(contact.print_vcard()) != None:
-                    contact_list.append(contact)
-                else:
-                    # special case for phone numbers without a space between prefix and number
-                    for type, number_list in sorted(contact.get_phone_numbers().items()):
+            if method == "all":
+                if regexp.search(contact.print_vcard()) is not None:
+                    contacts.append(contact)
+            elif method == "name":
+                if regexp.search(contact.get_full_name()) is not None:
+                    contacts.append(contact)
+                else:  # TODO I don't understand this
+                    # special case for phone numbers without a space between
+                    # prefix and number
+                    for type, number_list in sorted(
+                            contact.get_phone_numbers().items()):
                         for number in number_list:
-                            if regexp.search(re.sub("\D", "", number)) != None:
-                                contact_list.append(contact)
+                            if regexp.search(re.sub("\D", "", number)) is not \
+                                    None:
+                                contacts.append(contact)
                                 break
-    if Config().group_by_addressbook():
-        if Config().sort_by_name() == "first_name":
-            return sorted(contact_list,
-                    key = lambda x: (
-                        x.get_address_book().get_name().lower(),
-                        x.get_first_name_last_name().lower()
-                    ), reverse=reverse)
+            elif method == "phon":
+                # TODO
+                pass
+    # Sort the contacts.
+    if group:
+        if sort == "first_name":
+            return sorted(contacts, reverse=reverse,
+                          key=lambda x: (
+                              x.get_address_book().get_name().lower(),
+                              x.get_first_name_last_name().lower()))
+        elif sort == "last_name":
+            return sorted(contacts, reverse=reverse,
+                          key=lambda x: (
+                              x.get_address_book().get_name().lower(),
+                              x.get_last_name_first_name().lower()))
         else:
-            return sorted(contact_list,
-                    key = lambda x: (
-                        x.get_address_book().get_name().lower(),
-                        x.get_last_name_first_name().lower()
-                    ), reverse=reverse)
+            raise ValueError('sort must be "first_name" or "last_name" not '
+                             '{}.'.format(sort))
     else:
-        if Config().sort_by_name() == "first_name":
-            return sorted(contact_list, key = lambda x: x.get_first_name_last_name().lower(), reverse=reverse)
+        if sort == "first_name":
+            return sorted(contacts, reverse=reverse,
+                          key=lambda x: x.get_first_name_last_name().lower())
+        elif sort == "last_name":
+            return sorted(contacts, reverse=reverse,
+                          key=lambda x: x.get_last_name_first_name().lower())
         else:
-            return sorted(contact_list, key = lambda x: x.get_last_name_first_name().lower(), reverse=reverse)
+            raise ValueError('sort must be "first_name" or "last_name" not '
+                             '{}.'.format(sort))
 
 
 def new_subcommand(selected_address_books, addressbook,
