@@ -810,9 +810,8 @@ def copy_or_move_subcommand(action, vcard_list, search_terms, reverse):
     :type action: str
     :param vcard_list: the contact list from which to select one for the action
     :type vcard_list: list of carddav_object.CarddavObject
-    :param search_terms: a list of two strings, the first is a search tearm for
-        the source contact, the second a search term for the target addressbook
-    :type search_terms: list of str
+    :param search_terms: a search term for the target addressbook
+    :type search_terms: str
     :param reverse: reverse order when listing
     :type reverse: bool
     :returns: None
@@ -830,11 +829,11 @@ def copy_or_move_subcommand(action, vcard_list, search_terms, reverse):
             book for book in Config().get_all_address_books()
             if book != source_vcard.get_address_book()]
     target_address_book = None
-    if search_terms[1] != "":
-        target_address_book = Config().get_address_book(search_terms[1])
+    if search_terms != "":
+        target_address_book = Config().get_address_book(search_terms)
         if target_address_book is None:
             print("The given target address book %s does not exist\n" %
-                  search_terms[1])
+                  search_terms)
         elif target_address_book not in available_address_books:
             print("The contact %s is already in the address book %s" %
                   (source_vcard.get_full_name(),
@@ -923,17 +922,9 @@ def main():
                         help="Group contact table by address book")
     parser.add_argument("-r", "--reverse", action="store_true",
                         help="Reverse order of contact table")
-    parser.add_argument("-s", "--search", default="",
-                        help="Search in all contact data fields\n"
-                        "    default:   -s \"contact\"\n"
-                        "    merge:     -s \"source contact,target contact\"\n"
-                        "    copy/move: -s \"source contact,target address "
-                        "book\"")
     parser.add_argument("--sort", choices=("first_name", "last_name"),
                         help="Sort contact table by first or last name\n"
                         "    Possible values: first_name, last_name")
-    parser.add_argument("-u", "--uid", default="",
-                        help="Select contact by uid")
     parser.add_argument("-v", "--version", action="version",
                         version="Khard version %s" % khard_version)
 
@@ -941,26 +932,45 @@ def main():
     template_file_parser.add_argument(
             "-t", "--template-file", default=sys.stdin, type=argparse.FileType,
             help="Specify input template file name (use stdin by default)")
+    search_parser = argparse.ArgumentParser(add_help=False)
+    search_parser.add_argument(
+            "-u", "--uid", help="select contact by uid")
+    search_parser.add_argument(
+            "search_terms", nargs="*",
+            help="search in all fields to find matching contacts")
+    search_two_parser = argparse.ArgumentParser(add_help=False)
+    search_two_parser.add_argument(
+            "-u", "--uid", help="select contact by uid")
+    search_two_parser.add_argument(
+            "source_search_terms",
+            help="search terms to find the source contact")
+    search_two_parser.add_argument(
+            "target_search_terms",
+            help="search terms to find the target contact/addressbook")
 
     subparsers = parser.add_subparsers(dest="action")
-    list_parser = subparsers.add_parser("list",
+    list_parser = subparsers.add_parser("list", parents=[search_parser],
                                         help="list all (selected) contacts")
     details_parser = subparsers.add_parser(
-            "details", help="display detailed information about one contact")
+            "details", parents=[search_parser],
+            help="display detailed information about one contact")
     export_parser = subparsers.add_parser(
-            "export", help="export a contact to the custom yaml format that "
-            "is also used for editing and creating contacts")
+            "export", parents=[search_parser],
+            help="export a contact to the custom yaml format that is also "
+            "used for editing and creating contacts")
     export_parser.add_argument(
             "-o", "--output-file", default=sys.stdout,
             type=argparse.FileType("w"),
             help="Specify output file name (default is to write to stdout)")
     email_parser = subparsers.add_parser(
-            "email", help="list names and emails in a parsable format (usable "
-            "by e.g. mutt)")
-    phone_parser = subparsers.add_parser("phone",
+            "email", parents=[search_parser],
+            help="list names and emails in a parsable format (usable by e.g."
+            " mutt)")
+    phone_parser = subparsers.add_parser("phone", parents=[search_parser],
                                          help="list names and phone numbers")
     source_parser = subparsers.add_parser(
-            "source", help="edit the vcard file of a contact directly")
+            "source", parents=[search_parser],
+            help="edit the vcard file of a contact directly")
     new_parser = subparsers.add_parser("new", parents=[template_file_parser],
                                        help="create a new contact")
     new_parser.add_argument("--open-editor", action="store_true",
@@ -969,15 +979,19 @@ def main():
     add_email_parser = subparsers.add_parser(
             "add-email", parents=[template_file_parser],
             help="add an email address to the address book (e.g. from mutt)")
-    merge_parser = subparsers.add_parser("merge", help="merge two contacts")
+    merge_parser = subparsers.add_parser("merge", parents=[search_two_parser],
+                                         help="merge two contacts")
     modify_parser = subparsers.add_parser(
-            "modify", parents=[template_file_parser],
+            "modify", parents=[template_file_parser, search_parser],
             help="edit the data of a contact")
     copy_parser = subparsers.add_parser(
-            "copy", help="copy a contact to a different addressbook")
+            "copy", parents=[search_two_parser],
+            help="copy a contact to a different addressbook")
     move_parser = subparsers.add_parser(
-            "move", help="move a contact to a different addressbook")
-    remove_parser = subparsers.add_parser("remove", help="remove a contact")
+            "move", parents=[search_two_parser],
+            help="move a contact to a different addressbook")
+    remove_parser = subparsers.add_parser("remove", parents=[search_parser],
+                                          help="remove a contact")
 
     args = parser.parse_args()
 
@@ -1008,13 +1022,6 @@ def main():
             else:
                 selected_address_books.append(Config().get_address_book(name))
 
-    # The search parameter may either contain one search term for a standard
-    # search or two terms, devided by a "," to search for two contacts to merge
-    # them.
-    search_terms = args.search.split(",")
-    if len(search_terms) == 1:
-        search_terms.append("")
-
     # group by address book
     if args.group_by_addressbook:
         Config().set_group_by_addressbook()
@@ -1023,23 +1030,44 @@ def main():
     if args.sort:
         Config().set_sort_by_name(args.sort)
 
-    # create a list of all found vcard objects
-    if args.uid:
-        vcard_list = get_contacts(Config().get_all_address_books(), args.uid,
-                                  method="uid")
-        # We require that the uid given can uniquely identify a contact.
-        if len(vcard_list) != 1:
-            if len(vcard_list) == 0:
-                print("Found no contact for uid %s" % args.uid)
+    vcard_list = []
+    if "uid" in args:
+        # If "uid" is in args there might be an uid or search terms on the
+        # command line.
+        if args.uid is not None:
+            # If an uid was given we use it to find the contact.
+            logging.debug("args.uid={}".format(args.uid))
+            # We require that no search terms where given.
+            if args.search_terms != []:
+                args.error("You can not give arbitrary search terms and --uid "
+                           "at the same time.")
+            vcard_list = get_contacts(Config().get_all_address_books(),
+                                      args.uid, method="uid")
+            # We require that the uid given can uniquely identify a contact.
+            if len(vcard_list) != 1:
+                if len(vcard_list) == 0:
+                    print("Found no contact for uid %s" % args.uid)
+                else:
+                    print("Found multiple contacts for uid %s" % args.uid)
+                    for vcard in vcard_list:
+                        print("    %s: %s" % (vcard.get_full_name(),
+                                              vcard.get_uid()))
+                sys.exit(1)
+        else:
+            # No uid was given so we try to use the search terms to select a
+            # contact.
+            if hasattr(args, "source_search_terms"):
+                args.search_terms = [args.source_search_terms]
+            if args.search_terms == []:
+                # If no search terms where given on the command line we match
+                # everything with the empty search pattern.
+                args.search_terms = ""
             else:
-                print("Found multiple contacts for uid %s" % args.uid)
-                for vcard in vcard_list:
-                    print("    %s: %s" % (vcard.get_full_name(),
-                                          vcard.get_uid()))
-            sys.exit(1)
-    else:
-        vcard_list = get_contact_list_by_user_selection(
-                selected_address_books, args.reverse, search_terms[0], False)
+                logging.debug("args.search_terms={}".format(args.search_terms))
+                args.search_terms = " ".join(args.search_terms)
+            vcard_list = get_contact_list_by_user_selection(
+                    selected_address_books, args.reverse, args.search_terms,
+                    False)
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
@@ -1055,9 +1083,9 @@ def main():
         add_email_subcommand(input_from_stdin_or_file, selected_address_books,
                              args.reverse)
     elif args.action == "phone":
-        phone_subcommand(search_terms[0], vcard_list)
+        phone_subcommand(args.search_terms, vcard_list)
     elif args.action == "email":
-        email_subcommand(search_terms[0], vcard_list)
+        email_subcommand(args.search_terms, vcard_list)
     elif args.action == "list":
         list_subcommand(vcard_list)
     elif args.action in ["details", "modify", "remove", "source", "export"]:
@@ -1077,10 +1105,10 @@ def main():
             source_subcommand(selected_vcard, Config().get_editor())
     elif args.action == "merge":
         merge_subcommand(vcard_list, selected_address_books, args.reverse,
-                         search_terms[1])
+                         args.target_search_terms)
     elif args.action in ["copy", "move"]:
-        copy_or_move_subcommand(args.action, vcard_list, search_terms,
-                                args.reverse)
+        copy_or_move_subcommand(args.action, vcard_list,
+                                args.target_search_terms, args.reverse)
 
 
 if __name__ == "__main__":
