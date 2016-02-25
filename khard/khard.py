@@ -1,8 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import tempfile, subprocess, os, sys, re, argparse, datetime
+import argparse
 import logging
+import os
+import re
+import subprocess
+import sys
+import tempfile
 import helpers
 from email.header import decode_header
 from config import Config
@@ -14,7 +19,8 @@ def create_new_contact(address_book):
     # create temp file
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     temp_file_name = tf.name
-    old_contact_template = "# create new contact\n%s" % helpers.get_new_contact_template(address_book.get_name())
+    old_contact_template = "# create new contact\n%s" % \
+        helpers.get_new_contact_template(address_book.get_name())
     tf.write(old_contact_template)
     tf.close()
 
@@ -22,8 +28,9 @@ def create_new_contact(address_book):
     while True:
         # start vim to edit contact template
         child = subprocess.Popen([Config().get_editor(), temp_file_name])
-        streamdata = child.communicate()[0]
-        if temp_file_creation == helpers.file_modification_date(temp_file_name):
+        child.communicate()
+        if temp_file_creation == helpers.file_modification_date(
+                temp_file_name):
             new_contact = None
             os.remove(temp_file_name)
             break
@@ -35,11 +42,13 @@ def create_new_contact(address_book):
 
         # try to create new contact
         try:
-            new_contact = CarddavObject.from_user_input(address_book, new_contact_template)
+            new_contact = CarddavObject.from_user_input(address_book,
+                                                        new_contact_template)
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input("Do you want to open the editor again (y/n)? ")
+                input_string = raw_input(
+                        "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     os.remove(temp_file_name)
@@ -63,16 +72,17 @@ def modify_existing_contact(old_contact):
     # create temp file and open it with the specified text editor
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     temp_file_name = tf.name
-    tf.write("# Edit contact: %s\n%s" \
-            % (old_contact.get_full_name(), old_contact.get_template()))
+    tf.write("# Edit contact: %s\n%s" %
+             (old_contact.get_full_name(), old_contact.get_template()))
     tf.close()
 
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start editor to edit contact template
         child = subprocess.Popen([Config().get_editor(), temp_file_name])
-        streamdata = child.communicate()[0]
-        if temp_file_creation == helpers.file_modification_date(temp_file_name):
+        child.communicate()
+        if temp_file_creation == helpers.file_modification_date(
+                temp_file_name):
             new_contact = None
             os.remove(temp_file_name)
             break
@@ -84,12 +94,14 @@ def modify_existing_contact(old_contact):
 
         # try to create contact from user input
         try:
-            new_contact = CarddavObject.from_existing_contact_with_new_user_input(
-                    old_contact, new_contact_template)
+            new_contact = \
+                    CarddavObject.from_existing_contact_with_new_user_input(
+                        old_contact, new_contact_template)
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input("Do you want to open the editor again (y/n)? ")
+                input_string = raw_input(
+                        "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     os.remove(temp_file_name)
@@ -109,28 +121,33 @@ def modify_existing_contact(old_contact):
         print("Modification successful\n\n%s" % new_contact.print_vcard())
 
 
-def merge_existing_contacts(source_contact, target_contact, delete_source_contact):
+def merge_existing_contacts(source_contact, target_contact,
+                            delete_source_contact):
     # create temp files for each vcard
     # source vcard
     source_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     source_temp_file_name = source_tf.name
-    source_tf.write("# merge from %s\n%s" \
-            % (source_contact.get_full_name(), source_contact.get_template()))
+    source_tf.write("# merge from %s\n%s" % (source_contact.get_full_name(),
+                                             source_contact.get_template()))
     source_tf.close()
 
     # target vcard
     target_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     target_temp_file_name = target_tf.name
-    target_tf.write("# merge into %s\n%s" \
-            % (target_contact.get_full_name(), target_contact.get_template()))
+    target_tf.write("# merge into %s\n%s" % (target_contact.get_full_name(),
+                                             target_contact.get_template()))
     target_tf.close()
 
-    target_temp_file_creation = helpers.file_modification_date(target_temp_file_name)
+    target_temp_file_creation = helpers.file_modification_date(
+            target_temp_file_name)
     while True:
         # start editor to edit contact template
-        child = subprocess.Popen([Config().get_merge_editor(), source_temp_file_name, target_temp_file_name])
-        streamdata = child.communicate()[0]
-        if target_temp_file_creation == helpers.file_modification_date(target_temp_file_name):
+        child = subprocess.Popen([Config().get_merge_editor(),
+                                  source_temp_file_name,
+                                  target_temp_file_name])
+        child.communicate()
+        if target_temp_file_creation == helpers.file_modification_date(
+                target_temp_file_name):
             merged_contact = None
             os.remove(source_temp_file_name)
             os.remove(target_temp_file_name)
@@ -143,12 +160,14 @@ def merge_existing_contacts(source_contact, target_contact, delete_source_contac
 
         # try to create contact from user input
         try:
-            merged_contact = CarddavObject.from_existing_contact_with_new_user_input(
-                    target_contact, merged_contact_template)
+            merged_contact = \
+                    CarddavObject.from_existing_contact_with_new_user_input(
+                        target_contact, merged_contact_template)
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input("Do you want to open the editor again (y/n)? ")
+                input_string = raw_input(
+                        "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     os.remove(source_temp_file_name)
@@ -162,26 +181,33 @@ def merge_existing_contacts(source_contact, target_contact, delete_source_contac
             break
 
     # compare them
-    if merged_contact is None \
-            or target_contact == merged_contact:
+    if merged_contact is None or target_contact == merged_contact:
         print("Target contact unmodified\n\n%s" % target_contact.print_vcard())
         sys.exit(0)
 
     while True:
         if delete_source_contact:
             input_string = raw_input(
-                    "Merge contact %s from address book %s into contact %s from address book %s\n\n" \
-                        "To be removed\n\n%s\n\nMerged\n\n%s\n\nAre you sure? (y/n): " \
-                    % (source_contact.get_full_name(), source_contact.get_address_book().get_name(),
-                        merged_contact.get_full_name(), merged_contact.get_address_book().get_name(),
-                        source_contact.print_vcard(), merged_contact.print_vcard()))
+                    "Merge contact %s from address book %s into contact %s "
+                    "from address book %s\n\nTo be removed\n\n%s\n\n"
+                    "Merged\n\n%s\n\nAre you sure? (y/n): " % (
+                        source_contact.get_full_name(),
+                        source_contact.get_address_book().get_name(),
+                        merged_contact.get_full_name(),
+                        merged_contact.get_address_book().get_name(),
+                        source_contact.print_vcard(),
+                        merged_contact.print_vcard()))
         else:
             input_string = raw_input(
-                    "Merge contact %s from address book %s into contact %s from address book %s\n\n" \
-                        "Keep unchanged\n\n%s\n\nMerged:\n\n%s\n\nAre you sure? (y/n): " \
-                    % (source_contact.get_full_name(), source_contact.get_address_book().get_name(),
-                        merged_contact.get_full_name(), merged_contact.get_address_book().get_name(),
-                        source_contact.print_vcard(), merged_contact.print_vcard()))
+                    "Merge contact %s from address book %s into contact %s "
+                    "from address book %s\n\nKeep unchanged\n\n%s\n\n"
+                    "Merged:\n\n%s\n\nAre you sure? (y/n): " % (
+                        source_contact.get_full_name(),
+                        source_contact.get_address_book().get_name(),
+                        merged_contact.get_full_name(),
+                        merged_contact.get_address_book().get_name(),
+                        source_contact.print_vcard(),
+                        merged_contact.print_vcard()))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
             return
@@ -199,23 +225,23 @@ def copy_contact(source_contact, target_address_book, delete_source_contact):
     if delete_source_contact:
         # move contact to new address book and preserve uid
         source_contact.delete_vcard_file()
-        source_contact.set_filename(
-                os.path.join(
-                    target_address_book.get_path(), "%s.vcf" % source_contact.get_uid())
-                )
+        source_contact.set_filename(os.path.join(
+            target_address_book.get_path(),
+            "%s.vcf" % source_contact.get_uid()))
     else:
-        # copy contact to new address book and create a new uid for the copied entry
+        # Copy contact to new address book and create a new uid for the copied
+        # entry.
         source_contact.delete_vcard_object("UID")
         new_uid = helpers.get_random_uid()
         source_contact.add_uid(new_uid)
-        source_contact.set_filename(
-                os.path.join(
-                    target_address_book.get_path(), "%s.vcf" % new_uid)
-                )
+        source_contact.set_filename(os.path.join(
+            target_address_book.get_path(), "%s.vcf" % new_uid))
     source_contact.write_to_file()
-    print("%s contact %s from address book %s to %s" \
-            % ("Moved" if delete_source_contact else "Copied", source_contact.get_full_name(),
-                source_contact.get_address_book().get_name(), target_address_book.get_name()))
+    print("%s contact %s from address book %s to %s" % (
+        "Moved" if delete_source_contact else "Copied",
+        source_contact.get_full_name(),
+        source_contact.get_address_book().get_name(),
+        target_address_book.get_name()))
 
 
 def list_contacts(vcard_list):
@@ -229,7 +255,8 @@ def list_contacts(vcard_list):
         print("Address book: %s" % str(selected_address_books[0]))
         table_header = ["Index", "Name", "Phone", "E-Mail"]
     else:
-        print("Address books: %s" % ', '.join([str(book) for book in selected_address_books]))
+        print("Address books: %s" % ', '.join(
+            [str(book) for book in selected_address_books]))
         table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
     if Config().has_uids():
         table_header.append("UID")
@@ -241,11 +268,13 @@ def list_contacts(vcard_list):
         if len(vcard.get_nicknames()) > 0 \
                 and Config().show_nicknames():
             if Config().sort_by_name() == "first_name":
-                row.append("%s (Nickname: %s)" \
-                        % (vcard.get_first_name_last_name(), vcard.get_nicknames()[0]))
+                row.append("%s (Nickname: %s)" % (
+                    vcard.get_first_name_last_name(),
+                    vcard.get_nicknames()[0]))
             else:
-                row.append("%s (Nickname: %s)" \
-                        % (vcard.get_last_name_first_name(), vcard.get_nicknames()[0]))
+                row.append("%s (Nickname: %s)" % (
+                    vcard.get_last_name_first_name(),
+                    vcard.get_nicknames()[0]))
         else:
             if Config().sort_by_name() == "first_name":
                 row.append(vcard.get_first_name_last_name())
@@ -253,14 +282,18 @@ def list_contacts(vcard_list):
                 row.append(vcard.get_last_name_first_name())
         if len(vcard.get_phone_numbers().keys()) > 0:
             phone_dict = vcard.get_phone_numbers()
-            first_type = sorted(phone_dict.keys(), key=lambda k: k[0].lower())[0]
-            row.append("%s: %s" % (first_type, sorted(phone_dict.get(first_type))[0]))
+            first_type = sorted(phone_dict.keys(),
+                                key=lambda k: k[0].lower())[0]
+            row.append("%s: %s" % (first_type,
+                                   sorted(phone_dict.get(first_type))[0]))
         else:
             row.append("")
         if len(vcard.get_email_addresses().keys()) > 0:
             email_dict = vcard.get_email_addresses()
-            first_type = sorted(email_dict.keys(), key=lambda k: k[0].lower())[0]
-            row.append("%s: %s" % (first_type, sorted(email_dict.get(first_type))[0]))
+            first_type = sorted(email_dict.keys(),
+                                key=lambda k: k[0].lower())[0]
+            row.append("%s: %s" % (first_type,
+                                   sorted(email_dict.get(first_type))[0]))
         else:
             row.append("")
         if len(selected_address_books) > 1:
@@ -290,9 +323,10 @@ def choose_vcard_from_list(vcard_list):
                 vcard_index = int(input_string)
                 if vcard_index > 0 and vcard_index <= vcard_list.__len__():
                     break
-            except ValueError as e:
+            except ValueError:
                 pass
-            print("Please enter an index value between 1 and %d or nothing or q to exit." % len(vcard_list))
+            print("Please enter an index value between 1 and %d or nothing or "
+                  "q to exit." % len(vcard_list))
         print("")
         return vcard_list[vcard_index-1]
 
@@ -761,7 +795,7 @@ def source_subcommand(selected_vcard, editor):
 
     """
     child = subprocess.Popen([editor, selected_vcard.get_filename()])
-    streamdata = child.communicate()[0]
+    child.communicate()
 
 
 def merge_subcommand(vcard_list, selected_address_books, reverse,
@@ -949,9 +983,9 @@ def main():
             help="search terms to find the target contact/addressbook")
 
     subparsers = parser.add_subparsers(dest="action")
-    list_parser = subparsers.add_parser("list", parents=[search_parser],
-                                        help="list all (selected) contacts")
-    details_parser = subparsers.add_parser(
+    subparsers.add_parser("list", parents=[search_parser],
+                          help="list all (selected) contacts")
+    subparsers.add_parser(
             "details", parents=[search_parser],
             help="display detailed information about one contact")
     export_parser = subparsers.add_parser(
@@ -962,36 +996,31 @@ def main():
             "-o", "--output-file", default=sys.stdout,
             type=argparse.FileType("w"),
             help="Specify output file name (default is to write to stdout)")
-    email_parser = subparsers.add_parser(
-            "email", parents=[search_parser],
-            help="list names and emails in a parsable format (usable by e.g."
-            " mutt)")
-    phone_parser = subparsers.add_parser("phone", parents=[search_parser],
-                                         help="list names and phone numbers")
-    source_parser = subparsers.add_parser(
-            "source", parents=[search_parser],
-            help="edit the vcard file of a contact directly")
+    subparsers.add_parser("email", parents=[search_parser],
+                          help="list names and emails in a parsable format "
+                          "(usable by e.g. mutt)")
+    subparsers.add_parser("phone", parents=[search_parser],
+                          help="list names and phone numbers")
+    subparsers.add_parser("source", parents=[search_parser],
+                          help="edit the vcard file of a contact directly")
     new_parser = subparsers.add_parser("new", parents=[template_file_parser],
                                        help="create a new contact")
     new_parser.add_argument("--open-editor", action="store_true",
                             help="Open the default text editor after "
                             "successful creation of new contact")
-    add_email_parser = subparsers.add_parser(
+    subparsers.add_parser(
             "add-email", parents=[template_file_parser],
             help="add an email address to the address book (e.g. from mutt)")
-    merge_parser = subparsers.add_parser("merge", parents=[search_two_parser],
-                                         help="merge two contacts")
-    modify_parser = subparsers.add_parser(
-            "modify", parents=[template_file_parser, search_parser],
-            help="edit the data of a contact")
-    copy_parser = subparsers.add_parser(
-            "copy", parents=[search_two_parser],
-            help="copy a contact to a different addressbook")
-    move_parser = subparsers.add_parser(
-            "move", parents=[search_two_parser],
-            help="move a contact to a different addressbook")
-    remove_parser = subparsers.add_parser("remove", parents=[search_parser],
-                                          help="remove a contact")
+    subparsers.add_parser("merge", parents=[search_two_parser],
+                          help="merge two contacts")
+    subparsers.add_parser("modify", help="edit the data of a contact",
+                          parents=[template_file_parser, search_parser])
+    subparsers.add_parser("copy", parents=[search_two_parser],
+                          help="copy a contact to a different addressbook")
+    subparsers.add_parser("move", parents=[search_two_parser],
+                          help="move a contact to a different addressbook")
+    subparsers.add_parser("remove", parents=[search_parser],
+                          help="remove a contact")
 
     args = parser.parse_args()
 
