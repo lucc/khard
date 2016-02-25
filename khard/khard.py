@@ -324,7 +324,7 @@ def get_contacts(address_books, query, method="all", reverse=False,
     :type address_books: list(address_book.AddressBook)
     :param query: a search query to select contacts
     :type quer: str
-    :param method: the search method, one of "all", "name", "phone"
+    :param method: the search method, one of "all", "name", "phone" or "uid"
     :type method: str
     :param reverse: reverse the order of the returned contacts
     :type reverse: bool
@@ -336,41 +336,52 @@ def get_contacts(address_books, query, method="all", reverse=False,
     :rtype: list(CarddavObject)
 
     """
-    regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
-                        re.IGNORECASE | re.DOTALL)
     # Search for the contacts.
     contacts = []
-    for address_book in address_books:
-        for contact in address_book.get_contact_list():
-            if method == "all":
-                if regexp.search(contact.print_vcard()) is not None:
+    if method == "uid":
+        # Search for contacts with uid == query.
+        for address_book in address_books:
+            for contact in address_book.get_contact_list():
+                if contact.get_uid() == query:
                     contacts.append(contact)
-            elif method == "name":
-                if regexp.search(contact.get_full_name()) is not None:
-                    contacts.append(contact)
-                else:  # TODO I don't understand this
-                    # special case for phone numbers without a space between
-                    # prefix and number
-                    for type, number_list in sorted(
-                            contact.get_phone_numbers().items()):
-                        for number in number_list:
-                            if regexp.search(re.sub("\D", "", number)) is not \
-                                    None:
-                                contacts.append(contact)
-                                break
-            elif method == "phon":
-                # TODO
-                pass
+        # If that fails, search for contacts where uid starts with query.
+        if len(contacts) == 0:
+            for address_book in address_books:
+                for contact in address_book.get_contact_list():
+                    if contact.get_uid().startswith(query):
+                        contacts.append(contact)
+    else:
+        regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
+                            re.IGNORECASE | re.DOTALL)
+        for address_book in address_books:
+            for contact in address_book.get_contact_list():
+                if method == "all":
+                    if regexp.search(contact.print_vcard()) is not None:
+                        contacts.append(contact)
+                elif method == "name":
+                    if regexp.search(contact.get_full_name()) is not None:
+                        contacts.append(contact)
+                    else:  # TODO I don't understand this
+                        # special case for phone numbers without a space
+                        # between prefix and number
+                        for _, number_list in sorted(
+                                contact.get_phone_numbers().items()):
+                            for number in number_list:
+                                if regexp.search(re.sub("\D", "", number)) is \
+                                        not None:
+                                    contacts.append(contact)
+                                    break
+                elif method == "phon":
+                    # TODO
+                    pass
     # Sort the contacts.
     if group:
         if sort == "first_name":
-            return sorted(contacts, reverse=reverse,
-                          key=lambda x: (
+            return sorted(contacts, reverse=reverse, key=lambda x: (
                               x.get_address_book().get_name().lower(),
                               x.get_first_name_last_name().lower()))
         elif sort == "last_name":
-            return sorted(contacts, reverse=reverse,
-                          key=lambda x: (
+            return sorted(contacts, reverse=reverse, key=lambda x: (
                               x.get_address_book().get_name().lower(),
                               x.get_last_name_first_name().lower()))
         else:
@@ -1014,18 +1025,9 @@ def main():
 
     # create a list of all found vcard objects
     if args.uid:
-        vcard_list = []
-        # check if contacts uid == args.uid
-        for address_book in Config().get_all_address_books():
-            for contact in address_book.get_contact_list():
-                if contact.get_uid() == args.uid:
-                    vcard_list.append(contact)
-        # if that fails, check if contacts uid starts with args.uid
-        if len(vcard_list) == 0:
-            for address_book in Config().get_all_address_books():
-                for contact in address_book.get_contact_list():
-                    if contact.get_uid().startswith(args.uid):
-                        vcard_list.append(contact)
+        vcard_list = get_contacts(Config().get_all_address_books(), args.uid,
+                                  method="uid")
+        # We require that the uid given can uniquely identify a contact.
         if len(vcard_list) != 1:
             if len(vcard_list) == 0:
                 print("Found no contact for uid %s" % args.uid)
