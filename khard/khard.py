@@ -942,6 +942,35 @@ def copy_or_move_subcommand(action, vcard_list, search_terms, reverse):
                     break
 
 
+# Patch argparse.ArgumentParser, taken from http://stackoverflow.com/a/26379693
+def set_default_subparser(self, name):
+    """Default subparser selection. Call after setup, just before parse_args().
+
+    :param name: the name of the subparser to call by default
+    :type name: str
+    :returns: None
+    :rtype: None
+
+    """
+    for arg in sys.argv[1:]:
+        if arg in ['-h', '--help']:  # global help if no subparser
+            break
+    else:
+        for x in self._subparsers._actions:
+            if not isinstance(x, argparse._SubParsersAction):
+                continue
+            for sp_name in x._name_parser_map.keys():
+                if sp_name in sys.argv[1:]:
+                    return  # found a subcommand
+        else:
+            # Insert default in first position, this implies no global options
+            # without a sub_parsers specified.
+            sys.argv.insert(1, name)
+
+
+argparse.ArgumentParser.set_default_subparser = set_default_subparser
+
+
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
@@ -1033,19 +1062,12 @@ def main():
     subparsers.add_parser(
             "remove", parents=[search_one_parser], help="remove a contact")
 
+    parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("args={}".format(args))
-
-    # validate value for action
-    if args.action == "":
-        args.action = Config().get_default_action()
-    if args.action not in Config().get_list_of_actions():
-        print("Unsupported action. Possible values are: %s" %
-              ', '.join(Config().get_list_of_actions()))
-        sys.exit(1)
 
     # load address books which are defined in the configuration file
     selected_address_books = []
