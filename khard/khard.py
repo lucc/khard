@@ -974,16 +974,17 @@ def main():
     search_one_parser = argparse.ArgumentParser(
             add_help=False, parents=[search_parser])
     search_one_parser.add_argument(
-            "search_terms", nargs="*",
+            "search_terms", nargs="*", metavar="search terms",
             help="search in all fields to find matching contacts")
     search_two_parser = argparse.ArgumentParser(
             add_help=False, parents=[search_parser])
     search_two_parser.add_argument(
-            "source_search_terms", nargs="*",
+            "source_search_terms", nargs="*", metavar="source",
             help="search terms to find the source contact")
     search_two_parser.add_argument(
-            "target_search_terms",
-            help="search terms to find the target contact/addressbook")
+            "target_search_terms", metavar="target",
+            help="search terms to find the target contact/addressbook (must "
+            "be quotes into one argument)")
 
     subparsers = parser.add_subparsers(dest="action")
     subparsers.add_parser(
