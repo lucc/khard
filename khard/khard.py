@@ -799,22 +799,37 @@ def source_subcommand(selected_vcard, editor):
 
 
 def merge_subcommand(vcard_list, selected_address_books, reverse,
-                     search_terms):
+                     search_terms, target_uid):
     """Merge two contacts into one.
 
     :param vcard_list: the vcards from which to choose contacts for mergeing
     :type vcard_list: list of carddav_object.CarddavObject
     :param selected_address_books: the addressbooks to use to find the target
         contact
-    :type selected_address_books: list of address_book.AddressBook
+    :type selected_address_books: list(addressbook.AddressBook)
     :param reverse: order contact list in reverse
     :type reverse: bool
     :param search_terms: the search terms to find the target contact
     :type search_terms: str
+    :param target_uid: the uid of the target contact or empty
+    :type target_uid: str
     :returns: None
     :rtype: None
 
     """
+    logging.debug('Arguments for merge: vcard_list={}, selected_address_books={}, reverse={}, search_terms={}, target_uid={}'.format(vcard_list, selected_address_books, reverse, search_terms, target_uid))
+    # Check arguments.
+    if target_uid != "" and search_terms != "":
+        print("You can not specify a target uid and target search terms for a "
+              "merge.")
+        sys.exit(2)
+    # Find possible target contacts.
+    if target_uid != "":
+        target_vcards = get_contacts(selected_address_books, uid, method="uid",
+                                     reverse=reverse)
+    else:
+        target_vcards = get_contacts(selected_address_books, search_terms,
+                                     reverse=reverse)
     # get the source vcard, from which to merge
     source_vcard = choose_vcard_from_list(vcard_list)
     if source_vcard is None:
@@ -825,8 +840,7 @@ def merge_subcommand(vcard_list, selected_address_books, reverse,
           "Now choose the contact into which to merge:"
           % (source_vcard.get_full_name(),
              source_vcard.get_address_book().get_name()))
-    target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
-                selected_address_books, reverse, search_terms, False))
+    target_vcard = choose_vcard_from_list(target_vcards)
     if target_vcard is None:
         print("Found no target contact for merging")
         sys.exit(1)
@@ -985,6 +999,11 @@ def main():
     addressbook_parser.add_argument(
             "-a", "--addressbook", default="",
             help="Specify address book names as comma separated list")
+    target_addressbook_parser = argparse.ArgumentParser(add_help=False)
+    target_addressbook_parser.add_argument(
+            "-A", "--target-addressbook", default="",
+            help="the addressbooks in which to look for the target contact (a "
+            "comma seperated list)")
     input_file_parser = argparse.ArgumentParser(add_help=False)
     input_file_parser.add_argument(
             "-i", "--input-file", default=sys.stdin, type=argparse.FileType,
@@ -1006,15 +1025,11 @@ def main():
     search_one_parser.add_argument(
             "search_terms", nargs="*", metavar="search terms",
             help="search in all fields to find matching contacts")
-    search_two_parser = argparse.ArgumentParser(
+    copy_move_parser = argparse.ArgumentParser(
             add_help=False, parents=[search_parser])
-    search_two_parser.add_argument(
+    copy_move_parser.add_argument(
             "source_search_terms", nargs="*", metavar="source",
             help="search terms to find the source contact")
-    search_two_parser.add_argument(
-            "target_search_terms", metavar="target",
-            help="search terms to find the target contact/addressbook (must "
-            "be quotes into one argument)")
 
     subparsers = parser.add_subparsers(dest="action")
     subparsers.add_parser(
@@ -1050,18 +1065,27 @@ def main():
     subparsers.add_parser(
             "add-email", parents=[addressbook_parser, input_file_parser],
             help="add an email address to the address book (e.g. from mutt)")
-    subparsers.add_parser(
-            "merge", parents=[addressbook_parser, search_two_parser],
-            help="merge two contacts")
+    merge_parser = subparsers.add_parser(
+            "merge", help="merge two contacts",
+            parents=[addressbook_parser, target_addressbook_parser,
+                     search_one_parser])
+    merge_parser.add_argument(
+            "-U", "--target-uid", default="",
+            help="select target contact by uid")
+    merge_parser.add_argument(
+            "-t", "--target-contact", "--target", default="",
+            help="the target contact to merge into")
     subparsers.add_parser(
             "modify", help="edit the data of a contact",
             parents=[addressbook_parser, input_file_parser, search_one_parser])
     subparsers.add_parser(
-            "copy", parents=[addressbook_parser, search_two_parser],
-            help="copy a contact to a different addressbook")
+            "copy", help="copy a contact to a different addressbook",
+            parents=[addressbook_parser, target_addressbook_parser,
+                     copy_move_parser])
     subparsers.add_parser(
-            "move", parents=[addressbook_parser, search_two_parser],
-            help="move a contact to a different addressbook")
+            "move", help="move a contact to a different addressbook",
+            parents=[addressbook_parser, target_addressbook_parser,
+                     copy_move_parser])
     subparsers.add_parser(
             "remove", parents=[addressbook_parser, search_one_parser],
             help="remove a contact")
@@ -1087,6 +1111,22 @@ def main():
                 sys.exit(1)
             else:
                 selected_address_books.append(Config().get_address_book(name))
+    selected_target_address_books = []
+    if "target_addressbook" in args:
+        if args.target_addressbook == "":
+            selected_target_address_books = Config().get_all_address_books()
+        else:
+            for name in args.target_addressbook.split(","):
+                if Config().get_address_book(name) is None:
+                    print("Error: The entered address book \"%s\" does not "
+                          "exist.\nPossible values are: %s" % (
+                              name, ', '.join(
+                                  [str(book) for book in
+                                   Config().get_all_address_books()])))
+                    sys.exit(1)
+                else:
+                    selected_target_address_books.append(
+                            Config().get_address_book(name))
 
     # group by address book
     if "group_by_addressbook" in args and args.group_by_addressbook:
@@ -1172,11 +1212,16 @@ def main():
         elif args.action == "source":
             source_subcommand(selected_vcard, Config().get_editor())
     elif args.action == "merge":
-        merge_subcommand(vcard_list, selected_address_books, args.reverse,
-                         args.target_search_terms)
+        logging.debug('vcl={}'.format(vcard_list))
+        logging.debug("selected_target_address_books={}".format(selected_target_address_books))
+        logging.debug("args.reverse={}".format(args.reverse))
+        logging.debug("args.target_contact={}".format(args.target_contact))
+        logging.debug("args.target_uid={}".format(args.target_uid))
+        merge_subcommand(vcard_list, selected_target_address_books,
+                         args.reverse, args.target_contact, args.target_uid)
     elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(args.action, vcard_list,
-                                args.target_search_terms, args.reverse)
+                                args.target_addressbook, args.reverse)
 
 
 if __name__ == "__main__":
