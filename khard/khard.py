@@ -952,9 +952,9 @@ def main():
     parser.add_argument("-v", "--version", action="version",
                         version="Khard version %s" % khard_version)
 
-    template_file_parser = argparse.ArgumentParser(add_help=False)
-    template_file_parser.add_argument(
-            "-t", "--template-file", default=sys.stdin, type=argparse.FileType,
+    input_file_parser = argparse.ArgumentParser(add_help=False)
+    input_file_parser.add_argument(
+            "-i", "--input-file", default=sys.stdin, type=argparse.FileType,
             help="Specify input template file name (use stdin by default)")
     search_parser = argparse.ArgumentParser(add_help=False)
     search_parser.add_argument(
@@ -1012,17 +1012,17 @@ def main():
             "source", parents=[search_one_parser],
             help="edit the vcard file of a contact directly")
     new_parser = subparsers.add_parser(
-            "new", parents=[template_file_parser], help="create a new contact")
+            "new", parents=[input_file_parser], help="create a new contact")
     new_parser.add_argument(
             "--open-editor", action="store_true", help="Open the default text "
             "editor after successful creation of new contact")
     subparsers.add_parser(
-            "add-email", parents=[template_file_parser],
+            "add-email", parents=[input_file_parser],
             help="add an email address to the address book (e.g. from mutt)")
     subparsers.add_parser(
             "merge", parents=[search_two_parser], help="merge two contacts")
     subparsers.add_parser(
-            "modify", parents=[template_file_parser, search_one_parser],
+            "modify", parents=[input_file_parser, search_one_parser],
             help="edit the data of a contact")
     subparsers.add_parser(
             "copy", parents=[search_two_parser],
@@ -1111,8 +1111,8 @@ def main():
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
-    if hasattr(args, "template_file") and not args.template_file.isatty():
-        input_from_stdin_or_file = args.template_file.read()
+    if hasattr(args, "input_file") and not args.input_file.isatty():
+        input_from_stdin_or_file = args.input_file.read()
         # Reopen stdin in case it was used here.
         sys.stdin = open('/dev/tty')
 
