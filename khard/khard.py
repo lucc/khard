@@ -979,7 +979,7 @@ def main():
     search_two_parser = argparse.ArgumentParser(
             add_help=False, parents=[search_parser])
     search_two_parser.add_argument(
-            "source_search_terms",
+            "source_search_terms", nargs="*",
             help="search terms to find the source contact")
     search_two_parser.add_argument(
             "target_search_terms",
@@ -1098,7 +1098,7 @@ def main():
             # No uid was given so we try to use the search terms to select a
             # contact.
             if hasattr(args, "source_search_terms"):
-                args.search_terms = [args.source_search_terms]
+                args.search_terms = args.source_search_terms
             if args.search_terms == []:
                 # If no search terms where given on the command line we match
                 # everything with the empty search pattern.
