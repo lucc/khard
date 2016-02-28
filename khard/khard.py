@@ -949,16 +949,6 @@ def main():
             formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-d", "--debug", action="store_true",
                         help="enable debug output")
-    parser.add_argument("-a", "--addressbook", default="",
-                        help="Specify address book names as comma separated "
-                        "list")
-    parser.add_argument("-g", "--group-by-addressbook", action="store_true",
-                        help="Group contact table by address book")
-    parser.add_argument("-r", "--reverse", action="store_true",
-                        help="Reverse order of contact table")
-    parser.add_argument("--sort", choices=("first_name", "last_name"),
-                        help="Sort contact table by first or last name\n"
-                        "    Possible values: first_name, last_name")
     parser.add_argument("-v", "--version", action="version",
                         version="Khard version %s" % khard_version)
 
@@ -968,59 +958,80 @@ def main():
             help="Specify input template file name (use stdin by default)")
     search_parser = argparse.ArgumentParser(add_help=False)
     search_parser.add_argument(
-            "-u", "--uid", help="select contact by uid")
+            "-a", "--addressbook", default="",
+            help="Specify address book names as comma separated list")
     search_parser.add_argument(
+            "-u", "--uid", help="select contact by uid")
+    search_one_parser = argparse.ArgumentParser(
+            add_help=False, parents=[search_parser])
+    search_one_parser.add_argument(
             "search_terms", nargs="*",
             help="search in all fields to find matching contacts")
-    search_two_parser = argparse.ArgumentParser(add_help=False)
-    search_two_parser.add_argument(
-            "-u", "--uid", help="select contact by uid")
+    search_two_parser = argparse.ArgumentParser(
+            add_help=False, parents=[search_parser])
     search_two_parser.add_argument(
             "source_search_terms",
             help="search terms to find the source contact")
     search_two_parser.add_argument(
             "target_search_terms",
             help="search terms to find the target contact/addressbook")
+    print_parser = argparse.ArgumentParser(add_help=False)
+    print_parser.add_argument(
+            "-g", "--group-by-addressbook", action="store_true",
+            help="Group contact table by address book")
+    print_parser.add_argument(
+            "-r", "--reverse", action="store_true",
+            help="Reverse order of contact table")
+    print_parser.add_argument(
+            "-s", "--sort", choices=("first_name", "last_name"),
+            help="Sort contact table by first or last name")
 
     subparsers = parser.add_subparsers(dest="action")
-    subparsers.add_parser("list", parents=[search_parser],
-                          help="list all (selected) contacts")
     subparsers.add_parser(
-            "details", parents=[search_parser],
+            "list", parents=[search_one_parser, print_parser],
+            help="list all (selected) contacts")
+    subparsers.add_parser(
+            "details", parents=[search_one_parser],
             help="display detailed information about one contact")
     export_parser = subparsers.add_parser(
-            "export", parents=[search_parser],
+            "export", parents=[search_one_parser],
             help="export a contact to the custom yaml format that is also "
             "used for editing and creating contacts")
     export_parser.add_argument(
             "-o", "--output-file", default=sys.stdout,
             type=argparse.FileType("w"),
             help="Specify output file name (default is to write to stdout)")
-    subparsers.add_parser("email", parents=[search_parser],
-                          help="list names and emails in a parsable format "
-                          "(usable by e.g. mutt)")
-    subparsers.add_parser("phone", parents=[search_parser],
-                          help="list names and phone numbers")
-    subparsers.add_parser("source", parents=[search_parser],
-                          help="edit the vcard file of a contact directly")
-    new_parser = subparsers.add_parser("new", parents=[template_file_parser],
-                                       help="create a new contact")
-    new_parser.add_argument("--open-editor", action="store_true",
-                            help="Open the default text editor after "
-                            "successful creation of new contact")
+    subparsers.add_parser(
+            "email", parents=[search_one_parser, print_parser],
+            help="list names and emails in a parsable format (usable by e.g. "
+            "mutt)")
+    subparsers.add_parser(
+            "phone", parents=[search_one_parser, print_parser],
+            help="list names and phone numbers")
+    subparsers.add_parser(
+            "source", parents=[search_one_parser],
+            help="edit the vcard file of a contact directly")
+    new_parser = subparsers.add_parser(
+            "new", parents=[template_file_parser], help="create a new contact")
+    new_parser.add_argument(
+            "--open-editor", action="store_true", help="Open the default text "
+            "editor after successful creation of new contact")
     subparsers.add_parser(
             "add-email", parents=[template_file_parser],
             help="add an email address to the address book (e.g. from mutt)")
-    subparsers.add_parser("merge", parents=[search_two_parser],
-                          help="merge two contacts")
-    subparsers.add_parser("modify", help="edit the data of a contact",
-                          parents=[template_file_parser, search_parser])
-    subparsers.add_parser("copy", parents=[search_two_parser],
-                          help="copy a contact to a different addressbook")
-    subparsers.add_parser("move", parents=[search_two_parser],
-                          help="move a contact to a different addressbook")
-    subparsers.add_parser("remove", parents=[search_parser],
-                          help="remove a contact")
+    subparsers.add_parser(
+            "merge", parents=[search_two_parser], help="merge two contacts")
+    subparsers.add_parser(
+            "modify", parents=[template_file_parser, search_one_parser],
+            help="edit the data of a contact")
+    subparsers.add_parser(
+            "copy", parents=[search_two_parser],
+            help="copy a contact to a different addressbook")
+    subparsers.add_parser(
+            "move", parents=[search_two_parser],
+            help="move a contact to a different addressbook")
+    subparsers.add_parser(
+            "remove", parents=[search_one_parser], help="remove a contact")
 
     args = parser.parse_args()
 
