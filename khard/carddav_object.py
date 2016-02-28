@@ -142,7 +142,7 @@ class CarddavObject:
     def add_rev(self, dt):
         rev_obj = self.vcard.add('rev')
         rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
-                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
+                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def get_uid(self):
         try:
@@ -1224,10 +1224,9 @@ class CarddavObject:
             if it's a list, join to a comma separated string
         """
         if isinstance(value, list):
-            value = ', '.join(value)
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
-        return value
+            return ', '.join(value)
+        else:
+            return value
 
     def string_to_vcard_value(self, string, output):
         """Convert strings to vcard object data
