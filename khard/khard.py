@@ -961,6 +961,15 @@ def main():
             "-a", "--addressbook", default="",
             help="Specify address book names as comma separated list")
     search_parser.add_argument(
+            "-g", "--group-by-addressbook", action="store_true",
+            help="Group contact table by address book")
+    search_parser.add_argument(
+            "-r", "--reverse", action="store_true",
+            help="Reverse order of contact table")
+    search_parser.add_argument(
+            "-s", "--sort", choices=("first_name", "last_name"),
+            help="Sort contact table by first or last name")
+    search_parser.add_argument(
             "-u", "--uid", help="select contact by uid")
     search_one_parser = argparse.ArgumentParser(
             add_help=False, parents=[search_parser])
@@ -975,20 +984,10 @@ def main():
     search_two_parser.add_argument(
             "target_search_terms",
             help="search terms to find the target contact/addressbook")
-    print_parser = argparse.ArgumentParser(add_help=False)
-    print_parser.add_argument(
-            "-g", "--group-by-addressbook", action="store_true",
-            help="Group contact table by address book")
-    print_parser.add_argument(
-            "-r", "--reverse", action="store_true",
-            help="Reverse order of contact table")
-    print_parser.add_argument(
-            "-s", "--sort", choices=("first_name", "last_name"),
-            help="Sort contact table by first or last name")
 
     subparsers = parser.add_subparsers(dest="action")
     subparsers.add_parser(
-            "list", parents=[search_one_parser, print_parser],
+            "list", parents=[search_one_parser],
             help="list all (selected) contacts")
     subparsers.add_parser(
             "details", parents=[search_one_parser],
@@ -1002,11 +1001,11 @@ def main():
             type=argparse.FileType("w"),
             help="Specify output file name (default is to write to stdout)")
     subparsers.add_parser(
-            "email", parents=[search_one_parser, print_parser],
+            "email", parents=[search_one_parser],
             help="list names and emails in a parsable format (usable by e.g. "
             "mutt)")
     subparsers.add_parser(
-            "phone", parents=[search_one_parser, print_parser],
+            "phone", parents=[search_one_parser],
             help="list names and phone numbers")
     subparsers.add_parser(
             "source", parents=[search_one_parser],
@@ -1063,11 +1062,11 @@ def main():
                 selected_address_books.append(Config().get_address_book(name))
 
     # group by address book
-    if args.group_by_addressbook:
+    if "group_by_addressbook" in args and args.group_by_addressbook:
         Config().set_group_by_addressbook()
 
     # sort criteria: first or last name
-    if args.sort:
+    if "sort" in args and args.sort:
         Config().set_sort_by_name(args.sort)
 
     vcard_list = []
@@ -1078,9 +1077,11 @@ def main():
             # If an uid was given we use it to find the contact.
             logging.debug("args.uid={}".format(args.uid))
             # We require that no search terms where given.
-            if args.search_terms != []:
-                args.error("You can not give arbitrary search terms and --uid "
-                           "at the same time.")
+            if ("search_terms" in args and args.search_terms != []) or (
+                    "source_search_terms" in args and
+                    args.source_search_terms != []):
+                parser.error("You can not give arbitrary search terms and "
+                             "--uid at the same time.")
             vcard_list = get_contacts(Config().get_all_address_books(),
                                       args.uid, method="uid")
             # We require that the uid given can uniquely identify a contact.
