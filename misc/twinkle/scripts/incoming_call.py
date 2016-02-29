@@ -19,7 +19,7 @@ def get_caller_id(from_hdr):
     return caller_id
 
 def caller_from_addressbook(caller_id):
-    callers = subprocess.check_output([config.khard_exe, "phone", "-s", caller_id]).strip()
+    callers = subprocess.check_output([config.khard_exe, "phone", caller_id]).strip()
     if callers == "":
         return caller_id
     elif len(callers.split("\n")) == 1:
