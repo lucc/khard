@@ -971,9 +971,19 @@ def set_default_subparser(self, name):
                 if sp_name in sys.argv[1:]:
                     return  # found a subcommand
         else:
-            # Insert default in first position, this implies no global options
-            # without a sub_parsers specified.
-            sys.argv.insert(1, name)
+            # Find position to insert default command.
+            options = self._option_string_actions.keys()
+            for index, arg in enumerate(sys.argv[1:], 1):
+                if arg in options:
+                    continue
+                else:
+                    # Insert command before first non option string (possibly
+                    # an argument for the subcommand).
+                    sys.argv.insert(index, name)
+                    break
+            else:
+                # Otherwise append default command.
+                sys.argv.append(name)
 
 
 argparse.ArgumentParser.set_default_subparser = set_default_subparser
