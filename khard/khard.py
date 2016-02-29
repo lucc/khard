@@ -817,7 +817,6 @@ def merge_subcommand(vcard_list, selected_address_books, reverse,
     :rtype: None
 
     """
-    logging.debug('Arguments for merge: vcard_list={}, selected_address_books={}, reverse={}, search_terms={}, target_uid={}'.format(vcard_list, selected_address_books, reverse, search_terms, target_uid))
     # Check arguments.
     if target_uid != "" and search_terms != "":
         print("You can not specify a target uid and target search terms for a "
@@ -825,8 +824,8 @@ def merge_subcommand(vcard_list, selected_address_books, reverse,
         sys.exit(2)
     # Find possible target contacts.
     if target_uid != "":
-        target_vcards = get_contacts(selected_address_books, uid, method="uid",
-                                     reverse=reverse)
+        target_vcards = get_contacts(selected_address_books, target_uid,
+                                     method="uid", reverse=reverse)
     else:
         target_vcards = get_contacts(selected_address_books, search_terms,
                                      reverse=reverse)
