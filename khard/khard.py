@@ -851,15 +851,15 @@ def merge_subcommand(vcard_list, selected_address_books, reverse,
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
-def copy_or_move_subcommand(action, vcard_list, search_terms, reverse):
+def copy_or_move_subcommand(action, vcard_list, target, reverse):
     """Copy or move a contact to a different address book.
 
     :action: the string "copy" or "move" to indicate what to do
     :type action: str
     :param vcard_list: the contact list from which to select one for the action
     :type vcard_list: list of carddav_object.CarddavObject
-    :param search_terms: a search term for the target addressbook
-    :type search_terms: str
+    :param target: the list of target address books (should be of length one)
+    :type target: list(addressbook.AddressBook)
     :param reverse: reverse order when listing
     :type reverse: bool
     :returns: None
@@ -876,50 +876,47 @@ def copy_or_move_subcommand(action, vcard_list, search_terms, reverse):
     available_address_books = [
             book for book in Config().get_all_address_books()
             if book != source_vcard.get_address_book()]
-    target_address_book = None
-    if search_terms != "":
-        target_address_book = Config().get_address_book(search_terms)
-        if target_address_book is None:
-            print("The given target address book %s does not exist\n" %
-                  search_terms)
-        elif target_address_book not in available_address_books:
+    if len(target) >= 1:
+        print("You have to give only one target address book.")
+        sys.exit(1)
+    elif len(target) == 1:
+        target = target[0]
+        if target not in available_address_books:
             print("The contact %s is already in the address book %s" %
                   (source_vcard.get_full_name(),
-                   target_address_book.get_name()))
+                   target.get_name()))
             sys.exit(1)
-
-    # otherwise query the target address book name from user
-    if target_address_book is None:
+    else:
+        # otherwise query the target address book name from user
         print("%s contact %s from address book %s\n\nAvailable address books:"
               "\n  %s" % (action.title(), source_vcard.get_full_name(),
                           source_vcard.get_address_book().get_name(),
                           '\n  '.join([str(book)
                                       for book in available_address_books])))
-    while target_address_book is None:
+    while target is None:
         input_string = raw_input("Into address book: ")
         if input_string == "":
             print("Canceled")
             sys.exit(0)
         if Config().get_address_book(input_string) in available_address_books:
             print("")
-            target_address_book = Config().get_address_book(input_string)
+            target = Config().get_address_book(input_string)
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
-            [target_address_book], reverse, source_vcard.get_full_name(),
-            True))
+            [target], reverse, source_vcard.get_full_name(), True))
 
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
-    print(target_address_book)
+    print(target)
     print(target_vcard)
     if target_vcard is None:
-        copy_contact(source_vcard, target_address_book, action == "move")
+        copy_contact(source_vcard, target, action == "move")
     else:
         if source_vcard == target_vcard:
             # source and target contact are identical
             if action == "move":
-                copy_contact(source_vcard, target_address_book, True)
+                copy_contact(source_vcard, target, True)
             else:
                 print("The selected contacts are already identical")
         else:
@@ -939,13 +936,11 @@ def copy_or_move_subcommand(action, vcard_list, search_terms, reverse):
             while True:
                 input_string = raw_input("Your choice: ")
                 if input_string.lower() == "a":
-                    copy_contact(source_vcard, target_address_book,
-                                 action == "move")
+                    copy_contact(source_vcard, target, action == "move")
                     break
                 if input_string.lower() == "o":
                     target_vcard.delete_vcard_file()
-                    copy_contact(source_vcard, target_address_book,
-                                 action == "move")
+                    copy_contact(source_vcard, target, action == "move")
                     break
                 if input_string.lower() == "m":
                     merge_existing_contacts(source_vcard, target_vcard,
@@ -997,11 +992,13 @@ def main():
 
     addressbook_parser = argparse.ArgumentParser(add_help=False)
     addressbook_parser.add_argument(
-            "-a", "--addressbook", default="",
+            "-a", "--addressbook", default=[],
+            type=lambda x: [y.strip() for y in x.split(",")],
             help="Specify address book names as comma separated list")
     target_addressbook_parser = argparse.ArgumentParser(add_help=False)
     target_addressbook_parser.add_argument(
-            "-A", "--target-addressbook", default="",
+            "-A", "--target-addressbook", default=[],
+            type=lambda x: [y.strip() for y in x.split(",")],
             help="the addressbooks in which to look for the target contact (a "
             "comma seperated list)")
     input_file_parser = argparse.ArgumentParser(add_help=False)
@@ -1098,35 +1095,34 @@ def main():
     logging.debug("args={}".format(args))
 
     # load address books which are defined in the configuration file
-    selected_address_books = []
-    if args.addressbook == "":
-        selected_address_books = Config().get_all_address_books()
-    else:
-        for name in args.addressbook.split(","):
-            if Config().get_address_book(name) is None:
+    for index, name in enumerate(args.addressbook):
+        addressbook = Config().get_address_book(name)
+        if addressbook is None:
+            print("Error: The entered address book \"%s\" does not exist.\n"
+                  "Possible values are: %s" % (
+                      name, ', '.join([str(book) for book in
+                                       Config().get_all_address_books()])))
+            sys.exit(1)
+        else:
+            args.addressbook[index] = addressbook
+    if args.addressbook == []:
+        args.addressbook = Config().get_all_address_books()
+    logging.debug("addressbooks: {}".format(args.addressbook))
+    if "target_addressbook" in args:
+        for index, name in enumerate(args.target_addressbook):
+            addressbook = Config().get_address_book(name)
+            if addressbook is None:
                 print("Error: The entered address book \"%s\" does not exist."
                       "\nPossible values are: %s" % (
                           name, ', '.join([str(book) for book in
-                                          Config().get_all_address_books()])))
+                                           Config().get_all_address_books()])))
                 sys.exit(1)
             else:
-                selected_address_books.append(Config().get_address_book(name))
-    selected_target_address_books = []
-    if "target_addressbook" in args:
-        if args.target_addressbook == "":
-            selected_target_address_books = Config().get_all_address_books()
-        else:
-            for name in args.target_addressbook.split(","):
-                if Config().get_address_book(name) is None:
-                    print("Error: The entered address book \"%s\" does not "
-                          "exist.\nPossible values are: %s" % (
-                              name, ', '.join(
-                                  [str(book) for book in
-                                   Config().get_all_address_books()])))
-                    sys.exit(1)
-                else:
-                    selected_target_address_books.append(
-                            Config().get_address_book(name))
+                args.target_addressbook[index] = addressbook
+        if args.target_addressbook == []:
+            args.target_addressbook = Config().get_all_address_books()
+        logging.debug("target addressbooks: {}".format(
+            args.target_addressbook))
 
     # group by address book
     if "group_by_addressbook" in args and args.group_by_addressbook:
@@ -1174,8 +1170,7 @@ def main():
                 logging.debug("args.search_terms={}".format(args.search_terms))
                 args.search_terms = " ".join(args.search_terms)
             vcard_list = get_contact_list_by_user_selection(
-                    selected_address_books, args.reverse, args.search_terms,
-                    False)
+                    args.addressbook, args.reverse, args.search_terms, False)
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
@@ -1185,10 +1180,10 @@ def main():
         sys.stdin = open('/dev/tty')
 
     if args.action == "new":
-        new_subcommand(selected_address_books, args.addressbook,
+        new_subcommand(args.addressbook, args.addressbook,
                        input_from_stdin_or_file, args.open_editor)
     elif args.action == "add-email":
-        add_email_subcommand(input_from_stdin_or_file, selected_address_books,
+        add_email_subcommand(input_from_stdin_or_file, args.addressbook,
                              args.reverse)
     elif args.action == "phone":
         phone_subcommand(args.search_terms, vcard_list)
@@ -1212,13 +1207,8 @@ def main():
         elif args.action == "source":
             source_subcommand(selected_vcard, Config().get_editor())
     elif args.action == "merge":
-        logging.debug('vcl={}'.format(vcard_list))
-        logging.debug("selected_target_address_books={}".format(selected_target_address_books))
-        logging.debug("args.reverse={}".format(args.reverse))
-        logging.debug("args.target_contact={}".format(args.target_contact))
-        logging.debug("args.target_uid={}".format(args.target_uid))
-        merge_subcommand(vcard_list, selected_target_address_books,
-                         args.reverse, args.target_contact, args.target_uid)
+        merge_subcommand(vcard_list, args.target_addressbook, args.reverse,
+                         args.target_contact, args.target_uid)
     elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(args.action, vcard_list,
                                 args.target_addressbook, args.reverse)
