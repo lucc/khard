@@ -1095,6 +1095,7 @@ def main():
     subparsers.add_parser(
             "remove", parents=[addressbook_parser, search_one_parser],
             help="remove a contact")
+    subparsers.add_parser("addressbooks", help="list addressbooks")
 
     parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
@@ -1103,20 +1104,21 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("args={}".format(args))
 
-    # load address books which are defined in the configuration file
-    for index, name in enumerate(args.addressbook):
-        addressbook = Config().get_address_book(name)
-        if addressbook is None:
-            print("Error: The entered address book \"%s\" does not exist.\n"
-                  "Possible values are: %s" % (
-                      name, ', '.join([str(book) for book in
-                                       Config().get_all_address_books()])))
-            sys.exit(1)
-        else:
-            args.addressbook[index] = addressbook
-    if args.addressbook == []:
-        args.addressbook = Config().get_all_address_books()
-    logging.debug("addressbooks: {}".format(args.addressbook))
+    if "addressbook" in args:
+        # load address books which are defined in the configuration file
+        for index, name in enumerate(args.addressbook):
+            addressbook = Config().get_address_book(name)
+            if addressbook is None:
+                print("Error: The entered address book \"%s\" does not exist."
+                      "\nPossible values are: %s" % (
+                          name, ', '.join([str(book) for book in
+                                           Config().get_all_address_books()])))
+                sys.exit(1)
+            else:
+                args.addressbook[index] = addressbook
+        if args.addressbook == []:
+            args.addressbook = Config().get_all_address_books()
+        logging.debug("addressbooks: {}".format(args.addressbook))
     if "target_addressbook" in args:
         for index, name in enumerate(args.target_addressbook):
             addressbook = Config().get_address_book(name)
@@ -1221,6 +1223,9 @@ def main():
     elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(args.action, vcard_list,
                                 args.target_addressbook, args.reverse)
+    elif args.action == "addressbooks":
+        print('\n'.join(str(book) for book in
+              Config().get_all_address_books()))
 
 
 if __name__ == "__main__":
