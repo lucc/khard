@@ -875,7 +875,7 @@ def copy_or_move_subcommand(action, vcard_list, target, reverse):
     available_address_books = [
             book for book in Config().get_all_address_books()
             if book != source_vcard.get_address_book()]
-    if len(target) >= 1:
+    if len(target) > 1:
         print("You have to give only one target address book.")
         sys.exit(1)
     elif len(target) == 1:
