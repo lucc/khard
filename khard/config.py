@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 # singleton code comes from:
 # http://code.activestate.com/recipes/52558/#as_content
 
 import os, sys, glob, re, operator, vobject
-import helpers
+from . import helpers
 from configobj import ConfigObj
 from distutils.spawn import find_executable
-from address_book import AddressBook
-from carddav_object import CarddavObject
+from .address_book import AddressBook
+from .carddav_object import CarddavObject
 
 class Config:
     """ A python singleton """
@@ -28,10 +32,12 @@ class Config:
             if os.path.exists(config_file) == False:
                 print("Config file %s not available" % config_file)
                 sys.exit(2)
-            self.config = ConfigObj(config_file, interpolation=False)
+            config = ConfigObj(config_file, interpolation=False)
+            self.config = config.dict()
 
             # general settings
-            if self.config.has_key("general") == False:
+            #if self.config.has_key("general") == False:
+            if 'general' in self.config == False:
                 print("Error in config file\nMissing main section \"[general]\".")
                 sys.exit(2)
 
@@ -64,7 +70,8 @@ class Config:
                 sys.exit(2)
 
             # default action
-            if self.config['general'].has_key("default_action") == False:
+            #if self.config['general'].has_key("default_action") == False:
+            if 'default_action' in self.config['general'] == False:
                 print("Error in config file\nMissing default action parameter.")
                 sys.exit(2)
             elif self.config['general']['default_action'] not in self.get_list_of_actions():
@@ -74,11 +81,13 @@ class Config:
                 sys.exit(2)
 
             # contact table settings
-            if self.config.has_key("contact table") == False:
+            #if self.config.has_key("contact table") == False:
+            if 'contact table' in self.config == False:
                 self.config['contact table'] = {}
 
             # sort contacts table by first or last name
-            if self.config['contact table'].has_key("sort") == False:
+            #if self.config['contact table'].has_key("sort") == False:
+            if 'sort' in self.config['contact table'] == False:
                 self.config['contact table']['sort'] = "first_name"
             elif self.config['contact table']['sort'] not in ["first_name", "last_name"]:
                 print("Error in config file\n" \
@@ -87,7 +96,8 @@ class Config:
                 sys.exit(2)
 
             # group contact table by address book
-            if self.config['contact table'].has_key("group_by_addressbook") == False:
+            #if self.config['contact table'].has_key("group_by_addressbook") == False:
+            if 'group_by_addressbook' in self.config['contact table'] == False:
                 self.config['contact table']['group_by_addressbook'] = False
             elif self.config['contact table']['group_by_addressbook'] == "yes":
                 self.config['contact table']['group_by_addressbook'] = True
@@ -100,7 +110,8 @@ class Config:
                 sys.exit(2)
 
             # nickname
-            if self.config['contact table'].has_key("show_nicknames") == False:
+            #if self.config['contact table'].has_key("show_nicknames") == False:
+            if 'show_nicknames' in self.config['contact table'] == False:
                 self.config['contact table']['show_nicknames'] = False
             elif self.config['contact table']['show_nicknames'] == "yes":
                 self.config['contact table']['show_nicknames'] = True
@@ -113,7 +124,8 @@ class Config:
                 sys.exit(2)
 
             # show uids
-            if self.config['contact table'].has_key("show_uids") == False:
+            #if self.config['contact table'].has_key("show_uids") == False:
+            if 'show_uids' in self.config['contact table'] == False:
                 self.config['contact table']['show_uids'] = True
             elif self.config['contact table']['show_uids'] == "yes":
                 self.config['contact table']['show_uids'] = True
@@ -128,7 +140,8 @@ class Config:
             # load address books and contacts
             error_counter = 0
             number_of_contacts = 0
-            if self.config.has_key("addressbooks") == False:
+            #if self.config.has_key("addressbooks") == False:
+            if 'addressbooks' in self.config == False:
                 print("Error in config file\nMissing main section \"[addressbooks]\".")
                 sys.exit(2)
             if len(self.config['addressbooks'].keys()) == 0:

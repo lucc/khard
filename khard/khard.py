@@ -1,12 +1,15 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import tempfile, subprocess, os, sys, re, argparse, datetime
-import helpers
+from . import helpers
 from email.header import decode_header
-from config import Config
-from carddav_object import CarddavObject
-from version import khard_version
+from .config import Config
+from .carddav_object import CarddavObject
+from .version import khard_version
 
 
 def create_new_contact(address_book):
@@ -672,14 +675,14 @@ def main():
             sys.exit(1)
 
         if args.action == "details":
-            print selected_vcard.print_vcard()
+            print(selected_vcard.print_vcard())
 
         elif args.action == "export":
             if args.template_file:
                 with open(args.template_file, "w") as f:
                     f.write(selected_vcard.get_template())
             else:
-                print selected_vcard.get_template()
+                print(selected_vcard.get_template())
 
         elif args.action == "modify":
             # if there is some data in stdin
@@ -789,8 +792,8 @@ def main():
 
         # if the target contact doesn't exist, move or copy the source contact into the target
         # address book without further questions
-        print target_address_book
-        print target_vcard
+        print(target_address_book)
+        print(target_vcard)
         if target_vcard is None:
             copy_contact(source_vcard, target_address_book, args.action == "move")
         else:
