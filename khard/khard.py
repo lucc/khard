@@ -49,7 +49,7 @@ def create_new_contact(address_book):
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input(
+                input_string = input(
                         "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
@@ -107,7 +107,7 @@ def modify_existing_contact(old_contact):
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input(
+                input_string = input(
                         "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
@@ -183,7 +183,7 @@ def merge_existing_contacts(source_contact, target_contact,
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input(
+                input_string = input(
                         "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
@@ -204,7 +204,7 @@ def merge_existing_contacts(source_contact, target_contact,
 
     while True:
         if delete_source_contact:
-            input_string = raw_input(
+            input_string = input(
                     "Merge contact %s from address book %s into contact %s "
                     "from address book %s\n\nTo be removed\n\n%s\n\n"
                     "Merged\n\n%s\n\nAre you sure? (y/n): " % (
@@ -215,7 +215,7 @@ def merge_existing_contacts(source_contact, target_contact,
                         source_contact.print_vcard(),
                         merged_contact.print_vcard()))
         else:
-            input_string = raw_input(
+            input_string = input(
                     "Merge contact %s from address book %s into contact %s "
                     "from address book %s\n\nKeep unchanged\n\n%s\n\n"
                     "Merged:\n\n%s\n\nAre you sure? (y/n): " % (
@@ -356,7 +356,7 @@ def choose_vcard_from_list(vcard_list):
     else:
         list_contacts(vcard_list)
         while True:
-            input_string = raw_input("Enter Index: ")
+            input_string = input("Enter Index: ")
             if input_string in ["", "q", "Q"]:
                 print("Canceled")
                 sys.exit(0)
@@ -490,7 +490,7 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
         for book in Config().get_all_address_books():
             print("  %s" % book.get_name())
         while True:
-            input_string = raw_input("Address book: ")
+            input_string = input("Address book: ")
             if input_string == "":
                 print("Canceled")
                 sys.exit(0)
@@ -548,7 +548,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         sys.exit(1)
     print("Email address: %s" % email_address)
     if not name:
-        name = raw_input("Contact's name: ")
+        name = input("Contact's name: ")
     else:
         # remove quotes from name string, otherwise decoding fails
         name = name.replace("\"", "")
@@ -557,7 +557,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         if encoding:
             name = name.decode(encoding).encode("utf-8").replace("\"", "")
         # query user input.
-        user_input = raw_input("Contact's name [%s]: " % name)
+        user_input = input("Contact's name [%s]: " % name)
         # if empty, use the extracted name from above
         name = user_input or name
 
@@ -568,8 +568,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     if selected_vcard is None:
         # create new contact
         while True:
-            input_string = raw_input("Contact %s does not exist. Do you want "
-                                     "to create it (y/n)? " % name)
+            input_string = input("Contact %s does not exist. Do you want "
+                                 "to create it (y/n)? " % name)
             if input_string.lower() in ["", "n", "q"]:
                 print("Canceled")
                 sys.exit(0)
@@ -579,16 +579,16 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         print("Available address books: %s" % ', '.join(
             [str(book) for book in Config().get_all_address_books()]))
         while True:
-            book_name = raw_input("Address book [%s]: " %
-                                  selected_address_books[0].get_name()) or \
+            book_name = input("Address book [%s]: " %
+                              selected_address_books[0].get_name()) or \
                     selected_address_books[0].get_name()
             if Config().get_address_book(book_name) is not None:
                 break
         # ask for name and organisation of new contact
         while True:
-            first_name = raw_input("First name: ")
-            last_name = raw_input("Last name: ")
-            organisation = raw_input("Organisation: ")
+            first_name = input("First name: ")
+            last_name = input("Last name: ")
+            organisation = input("Organisation: ")
             if not first_name and not last_name and not organisation:
                 print("Error: All fields are empty.")
             else:
@@ -610,7 +610,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
 
     # ask for confirmation again
     while True:
-        input_string = raw_input(
+        input_string = input(
                 "Do you want to add the email address %s to the contact %s "
                 "(y/n)? " % (email_address, selected_vcard.get_full_name()))
         if input_string.lower() in ["", "n", "q"]:
@@ -626,7 +626,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
           "    Or a custom label (only letters" %
           (email_address, selected_vcard))
     while True:
-        label = raw_input("email label [internet]: ") or "internet"
+        label = input("email label [internet]: ") or "internet"
         try:
             selected_vcard.add_email_address(label, email_address)
         except ValueError as e:
@@ -848,7 +848,7 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
         else:
             print("Modification\n\n%s\n" % new_contact.print_vcard())
             while True:
-                input_string = raw_input("Do you want to proceed (y/n)? ")
+                input_string = input("Do you want to proceed (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     break
@@ -873,7 +873,7 @@ def remove_subcommand(selected_vcard):
 
     """
     while True:
-        input_string = raw_input(
+        input_string = input(
                 "Deleting contact %s from address book %s. Are you sure? "
                 "(y/n): " % (selected_vcard.get_full_name(),
                              selected_vcard.get_address_book().get_name()))
@@ -1001,7 +1001,7 @@ def copy_or_move_subcommand(action, vcard_list, target):
                           '\n  '.join([str(book)
                                       for book in available_address_books])))
         while True:
-            input_string = raw_input("Into address book: ")
+            input_string = input("Into address book: ")
             if input_string == "":
                 print("Canceled")
                 sys.exit(0)
@@ -1041,7 +1041,7 @@ def copy_or_move_subcommand(action, vcard_list, target):
                       target_vcard.print_vcard(),
                       "Move" if action == "move" else "Copy"))
             while True:
-                input_string = raw_input("Your choice: ")
+                input_string = input("Your choice: ")
                 if input_string.lower() == "a":
                     copy_contact(source_vcard, target, action == "move")
                     break
