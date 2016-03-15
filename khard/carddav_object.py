@@ -7,7 +7,7 @@ import os, sys, string, datetime, re
 import vobject, yaml
 from atomicwrites import atomic_write
 from pkg_resources import parse_version, get_distribution
-import helpers
+from . import helpers
 
 class CarddavObject:
     def __init__(self, address_book, filename = None):
@@ -547,10 +547,6 @@ class CarddavObject:
                 and not bool(contact_data.get("Last name")) \
                 and not bool(contact_data.get("Organisation")):
             raise ValueError("Error: You must either enter a name or an organisation")
-
-        # delete vcard version
-        # the correct version is added automatically on saving again
-        self.delete_vcard_object("VERSION")
 
         # update rev
         self.delete_vcard_object("REV")
@@ -1224,8 +1220,9 @@ class CarddavObject:
         """
         if isinstance(value, list):
             value = ', '.join(value)
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
+        #TODO unbreak python2 compat
+        #if isinstance(value, unicode):
+        #    value = value.encode("utf-8")
         return value
 
     def string_to_vcard_value(self, string, output):
@@ -1235,8 +1232,9 @@ class CarddavObject:
         vobject version < 0.8.2 needs unicode, so decode if necessary
         """
         # the yaml parser returns unicode strings, so fix that first
-        if isinstance(string, unicode):
-            string = string.encode("utf-8")
+        #TODO unbreak python2 compat
+        #if isinstance(string, unicode):
+        #    string = string.encode("utf-8")
         # possible vcard object types: list and text
         if output == "list":
             # use that for vcard objects, which require list output
@@ -1288,10 +1286,11 @@ class CarddavObject:
         :returns: tuple of standard and custom types
         :rtype: tuple(str, str)
         """
-        if isinstance(types, unicode):
-            types = types.encode("utf-8")
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
+        #TODO un-break python2 compat
+        #if isinstance(types, unicode):
+        #    types = types.encode("utf-8")
+        #if isinstance(value, unicode):
+        #    value = value.encode("utf-8")
         custom_types = []
         standard_types = []
         for type in types.split(","):
