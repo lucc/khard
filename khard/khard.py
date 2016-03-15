@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -8,11 +7,11 @@ import re
 import subprocess
 import sys
 import tempfile
-import helpers
+from . import helpers
 from email.header import decode_header
-from config import Config
-from carddav_object import CarddavObject
-from version import khard_version
+from .config import Config
+from .carddav_object import CarddavObject
+from .version import khard_version
 
 
 def create_new_contact(address_book):
@@ -1426,7 +1425,3 @@ def main():
         copy_or_move_subcommand(args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
         print('\n'.join(str(book) for book in Config().get_all_address_books()))
-
-
-if __name__ == "__main__":
-    main()
