@@ -14,29 +14,6 @@ class CarddavObject:
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
-        self.old_vobject_version = False
-
-        # at the moment khard must support two different behavior of the vobject module
-        # the versions < 0.8.2 are still widely in use and expect unicode strings for non-ascii characters
-        # all newer versions use utf-8 encoded strings directly
-        # so we must determine, which version is installed
-        try:
-            # try to compare the version numbers
-            if parse_version(get_distribution("vobject").version) < parse_version("0.8.2"):
-                self.old_vobject_version = True
-        except Exception as e:
-            # if something goes wrong during vobject version comparison, try to serialize a
-            # minimal vcard object with umlauts
-            # if that fails, khard still uses a vobject version < 0.8.2
-            v = vobject.vCard()
-            o = v.add("fn")
-            o.value = "Markus Schröder"
-            o = v.add("n")
-            o.value = vobject.vcard.Name(family="Schröder", given="Markus")
-            try:
-                v.serialize()
-            except UnicodeDecodeError as e:
-                self.old_vobject_version = True
 
         # vcard supports the following type values
         self.supported_phone_types = ["bbs", "car", "cell", "fax", "home", "isdn",
@@ -1244,15 +1221,11 @@ class CarddavObject:
             #
             # devide by comma char
             value_list = [ x.strip() for x in string.split(",") ]
-            if self.old_vobject_version:
-                value_list = [ x.decode("utf-8") for x in value_list ]
             return value_list
         if output == "text":
             # use that for vcard objects, which require a single text output
             # examples: nickname and note field
             string = string.strip()
-            if self.old_vobject_version:
-                string = string.decode("utf-8")
             return string
 
     def get_type_for_vcard_object(self, object):
