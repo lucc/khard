@@ -1149,11 +1149,12 @@ def main():
 
     # create subparsers for actions
     subparsers = parser.add_subparsers(dest="action")
-    subparsers.add_parser(
-            "list",
+    list_parser = subparsers.add_parser(
+            "list", aliases=['ls'],
             parents=[default_addressbook_parser, sort_parser,
                 default_search_parser],
             help="list all (selected) contacts")
+    list_parser.set_defaults(action="list")
     subparsers.add_parser(
             "details",
             parents=[default_addressbook_parser, sort_parser,
@@ -1173,9 +1174,10 @@ def main():
             type=argparse.FileType("w"),
             help="Specify output template file name or use stdout by default")
     birthdays_parser = subparsers.add_parser(
-            "birthdays",
+            "birthdays", aliases=["bdays"],
             parents=[default_addressbook_parser, default_search_parser],
             help="list birthdays (sorted by month and day)")
+    birthdays_parser.set_defaults(action="birthdays")
     birthdays_parser.add_argument(
             "-p", "--parsable", action="store_true",
             help="Machine readable format: name\\tdate")
@@ -1205,43 +1207,49 @@ def main():
                 default_search_parser],
             help="edit the vcard file of a contact directly")
     new_parser = subparsers.add_parser(
-            "new",
+            "new", aliases=["add"],
             parents=[new_addressbook_parser, template_input_file_parser],
             help="create a new contact")
+    new_parser.set_defaults(action="new")
     subparsers.add_parser(
             "add-email",
             parents=[default_addressbook_parser, email_header_input_file_parser,
                 sort_parser, default_search_parser],
             help="Extract email address from the \"From:\" field of an email "
                     "header and add to an existing contact or create a new one")
-    merge_parser = subparsers.add_parser(
+    subparsers.add_parser(
             "merge",
             parents=[merge_addressbook_parser, sort_parser,
                 merge_search_parser],
             help="merge two contacts")
-    subparsers.add_parser(
-            "modify",
+    modify_parser = subparsers.add_parser(
+            "modify", aliases=["edit"],
             parents=[default_addressbook_parser, template_input_file_parser,
                     sort_parser, default_search_parser],
             help="edit the data of a contact")
-    subparsers.add_parser(
-            "copy",
+    modify_parser.set_defaults(action="modify")
+    copy_parser = subparsers.add_parser(
+            "copy",aliases=["cp"],
             parents=[copy_move_addressbook_parser, sort_parser,
                 default_search_parser],
             help="copy a contact to a different addressbook")
-    subparsers.add_parser(
-            "move",
+    copy_parser.set_defaults(action="copy")
+    move_parser = subparsers.add_parser(
+            "move", aliases=["mv"],
             parents=[copy_move_addressbook_parser, sort_parser,
                 default_search_parser],
             help="move a contact to a different addressbook")
-    subparsers.add_parser(
-            "remove",
+    move_parser.set_defaults(action="move")
+    remove_parser = subparsers.add_parser(
+            "remove", aliases=["delete", "rm", "del"],
             parents=[default_addressbook_parser, sort_parser,
                 default_search_parser],
             help="remove a contact")
-    subparsers.add_parser(
-            "addressbooks",
+    remove_parser.set_defaults(action="remove")
+    addressbooks_parser = subparsers.add_parser(
+            "addressbooks", aliases=["abooks"],
             help="list addressbooks")
+    addressbooks_parser.set_defaults(action="addressbooks")
 
     args = parser.parse_args()
 
