@@ -3,11 +3,14 @@
 # contact object class
 # vcard: https://tools.ietf.org/html/rfc6350
 
-import os, sys, string, datetime, re
-import vobject, yaml
+import os
+import sys
+import datetime
+import re
+import vobject
+import yaml
 from atomicwrites import atomic_write
-from pkg_resources import parse_version, get_distribution
-import helpers
+from . import helpers
 
 class CarddavObject:
     def __init__(self, address_book, filename = None):

@@ -3,12 +3,13 @@
 # singleton code comes from:
 # http://code.activestate.com/recipes/52558/#as_content
 
-import os, sys, glob, re, operator, vobject
-import helpers
+import os
+import sys
+from . import helpers
 from configobj import ConfigObj
 from distutils.spawn import find_executable
-from address_book import AddressBook
-from carddav_object import CarddavObject
+from .address_book import AddressBook
+
 
 class Config:
     """ A python singleton """
