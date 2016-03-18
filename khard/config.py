@@ -91,7 +91,7 @@ class Config:
                 sys.exit(2)
 
             # reverse contact table
-            if self.config['contact table'].has_key("reverse") == False:
+            if 'reverse' not in self.config['contact table']:
                 self.config['contact table']['reverse'] = False
             elif self.config['contact table']['reverse'] == "yes":
                 self.config['contact table']['reverse'] = True
