@@ -5,6 +5,9 @@
 
 import os
 import sys
+import glob
+import vobject
+from .carddav_object import CarddavObject
 from . import helpers
 from configobj import ConfigObj
 from distutils.spawn import find_executable
