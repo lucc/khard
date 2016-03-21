@@ -1199,9 +1199,6 @@ class CarddavObject:
     def vcard_value_to_string(self, value):
         """convert values from source vcard to string
         function is used by all getters
-        includes:
-            vobject version < 0.8.2 still uses unicode, so encode to utf-8
-            if it's a list, join to a comma separated string
         """
         if isinstance(value, list):
             return ', '.join(value)
@@ -1212,11 +1209,7 @@ class CarddavObject:
         """Convert strings to vcard object data
         function is used by all setters
         The output parameter specifies the required type, currently we only need simple text and lists
-        vobject version < 0.8.2 needs unicode, so decode if necessary
         """
-        # the yaml parser returns unicode strings, so fix that first
-        if isinstance(string, unicode):
-            string = string.encode("utf-8")
         # possible vcard object types: list and text
         if output == "list":
             # use that for vcard objects, which require list output
@@ -1256,18 +1249,14 @@ class CarddavObject:
     def parse_type_value(self, types, value, supported_types):
         """ parse type value of phone numbers, email and post addresses
         :param types: one or several type values, separated by comma character
-        :type types: str or unicode
+        :type types: str
         :param value: the corresponding label, required for more verbose exceptions
-        :type value: str or unicode
+        :type value: str
         :param supported_types: all allowed standard types
         :type supported_types: list
         :returns: tuple of standard and custom types
         :rtype: tuple(str, str)
         """
-        if isinstance(types, unicode):
-            types = types.encode("utf-8")
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
         custom_types = []
         standard_types = []
         for type in types.split(","):
