@@ -1317,6 +1317,7 @@ def main():
     input_from_stdin_or_file = ""
     if hasattr(args, "input_file"):
         if args.input_file != "-":
+            # try to read from specified input file
             try:
                 with open(args.input_file, "r") as f:
                     input_from_stdin_or_file = f.read()
@@ -1324,8 +1325,19 @@ def main():
                 print("Error: %s\n       File: %s" % (e.strerror, e.filename))
                 sys.exit(1)
         elif not sys.stdin.isatty():
-            input_from_stdin_or_file = sys.stdin.read()
-            sys.stdin = open('/dev/tty')
+            # try to read from stdin
+            try:
+                input_from_stdin_or_file = sys.stdin.read()
+            except IOError as e:
+                print("Error: Can't read from stdin")
+                sys.exit(1)
+            # try to reopen console
+            # otherwise further user interaction is not possible (for example
+            # selecting a contact from the contact table)
+            try:
+                sys.stdin = open('/dev/tty')
+            except IOError as e:
+                pass
 
     if args.action == "new":
         new_subcommand(args.addressbook, input_from_stdin_or_file,
