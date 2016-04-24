@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import os
 import argparse
-from configobj import ConfigObj
 from caldavclientlibrary.client.account import CalDAVAccount
 from caldavclientlibrary.protocol.url import URL
 
