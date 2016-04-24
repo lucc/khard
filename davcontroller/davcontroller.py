@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import sys
@@ -25,32 +25,32 @@ def main():
 
     # version
     if args.version is True:
-        print "davcontroller version 0.1"
+        print("davcontroller version 0.1")
         sys.exit(0)
 
     # check the server's parameter
     if args.hostname == "":
-        print "Missing host name"
+        print("Missing host name")
         sys.exit(1)
     if args.port == "":
-        print "Missing host port"
+        print("Missing host port")
         sys.exit(1)
     if args.username == "":
-        print "Missing user name"
+        print("Missing user name")
         sys.exit(1)
     if args.password == "":
-        print "Missing password"
+        print("Missing password")
         sys.exit(1)
 
     if args.action == "":
-        print "Please specify an action. Possible values are: " \
-            "new-addressbook, new-calendar, list and remove"
+        print("Please specify an action. Possible values are: "
+              "new-addressbook, new-calendar, list and remove")
         sys.exit(1)
     elif args.action not in ["new-addressbook", "new-calendar", "list",
                              "remove"]:
-        print "The specified action \"%s\" is not supported. Possible " \
-            "values are: new-addressbook, new-calendar, list and remove" % \
-            args.action
+        print("The specified action \"%s\" is not supported. Possible values "
+              "are: new-addressbook, new-calendar, list and remove" %
+              args.action)
         sys.exit(1)
 
     # try to connect to the caldav server
@@ -58,28 +58,28 @@ def main():
                             user=args.username, pswd=args.password, root="/",
                             principal="")
     if account.getPrincipal() is None:
-        print "Error: Connection refused"
+        print("Error: Connection refused")
         sys.exit(2)
 
     if args.action in ["list", "remove"]:
         # address books
-        print "Available address books"
+        print("Available address books")
         addressbook_list = account.getPrincipal().listAddressBooks()
         if addressbook_list.__len__() == 0:
-            print "No address books found"
+            print("No address books found")
         else:
             for index, addressbook in enumerate(addressbook_list):
-                print "%d. %s" % (index+1, addressbook.getDisplayName())
+                print("%d. %s" % (index+1, addressbook.getDisplayName()))
         print
         # calendars
-        print "Available calendars"
+        print("Available calendars")
         calendar_list = account.getPrincipal().listCalendars()
         if calendar_list.__len__() == 0:
-            print "No calendars found"
+            print("No calendars found")
         else:
             for index, calendar in enumerate(calendar_list):
-                print "%d. %s" % (addressbook_list.__len__() + index + 1,
-                                  calendar.getDisplayName())
+                print("%d. %s" % (addressbook_list.__len__() + index + 1,
+                      calendar.getDisplayName()))
         item_list = addressbook_list + calendar_list
         if item_list.__len__() == 0:
             sys.exit(2)
@@ -87,23 +87,23 @@ def main():
         if args.action == "remove":
             print
             while True:
-                input_string = raw_input("Enter Id: ")
+                input_string = input("Enter Id: ")
                 if input_string == "":
                     sys.exit(0)
                 try:
                     id = int(input_string)
                     if id > 0 and id <= item_list.__len__():
                         break
-                except ValueError as e:
+                except ValueError:
                     pass
-                print "Please enter an Id between 1 and %d or nothing to " \
-                    "exit." % item_list.__len__()
+                print("Please enter an Id between 1 and %d or nothing to exit."
+                      % item_list.__len__())
             item = item_list[id-1]
             while True:
-                input_string = raw_input("Deleting %s. Are you sure? (y/n): "
-                                         % item.getDisplayName())
+                input_string = input("Deleting %s. Are you sure? (y/n): " %
+                                     item.getDisplayName())
                 if input_string.lower() in ["", "n", "q"]:
-                    print "Canceled"
+                    print("Canceled")
                     sys.exit(0)
                 if input_string.lower() == "y":
                     break
@@ -115,11 +115,11 @@ def main():
                                       account.session.port)
         # enter new name
         if args.action == "new-addressbook":
-            input_string = raw_input("Enter new address book name or nothing "
-                                     "to cancel: ")
+            input_string = input("Enter new address book name or nothing to "
+                                 "cancel: ")
         else:
-            input_string = raw_input("Enter new calendar name or nothing to "
-                                     "cancel: ")
+            input_string = input("Enter new calendar name or nothing to "
+                                 "cancel: ")
         if input_string == "":
             sys.exit(0)
         res_name = input_string
@@ -133,7 +133,7 @@ def main():
             u = URL(url=host_url + account.principal.homeset[0].path +
                     res_path + "/")
             account.session.makeCalendar(u, res_name)
-        print "Creation successful"
+        print("Creation successful")
 
 
 if __name__ == "__main__":
