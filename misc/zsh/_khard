@@ -1,6 +1,6 @@
 #compdef khard
 
-# Zsh completion definition for khard version >= 0.9.0
+# Zsh completion definition for khard version >= 0.10.0
 # Install by copying to a directory where zsh searches for completion
 # functions (the $fpath array).
 #
@@ -49,6 +49,7 @@ case $state in
       'list:list all (selected) contacts'
       'details:show details for a contact'
       'export:export a contact'
+      'birthdays:list birthdays'
       'email:list email addresses'
       'phone:list phone numbers'
       'source:edit the source vcard of a contact'
@@ -92,19 +93,20 @@ case $state in
       '(-i)'{-i+,--input-file=}'[Specify input template file name or use stdin]:input file:_files'
       '--open-editor[Open text editor after successful creation of new contact from stdin or template]'
     )
-    # search options
-    local -a default_search_options merge_search_options
-    default_search_options=(
+    # sort options
+    local -a sort_options
+    sort_options=(
       '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
       '(-r)'{-r,--reverse}'[reverse order of contact table]'
       '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name)'
+    )
+    # search options
+    local -a default_search_options merge_search_options
+    default_search_options=(
       '(-u)'{-u+,--uid=}'[select contact by uid]:uid'
       '*::search terms'
     )
     merge_search_options=(
-      '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
-      '(-r)'{-r,--reverse}'[reverse order of contact table]'
-      '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name)'
       '(-t)'{-t+,--target-contact=}'[search in all fields to find matching target contact]:search string'
       '(-u)'{-u+,--uid=}'[select source contact by uid]:uid'
       '(-U)'{-U+,--target-uid=}'[select target contact by uid]:uid'
@@ -119,22 +121,27 @@ case $state in
         options+=();;
       list|details|source|remove)
         options+=(
+          $default_addressbook_options $sort_options $default_search_options
+        );;
+      birthdays)
+        options+=(
           $default_addressbook_options $default_search_options
+          '(-p)'{-p,--parsable}'[Machine readable birthday table]'
         );;
       email)
         options+=(
-          $default_addressbook_options $default_search_options
-          '(-p)'{-p,--pretty}'[Pretty format email address table]'
+          $default_addressbook_options $sort_options $default_search_options
+          '(-p)'{-p,--parsable}'[Machine readable email address table]'
           '--remove-first-line[remove first line from output]'
         );;
       phone)
         options+=(
-          $default_addressbook_options $default_search_options
-          '(-p)'{-p,--pretty}'[Pretty format phone number table]'
+          $default_addressbook_options $sort_options $default_search_options
+          '(-p)'{-p,--parsable}'[Machine readable phone number table]'
         );;
       export)
 	    options+=(
-          $default_addressbook_options $default_search_options
+          $default_addressbook_options $sort_options $default_search_options
           '--empty-contact-template[export empty contact template]'
           '(-o)'{-o+,--output-file=}'[Specify output template file name or use stdout]:output file:_files'
         );;
@@ -144,19 +151,19 @@ case $state in
         );;
       add-email)
         options+=(
-          $default_addressbook_options $email_header_input_options $default_search_options
+          $default_addressbook_options $email_header_input_options $sort_options $default_search_options
         );;
       copy|move)
         options+=(
-          $copy_move_addressbook_options $default_search_options
+          $copy_move_addressbook_options $sort_options $default_search_options
         );;
       modify)
         options+=(
-          $default_addressbook_options $template_file_input_options $default_search_options
+          $default_addressbook_options $template_file_input_options $sort_options $default_search_options
         );;
       merge)
         options+=(
-          $merge_addressbook_options $merge_search_options
+          $merge_addressbook_options $sort_options $merge_search_options
         );;
     esac
     # Complete the subcommand options.

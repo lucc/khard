@@ -249,8 +249,9 @@ class Config:
 
 
         def get_list_of_actions(self):
-            return ["list", "details", "export", "email", "phone", "source",
-                    "new", "add-email", "merge", "modify", "copy", "move", "remove"]
+            return ["addressbooks", "list", "details", "export", "birthdays",
+                    "email", "phone", "source", "new", "add-email", "merge",
+                    "modify", "copy", "move", "remove"]
 
 
         def sort_by_name(self):

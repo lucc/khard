@@ -328,6 +328,12 @@ def list_contacts(vcard_list):
     print(helpers.pretty_print(table))
 
 
+def list_birthdays(birthday_list):
+    table = [["Name", "Birthday"]]
+    for row in birthday_list:
+        table.append(row.split("\t"))
+    print(helpers.pretty_print(table))
+
 def list_phone_numbers(phone_number_list):
     table = [["Phone", "Name", "Type"]]
     for row in phone_number_list:
@@ -632,7 +638,46 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     print("Done.\n\n%s" % selected_vcard.print_vcard())
 
 
-def phone_subcommand(search_terms, vcard_list, pretty):
+def birthdays_subcommand(vcard_list, parsable):
+    """Print birthday contact table.
+
+    :param vcard_list: the vcards to search for matching entries which should
+        be printed
+    :type vcard_list: list of carddav_object.CarddavObject
+    :param parsable: machine readable output: columns devided by tabulator (\t)
+    :type parsable: bool
+    :returns: None
+    :rtype: None
+
+    """
+    # filter out contacts without a birthday date
+    vcard_list = [vcard for vcard in vcard_list if vcard.get_birthday() != None]
+    # sort by date (month and day)
+    vcard_list.sort(key=lambda x: (x.get_birthday().month, x.get_birthday().day))
+    # add to string list
+    birthday_list = []
+    for vcard in vcard_list:
+        date = vcard.get_birthday()
+        if Config().sort_by_name() == "first_name":
+            birthday_list.append("%s\t%.2d.%.2d.%.4d" % \
+                    (vcard.get_first_name_last_name(),
+                        date.day, date.month, date.year))
+        else:
+            birthday_list.append("%s\t%.2d.%.2d.%.4d" % \
+                    (vcard.get_last_name_first_name(),
+                        date.day, date.month, date.year))
+    if len(birthday_list) > 0:
+        if parsable:
+            print('\n'.join(birthday_list))
+        else:
+            list_birthdays(birthday_list)
+    else:
+        if not parsable:
+            print("Found no birthdays")
+        sys.exit(1)
+
+
+def phone_subcommand(search_terms, vcard_list, parsable):
     """Print a phone application friendly contact table.
 
     :param search_terms: used as search term to filter the contacts before
@@ -641,8 +686,8 @@ def phone_subcommand(search_terms, vcard_list, pretty):
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :type vcard_list: list of carddav_object.CarddavObject
-    :param pretty: pretty formatted output
-    :type pretty: bool
+    :param parsable: machine readable output: columns devided by tabulator (\t)
+    :type parsable: bool
     :returns: None
     :rtype: None
 
@@ -655,8 +700,12 @@ def phone_subcommand(search_terms, vcard_list, pretty):
         for type, number_list in sorted(vcard.get_phone_numbers().items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
-                phone_number_line = "%s\t%s\t%s" % \
-                        (number, vcard.get_full_name(), type)
+                if Config().sort_by_name() == "first_name":
+                    phone_number_line = "%s\t%s\t%s" % \
+                            (number, vcard.get_first_name_last_name(), type)
+                else:
+                    phone_number_line = "%s\t%s\t%s" % \
+                            (number, vcard.get_last_name_first_name(), type)
                 if len(re.sub("\D", "", search_terms)) >= 3:
                     # The user likely searches for a phone number cause the
                     # search string contains at least three digits.  So we
@@ -673,22 +722,22 @@ def phone_subcommand(search_terms, vcard_list, pretty):
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
     if len(matching_phone_number_list) > 0:
-        if pretty:
-            list_phone_numbers(matching_phone_number_list)
-        else:
+        if parsable:
             print('\n'.join(matching_phone_number_list))
-    elif len(all_phone_numbers_list) > 0:
-        if pretty:
-            list_phone_numbers(all_phone_numbers_list)
         else:
+            list_phone_numbers(matching_phone_number_list)
+    elif len(all_phone_numbers_list) > 0:
+        if parsable:
             print('\n'.join(all_phone_numbers_list))
+        else:
+            list_phone_numbers(all_phone_numbers_list)
     else:
-        if pretty:
+        if not parsable:
             print("Found no phone numbers")
         sys.exit(1)
 
 
-def email_subcommand(search_terms, vcard_list, pretty, remove_first_line):
+def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
     Output format:
@@ -703,8 +752,8 @@ def email_subcommand(search_terms, vcard_list, pretty, remove_first_line):
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :type vcard_list: list of carddav_object.CarddavObject
-    :param pretty: pretty formatted output
-    :type pretty: bool
+    :param parsable: machine readable output: columns devided by tabulator (\t)
+    :type parsable: bool
     :param remove_first_line: remove first line (searching for '' ...)
     :type remove_first_line: bool
     :returns: None
@@ -719,28 +768,34 @@ def email_subcommand(search_terms, vcard_list, pretty, remove_first_line):
         for type, email_list in sorted(vcard.get_email_addresses().items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
-                email_address_line = "%s\t%s\t%s" \
-                        % (email, vcard.get_full_name(), type)
+                if Config().sort_by_name() == "first_name":
+                    email_address_line = "%s\t%s\t%s" \
+                            % (email, vcard.get_first_name_last_name(), type)
+                else:
+                    email_address_line = "%s\t%s\t%s" \
+                            % (email, vcard.get_last_name_first_name(), type)
                 if regexp.search(email_address_line) is not None:
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
                 all_email_address_list.append(email_address_line)
     if len(matching_email_address_list) > 0:
-        if pretty:
-            list_email_addresses(matching_email_address_list)
-        else:
+        if parsable:
             if not remove_first_line:
+                # at least mutt requires that line
                 print("searching for '%s' ..." % search_terms)
             print('\n'.join(matching_email_address_list))
-    elif len(all_email_address_list) > 0:
-        if pretty:
-            list_email_addresses(all_email_address_list)
         else:
+            list_email_addresses(matching_email_address_list)
+    elif len(all_email_address_list) > 0:
+        if parsable:
             if not remove_first_line:
+                # at least mutt requires that line
                 print("searching for '%s' ..." % search_terms)
             print('\n'.join(all_email_address_list))
+        else:
+            list_email_addresses(all_email_address_list)
     else:
-        if pretty:
+        if not parsable:
             print("Found no email addresses")
         elif not remove_first_line:
             print("searching for '%s' ..." % search_terms)
@@ -1100,26 +1155,26 @@ def main():
             "--open-editor", action="store_true", help="Open the default text "
             "editor after successful creation of new contact")
 
-    # create search subparsers
-    search_parser = argparse.ArgumentParser(add_help=False)
-    search_parser.add_argument(
+    # create sort subparser
+    sort_parser = argparse.ArgumentParser(add_help=False)
+    sort_parser.add_argument(
             "-g", "--group-by-addressbook", action="store_true",
             help="Group contact table by address book")
-    search_parser.add_argument(
+    sort_parser.add_argument(
             "-r", "--reverse", action="store_true",
             help="Reverse order of contact table")
-    search_parser.add_argument(
+    sort_parser.add_argument(
             "-s", "--sort", choices=("first_name", "last_name"),
             help="Sort contact table by first or last name")
-    default_search_parser = argparse.ArgumentParser(
-            add_help=False, parents=[search_parser])
+
+    # create search subparsers
+    default_search_parser = argparse.ArgumentParser(add_help=False)
     default_search_parser.add_argument(
             "-u", "--uid", default="", help="select contact by uid")
     default_search_parser.add_argument(
             "search_terms", nargs="*", metavar="search terms",
             help="search in all fields to find matching contact")
-    merge_search_parser = argparse.ArgumentParser(
-            add_help=False, parents=[search_parser])
+    merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
             "-t", "--target-contact", "--target", default="",
             help="search in all fields to find matching target contact")
@@ -1135,15 +1190,18 @@ def main():
     subparsers = parser.add_subparsers(dest="action")
     subparsers.add_parser(
             "list",
-            parents=[default_addressbook_parser, default_search_parser],
+            parents=[default_addressbook_parser, sort_parser,
+                default_search_parser],
             help="list all (selected) contacts")
     subparsers.add_parser(
             "details",
-            parents=[default_addressbook_parser, default_search_parser],
+            parents=[default_addressbook_parser, sort_parser,
+                default_search_parser],
             help="display detailed information about one contact")
     export_parser = subparsers.add_parser(
             "export",
-            parents=[default_addressbook_parser, default_search_parser],
+            parents=[default_addressbook_parser, sort_parser,
+                default_search_parser],
             help="export a contact to the custom yaml format that is also "
             "used for editing and creating contacts")
     export_parser.add_argument(
@@ -1153,29 +1211,37 @@ def main():
             "-o", "--output-file", default=sys.stdout,
             type=argparse.FileType("w"),
             help="Specify output template file name or use stdout by default")
+    birthdays_parser = subparsers.add_parser(
+            "birthdays",
+            parents=[default_addressbook_parser, default_search_parser],
+            help="list birthdays (sorted by month and day)")
+    birthdays_parser.add_argument(
+            "-p", "--parsable", action="store_true",
+            help="Machine readable format: name\\tdate")
     email_parser = subparsers.add_parser(
             "email",
-            parents=[default_addressbook_parser, default_search_parser],
-            help="list email addresses in a parsable format "
-                    "(address\\tname\\ttype)")
+            parents=[default_addressbook_parser, sort_parser,
+                default_search_parser],
+            help="list email addresses")
     email_parser.add_argument(
-            "-p", "--pretty", action="store_true",
-            help="Pretty format email address table")
+            "-p", "--parsable", action="store_true",
+            help="Machine readable format: address\\tname\\ttype")
     email_parser.add_argument(
             "--remove-first-line", action="store_true",
             help="remove \"searching for '' ...\" line from parsable output "
                     "(that line is required by mutt)")
     phone_parser = subparsers.add_parser(
             "phone",
-            parents=[default_addressbook_parser, default_search_parser],
-            help="list phone numbers in a parsable format "
-                    "(number\\tname\\ttype)")
+            parents=[default_addressbook_parser, sort_parser,
+                default_search_parser],
+            help="list phone numbers")
     phone_parser.add_argument(
-            "-p", "--pretty", action="store_true",
-            help="Pretty format phone number table")
+            "-p", "--parsable", action="store_true",
+            help="Machine readable format: number\\tname\\ttype")
     subparsers.add_parser(
             "source",
-            parents=[default_addressbook_parser, default_search_parser],
+            parents=[default_addressbook_parser, sort_parser,
+                default_search_parser],
             help="edit the vcard file of a contact directly")
     new_parser = subparsers.add_parser(
             "new",
@@ -1183,30 +1249,34 @@ def main():
             help="create a new contact")
     subparsers.add_parser(
             "add-email",
-            parents=[default_addressbook_parser,
-                email_header_input_file_parser, default_search_parser],
+            parents=[default_addressbook_parser, email_header_input_file_parser,
+                sort_parser, default_search_parser],
             help="Extract email address from the \"From:\" field of an email "
                     "header and add to an existing contact or create a new one")
     merge_parser = subparsers.add_parser(
             "merge",
-            parents=[merge_addressbook_parser, merge_search_parser],
+            parents=[merge_addressbook_parser, sort_parser,
+                merge_search_parser],
             help="merge two contacts")
     subparsers.add_parser(
             "modify",
             parents=[default_addressbook_parser, template_input_file_parser,
-                    default_search_parser],
+                    sort_parser, default_search_parser],
             help="edit the data of a contact")
     subparsers.add_parser(
             "copy",
-            parents=[copy_move_addressbook_parser, default_search_parser],
+            parents=[copy_move_addressbook_parser, sort_parser,
+                default_search_parser],
             help="copy a contact to a different addressbook")
     subparsers.add_parser(
             "move",
-            parents=[copy_move_addressbook_parser, default_search_parser],
+            parents=[copy_move_addressbook_parser, sort_parser,
+                default_search_parser],
             help="move a contact to a different addressbook")
     subparsers.add_parser(
             "remove",
-            parents=[default_addressbook_parser, default_search_parser],
+            parents=[default_addressbook_parser, sort_parser,
+                default_search_parser],
             help="remove a contact")
     subparsers.add_parser(
             "addressbooks",
@@ -1344,11 +1414,13 @@ def main():
                 args.open_editor)
     elif args.action == "add-email":
         add_email_subcommand(input_from_stdin_or_file, args.addressbook)
+    elif args.action == "birthdays":
+        birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
-        phone_subcommand(args.search_terms, vcard_list, args.pretty)
+        phone_subcommand(args.search_terms, vcard_list, args.parsable)
     elif args.action == "email":
         email_subcommand(args.search_terms, vcard_list,
-                args.pretty, args.remove_first_line)
+                args.parsable, args.remove_first_line)
     elif args.action == "list":
         list_subcommand(vcard_list)
     elif args.action == "export" \

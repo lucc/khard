@@ -283,7 +283,7 @@ Khard may be used as an external address book for the email client mutt. To acco
 following to your mutt config file (mostly ~/.mutt/muttrc):
 
 ```
-set query_command= "khard email %s"
+set query_command= "khard email -p %s"
 bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
@@ -311,7 +311,7 @@ Add the following lines to your alot config file:
     [[youraccount]]
         [[[abook]]]
             type = shellcommand
-            command = khard email
+            command = khard email -p
             regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
             ignorecase = True
 ```

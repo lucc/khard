@@ -106,3 +106,9 @@ v0.9.0: 2016.03.17
 - New option -p|--pretty for email and phone actions to get pretty formatted output
 - Fix: Only delete contact after modify, copy or move action was completed successfully
 
+v0.10.0: 2016.05.02
+- New Action birthday: list birthdays, sorted by month and day
+- option -p, --pretty was renamed to -p, --parsable: So, the pretty formatted email or
+  phone number table is the default now. Please adapt the configuration files of potential email and
+  phone applications (e.g.: mutt email -p %s)
+
