@@ -7,6 +7,7 @@ import os
 import sys
 import glob
 import vobject
+from .actions import Actions
 from .carddav_object import CarddavObject
 from . import helpers
 from configobj import ConfigObj
@@ -71,10 +72,11 @@ class Config:
             if "default_action" not in self.config['general']:
                 print("Error in config file\nMissing default action parameter.")
                 sys.exit(2)
-            elif self.config['general']['default_action'] not in self.get_list_of_actions():
+            elif self.config['general']['default_action'] not in Actions.get_list_of_all_actions():
                 print("Error in config file\n" \
                         "Invalid value for default_action parameter\n" \
-                        "Possible values: %s" % ', '.join(self.get_list_of_actions()))
+                        "Possible values: %s" \
+                        % ', '.join(sorted(Actions.get_list_of_all_actions())))
                 sys.exit(2)
 
             # contact table settings
@@ -250,12 +252,6 @@ class Config:
 
         def get_default_action(self):
             return self.config['general']['default_action']
-
-
-        def get_list_of_actions(self):
-            return ["addressbooks", "list", "details", "export", "birthdays",
-                    "email", "phone", "source", "new", "add-email", "merge",
-                    "modify", "copy", "move", "remove"]
 
 
         def sort_by_name(self):

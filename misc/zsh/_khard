@@ -1,6 +1,6 @@
 #compdef khard
 
-# Zsh completion definition for khard version >= 0.10.0
+# Zsh completion definition for khard version >= 0.11.0
 # Install by copying to a directory where zsh searches for completion
 # functions (the $fpath array).
 #
@@ -117,13 +117,13 @@ case $state in
     # Add the correct options for the subcommand to $options, depending on the
     # subcommand found in $word[1].
     case $words[1] in
-      addressbooks)
+      addressbooks|abooks)
         options+=();;
-      list|details|source|remove)
+      list|ls|details|source|remove|delete|del|rm)
         options+=(
           $default_addressbook_options $sort_options $default_search_options
         );;
-      birthdays)
+      birthdays|bdays)
         options+=(
           $default_addressbook_options $default_search_options
           '(-p)'{-p,--parsable}'[Machine readable birthday table]'
@@ -145,7 +145,7 @@ case $state in
           '--empty-contact-template[export empty contact template]'
           '(-o)'{-o+,--output-file=}'[Specify output template file name or use stdout]:output file:_files'
         );;
-      new)
+      new|add)
     	options+=(
           $new_addressbook_options $template_file_input_options
         );;
@@ -153,11 +153,11 @@ case $state in
         options+=(
           $default_addressbook_options $email_header_input_options $sort_options $default_search_options
         );;
-      copy|move)
+      copy|cp|move|mv)
         options+=(
           $copy_move_addressbook_options $sort_options $default_search_options
         );;
-      modify)
+      modify|edit)
         options+=(
           $default_addressbook_options $template_file_input_options $sort_options $default_search_options
         );;
