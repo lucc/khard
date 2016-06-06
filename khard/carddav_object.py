@@ -3,40 +3,20 @@
 # contact object class
 # vcard: https://tools.ietf.org/html/rfc6350
 
-import os, sys, string, datetime, re
-import vobject, yaml
+import os
+import sys
+import datetime
+import re
+import vobject
+import yaml
 from atomicwrites import atomic_write
-from pkg_resources import parse_version, get_distribution
-import helpers
+from . import helpers
 
 class CarddavObject:
     def __init__(self, address_book, filename = None):
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
-        self.old_vobject_version = False
-
-        # at the moment khard must support two different behavior of the vobject module
-        # the versions < 0.8.2 are still widely in use and expect unicode strings for non-ascii characters
-        # all newer versions use utf-8 encoded strings directly
-        # so we must determine, which version is installed
-        try:
-            # try to compare the version numbers
-            if parse_version(get_distribution("vobject").version) < parse_version("0.8.2"):
-                self.old_vobject_version = True
-        except Exception as e:
-            # if something goes wrong during vobject version comparison, try to serialize a
-            # minimal vcard object with umlauts
-            # if that fails, khard still uses a vobject version < 0.8.2
-            v = vobject.vCard()
-            o = v.add("fn")
-            o.value = "Markus Schröder"
-            o = v.add("n")
-            o.value = vobject.vcard.Name(family="Schröder", given="Markus")
-            try:
-                v.serialize()
-            except UnicodeDecodeError as e:
-                self.old_vobject_version = True
 
         # vcard supports the following type values
         self.supported_phone_types = ["bbs", "car", "cell", "fax", "home", "isdn",
@@ -142,7 +122,7 @@ class CarddavObject:
     def add_rev(self, dt):
         rev_obj = self.vcard.add('rev')
         rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
-                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second) 
+                % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def get_uid(self):
         try:
@@ -1219,25 +1199,17 @@ class CarddavObject:
     def vcard_value_to_string(self, value):
         """convert values from source vcard to string
         function is used by all getters
-        includes:
-            vobject version < 0.8.2 still uses unicode, so encode to utf-8
-            if it's a list, join to a comma separated string
         """
         if isinstance(value, list):
-            value = ', '.join(value)
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
-        return value
+            return ', '.join(value)
+        else:
+            return value
 
     def string_to_vcard_value(self, string, output):
         """Convert strings to vcard object data
         function is used by all setters
         The output parameter specifies the required type, currently we only need simple text and lists
-        vobject version < 0.8.2 needs unicode, so decode if necessary
         """
-        # the yaml parser returns unicode strings, so fix that first
-        if isinstance(string, unicode):
-            string = string.encode("utf-8")
         # possible vcard object types: list and text
         if output == "list":
             # use that for vcard objects, which require list output
@@ -1245,15 +1217,11 @@ class CarddavObject:
             #
             # devide by comma char
             value_list = [ x.strip() for x in string.split(",") ]
-            if self.old_vobject_version:
-                value_list = [ x.decode("utf-8") for x in value_list ]
             return value_list
         if output == "text":
             # use that for vcard objects, which require a single text output
             # examples: nickname and note field
             string = string.strip()
-            if self.old_vobject_version:
-                string = string.decode("utf-8")
             return string
 
     def get_type_for_vcard_object(self, object):
@@ -1281,18 +1249,14 @@ class CarddavObject:
     def parse_type_value(self, types, value, supported_types):
         """ parse type value of phone numbers, email and post addresses
         :param types: one or several type values, separated by comma character
-        :type types: str or unicode
+        :type types: str
         :param value: the corresponding label, required for more verbose exceptions
-        :type value: str or unicode
+        :type value: str
         :param supported_types: all allowed standard types
         :type supported_types: list
         :returns: tuple of standard and custom types
         :rtype: tuple(str, str)
         """
-        if isinstance(types, unicode):
-            types = types.encode("utf-8")
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
         custom_types = []
         standard_types = []
         for type in types.split(","):

@@ -20,7 +20,7 @@ def pretty_print(table, justify = "L"):
     offset = 3
     for row in table:
         for index, col in enumerate(row):
-            width = len(str(col).decode("utf-8"))
+            width = len(str(col))
             if width > column_widths[index]:
                 column_widths[index] = width
     table_row_list = []
@@ -28,12 +28,12 @@ def pretty_print(table, justify = "L"):
         single_row_list = []
         for col_index, col in enumerate(row):
             if justify == "R": # justify right
-                formated_column = str(col).decode("utf-8").rjust(column_widths[col_index] + offset)
+                formated_column = str(col).rjust(column_widths[col_index] + offset)
             elif justify == "L": # justify left
-                formated_column = str(col).decode("utf-8").ljust(column_widths[col_index] + offset)
+                formated_column = str(col).ljust(column_widths[col_index] + offset)
             elif justify == "C": # justify center
-                formated_column = str(col).decode("utf-8").center(column_widths[col_index] + offset)
-            single_row_list.append(formated_column.encode("utf-8"))
+                formated_column = str(col).center(column_widths[col_index] + offset)
+            single_row_list.append(formated_column)
         table_row_list.append(' '.join(single_row_list))
     return '\n'.join(table_row_list)
 

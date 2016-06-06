@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -8,11 +7,11 @@ import re
 import subprocess
 import sys
 import tempfile
-import helpers
+from . import helpers
 from email.header import decode_header
-from config import Config
-from carddav_object import CarddavObject
-from version import khard_version
+from .config import Config
+from .carddav_object import CarddavObject
+from .version import khard_version
 
 
 def create_new_contact(address_book):
@@ -49,7 +48,7 @@ def create_new_contact(address_book):
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input(
+                input_string = input(
                         "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
@@ -107,7 +106,7 @@ def modify_existing_contact(old_contact):
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input(
+                input_string = input(
                         "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
@@ -183,7 +182,7 @@ def merge_existing_contacts(source_contact, target_contact,
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
-                input_string = raw_input(
+                input_string = input(
                         "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
@@ -204,7 +203,7 @@ def merge_existing_contacts(source_contact, target_contact,
 
     while True:
         if delete_source_contact:
-            input_string = raw_input(
+            input_string = input(
                     "Merge contact %s from address book %s into contact %s "
                     "from address book %s\n\nTo be removed\n\n%s\n\n"
                     "Merged\n\n%s\n\nAre you sure? (y/n): " % (
@@ -215,7 +214,7 @@ def merge_existing_contacts(source_contact, target_contact,
                         source_contact.print_vcard(),
                         merged_contact.print_vcard()))
         else:
-            input_string = raw_input(
+            input_string = input(
                     "Merge contact %s from address book %s into contact %s "
                     "from address book %s\n\nKeep unchanged\n\n%s\n\n"
                     "Merged:\n\n%s\n\nAre you sure? (y/n): " % (
@@ -356,7 +355,7 @@ def choose_vcard_from_list(vcard_list):
     else:
         list_contacts(vcard_list)
         while True:
-            input_string = raw_input("Enter Index: ")
+            input_string = input("Enter Index: ")
             if input_string in ["", "q", "Q"]:
                 print("Canceled")
                 sys.exit(0)
@@ -490,7 +489,7 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
         for book in Config().get_all_address_books():
             print("  %s" % book.get_name())
         while True:
-            input_string = raw_input("Address book: ")
+            input_string = input("Address book: ")
             if input_string == "":
                 print("Canceled")
                 sys.exit(0)
@@ -548,7 +547,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         sys.exit(1)
     print("Email address: %s" % email_address)
     if not name:
-        name = raw_input("Contact's name: ")
+        name = input("Contact's name: ")
     else:
         # remove quotes from name string, otherwise decoding fails
         name = name.replace("\"", "")
@@ -557,7 +556,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         if encoding:
             name = name.decode(encoding).encode("utf-8").replace("\"", "")
         # query user input.
-        user_input = raw_input("Contact's name [%s]: " % name)
+        user_input = input("Contact's name [%s]: " % name)
         # if empty, use the extracted name from above
         name = user_input or name
 
@@ -568,8 +567,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     if selected_vcard is None:
         # create new contact
         while True:
-            input_string = raw_input("Contact %s does not exist. Do you want "
-                                     "to create it (y/n)? " % name)
+            input_string = input("Contact %s does not exist. Do you want "
+                                 "to create it (y/n)? " % name)
             if input_string.lower() in ["", "n", "q"]:
                 print("Canceled")
                 sys.exit(0)
@@ -579,16 +578,16 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         print("Available address books: %s" % ', '.join(
             [str(book) for book in Config().get_all_address_books()]))
         while True:
-            book_name = raw_input("Address book [%s]: " %
-                                  selected_address_books[0].get_name()) or \
+            book_name = input("Address book [%s]: " %
+                              selected_address_books[0].get_name()) or \
                     selected_address_books[0].get_name()
             if Config().get_address_book(book_name) is not None:
                 break
         # ask for name and organisation of new contact
         while True:
-            first_name = raw_input("First name: ")
-            last_name = raw_input("Last name: ")
-            organisation = raw_input("Organisation: ")
+            first_name = input("First name: ")
+            last_name = input("Last name: ")
+            organisation = input("Organisation: ")
             if not first_name and not last_name and not organisation:
                 print("Error: All fields are empty.")
             else:
@@ -610,7 +609,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
 
     # ask for confirmation again
     while True:
-        input_string = raw_input(
+        input_string = input(
                 "Do you want to add the email address %s to the contact %s "
                 "(y/n)? " % (email_address, selected_vcard.get_full_name()))
         if input_string.lower() in ["", "n", "q"]:
@@ -626,7 +625,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
           "    Or a custom label (only letters" %
           (email_address, selected_vcard))
     while True:
-        label = raw_input("email label [internet]: ") or "internet"
+        label = input("email label [internet]: ") or "internet"
         try:
             selected_vcard.add_email_address(label, email_address)
         except ValueError as e:
@@ -848,7 +847,7 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
         else:
             print("Modification\n\n%s\n" % new_contact.print_vcard())
             while True:
-                input_string = raw_input("Do you want to proceed (y/n)? ")
+                input_string = input("Do you want to proceed (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     break
@@ -873,7 +872,7 @@ def remove_subcommand(selected_vcard):
 
     """
     while True:
-        input_string = raw_input(
+        input_string = input(
                 "Deleting contact %s from address book %s. Are you sure? "
                 "(y/n): " % (selected_vcard.get_full_name(),
                              selected_vcard.get_address_book().get_name()))
@@ -1001,7 +1000,7 @@ def copy_or_move_subcommand(action, vcard_list, target):
                           '\n  '.join([str(book)
                                       for book in available_address_books])))
         while True:
-            input_string = raw_input("Into address book: ")
+            input_string = input("Into address book: ")
             if input_string == "":
                 print("Canceled")
                 sys.exit(0)
@@ -1041,7 +1040,7 @@ def copy_or_move_subcommand(action, vcard_list, target):
                       target_vcard.print_vcard(),
                       "Move" if action == "move" else "Copy"))
             while True:
-                input_string = raw_input("Your choice: ")
+                input_string = input("Your choice: ")
                 if input_string.lower() == "a":
                     copy_contact(source_vcard, target, action == "move")
                     break
@@ -1056,45 +1055,6 @@ def copy_or_move_subcommand(action, vcard_list, target):
                 if input_string.lower() in ["", "q"]:
                     print("Canceled")
                     break
-
-
-# Patch argparse.ArgumentParser, taken from http://stackoverflow.com/a/26379693
-def set_default_subparser(self, name):
-    """Default subparser selection. Call after setup, just before parse_args().
-
-    :param name: the name of the subparser to call by default
-    :type name: str
-    :returns: None
-    :rtype: None
-
-    """
-    for arg in sys.argv[1:]:
-        if arg in ['-h', '--help']:  # global help if no subparser
-            break
-    else:
-        for x in self._subparsers._actions:
-            if not isinstance(x, argparse._SubParsersAction):
-                continue
-            for sp_name in x._name_parser_map.keys():
-                if sp_name in sys.argv[1:]:
-                    return  # found a subcommand
-        else:
-            # Find position to insert default command.
-            options = self._option_string_actions.keys()
-            for index, arg in enumerate(sys.argv[1:], 1):
-                if arg in options:
-                    continue
-                else:
-                    # Insert command before first non option string (possibly
-                    # an argument for the subcommand).
-                    sys.argv.insert(index, name)
-                    break
-            else:
-                # Otherwise append default command.
-                sys.argv.append(name)
-
-
-argparse.ArgumentParser.set_default_subparser = set_default_subparser
 
 
 def main():
@@ -1188,11 +1148,12 @@ def main():
 
     # create subparsers for actions
     subparsers = parser.add_subparsers(dest="action")
-    subparsers.add_parser(
-            "list",
+    list_parser = subparsers.add_parser(
+            "list", aliases=['ls'],
             parents=[default_addressbook_parser, sort_parser,
                 default_search_parser],
             help="list all (selected) contacts")
+    list_parser.set_defaults(action="list")
     subparsers.add_parser(
             "details",
             parents=[default_addressbook_parser, sort_parser,
@@ -1244,50 +1205,58 @@ def main():
                 default_search_parser],
             help="edit the vcard file of a contact directly")
     new_parser = subparsers.add_parser(
-            "new",
+            "new", aliases=["add"],
             parents=[new_addressbook_parser, template_input_file_parser],
             help="create a new contact")
+    new_parser.set_defaults(action="new")
     subparsers.add_parser(
             "add-email",
             parents=[default_addressbook_parser, email_header_input_file_parser,
                 sort_parser, default_search_parser],
             help="Extract email address from the \"From:\" field of an email "
                     "header and add to an existing contact or create a new one")
-    merge_parser = subparsers.add_parser(
+    subparsers.add_parser(
             "merge",
             parents=[merge_addressbook_parser, sort_parser,
                 merge_search_parser],
             help="merge two contacts")
-    subparsers.add_parser(
-            "modify",
+    modify_parser = subparsers.add_parser(
+            "modify", aliases=["edit"],
             parents=[default_addressbook_parser, template_input_file_parser,
                     sort_parser, default_search_parser],
             help="edit the data of a contact")
-    subparsers.add_parser(
-            "copy",
+    modify_parser.set_defaults(action="modify")
+    copy_parser = subparsers.add_parser(
+            "copy",aliases=["cp"],
             parents=[copy_move_addressbook_parser, sort_parser,
                 default_search_parser],
             help="copy a contact to a different addressbook")
-    subparsers.add_parser(
-            "move",
+    copy_parser.set_defaults(action="copy")
+    move_parser = subparsers.add_parser(
+            "move", aliases=["mv"],
             parents=[copy_move_addressbook_parser, sort_parser,
                 default_search_parser],
             help="move a contact to a different addressbook")
-    subparsers.add_parser(
-            "remove",
+    move_parser.set_defaults(action="move")
+    remove_parser = subparsers.add_parser(
+            "remove", aliases=["delete", "rm", "del"],
             parents=[default_addressbook_parser, sort_parser,
                 default_search_parser],
             help="remove a contact")
-    subparsers.add_parser(
-            "addressbooks",
+    remove_parser.set_defaults(action="remove")
+    addressbooks_parser = subparsers.add_parser(
+            "addressbooks", aliases=["abooks"],
             help="list addressbooks")
+    addressbooks_parser.set_defaults(action="addressbooks")
 
-    parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("args={}".format(args))
+
+    if args.action is None:
+        args.action = Config().get_default_action()
 
     if "addressbook" in args and args.addressbook != []:
         # load address books which are defined in the configuration file
@@ -1455,7 +1424,3 @@ def main():
         copy_or_move_subcommand(args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
         print('\n'.join(str(book) for book in Config().get_all_address_books()))
-
-
-if __name__ == "__main__":
-    main()
