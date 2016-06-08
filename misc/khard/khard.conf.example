@@ -10,8 +10,15 @@ editor = vim
 merge_editor = vimdiff
 
 [contact table]
+# display names by first or last name: first_name / last_name
+display = first_name
+# group by address book: yes / no
 group_by_addressbook = no
+# reverse table ordering: yes / no
 reverse = no
+# append nicknames to name column: yes / no
 show_nicknames = no
+# show uid table column: yes / no
 show_uids = yes
+# sort by first or last name: first_name / last_name
 sort = last_name

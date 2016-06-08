@@ -288,7 +288,7 @@ def list_contacts(vcard_list):
         row.append(index+1)
         if len(vcard.get_nicknames()) > 0 \
                 and Config().show_nicknames():
-            if Config().sort_by_name() == "first_name":
+            if Config().display_by_name() == "first_name":
                 row.append("%s (Nickname: %s)" % (
                     vcard.get_first_name_last_name(),
                     vcard.get_nicknames()[0]))
@@ -297,7 +297,7 @@ def list_contacts(vcard_list):
                     vcard.get_last_name_first_name(),
                     vcard.get_nicknames()[0]))
         else:
-            if Config().sort_by_name() == "first_name":
+            if Config().display_by_name() == "first_name":
                 row.append(vcard.get_first_name_last_name())
             else:
                 row.append(vcard.get_last_name_first_name())
@@ -658,7 +658,7 @@ def birthdays_subcommand(vcard_list, parsable):
     birthday_list = []
     for vcard in vcard_list:
         date = vcard.get_birthday()
-        if Config().sort_by_name() == "first_name":
+        if Config().display_by_name() == "first_name":
             birthday_list.append("%s\t%.2d.%.2d.%.4d" % \
                     (vcard.get_first_name_last_name(),
                         date.day, date.month, date.year))
@@ -700,7 +700,7 @@ def phone_subcommand(search_terms, vcard_list, parsable):
         for type, number_list in sorted(vcard.get_phone_numbers().items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
-                if Config().sort_by_name() == "first_name":
+                if Config().display_by_name() == "first_name":
                     phone_number_line = "%s\t%s\t%s" % \
                             (number, vcard.get_first_name_last_name(), type)
                 else:
@@ -768,7 +768,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
         for type, email_list in sorted(vcard.get_email_addresses().items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
-                if Config().sort_by_name() == "first_name":
+                if Config().display_by_name() == "first_name":
                     email_address_line = "%s\t%s\t%s" \
                             % (email, vcard.get_first_name_last_name(), type)
                 else:
@@ -1102,7 +1102,7 @@ def main():
     parser = argparse.ArgumentParser(
             description="Khard is a carddav address book for the console",
             formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-d", "--debug", action="store_true",
+    parser.add_argument("--debug", action="store_true",
                         help="enable debug output")
     parser.add_argument("-v", "--version", action="version",
                         version="Khard version %s" % khard_version)
@@ -1157,6 +1157,9 @@ def main():
 
     # create sort subparser
     sort_parser = argparse.ArgumentParser(add_help=False)
+    sort_parser.add_argument(
+            "-d", "--display", choices=("first_name", "last_name"),
+            help="Display names in contact table by first or last name")
     sort_parser.add_argument(
             "-g", "--group-by-addressbook", action="store_true",
             help="Group contact table by address book")
@@ -1224,6 +1227,9 @@ def main():
             parents=[default_addressbook_parser, default_search_parser],
             description="list birthdays (sorted by month and day)",
             help="list birthdays (sorted by month and day)")
+    birthdays_parser.add_argument(
+            "-d", "--display", choices=("first_name", "last_name"),
+            help="Display names in birthdays table by first or last name")
     birthdays_parser.add_argument(
             "-p", "--parsable", action="store_true",
             help="Machine readable format: name\\tdate")
@@ -1364,6 +1370,10 @@ def main():
         else:
             args.target_addressbook = []
     logging.debug("target addressbooks: {}".format(args.target_addressbook))
+
+    # display by name: first or last name
+    if "display" in args and args.display:
+        Config().set_display_by_name(args.display)
 
     # group by address book
     if "group_by_addressbook" in args and args.group_by_addressbook:

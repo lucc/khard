@@ -37,7 +37,7 @@ options=(
 _arguments -C -s \
   $options \
   '(- *)'{-v,--version}'[show version information]' \
-  '(-d)'{-d,--debug}'[enable debug output]' \
+  '--debug[enable debug output]' \
   ':subcommand:->subcommand' \
   '*::options:->options' && ret=0
 
@@ -96,6 +96,7 @@ case $state in
     # sort options
     local -a sort_options
     sort_options=(
+      '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:sort by:(first_name last_name)'
       '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
       '(-r)'{-r,--reverse}'[reverse order of contact table]'
       '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name)'
@@ -126,6 +127,7 @@ case $state in
       birthdays|bdays)
         options+=(
           $default_addressbook_options $default_search_options
+          '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:sort by:(first_name last_name)'
           '(-p)'{-p,--parsable}'[Machine readable birthday table]'
         );;
       email)

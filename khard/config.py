@@ -83,7 +83,16 @@ class Config:
             if "contact table" not in self.config:
                 self.config['contact table'] = {}
 
-            # sort contacts table by first or last name
+            # display names in contact table by first or last name
+            if "display" not in self.config['contact table']:
+                self.config['contact table']['display'] = "first_name"
+            elif self.config['contact table']['display'] not in ["first_name", "last_name"]:
+                print("Error in config file\n" \
+                        "Invalid value for display parameter\n" \
+                        "Possible values: first_name, last_name")
+                sys.exit(2)
+
+            # sort contact table by first or last name
             if "sort" not in self.config['contact table']:
                 self.config['contact table']['sort'] = "first_name"
             elif self.config['contact table']['sort'] not in ["first_name", "last_name"]:
@@ -252,6 +261,14 @@ class Config:
 
         def get_default_action(self):
             return self.config['general']['default_action']
+
+
+        def display_by_name(self):
+            return self.config['contact table']['display']
+
+
+        def set_display_by_name(self, criteria):
+            self.config['contact table']['display'] = criteria
 
 
         def sort_by_name(self):
