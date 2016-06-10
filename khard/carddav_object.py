@@ -14,12 +14,13 @@ from . import helpers
 from .object_type import ObjectType
 
 class CarddavObject:
-    def __init__(self, address_book, filename = None):
+    def __init__(self, address_book, filename, supported_private_objects):
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
+        self.supported_private_objects = supported_private_objects
 
-        # vcard supports the following type values
+        # vcard v3.0 supports the following type values
         self.supported_phone_types = ["bbs", "car", "cell", "fax", "home", "isdn",
                 "msg", "modem", "pager", "pcs", "pref", "video", "voice", "work"]
         self.supported_email_types = ["home", "internet", "pref", "uri", "work", "x400"]
@@ -62,26 +63,28 @@ class CarddavObject:
     #######################################
 
     @classmethod
-    def new_contact(cls, address_book):
+    def new_contact(cls, address_book, supported_private_objects):
         """ use this to create a new and empty contact """
-        return cls(address_book)
+        return cls(address_book, None, supported_private_objects)
 
     @classmethod
-    def from_file(cls, address_book, filename):
+    def from_file(cls, address_book, filename, supported_private_objects):
         """ Use this if you want to create a new contact from an existing .vcf file """
-        return cls(address_book, filename)
+        return cls(address_book, filename, supported_private_objects)
 
     @classmethod
-    def from_user_input(cls, address_book, user_input):
+    def from_user_input(
+            cls, address_book, user_input, supported_private_objects):
         """ Use this if you want to create a new contact from user input """
-        contact = cls(address_book)
+        contact = cls(address_book, None, supported_private_objects)
         contact.process_user_input(user_input)
         return contact
 
     @classmethod
     def from_existing_contact_with_new_user_input(cls, contact, user_input):
         """ use this if you want to clone an existing contact and  replace its data with new user input in one step """
-        contact = cls(contact.get_address_book(), contact.get_filename())
+        contact = cls(contact.get_address_book(), contact.get_filename(),
+                contact.get_supported_private_objects())
         contact.process_user_input(user_input)
         return contact
 
@@ -94,8 +97,11 @@ class CarddavObject:
         return self.get_full_name()
 
     def __eq__(self, other):
-        return isinstance(other, CarddavObject) \
-                and self.print_vcard(show_address_book=False, show_uid=False) == other.print_vcard(show_address_book=False, show_uid=False)
+        if isinstance(other, CarddavObject) \
+                and self.print_vcard(show_address_book=False, show_uid=False) == \
+                    other.print_vcard(show_address_book=False, show_uid=False):
+            return True
+        return False
 
     def __ne__(self, other):
         return not self == other
@@ -105,14 +111,17 @@ class CarddavObject:
     # getters and setters
     #####################
 
+    def get_address_book(self):
+        return self.address_book
+
     def get_filename(self):
         return self.filename
 
     def set_filename(self, filename):
         self.filename = filename
 
-    def get_address_book(self):
-        return self.address_book
+    def get_supported_private_objects(self):
+        return self.supported_private_objects
 
     def get_rev(self):
         """
@@ -619,50 +628,33 @@ class CarddavObject:
         note_obj.value = helpers.convert_to_vcard(
                 "note", note, ObjectType.string)
 
-    def get_jabber_ids(self):
+    def get_private_objects(self):
         """
-        :rtype: list(list(str))
+        :rtype: dict(str, list(str))
         """
-        jabber_ids = []
+        private_objects = {}
         for child in self.vcard.getChildren():
-            if child.name == "X-JABBER":
-                jabber_ids.append(child.value)
-        return sorted(jabber_ids)
+            if child.name.lower().startswith("x-"):
+                try:
+                    key_index = [ x.lower() 
+                            for x in self.supported_private_objects ] \
+                            .index(child.name[2:].lower())
+                except ValueError as e:
+                    pass
+                else:
+                    key = self.supported_private_objects[key_index]
+                    if private_objects.get(key) is None:
+                        private_objects[key] = []
+                    private_objects[key].append(child.value)
+        # sort private object lists
+        for value in private_objects.values():
+            value.sort()
+        return private_objects
 
-    def add_jabber_id(self, jabber_id):
-        jabber_obj = self.vcard.add('x-jabber')
-        jabber_obj.value = helpers.convert_to_vcard(
-                "jabber id", jabber_id, ObjectType.string)
-
-    def get_skype_ids(self):
-        """
-        :rtype: list(list(str))
-        """
-        skype_ids = []
-        for child in self.vcard.getChildren():
-            if child.name == "X-SKYPE":
-                skype_ids.append(child.value)
-        return sorted(skype_ids)
-
-    def add_skype_id(self, skype_id):
-        skype_obj = self.vcard.add('x-skype')
-        skype_obj.value = helpers.convert_to_vcard(
-                "skype id", skype_id, ObjectType.string)
-
-    def get_twitter_ids(self):
-        """
-        :rtype: list(list(str))
-        """
-        twitter_ids = []
-        for child in self.vcard.getChildren():
-            if child.name == "X-TWITTER":
-                twitter_ids.append(child.value)
-        return sorted(twitter_ids)
-
-    def add_twitter_id(self, twitter_id):
-        twitter_obj = self.vcard.add('x-twitter')
-        twitter_obj.value = helpers.convert_to_vcard(
-                "twitter id", twitter_id, ObjectType.string)
+    def add_private_object(self, key, value):
+        private_obj = self.vcard.add('X-' + key.upper())
+        private_obj.value = helpers.convert_to_vcard(
+                key, value, ObjectType.string)
 
     def get_webpages(self):
         """
@@ -918,45 +910,6 @@ class CarddavObject:
                 raise ValueError(
                         "Error: category must be a string or a list of strings")
 
-        # jabber
-        self.delete_vcard_object("X-JABBER")
-        if bool(contact_data.get("Jabber")):
-            if isinstance(contact_data.get("Jabber"), str):
-                self.add_jabber_id(contact_data.get("Jabber"))
-            elif isinstance(contact_data.get("Jabber"), list):
-                for jabber_id in contact_data.get("Jabber"):
-                    if bool(jabber_id):
-                        self.add_jabber_id(jabber_id)
-            else:
-                raise ValueError(
-                        "Error: jabber id must be a string or a list of strings")
-
-        # skype
-        self.delete_vcard_object("X-SKYPE")
-        if bool(contact_data.get("Skype")):
-            if isinstance(contact_data.get("Skype"), str):
-                self.add_skype_id(contact_data.get("Skype"))
-            elif isinstance(contact_data.get("Skype"), list):
-                for skype_id in contact_data.get("Skype"):
-                    if bool(skype_id):
-                        self.add_skype_id(skype_id)
-            else:
-                raise ValueError(
-                        "Error: skype id must be a string or a list of strings")
-
-        # twitter
-        self.delete_vcard_object("X-TWITTER")
-        if bool(contact_data.get("Twitter")):
-            if isinstance(contact_data.get("Twitter"), str):
-                self.add_twitter_id(contact_data.get("Twitter"))
-            elif isinstance(contact_data.get("Twitter"), list):
-                for twitter_id in contact_data.get("Twitter"):
-                    if bool(twitter_id):
-                        self.add_twitter_id(twitter_id)
-            else:
-                raise ValueError(
-                        "Error: twitter id must be a string or a list of strings")
-
         # urls
         self.delete_vcard_object("URL")
         if bool(contact_data.get("Webpage")):
@@ -993,6 +946,34 @@ class CarddavObject:
                             "Examples: 21.10.1988, 1988.10.21 or 1988-10-21")
             else:
                 raise ValueError("Error: birthday must be a string object.")
+
+        # private objects
+        for supported in self.supported_private_objects:
+            self.delete_vcard_object("X-%s" % supported.upper())
+        if bool(contact_data.get("Private")):
+            if isinstance(contact_data.get("Private"), dict):
+                for key, value_list in contact_data.get("Private").items():
+                    if key in self.supported_private_objects:
+                        if isinstance(value_list, list) \
+                                or isinstance(value_list, str):
+                            if isinstance(value_list, str):
+                                value_list = [value_list]
+                            for value in value_list:
+                                if bool(value):
+                                    self.add_private_object(key, value)
+                        else:
+                            raise ValueError(
+                                    "Error: got no value or list of values "
+                                    "for the private object " + key)
+                    else:
+                        raise ValueError(
+                                "Error: private object key " + key + " was "
+                                "changed.\nSupported private keys: "
+                                + ', '.join(self.supported_private_objects))
+            else:
+                raise ValueError(
+                        "Error: private objects must consist of a key : value "
+                        "pair.")
 
         # notes
         self.delete_vcard_object("NOTE")
@@ -1041,10 +1022,10 @@ class CarddavObject:
                         "Organisation", self.get_organisations(), 0, 13, True)
             elif line.lower().startswith("title"):
                 strings += helpers.convert_to_yaml(
-                        "Title", self.get_titles(), 0, 13, True)
+                        "Title", self.get_titles(), 0, 6, True)
             elif line.lower().startswith("role"):
                 strings += helpers.convert_to_yaml(
-                        "Role", self.get_roles(), 0, 13, True)
+                        "Role", self.get_roles(), 0, 6, True)
 
             elif line.lower().startswith("phone"):
                 strings.append("Phone :")
@@ -1115,31 +1096,30 @@ class CarddavObject:
                                     "Country", post_adr.get("country"),
                                     indentation, 9, True)
 
-            elif line.lower().startswith("jabber"):
-                strings += helpers.convert_to_yaml(
-                        "Jabber", self.get_jabber_ids(), 0, 8, True)
-            elif line.lower().startswith("skype"):
-                strings += helpers.convert_to_yaml(
-                        "Skype", self.get_skype_ids(), 0, 8, True)
-            elif line.lower().startswith("twitter"):
-                strings += helpers.convert_to_yaml(
-                        "Twitter", self.get_twitter_ids(), 0, 8, True)
-            elif line.lower().startswith("webpage"):
-                strings += helpers.convert_to_yaml(
-                        "Webpage", self.get_webpages(), 0, 8, True)
+            elif line.lower().startswith("private"):
+                strings.append("Private :")
+                if self.supported_private_objects:
+                    longest_key = max(self.supported_private_objects, key=len)
+                    for object in self.supported_private_objects:
+                        strings += helpers.convert_to_yaml(object,
+                                self.get_private_objects().get(object) or "",
+                                4, len(longest_key)+1, True)
 
-            elif line.lower().startswith("categories"):
-                strings += helpers.convert_to_yaml(
-                        "Categories", self.get_categories(), 0, 11, True)
             elif line.lower().startswith("birthday"):
                 date = self.get_birthday()
                 if not date:
                     strings.append("Birthday : ")
                 else:
                     strings.append("Birthday : %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+            elif line.lower().startswith("categories"):
+                strings += helpers.convert_to_yaml(
+                        "Categories", self.get_categories(), 0, 11, True)
             elif line.lower().startswith("note"):
                 strings += helpers.convert_to_yaml(
                         "Note", self.get_notes(), 0, 5, True)
+            elif line.lower().startswith("webpage"):
+                strings += helpers.convert_to_yaml(
+                        "Webpage", self.get_webpages(), 0, 8, True)
         return '\n'.join(strings)
 
     def print_vcard(self, show_address_book = True, show_uid = True):
@@ -1169,6 +1149,9 @@ class CarddavObject:
                 for organisation in self.get_organisations():
                     strings.append("    - %s"
                             % helpers.list_to_string(organisation, ", "))
+        # address book name
+        if show_address_book:
+            strings.append("Address book: %s" % self.address_book.get_name())
 
         # person related information
         if self.get_birthday() != None \
@@ -1215,50 +1198,31 @@ class CarddavObject:
                 strings += helpers.convert_to_yaml(
                         type, post_adr_list, 4, -1, False)
 
-        # im and webpages
-        if len(self.get_jabber_ids()) > 0 \
-                or len(self.get_skype_ids()) > 0 \
-                or len(self.get_twitter_ids()) > 0 \
-                or len(self.get_webpages()) > 0:
-            strings.append("Instant messaging and social networks")
-            if len(self.get_jabber_ids()) > 0:
-                strings += helpers.convert_to_yaml(
-                        "Jabber", self.get_jabber_ids(), 4, -1, False)
-            if len(self.get_skype_ids()) > 0:
-                strings += helpers.convert_to_yaml(
-                        "Skype", self.get_skype_ids(), 4, -1, False)
-            if len(self.get_twitter_ids()) > 0:
-                strings += helpers.convert_to_yaml(
-                        "Twitter", self.get_twitter_ids(), 4, -1, False)
-            if len(self.get_webpages()) > 0:
-                strings += helpers.convert_to_yaml(
-                        "Webpage", self.get_webpages(), 4, -1, False)
+        # private objects
+        if len(self.get_private_objects().keys()) > 0:
+            strings.append("Private:")
+            for object in self.supported_private_objects:
+                if self.get_private_objects().get(object):
+                    strings += helpers.convert_to_yaml(object,
+                            self.get_private_objects().get(object), 4, -1, False)
 
         # misc stuff
-        if show_address_book \
-                or len(self.get_categories()) > 0 \
-                or len(self.get_notes()) > 0 \
-                or (show_uid and self.get_uid() != ""):
+        if len(self.get_categories()) > 0 \
+                or (show_uid and self.get_uid() != "") \
+                or len(self.get_webpages()) > 0 \
+                or len(self.get_notes()) > 0:
             strings.append("Miscellaneous")
-            if show_address_book:
-                strings.append("    Address book: %s" % self.address_book.get_name())
+            if show_uid and self.get_uid():
+                strings.append("    UID: %s" % self.get_uid())
             if len(self.get_categories()) > 0:
                 strings += helpers.convert_to_yaml(
                         "Categories", self.get_categories(), 4, -1, False)
-                #if len(self.get_categories()) == 1:
-                #    strings.append("    Categories: %s"
-                #            % helpers.list_to_string(
-                #                self.get_categories(), ", "))
-                #else:
-                #    strings.append("    Categories:")
-                #    for sub_category in self.get_categories():
-                #        strings.append("        - %s"
-                #                % helpers.list_to_string(sub_category, ", "))
+            if len(self.get_webpages()) > 0:
+                strings += helpers.convert_to_yaml(
+                        "Webpage", self.get_webpages(), 4, -1, False)
             if len(self.get_notes()) > 0:
                 strings += helpers.convert_to_yaml(
                         "Note", self.get_notes(), 4, -1, False)
-            if show_uid and self.get_uid():
-                strings.append("    UID: %s" % self.get_uid())
         return '\n'.join(strings)
 
 

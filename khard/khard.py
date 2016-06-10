@@ -44,8 +44,9 @@ def create_new_contact(address_book):
 
         # try to create new contact
         try:
-            new_contact = CarddavObject.from_user_input(address_book,
-                                                        new_contact_template)
+            new_contact = CarddavObject.from_user_input(
+                    address_book, new_contact_template,
+                    Config().get_supported_private_objects())
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
@@ -505,7 +506,8 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
         # create new contact from stdin
         try:
             new_contact = CarddavObject.from_user_input(
-                    selected_address_book, input_from_stdin_or_file)
+                    selected_address_book, input_from_stdin_or_file,
+                    Config().get_supported_private_objects())
         except ValueError as e:
             print(e)
             sys.exit(1)
@@ -595,8 +597,9 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
                 break
         selected_vcard = CarddavObject.from_user_input(
                 Config().get_address_book(book_name),
-                "First name : %s\nLast name : %s\nOrganisation : %s" %
-                (first_name, last_name, organisation))
+                "First name : %s\nLast name : %s\nOrganisation : %s"
+                    % (first_name, last_name, organisation),
+                Config().get_supported_private_objects())
 
     # check if the contact already contains the email address
     for type, email_list in sorted(

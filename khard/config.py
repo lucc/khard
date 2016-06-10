@@ -6,11 +6,12 @@
 import os
 import sys
 import glob
+import re
 import vobject
 from .actions import Actions
 from .carddav_object import CarddavObject
 from . import helpers
-from configobj import ConfigObj
+from configobj import ConfigObj, ParseError
 from distutils.spawn import find_executable
 from .address_book import AddressBook
 
@@ -33,7 +34,13 @@ class Config:
             if os.path.exists(config_file) == False:
                 print("Config file %s not available" % config_file)
                 sys.exit(2)
-            self.config = ConfigObj(config_file, interpolation=False)
+
+            # parse config file contents
+            try:
+                self.config = ConfigObj(config_file, interpolation=False)
+            except ParseError as e:
+                print("Error in config file\n%s" % e)
+                sys.exit(2)
 
             # general settings
             if "general" not in self.config:
@@ -153,6 +160,29 @@ class Config:
                         "Possible values: yes, no")
                 sys.exit(2)
 
+            # vcard settings
+            if "vcard" not in self.config:
+                self.config['vcard'] = {}
+
+            # get supported private objects
+            if "private_objects" not in self.config['vcard']:
+                self.config['vcard']['private_objects'] = []
+            else:
+                # check if object only contains letters, digits or -
+                for object in self.config['vcard']['private_objects']:
+                    if object != re.sub("[^a-zA-Z0-9-]", "", object):
+                        print("Error in config file\n" \
+                                "private object %s may only contain letters, " \
+                                "digits and the \"-\" character." % object)
+                        sys.exit(2)
+                    if object == re.sub("[^-]", "", object) \
+                            or object.startswith("-") \
+                            or object.endswith("-"):
+                        print("Error in config file\n" \
+                                "A \"-\" in a private object label must be " \
+                                "at least surrounded by one letter or digit.")
+                        sys.exit(2)
+
             # load address books and contacts
             error_counter = 0
             number_of_contacts = 0
@@ -177,7 +207,9 @@ class Config:
                 for filename in glob.glob(os.path.join(address_book.get_path(), "*.vcf")):
                     try:
                         address_book.add_contact(
-                                CarddavObject.from_file(address_book, filename))
+                                CarddavObject.from_file(
+                                    address_book, filename,
+                                    self.get_supported_private_objects()))
                         number_of_contacts += 1
                     except IOError as e:
                         print("Error: Could not open file %s\n%s" % (filename, e))
@@ -261,6 +293,10 @@ class Config:
 
         def get_default_action(self):
             return self.config['general']['default_action']
+
+
+        def get_supported_private_objects(self):
+            return self.config['vcard']['private_objects']
 
 
         def display_by_name(self):

@@ -221,15 +221,15 @@ Nickname   :
 #           - unit
 Organisation : 
 
-# title and role
+# organisation title and role
 # every entry may contain a string or a list of strings
 #
 # title at organisation
 # example usage: research scientist
-Title        : 
+Title : 
 # role at organisation
 # example usage: project leader
-Role         : 
+Role  : 
 
 # phone numbers
 # format:
@@ -279,16 +279,15 @@ Address :
 #       - category2
 Categories : 
 
-# instant messaging and social networks
-# every entry may contain a string or a list of strings
-# Warning: may only work with the contacts app of some Android devices
-Jabber  : 
-Skype   : 
-Twitter : 
-
 # web pages
 # may contain a string or a list of strings
 Webpage : 
+
+# private objects
+# define your own private objects in the vcard section of your khard.conf file
+# these objects are stored with a leading "X-" before the object name in the vcard files.
+# every entry may contain a string or a list of strings
+Private :
 
 # notes
 # may contain a string or a list of strings
