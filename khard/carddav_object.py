@@ -5,13 +5,17 @@
 
 import os
 import sys
-import datetime
+import locale
 import re
 import vobject
 import yaml
 from atomicwrites import atomic_write
 from . import helpers
 from .object_type import ObjectType
+from babel.core import UnknownLocaleError
+from babel.dates import format_date, format_datetime, format_time
+from datetime import date, datetime, time
+from dateutil import parser
 
 class CarddavObject:
     def __init__(self, address_book, filename, supported_private_objects):
@@ -676,12 +680,19 @@ class CarddavObject:
             :rtype: datetime.datetime
         """
         try:
-            return datetime.datetime.strptime(
+            return datetime.strptime(
                     self.vcard.bday.value.replace('-', ''), "%Y%m%d")
-        except AttributeError as e:
+        except (AttributeError, ValueError) as e:
             return None
-        except ValueError as e:
-            return None
+
+    def get_formatted_birthday(self):
+        date = self.get_birthday()
+        if date:
+            try:
+                return format_date(date, locale=locale.getdefaultlocale()[0])
+            except (IndexError, ValueError, UnknownLocaleError) as e:
+                return "%.4d.%.2d.%.2d" % (date.year, date.month, date.day)
+        return ""
 
     def add_birthday(self, date):
         bday_obj = self.vcard.add('bday')
@@ -731,7 +742,7 @@ class CarddavObject:
 
         # update rev
         self.delete_vcard_object("REV")
-        self.add_rev(datetime.datetime.now())
+        self.add_rev(datetime.now())
 
         # name
         self.delete_vcard_object("FN")
@@ -927,23 +938,14 @@ class CarddavObject:
         self.delete_vcard_object("BDAY")
         if bool(contact_data.get("Birthday")):
             if isinstance(contact_data.get("Birthday"), str):
-                bday_date = None
-                supported_date_formats = ["%d-%m-%Y", "%Y-%m-%d"]
-                for date_format in supported_date_formats:
-                    try:
-                        bday_date = datetime.datetime.strptime(
-                                re.sub("\D", "-", contact_data.get("Birthday")),
-                                date_format)
-                    except ValueError as e:
-                        pass
-                    else:
-                        break
-                if bday_date:
-                    self.add_birthday(bday_date)
-                else:
+                try:
+                    date = parser.parse(contact_data.get("Birthday"))
+                except ValueError as e:
                     raise ValueError(
                             "Error: Wrong birthday date format\n"
-                            "Examples: 21.10.1988, 1988.10.21 or 1988-10-21")
+                            "Examples: 21.10.1988 or 1988.10.21")
+                else:
+                    self.add_birthday(date)
             else:
                 raise ValueError("Error: birthday must be a string object.")
 
@@ -1015,7 +1017,7 @@ class CarddavObject:
                         "Suffix", self.get_name_suffixes(), 0, 11, True)
             elif line.lower().startswith("nickname"):
                 strings += helpers.convert_to_yaml(
-                        "Nickname", self.get_nicknames(), 0, 11, True)
+                        "Nickname", self.get_nicknames(), 0, 9, True)
 
             elif line.lower().startswith("organisation"):
                 strings += helpers.convert_to_yaml(
@@ -1106,11 +1108,7 @@ class CarddavObject:
                                 4, len(longest_key)+1, True)
 
             elif line.lower().startswith("birthday"):
-                date = self.get_birthday()
-                if not date:
-                    strings.append("Birthday : ")
-                else:
-                    strings.append("Birthday : %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+                strings.append("Birthday : %s" % self.get_formatted_birthday())
             elif line.lower().startswith("categories"):
                 strings += helpers.convert_to_yaml(
                         "Categories", self.get_categories(), 0, 11, True)
@@ -1160,8 +1158,8 @@ class CarddavObject:
                 or len(self.get_titles()) > 0:
             strings.append("General:")
             if self.get_birthday():
-                date = self.get_birthday()
-                strings.append("    Birthday: %.2d.%.2d.%.4d" % (date.day, date.month, date.year))
+                strings.append("    Birthday: %s" 
+                        % self.get_formatted_birthday())
             if len(self.get_nicknames()) > 0:
                 strings += helpers.convert_to_yaml(
                         "Nickname", self.get_nicknames(), 4, -1, False)

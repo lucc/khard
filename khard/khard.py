@@ -662,13 +662,13 @@ def birthdays_subcommand(vcard_list, parsable):
     for vcard in vcard_list:
         date = vcard.get_birthday()
         if Config().display_by_name() == "first_name":
-            birthday_list.append("%s\t%.2d.%.2d.%.4d" % \
-                    (vcard.get_first_name_last_name(),
-                        date.day, date.month, date.year))
+            birthday_list.append("%s\t%s"
+                    % (vcard.get_first_name_last_name(),
+                        vcard.get_formatted_birthday()))
         else:
-            birthday_list.append("%s\t%.2d.%.2d.%.4d" % \
-                    (vcard.get_last_name_first_name(),
-                        date.day, date.month, date.year))
+            birthday_list.append("%s\t%s"
+                    % (vcard.get_last_name_first_name(),
+                        vcard.get_formatted_birthday()))
     if len(birthday_list) > 0:
         if parsable:
             print('\n'.join(birthday_list))

@@ -198,14 +198,11 @@ Suffix     :
 
 # person related information
 # birthday
-# format:
-#   - dd.mm.yyyy
-#   - yyyy.mm.dd
-#   - yyyy-mm-dd
+# example: yyyy.mm.dd
 Birthday : 
 # nickname
 # may contain a string or a list of strings
-Nickname   : 
+Nickname : 
 
 # organisation
 # format:
