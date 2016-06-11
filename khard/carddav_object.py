@@ -257,7 +257,7 @@ class CarddavObject:
         :rtype: str
         """
         if self.get_first_names() and self.get_last_names():
-            return "%s %s" \
+            return "%s, %s" \
                     % (helpers.list_to_string(self.get_last_names(), " "),
                             helpers.list_to_string(self.get_first_names(), " "))
         elif self.get_first_names():

@@ -336,14 +336,14 @@ def list_birthdays(birthday_list):
     print(helpers.pretty_print(table))
 
 def list_phone_numbers(phone_number_list):
-    table = [["Phone", "Name", "Type"]]
+    table = [["Name", "Type", "Phone"]]
     for row in phone_number_list:
         table.append(row.split("\t"))
     print(helpers.pretty_print(table))
 
 
 def list_email_addresses(email_address_list):
-    table = [["E-Mail", "Name", "Type"]]
+    table = [["Name", "Type", "E-Mail"]]
     for row in email_address_list:
         table.append(row.split("\t"))
     print(helpers.pretty_print(table))
@@ -557,7 +557,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         # fix encoding of senders name
         name, encoding = decode_header(name)[0]
         if encoding:
-            name = name.decode(encoding).encode("utf-8").replace("\"", "")
+            name = name.decode(encoding).replace("\"", "")
         # query user input.
         user_input = input("Contact's name [%s]: " % name)
         # if empty, use the extracted name from above
@@ -661,14 +661,24 @@ def birthdays_subcommand(vcard_list, parsable):
     birthday_list = []
     for vcard in vcard_list:
         date = vcard.get_birthday()
-        if Config().display_by_name() == "first_name":
-            birthday_list.append("%s\t%s"
-                    % (vcard.get_first_name_last_name(),
-                        vcard.get_formatted_birthday()))
+        if parsable:
+            if Config().display_by_name() == "first_name":
+                birthday_list.append("%04d.%02d.%02d\t%s"
+                        % (date.year, date.month, date.day,
+                            vcard.get_first_name_last_name()))
+            else:
+                birthday_list.append("%04d.%02d.%02d\t%s"
+                        % (date.year, date.month, date.day,
+                            vcard.get_last_name_first_name()))
         else:
-            birthday_list.append("%s\t%s"
-                    % (vcard.get_last_name_first_name(),
-                        vcard.get_formatted_birthday()))
+            if Config().display_by_name() == "first_name":
+                birthday_list.append("%s\t%s"
+                        % (vcard.get_first_name_last_name(),
+                            vcard.get_formatted_birthday()))
+            else:
+                birthday_list.append("%s\t%s"
+                        % (vcard.get_last_name_first_name(),
+                            vcard.get_formatted_birthday()))
     if len(birthday_list) > 0:
         if parsable:
             print('\n'.join(birthday_list))
@@ -703,12 +713,23 @@ def phone_subcommand(search_terms, vcard_list, parsable):
         for type, number_list in sorted(vcard.get_phone_numbers().items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
-                if Config().display_by_name() == "first_name":
-                    phone_number_line = "%s\t%s\t%s" % \
-                            (number, vcard.get_first_name_last_name(), type)
+                # create output line
+                if parsable:
+                    # parsable option: start with phone number
+                    if Config().display_by_name() == "first_name":
+                        phone_number_line = "%s\t%s\t%s" % \
+                                (number, vcard.get_first_name_last_name(), type)
+                    else:
+                        phone_number_line = "%s\t%s\t%s" % \
+                                (number, vcard.get_last_name_first_name(), type)
                 else:
-                    phone_number_line = "%s\t%s\t%s" % \
-                            (number, vcard.get_last_name_first_name(), type)
+                    # else: start with name
+                    if Config().display_by_name() == "first_name":
+                        phone_number_line = "%s\t%s\t%s" % \
+                                (vcard.get_first_name_last_name(), type, number)
+                    else:
+                        phone_number_line = "%s\t%s\t%s" % \
+                                (vcard.get_last_name_first_name(), type, number)
                 if len(re.sub("\D", "", search_terms)) >= 3:
                     # The user likely searches for a phone number cause the
                     # search string contains at least three digits.  So we
@@ -771,12 +792,23 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
         for type, email_list in sorted(vcard.get_email_addresses().items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
-                if Config().display_by_name() == "first_name":
-                    email_address_line = "%s\t%s\t%s" \
-                            % (email, vcard.get_first_name_last_name(), type)
+                # create output line
+                if parsable:
+                    # parsable option: start with email address
+                    if Config().display_by_name() == "first_name":
+                        email_address_line = "%s\t%s\t%s" \
+                                % (email, vcard.get_first_name_last_name(), type)
+                    else:
+                        email_address_line = "%s\t%s\t%s" \
+                                % (email, vcard.get_last_name_first_name(), type)
                 else:
-                    email_address_line = "%s\t%s\t%s" \
-                            % (email, vcard.get_last_name_first_name(), type)
+                    # else: start with name
+                    if Config().display_by_name() == "first_name":
+                        email_address_line = "%s\t%s\t%s" \
+                                % (vcard.get_first_name_last_name(), type, email)
+                    else:
+                        email_address_line = "%s\t%s\t%s" \
+                                % (vcard.get_last_name_first_name(), type, email)
                 if regexp.search(email_address_line) is not None:
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
