@@ -12,8 +12,6 @@ import yaml
 from atomicwrites import atomic_write
 from . import helpers
 from .object_type import ObjectType
-from babel.core import UnknownLocaleError
-from babel.dates import format_date, format_datetime, format_time
 from datetime import date, datetime, time
 from dateutil import parser
 
@@ -688,9 +686,10 @@ class CarddavObject:
     def get_formatted_birthday(self):
         date = self.get_birthday()
         if date:
-            try:
-                return format_date(date, locale=locale.getdefaultlocale()[0])
-            except (IndexError, ValueError, UnknownLocaleError) as e:
+            date_format = locale.nl_langinfo(locale.D_FMT)
+            if date_format:
+                return date.strftime(date_format)
+            else:
                 return "%.4d.%.2d.%.2d" % (date.year, date.month, date.day)
         return ""
 

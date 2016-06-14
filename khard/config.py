@@ -6,6 +6,7 @@
 import os
 import sys
 import glob
+import locale
 import re
 import vobject
 from .actions import Actions
@@ -25,6 +26,9 @@ class Config:
             self.config = None
             self.address_book_list = []
             self.uid_dict = {}
+
+            # set locale
+            locale.setlocale(locale.LC_ALL, '')
 
             # load config file
             xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
