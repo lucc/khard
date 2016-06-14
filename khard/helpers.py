@@ -22,14 +22,14 @@ def pretty_print(table, justify="L"):
         single_row_list = []
         for col_index, col in enumerate(row):
             if justify == "R":  # justify right
-                formated_column = str(col).rjust(
-                    column_widths[col_index] + offset)
+                formated_column = str(col).rjust(column_widths[col_index] +
+                                                 offset)
             elif justify == "L":  # justify left
-                formated_column = str(col).ljust(
-                    column_widths[col_index] + offset)
+                formated_column = str(col).ljust(column_widths[col_index] +
+                                                 offset)
             elif justify == "C":  # justify center
-                formated_column = str(col).center(
-                    column_widths[col_index] + offset)
+                formated_column = str(col).center(column_widths[col_index] +
+                                                  offset)
             single_row_list.append(formated_column)
         table_row_list.append(' '.join(single_row_list))
     return '\n'.join(table_row_list)
@@ -97,14 +97,14 @@ def string_to_date(input):
         pass
     # try datetime format yyyymmddThhmmsstz where tz may look like -06:00
     try:
-        return datetime.strptime(
-            ''.join(input.rsplit(":", 1)), "%Y%m%dT%H%M%S%z")
+        return datetime.strptime(''.join(input.rsplit(":", 1)),
+                                 "%Y%m%dT%H%M%S%z")
     except ValueError:
         pass
     # try datetime format yyyy-mm-ddThh:mm:sstz where tz may look like -06:00
     try:
-        return datetime.strptime(
-            ''.join(input.rsplit(":", 1)), "%Y-%m-%dT%H:%M:%S%z")
+        return datetime.strptime(''.join(input.rsplit(":", 1)),
+                                 "%Y-%m-%dT%H:%M:%S%z")
     except ValueError:
         pass
     raise ValueError
