@@ -13,9 +13,9 @@ import sys
 import configobj
 
 from .actions import Actions
+from .address_book import AddressBook
 from .carddav_object import CarddavObject
 from . import helpers
-from .address_book import AddressBook
 
 
 class Config:
