@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from email.header import decode_header
 import logging
 import os
 import re
 import subprocess
 import sys
 import tempfile
-
-from email.header import decode_header
 
 from . import helpers
 from .actions import Actions
