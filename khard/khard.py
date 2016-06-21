@@ -495,10 +495,8 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
             if input_string == "":
                 print("Canceled")
                 sys.exit(0)
-            if Config().get_address_book(input_string) in \
-                    Config().get_all_address_books():
-                selected_address_book = Config().get_address_book(
-                        input_string)
+            selected_address_book = Config().get_address_book(input_string)
+            if selected_address_book:
                 print("")
                 break
     # if there is some data in stdin
@@ -581,10 +579,11 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         print("Available address books: %s" % ', '.join(
             [str(book) for book in Config().get_all_address_books()]))
         while True:
-            book_name = input("Address book [%s]: " %
-                              selected_address_books[0].get_name()) or \
-                    selected_address_books[0].get_name()
-            if Config().get_address_book(book_name) is not None:
+            input_string = input("Address book [%s]: " %
+                        Config().get_all_address_books()[0].get_name()) or \
+                    Config().get_all_address_books()[0].get_name()
+            selected_address_book = Config().get_address_book(input_string)
+            if selected_address_book:
                 break
         # ask for name and organisation of new contact
         while True:
@@ -595,8 +594,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
                 print("Error: All fields are empty.")
             else:
                 break
-        selected_vcard = CarddavObject.from_user_input(
-                Config().get_address_book(book_name),
+        selected_vcard = CarddavObject.from_user_input(selected_address_book,
                 "First name : %s\nLast name : %s\nOrganisation : %s"
                     % (first_name, last_name, organisation),
                 Config().get_supported_private_objects())
@@ -1371,39 +1369,44 @@ def main():
     if "addressbook" in args and args.addressbook != []:
         # load address books which are defined in the configuration file
         for index, name in enumerate(args.addressbook):
-            addressbook = Config().get_address_book(name)
-            if addressbook is None:
+            address_book = Config().get_address_book(name)
+            if address_book is None:
                 print("Error: The entered address book \"%s\" does not exist."
                       "\nPossible values are: %s" % (
                           name, ', '.join([str(book) for book in
                                            Config().get_all_address_books()])))
                 sys.exit(1)
             else:
-                args.addressbook[index] = addressbook
+                args.addressbook[index] = address_book
     else:
-        args.addressbook = Config().get_all_address_books()
+        # load contacts of all address books
+        args.addressbook = []
+        for address_book in Config().get_all_address_books():
+            args.addressbook.append(
+                    Config().get_address_book(address_book.get_name()))
     logging.debug("addressbooks: {}".format(args.addressbook))
     if "target_addressbook" in args and args.target_addressbook != []:
         for index, name in enumerate(args.target_addressbook):
-            addressbook = Config().get_address_book(name)
-            if addressbook is None:
+            address_book = Config().get_address_book(name)
+            if address_book is None:
                 print("Error: The entered address book \"%s\" does not exist."
                       "\nPossible values are: %s" % (
                           name, ', '.join([str(book) for book in
                                            Config().get_all_address_books()])))
                 sys.exit(1)
             else:
-                args.target_addressbook[index] = addressbook
+                args.target_addressbook[index] = address_book
     else:
         # when no target address book was given, the default configuration
         # depends on the selected action
         #   - merge: select all address books like above
         #   - copy|move: leave the target address book list empty so the user may
         #       pick one target address book manually
+        args.target_addressbook = []
         if args.action == "merge":
-            args.target_addressbook = Config().get_all_address_books()
-        else:
-            args.target_addressbook = []
+            for address_book in Config().get_all_address_books():
+                args.target_addressbook.append(
+                        Config().get_address_book(address_book.get_name()))
     logging.debug("target addressbooks: {}".format(args.target_addressbook))
 
     # display by name: first or last name

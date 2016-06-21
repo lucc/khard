@@ -25,6 +25,7 @@ class Config:
         def __init__(self):
             self.config = None
             self.address_book_list = []
+            self.original_uid_dict = {}
             self.uid_dict = {}
 
             # set locale
@@ -52,31 +53,38 @@ class Config:
                 sys.exit(2)
 
             # editor
-            self.config['general']['editor'] = self.config['general'].get("editor") \
+            self.config['general']['editor'] = \
+                       self.config['general'].get("editor") \
                     or os.environ.get("EDITOR")
             if self.config['general']['editor'] is None:
-                print("Error in config file\n" \
-                        "Set path to your preferred text editor in khard's config file or the $EDITOR shell variable\n" \
+                print("Error in config file\n"
+                        "Set path to your preferred text editor in khard's "
+                        "config file or the $EDITOR shell variable\n"
                         "Example for khard.conf: editor = vim")
                 sys.exit(2)
             self.config['general']['editor'] = find_executable(
                     os.path.expanduser(self.config['general']['editor']))
             if self.config['general']['editor'] is None:
-                print("Error in config file\nInvalid editor path or executable not found.")
+                print("Error in config file\n"
+                        "Invalid editor path or executable not found.")
                 sys.exit(2)
 
             # merge editor
-            self.config['general']['merge_editor'] = self.config['general'].get("merge_editor") \
+            self.config['general']['merge_editor'] = \
+                       self.config['general'].get("merge_editor") \
                     or os.environ.get("MERGE_EDITOR")
             if self.config['general']['merge_editor'] is None:
                 print("Error in config file\n" \
-                        "Set path to your preferred text merge editor in khard's config file or the $MERGE_EDITOR shell variable\n" \
+                        "Set path to your preferred text merge editor in "
+                        "khard's config file or the $MERGE_EDITOR shell "
+                        "variable\n"
                         "Example for khard.conf: merge_editor = vimdiff")
                 sys.exit(2)
             self.config['general']['merge_editor'] = find_executable(
                     os.path.expanduser(self.config['general']['merge_editor']))
             if self.config['general']['merge_editor'] is None:
-                print("Error in config file\nInvalid merge editor path or executable not found.")
+                print("Error in config file\n"
+                        "Invalid merge editor path or executable not found.")
                 sys.exit(2)
 
             # default action
@@ -187,9 +195,7 @@ class Config:
                                 "at least surrounded by one letter or digit.")
                         sys.exit(2)
 
-            # load address books and contacts
-            error_counter = 0
-            number_of_contacts = 0
+            # load address books
             if "addressbooks" not in self.config:
                 print("Error in config file\nMissing main section \"[addressbooks]\".")
                 sys.exit(2)
@@ -201,90 +207,144 @@ class Config:
                 try:
                     address_book = AddressBook(name, self.config['addressbooks'][name]['path'])
                 except KeyError as e:
-                    print("Error in config file\nMissing path to the \"%s\" address book." % name)
+                    print("Error in config file\n"
+                            "Missing path to the \"%s\" address book." % name)
                     sys.exit(2)
                 except IOError as e:
                     print("Error in config file\n%s" % e)
                     sys.exit(2)
+                else:
+                    # add address book to list
+                    self.address_book_list.append(address_book)
 
-                # load all vcard files
-                for filename in glob.glob(os.path.join(address_book.get_path(), "*.vcf")):
-                    try:
-                        address_book.add_contact(
-                                CarddavObject.from_file(
-                                    address_book, filename,
-                                    self.get_supported_private_objects()))
-                        number_of_contacts += 1
-                    except IOError as e:
-                        print("Error: Could not open file %s\n%s" % (filename, e))
-                        error_counter += 1
-                    except vobject.base.ParseError as e:
-                        print("Error: Could not parse file %s\n%s" % (filename, e))
-                        error_counter += 1
 
-                # add address book to list
-                self.address_book_list.append(address_book)
+        def get_all_address_books(self):
+            """
+            return a list of all address books from config file
+            But due to performance optimizations its not guaranteed, that the
+            address books already contain their contact objects
+            if you must be sure, get every address book individually with the
+            get_address_book() function below
+            :rtype: list(AddressBook)
+            """
+            return self.address_book_list
 
-            # check if one or more contacts could not be parsed
-            if error_counter > 0:
-                print("\n%d of %d vcard files could not be parsed" % (error_counter, number_of_contacts))
-                sys.exit(2)
 
-            # check uniqueness of vcard uids and create short uid dictionary
-            # that can be disabled with the show_uids option in the config file, if desired
-            if self.config['contact table']['show_uids']:
-                # check, if multiple contacts have the same uid
-                flat_contact_list = []
-                for address_book in self.address_book_list:
-                    for contact in address_book.get_contact_list():
-                        uid = contact.get_uid()
-                        if bool(uid):
-                            matching_contact = self.uid_dict.get(uid)
-                            if matching_contact is None:
-                                self.uid_dict[uid] = contact
-                            else:
-                                print("The contact %s from address book %s" \
-                                        " and the contact %s from address book %s have the same uid %s" \
-                                        % (matching_contact.get_full_name(),
-                                            matching_contact.get_address_book().get_name(),
-                                            contact.get_full_name(),
-                                            contact.get_address_book().get_name(),
-                                            contact.get_uid())
+        def get_address_book(self, name):
+            """
+            return address book object or None, if the address book with the
+            given name does not exist
+            :rtype: AddressBook
+            """
+            for address_book in self.address_book_list:
+                if name == address_book.get_name():
+                    if not address_book.loaded:
+                        number_of_contacts = 0
+                        error_counter = 0
+                        # load vcard files of address book
+                        for filename in glob.glob(
+                                os.path.join(address_book.get_path(), "*.vcf")):
+                            number_of_contacts += 1
+                            try:
+                                address_book.add_contact(
+                                        CarddavObject.from_file(
+                                            address_book, filename,
+                                            self.get_supported_private_objects())
                                         )
-                                sys.exit(2)
-                            # add to flat contact list
-                            flat_contact_list.append(contact)
+                            except IOError as e:
+                                print("Error: Could not open file %s\n%s"
+                                        % (filename, e))
+                                error_counter += 1
+                            except vobject.base.ParseError as e:
+                                print("Error: Could not parse file %s\n%s"
+                                        % (filename, e))
+                                error_counter += 1
+                        # check if one or more contacts could not be parsed
+                        if error_counter > 0:
+                            print("\n%d of %d vcard files could not be parsed"
+                                    % (error_counter, number_of_contacts))
+                            sys.exit(2)
+                        # check uniqueness of vcard uids and create short uid 
+                        # dictionary that can be disabled with the show_uids
+                        # option in the config file, if desired
+                        if self.config['contact table']['show_uids']:
+                            # check, if multiple contacts have the same uid
+                            for contact in address_book.get_contact_list():
+                                uid = contact.get_uid()
+                                if bool(uid):
+                                    matching_contact = \
+                                            self.original_uid_dict.get(uid)
+                                    if matching_contact is None:
+                                        self.original_uid_dict[uid] = contact
+                                    else:
+                                        print("The contact %s from address "
+                                                "book %s and the contact %s "
+                                                "from address book %s have the "
+                                                "same uid %s" % (
+                                                    matching_contact.get_full_name(),
+                                                    matching_contact.get_address_book().get_name(),
+                                                    contact.get_full_name(),
+                                                    contact.get_address_book().get_name(),
+                                                    contact.get_uid())
+                                                )
+                                        sys.exit(2)
+                            # rebuild shortened uid dictionary
+                            self.create_shortened_uid_dictionary()
+                        address_book.loaded = True
+                    return address_book
+            return None
 
-                # now we can be sure, that all uid's are unique but we don't want to enter
-                # the whole uid, if we choose a contact by the -u / --uid option
-                # so clear previously filled uid_dict and recreate with the shortest possible uid, so
-                # that it's still unique and easier to enter
-                # with around 100 contacts that short id should not be longer then two or three characters
-                self.uid_dict.clear()
-                flat_contact_list.sort(key = lambda x: x.get_uid())
-                if len(flat_contact_list) == 1:
-                    current = flat_contact_list[0]
-                    self.uid_dict[current.get_uid()[:1]] = current
-                elif len(flat_contact_list) > 1:
-                    # first list element
-                    current = flat_contact_list[0]
-                    next = flat_contact_list[1]
-                    same = helpers.compare_uids(current.get_uid(), next.get_uid())
+
+        def has_uids(self):
+            return len(self.uid_dict.keys()) > 0
+
+
+        def create_shortened_uid_dictionary(self):
+            # uniqueness of uids is guaranteed but they are much to long for
+            # the -u / --uid command line option
+            #
+            # Therefore clear previously filled uid_dict and recreate with the
+            # shortest possible uids, so they are still unique but much handier
+            #
+            # with around 100 contacts that short id should not be longer
+            # then two or three characters
+            self.uid_dict.clear()
+            flat_contact_list = sorted(
+                    self.original_uid_dict.values(),
+                    key = lambda x: x.get_uid())
+            if len(flat_contact_list) == 1:
+                current = flat_contact_list[0]
+                self.uid_dict[current.get_uid()[:1]] = current
+            elif len(flat_contact_list) > 1:
+                # first list element
+                current = flat_contact_list[0]
+                next = flat_contact_list[1]
+                same = helpers.compare_uids(current.get_uid(), next.get_uid())
+                self.uid_dict[current.get_uid()[:same+1]] = current
+                # list elements 1 to len(flat_contact_list)-1
+                for index in range(1, len(flat_contact_list)-1):
+                    prev = flat_contact_list[index-1]
+                    current = flat_contact_list[index]
+                    next = flat_contact_list[index+1]
+                    same = max(
+                            helpers.compare_uids(
+                                prev.get_uid(), current.get_uid()),
+                            helpers.compare_uids(
+                                current.get_uid(), next.get_uid()))
                     self.uid_dict[current.get_uid()[:same+1]] = current
-                    # list elements 1 to len(flat_contact_list)-1
-                    for index in range(1, len(flat_contact_list)-1):
-                        prev = flat_contact_list[index-1]
-                        current = flat_contact_list[index]
-                        next = flat_contact_list[index+1]
-                        same = max(
-                                helpers.compare_uids(prev.get_uid(), current.get_uid()),
-                                helpers.compare_uids(current.get_uid(), next.get_uid()))
-                        self.uid_dict[current.get_uid()[:same+1]] = current
-                    # last list element
-                    prev = flat_contact_list[-2]
-                    current = flat_contact_list[-1]
-                    same = helpers.compare_uids(prev.get_uid(), current.get_uid())
-                    self.uid_dict[current.get_uid()[:same+1]] = current
+                # last list element
+                prev = flat_contact_list[-2]
+                current = flat_contact_list[-1]
+                same = helpers.compare_uids(prev.get_uid(), current.get_uid())
+                self.uid_dict[current.get_uid()[:same+1]] = current
+
+
+        def get_shortened_uid(self, uid):
+            if bool(uid):
+                for length_of_uid in range(len(uid), 0, -1):
+                    if self.uid_dict.get(uid[:length_of_uid]) is not None:
+                        return uid[:length_of_uid]
+            return ""
 
 
         def get_editor(self):
@@ -337,29 +397,6 @@ class Config:
 
         def show_nicknames(self):
             return self.config['contact table']['show_nicknames']
-
-
-        def get_all_address_books(self):
-            return self.address_book_list
-
-
-        def get_address_book(self, name):
-            for address_book in self.address_book_list:
-                if name == address_book.get_name():
-                    return address_book
-            return None
-
-
-        def has_uids(self):
-            return len(self.uid_dict.keys()) > 0
-
-
-        def get_shortened_uid(self, uid):
-            if bool(uid):
-                for length_of_uid in range(len(uid), 0, -1):
-                    if self.uid_dict.get(uid[:length_of_uid]) is not None:
-                        return uid[:length_of_uid]
-            return ""
 
 
     ####################################
