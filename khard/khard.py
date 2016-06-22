@@ -266,6 +266,13 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         target_address_book.get_name()))
 
 
+def list_address_books(address_book_list):
+    table = [["Index", "Address book"]]
+    for index, address_book in enumerate(address_book_list):
+        table.append([ index+1, address_book.name ])
+    print(helpers.pretty_print(table))
+
+
 def list_contacts(vcard_list):
     selected_address_books = []
     for contact in vcard_list:
@@ -347,6 +354,37 @@ def list_email_addresses(email_address_list):
     for row in email_address_list:
         table.append(row.split("\t"))
     print(helpers.pretty_print(table))
+
+
+def choose_address_book_from_list(header_string, address_book_list):
+    if len(address_book_list) == 0:
+        print("%s\nError: address book list is empty" % header_string)
+        sys.exit(1)
+    elif len(address_book_list) == 1:
+        return address_book_list[0]
+    else:
+        print(header_string)
+        list_address_books(address_book_list)
+        while True:
+            try:
+                input_string = input("Enter Index: ")
+                if input_string in ["", "q", "Q"]:
+                    print("Canceled")
+                    sys.exit(0)
+                addr_index = int(input_string)
+                if addr_index > 0:
+                    # make sure the address book is loaded afterwards
+                    selected_address_book = Config().get_address_book(
+                            address_book_list[addr_index-1].name)
+                else:
+                    raise ValueError
+            except (EOFError, IndexError, ValueError):
+                print("Please enter an index value between 1 and %d or nothing "
+                        "to exit." % len(address_book_list))
+            else:
+                break
+        print("")
+        return selected_address_book
 
 
 def choose_vcard_from_list(vcard_list):
@@ -483,22 +521,9 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
     :rtype: None
 
     """
-    if len(selected_address_books) == 1:
-        selected_address_book = selected_address_books[0]
-    else:
-        # ask for address book
-        print("Create new contact\nEnter address book name")
-        for book in Config().get_all_address_books():
-            print("  %s" % book.get_name())
-        while True:
-            input_string = input("Address book: ")
-            if input_string == "":
-                print("Canceled")
-                sys.exit(0)
-            selected_address_book = Config().get_address_book(input_string)
-            if selected_address_book:
-                print("")
-                break
+    # ask for address book, in which to create the new contact
+    selected_address_book = choose_address_book_from_list(
+            "Select address book for new contact", selected_address_books)
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
@@ -576,15 +601,9 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
             if input_string.lower() == "y":
                 break
         # ask for address book, in which to create the new contact
-        print("Available address books: %s" % ', '.join(
-            [str(book) for book in Config().get_all_address_books()]))
-        while True:
-            input_string = input("Address book [%s]: " %
-                        Config().get_all_address_books()[0].get_name()) or \
-                    Config().get_all_address_books()[0].get_name()
-            selected_address_book = Config().get_address_book(input_string)
-            if selected_address_book:
-                break
+        selected_address_book = choose_address_book_from_list(
+                "Select address book for new contact",
+                Config().get_all_address_books())
         # ask for name and organisation of new contact
         while True:
             first_name = input("First name: ")
@@ -993,15 +1012,15 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms, target_ui
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
-def copy_or_move_subcommand(action, vcard_list, target):
+def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     """Copy or move a contact to a different address book.
 
     :action: the string "copy" or "move" to indicate what to do
     :type action: str
     :param vcard_list: the contact list from which to select one for the action
     :type vcard_list: list of carddav_object.CarddavObject
-    :param target: the list of target address books (should be of length one)
-    :type target: list(addressbook.AddressBook)
+    :param target_address_book_list: the list of target address books
+    :type target_address_book_list: list(addressbook.AddressBook)
     :returns: None
     :rtype: None
 
@@ -1011,52 +1030,41 @@ def copy_or_move_subcommand(action, vcard_list, target):
     if source_vcard is None:
         print("Found no contact")
         sys.exit(1)
-
-    # get target address book from search query if provided
-    available_address_books = [
-            book for book in Config().get_all_address_books()
-            if book != source_vcard.get_address_book()]
-    if len(target) > 1:
-        print("You have to give only one target address book.")
-        sys.exit(1)
-    elif len(target) == 1:
-        target = target[0]
-        if target not in available_address_books:
-            print("The contact %s is already in the address book %s" %
-                  (source_vcard.get_full_name(),
-                   target.get_name()))
-            sys.exit(1)
     else:
-        # otherwise query the target address book name from user
-        print("%s contact %s from address book %s\n\nAvailable address books:"
-              "\n  %s" % (action.title(), source_vcard.get_full_name(),
-                          source_vcard.get_address_book().get_name(),
-                          '\n  '.join([str(book)
-                                      for book in available_address_books])))
-        while True:
-            input_string = input("Into address book: ")
-            if input_string == "":
-                print("Canceled")
-                sys.exit(0)
-            if Config().get_address_book(input_string) in available_address_books:
-                target = Config().get_address_book(input_string)
-                print("")
-                break
+        print("%s contact %s from address book %s"
+                % (action.title(), source_vcard.get_full_name(),
+                    source_vcard.get_address_book().get_name()))
+
+    # get target address book
+    if len(target_address_book_list) == 1 \
+            and target_address_book_list[0] == source_vcard.get_address_book():
+        print("The address book %s already contains the contact %s"
+                % (source_vcard.get_full_name(),
+                    target_address_book_list[0].get_name()))
+        sys.exit(1)
+    else:
+        available_address_books = []
+        for address_book in target_address_book_list:
+            if address_book != source_vcard.get_address_book():
+                available_address_books.append(address_book)
+        selected_target_address_book = choose_address_book_from_list(
+            "Select target address book", available_address_books)
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
-            [target], source_vcard.get_full_name(), True))
+            [selected_target_address_book], source_vcard.get_full_name(), True))
 
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
-        copy_contact(source_vcard, target, action == "move")
+        copy_contact(source_vcard, selected_target_address_book,
+                action == "move")
     else:
         if source_vcard == target_vcard:
             # source and target contact are identical
             print("Target contact: %s" % target_vcard)
             if action == "move":
-                copy_contact(source_vcard, target, True)
+                copy_contact(source_vcard, selected_target_address_book, True)
             else:
                 print("The selected contacts are already identical")
         else:
@@ -1076,10 +1084,12 @@ def copy_or_move_subcommand(action, vcard_list, target):
             while True:
                 input_string = input("Your choice: ")
                 if input_string.lower() == "a":
-                    copy_contact(source_vcard, target, action == "move")
+                    copy_contact(source_vcard, selected_target_address_book,
+                            action == "move")
                     break
                 if input_string.lower() == "o":
-                    copy_contact(source_vcard, target, action == "move")
+                    copy_contact(source_vcard, selected_target_address_book,
+                            action == "move")
                     target_vcard.delete_vcard_file()
                     break
                 if input_string.lower() == "m":
@@ -1397,16 +1407,10 @@ def main():
             else:
                 args.target_addressbook[index] = address_book
     else:
-        # when no target address book was given, the default configuration
-        # depends on the selected action
-        #   - merge: select all address books like above
-        #   - copy|move: leave the target address book list empty so the user may
-        #       pick one target address book manually
         args.target_addressbook = []
-        if args.action == "merge":
-            for address_book in Config().get_all_address_books():
-                args.target_addressbook.append(
-                        Config().get_address_book(address_book.get_name()))
+        for address_book in Config().get_all_address_books():
+            args.target_addressbook.append(
+                    Config().get_address_book(address_book.get_name()))
     logging.debug("target addressbooks: {}".format(args.target_addressbook))
 
     # display by name: first or last name

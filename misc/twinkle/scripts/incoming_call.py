@@ -19,10 +19,11 @@ def get_caller_id(from_hdr):
     return caller_id
 
 def caller_from_addressbook(caller_id):
-    callers = subprocess.check_output([config.khard_exe, "phone", "--parsable", caller_id]).strip()
-    if callers == "":
+    try:
+        callers = subprocess.check_output([config.khard_exe, "phone", "--parsable", caller_id]).strip()
+    except subprocess.CalledProcessError:
         return caller_id
-    elif len(callers.split("\n")) == 1:
+    if len(callers.split("\n")) == 1:
         return callers.split("\t")[1]
     else:
         # the contact contains multiple phone numbers and we have to obtain the right phone label
