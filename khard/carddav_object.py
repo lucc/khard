@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # contact object class
-# vcard: https://tools.ietf.org/html/rfc6350
+# vcard version 3.0: https://tools.ietf.org/html/rfc2426
 
 import os
 import sys
@@ -13,7 +13,6 @@ from atomicwrites import atomic_write
 from . import helpers
 from .object_type import ObjectType
 from datetime import date, datetime, time
-from dateutil import parser
 
 class CarddavObject:
     def __init__(self, address_book, filename, supported_private_objects):
@@ -678,24 +677,37 @@ class CarddavObject:
             :rtype: datetime.datetime
         """
         try:
-            return datetime.strptime(
-                    self.vcard.bday.value.replace('-', ''), "%Y%m%d")
-        except (AttributeError, ValueError) as e:
+            return helpers.string_to_date(self.vcard.bday.value)
+        except (AttributeError, ValueError):
             return None
 
     def get_formatted_birthday(self):
         date = self.get_birthday()
         if date:
-            date_format = locale.nl_langinfo(locale.D_FMT)
+            if (date.tzname() and date.tzname()[3:]) or \
+                    (date.hour != 0 or date.minute != 0 or date.second != 0):
+                date_format = locale.nl_langinfo(locale.D_T_FMT)
+            else:
+                date_format = locale.nl_langinfo(locale.D_FMT)
             if date_format:
                 return date.strftime(date_format)
             else:
-                return "%.4d.%.2d.%.2d" % (date.year, date.month, date.day)
+                return "%.4d-%.2d-%.2d" % (date.year, date.month, date.day)
         return ""
 
     def add_birthday(self, date):
         bday_obj = self.vcard.add('bday')
-        bday_obj.value = "%.4d%.2d%.2d" % (date.year, date.month, date.day)
+        if date.tzname() and date.tzname()[3:]:
+            bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" \
+                    % (date.year, date.month, date.day, date.hour, date.minute,
+                            date.second, date.tzname()[3:])
+        elif date.hour != 0 or date.minute != 0 or date.second != 0:
+            bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" \
+                    % (date.year, date.month, date.day, date.hour, date.minute,
+                            date.second)
+        else:
+            bday_obj.value = "%.4d-%.2d-%.2d" \
+                    % (date.year, date.month, date.day)
 
 
     #######################
@@ -938,11 +950,11 @@ class CarddavObject:
         if bool(contact_data.get("Birthday")):
             if isinstance(contact_data.get("Birthday"), str):
                 try:
-                    date = parser.parse(contact_data.get("Birthday"))
+                    date = helpers.string_to_date(contact_data.get("Birthday"))
                 except ValueError as e:
                     raise ValueError(
-                            "Error: Wrong birthday date format\n"
-                            "Examples: 21.10.1988 or 1988.10.21")
+                            "Error: Wrong birthday format or invalid date\n"
+                            "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
                 else:
                     self.add_birthday(date)
             else:
@@ -1107,7 +1119,17 @@ class CarddavObject:
                                 4, len(longest_key)+1, True)
 
             elif line.lower().startswith("birthday"):
-                strings.append("Birthday : %s" % self.get_formatted_birthday())
+                birthday = self.get_birthday()
+                if birthday:
+                    if (birthday.tzname() and birthday.tzname()[3:]) or \
+                            (birthday.hour != 0 or birthday.minute != 0 \
+                                or birthday.second != 0):
+                        strings.append("Birthday : %s" % birthday.isoformat())
+                    else:
+                        strings.append("Birthday : %.4d-%.2d-%.2d" \
+                                % (birthday.year, birthday.month, birthday.day))
+                else:
+                    strings.append("Birthday : ")
             elif line.lower().startswith("categories"):
                 strings += helpers.convert_to_yaml(
                         "Categories", self.get_categories(), 0, 11, True)
@@ -1292,7 +1314,7 @@ class CarddavObject:
                 if type:
                     if not type.lower().startswith("x-"):
                         type_list.append(type)
-                    elif type[2:] not in type_list:
+                    elif type[2:].lower() not in [x.lower() for x in type_list]:
                         # add x-custom type in case it's not already added by
                         # custom label for loop above but strip x- before
                         type_list.append(type[2:])

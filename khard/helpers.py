@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import datetime, os, random, string
+import os, random, string
+from datetime import datetime
 from .object_type import ObjectType
 
 
@@ -44,6 +45,37 @@ def string_to_list(input, delimiter):
     return [ x.strip() for x in input.split(delimiter) ]
 
 
+def string_to_date(input):
+    """convert string to date object"""
+    # try date format yyyymmdd
+    try:
+        return datetime.strptime(input, "%Y%m%d")
+    except ValueError as e:
+        pass
+    # try date format yyyy-mm-dd
+    try:
+        return datetime.strptime(input, "%Y-%m-%d")
+    except ValueError as e:
+        pass
+    # try datetime format yyyy-mm-ddThh-mm-ss
+    try:
+        return datetime.strptime(input, "%Y-%m-%dT%H:%M:%S")
+    except ValueError as e:
+        pass
+    # try datetime format yyyy-mm-ddThh-mm-ssZ
+    try:
+        return datetime.strptime(input, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError as e:
+        pass
+    # try datetime format yyyy-mm-ddThh-mm-sstz where tz may look like -06:00
+    try:
+        return datetime.strptime(
+                ''.join(input.rsplit(":", 1)), "%Y-%m-%dT%H:%M:%S%z")
+    except ValueError as e:
+        pass
+    raise ValueError
+
+
 def get_random_uid():
     return ''.join([ random.choice(string.ascii_lowercase + string.digits) for _ in range(36) ])
 
@@ -60,7 +92,7 @@ def compare_uids(uid1, uid2):
 
 def file_modification_date(filename):
     t = os.path.getmtime(filename)
-    return datetime.datetime.fromtimestamp(t)
+    return datetime.fromtimestamp(t)
 
 
 def convert_to_yaml(
@@ -197,8 +229,9 @@ Last name  :
 Suffix     : 
 
 # person related information
+#
 # birthday
-# example: yyyy.mm.dd
+# Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
 Birthday : 
 # nickname
 # may contain a string or a list of strings
