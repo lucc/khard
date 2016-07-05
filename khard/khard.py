@@ -21,8 +21,10 @@ def create_new_contact(address_book):
     temp_file_name = tf.name
     old_contact_template = "# create new contact\n" \
             "# Address book: %s\n" \
+            "# Vcard version: %s\n" \
             "# if you want to cancel, exit without saving\n\n%s" \
-            % (address_book.get_name(), helpers.get_new_contact_template())
+            % (address_book.get_name(), Config().get_preferred_vcard_version(),
+                    helpers.get_new_contact_template())
     tf.write(old_contact_template)
     tf.close()
 
@@ -46,7 +48,8 @@ def create_new_contact(address_book):
         try:
             new_contact = CarddavObject.from_user_input(
                     address_book, new_contact_template,
-                    Config().get_supported_private_objects())
+                    Config().get_supported_private_objects(),
+                    Config().get_preferred_vcard_version())
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
@@ -77,10 +80,12 @@ def modify_existing_contact(old_contact):
     temp_file_name = tf.name
     tf.write(
             "# Edit contact: %s\n"
-            "# Address book: %s\n" \
-            "# if you want to cancel, exit without saving\n\n%s" \
+            "# Address book: %s\n"
+            "# Vcard version: %s\n"
+            "# if you want to cancel, exit without saving\n\n%s"
             % (old_contact.get_full_name(),
                 old_contact.get_address_book().get_name(),
+                old_contact.get_version(),
                 old_contact.get_template()))
     tf.close()
 
@@ -131,16 +136,35 @@ def modify_existing_contact(old_contact):
 
 def merge_existing_contacts(source_contact, target_contact,
                             delete_source_contact):
+    # show warning, if target vcard version is not 3.0 or 4.0
+    if target_contact.get_version() not in \
+            Config().get_supported_vcard_versions():
+        print("Warning:\nThe target contact in which to merge is based on "
+                "vcard version %s but khard only supports the modification of "
+                "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
+                "will be converted to vcard version %s but beware: This could "
+                "corrupt the contact file or cause data loss."
+                % (target_contact.get_version(),
+                    Config().get_preferred_vcard_version()))
+        while True:
+            input_string = input("Do you want to proceed anyway (y/n)? ")
+            if input_string.lower() in ["", "n", "q"]:
+                print("Canceled")
+                sys.exit(0)
+            if input_string.lower() == "y":
+                break
     # create temp files for each vcard
     # source vcard
     source_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     source_temp_file_name = source_tf.name
     source_tf.write(
-            "# merge from %s\n" \
-            "# Address book: %s\n" \
-            "# if you want to cancel, exit without saving\n\n%s" \
+            "# merge from %s\n"
+            "# Address book: %s\n"
+            "# Vcard version: %s\n"
+            "# if you want to cancel, exit without saving\n\n%s"
             % (source_contact.get_full_name(),
                 source_contact.get_address_book().get_name(),
+                source_contact.get_version(),
                 source_contact.get_template()))
     source_tf.close()
 
@@ -148,11 +172,13 @@ def merge_existing_contacts(source_contact, target_contact,
     target_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     target_temp_file_name = target_tf.name
     target_tf.write(
-            "# merge into %s\n" \
-            "# Address book: %s\n" \
-            "# if you want to cancel, exit without saving\n\n%s" \
+            "# merge into %s\n"
+            "# Address book: %s\n"
+            "# Vcard version: %s\n"
+            "# if you want to cancel, exit without saving\n\n%s"
             % (target_contact.get_full_name(),
                 target_contact.get_address_book().get_name(),
+                target_contact.get_version(),
                 target_contact.get_template()))
     target_tf.close()
 
@@ -530,7 +556,8 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
         try:
             new_contact = CarddavObject.from_user_input(
                     selected_address_book, input_from_stdin_or_file,
-                    Config().get_supported_private_objects())
+                    Config().get_supported_private_objects(),
+                    Config().get_preferred_vcard_version())
         except ValueError as e:
             print(e)
             sys.exit(1)
@@ -616,7 +643,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         selected_vcard = CarddavObject.from_user_input(selected_address_book,
                 "First name : %s\nLast name : %s\nOrganisation : %s"
                     % (first_name, last_name, organisation),
-                Config().get_supported_private_objects())
+                Config().get_supported_private_objects(),
+                Config().get_preferred_vcard_version())
 
     # check if the contact already contains the email address
     for type, email_list in sorted(
@@ -885,6 +913,23 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
     :rtype: None
 
     """
+    # show warning, if vcard version of selected contact is not 3.0 or 4.0
+    if selected_vcard.get_version() not in \
+            Config().get_supported_vcard_versions():
+        print("Warning:\nThe selected contact is based on vcard version %s but "
+                "khard only supports the creation and modification of vcards "
+                "with version 3.0 and 4.0.\nIf you proceed, the contact will be "
+                "converted to vcard version %s but beware: This could corrupt "
+                "the contact file or cause data loss."
+                % (selected_vcard.get_version(),
+                    Config().get_preferred_vcard_version()))
+        while True:
+            input_string = input("Do you want to proceed anyway (y/n)? ")
+            if input_string.lower() in ["", "n", "q"]:
+                print("Canceled")
+                sys.exit(0)
+            if input_string.lower() == "y":
+                break
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
@@ -1517,7 +1562,8 @@ def main():
             and "empty_contact_template" in args \
             and args.empty_contact_template:
         # export empty template must work without selecting a contact first
-        args.output_file.write("# Contact template for khard version %s\n\n%s" \
+        args.output_file.write(
+                "# Contact template for khard version %s\n"
                 % (khard_version, helpers.get_new_contact_template()))
     elif args.action in ["details", "modify", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(vcard_list)
@@ -1528,8 +1574,10 @@ def main():
             print(selected_vcard.print_vcard())
         elif args.action == "export":
             args.output_file.write(
-                    "# Contact template for khard version %s\nName: %s\n\n%s" \
+                    "# Contact template for khard version %s\n"
+                    "# Name: %s\n# Vcard version: %s\n\n%s"
                     % (khard_version, selected_vcard.get_full_name(),
+                        selected_vcard.get_version(),
                         selected_vcard.get_template()))
         elif args.action == "modify":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
@@ -1545,3 +1593,4 @@ def main():
         copy_or_move_subcommand(args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
         print('\n'.join(str(book) for book in Config().get_all_address_books()))
+

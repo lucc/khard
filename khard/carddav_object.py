@@ -15,28 +15,36 @@ from .object_type import ObjectType
 from datetime import date, datetime, time
 
 class CarddavObject:
-    def __init__(self, address_book, filename, supported_private_objects):
+    def __init__(self, address_book, filename, supported_private_objects,
+            vcard_version):
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
         self.supported_private_objects = supported_private_objects
 
         # vcard v3.0 supports the following type values
-        self.supported_phone_types = ["bbs", "car", "cell", "fax", "home", "isdn",
-                "msg", "modem", "pager", "pcs", "pref", "video", "voice", "work"]
-        self.supported_email_types = ["home", "internet", "pref", "uri", "work", "x400"]
-        self.supported_address_types = ["home", "pref", "work"]
+        self.phone_types_v3 = ["bbs", "car", "cell", "fax", "home", "isdn",
+                "msg", "modem", "pager", "pcs", "video", "voice", "work"]
+        self.email_types_v3 = ["home", "internet", "work", "x400"]
+        self.address_types_v3 = ["dom", "intl", "home", "parcel", "postal",
+                "work"]
+        # vcard v4.0 supports the following type values
+        self.phone_types_v4 = ["text", "voice", "fax", "cell", "video",
+                "pager", "textphone", "home", "work"]
+        self.email_types_v4 = ["home", "internet", "work"]
+        self.address_types_v4 = ["home", "work"]
 
         # load vcard
         if self.filename is None:
             # create new vcard object
             self.vcard = vobject.vCard()
-            # uid
-            uid_obj = self.vcard.add('uid')
-            uid_obj.value = helpers.get_random_uid()
+            # add uid
+            self.add_uid(helpers.get_random_uid())
             # use uid for vcard filename
-            self.filename = os.path.join(address_book.get_path(),
-                    self.vcard.uid.value + ".vcf")
+            self.filename = os.path.join(
+                    address_book.get_path(), self.get_uid() + ".vcf")
+            # add preferred vcard version
+            self.add_version(vcard_version)
 
         else:
             # create vcard from .vcf file
@@ -64,20 +72,20 @@ class CarddavObject:
     #######################################
 
     @classmethod
-    def new_contact(cls, address_book, supported_private_objects):
+    def new_contact(cls, address_book, supported_private_objects, version):
         """ use this to create a new and empty contact """
-        return cls(address_book, None, supported_private_objects)
+        return cls(address_book, None, supported_private_objects, version)
 
     @classmethod
     def from_file(cls, address_book, filename, supported_private_objects):
         """ Use this if you want to create a new contact from an existing .vcf file """
-        return cls(address_book, filename, supported_private_objects)
+        return cls(address_book, filename, supported_private_objects, None)
 
     @classmethod
     def from_user_input(
-            cls, address_book, user_input, supported_private_objects):
+            cls, address_book, user_input, supported_private_objects, version):
         """ Use this if you want to create a new contact from user input """
-        contact = cls(address_book, None, supported_private_objects)
+        contact = cls(address_book, None, supported_private_objects, version)
         contact.process_user_input(user_input)
         return contact
 
@@ -85,7 +93,7 @@ class CarddavObject:
     def from_existing_contact_with_new_user_input(cls, contact, user_input):
         """ use this if you want to clone an existing contact and  replace its data with new user input in one step """
         contact = cls(contact.get_address_book(), contact.get_filename(),
-                contact.get_supported_private_objects())
+                contact.get_supported_private_objects(), None)
         contact.process_user_input(user_input)
         return contact
 
@@ -151,6 +159,20 @@ class CarddavObject:
         uid_obj = self.vcard.add('uid')
         uid_obj.value = helpers.convert_to_vcard(
                 "uid", uid, ObjectType.string)
+
+    def get_version(self):
+        """
+        :rtype: str
+        """
+        try:
+            return self.vcard.version.value
+        except AttributeError as e:
+            return ""
+
+    def add_version(self, vcard_version):
+        version_obj = self.vcard.add('version')
+        version_obj.value = helpers.convert_to_vcard(
+                "version", vcard_version, ObjectType.string)
 
     def get_name_prefixes(self):
         """
@@ -378,20 +400,24 @@ class CarddavObject:
                         self.get_types_for_vcard_object(child, "voice"), ", ")
                 if phone_dict.get(type) is None:
                     phone_dict[type] = []
-                phone_dict[type].append(child.value)
+                try:
+                    # detect uri
+                    if child.params.get("VALUE")[0] == "uri":
+                        phone_dict[type].append(
+                                child.value.split(":")[1])
+                except (IndexError, TypeError):
+                    phone_dict[type].append(child.value)
         # sort phone number lists
         for number_list in phone_dict.values():
             number_list.sort()
         return phone_dict
 
     def add_phone_number(self, type, number):
-        phone_obj = self.vcard.add('tel')
-        phone_obj.value = helpers.convert_to_vcard(
-                "phone number", number, ObjectType.string)
-        standard_types, custom_types = self.parse_type_value(
-                helpers.string_to_list(type, ","),
-                number, self.supported_phone_types)
-        if len(standard_types) == 0 and len(custom_types) == 0:
+        standard_types, custom_types, pref = self.parse_type_value(
+                helpers.string_to_list(type, ","), number,
+                self.phone_types_v4 if self.get_version() == "4.0" \
+                        else self.phone_types_v3)
+        if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
             raise ValueError("Error: "
                     "label for phone number " + number + " is missing.")
         elif len(custom_types) > 1:
@@ -399,8 +425,20 @@ class CarddavObject:
                     "phone number " + number + " got more than one custom "
                     "label: " + helpers.list_to_string(custom_types, ", "))
         else:
+            phone_obj = self.vcard.add('tel')
+            if self.get_version() == "4.0":
+                phone_obj.value = "tel:%s" % helpers.convert_to_vcard(
+                        "phone number", number, ObjectType.string)
+                phone_obj.params['VALUE'] = ["uri"]
+                if pref > 0:
+                    phone_obj.params['PREF'] = str(pref)
+            else:
+                phone_obj.value = helpers.convert_to_vcard(
+                        "phone number", number, ObjectType.string)
+                if pref > 0:
+                    standard_types.append("pref")
             if standard_types:
-                phone_obj.type_param = standard_types
+                phone_obj.params['TYPE'] = standard_types
             if custom_types:
                 number_of_custom_phone_number_labels = 0
                 for label in self.vcard.getChildren():
@@ -433,13 +471,11 @@ class CarddavObject:
         return email_dict
 
     def add_email_address(self, type, address):
-        email_obj = self.vcard.add('email')
-        email_obj.value = helpers.convert_to_vcard(
-                "email address", address, ObjectType.string)
-        standard_types, custom_types = self.parse_type_value(
-                helpers.string_to_list(type, ","),
-                address, self.supported_email_types)
-        if len(standard_types) == 0 and len(custom_types) == 0:
+        standard_types, custom_types, pref = self.parse_type_value(
+                helpers.string_to_list(type, ","), address,
+                self.email_types_v4 if self.get_version() == "4.0" \
+                        else self.email_types_v3)
+        if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
             raise ValueError("Error: "
                     "label for email address " + address + " is missing.")
         elif len(custom_types) > 1:
@@ -447,8 +483,17 @@ class CarddavObject:
                     "email address " + address + " got more than one custom "
                     "label: " + helpers.list_to_string(custom_types, ", "))
         else:
+            email_obj = self.vcard.add('email')
+            email_obj.value = helpers.convert_to_vcard(
+                    "email address", address, ObjectType.string)
+            if self.get_version() == "4.0":
+                if pref > 0:
+                    email_obj.params['PREF'] = str(pref)
+            else:
+                if pref > 0:
+                    standard_types.append("pref")
             if standard_types:
-                email_obj.type_param = standard_types
+                email_obj.params['TYPE'] = standard_types
             if custom_types:
                 number_of_custom_email_labels = 0
                 for label in self.vcard.getChildren():
@@ -535,28 +580,12 @@ class CarddavObject:
 
     def add_post_address(
             self, type, box, extended, street, code, city, region, country):
-        adr_obj = self.vcard.add('adr')
-        adr_obj.value = vobject.vcard.Address(
-                box = helpers.convert_to_vcard(
-                    "box address field", box,
-                    ObjectType.string_or_list_with_strings),
-                extended = helpers.convert_to_vcard(
-                    "extended address field", extended,
-                        ObjectType.string_or_list_with_strings),
-                street = helpers.convert_to_vcard(
-                    "street", street, ObjectType.string_or_list_with_strings),
-                code = helpers.convert_to_vcard(
-                    "post code", code, ObjectType.string_or_list_with_strings),
-                city = helpers.convert_to_vcard(
-                    "city", city, ObjectType.string_or_list_with_strings),
-                region = helpers.convert_to_vcard(
-                    "region", region, ObjectType.string_or_list_with_strings),
-                country = helpers.convert_to_vcard(
-                    "country", country, ObjectType.string_or_list_with_strings))
-        standard_types, custom_types = self.parse_type_value(
+        standard_types, custom_types, pref = self.parse_type_value(
                 helpers.string_to_list(type, ","),
-                "%s, %s" % (street, city), self.supported_address_types)
-        if len(standard_types) == 0 and len(custom_types) == 0:
+                "%s, %s" % (street, city),
+                self.address_types_v4 if self.get_version() == "4.0" \
+                        else self.address_types_v3)
+        if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
             raise ValueError("Error: "
                     "label for post address " + street + " is missing.")
         elif len(custom_types) > 1:
@@ -564,8 +593,37 @@ class CarddavObject:
                     "post address " + street + " got more than one custom "
                     "label: " + helpers.list_to_string(custom_types, ", "))
         else:
+            adr_obj = self.vcard.add('adr')
+            adr_obj.value = vobject.vcard.Address(
+                    box = helpers.convert_to_vcard(
+                        "box address field", box,
+                        ObjectType.string_or_list_with_strings),
+                    extended = helpers.convert_to_vcard(
+                        "extended address field", extended,
+                        ObjectType.string_or_list_with_strings),
+                    street = helpers.convert_to_vcard(
+                        "street", street,
+                        ObjectType.string_or_list_with_strings),
+                    code = helpers.convert_to_vcard(
+                        "post code", code,
+                        ObjectType.string_or_list_with_strings),
+                    city = helpers.convert_to_vcard(
+                        "city", city,
+                        ObjectType.string_or_list_with_strings),
+                    region = helpers.convert_to_vcard(
+                        "region", region,
+                        ObjectType.string_or_list_with_strings),
+                    country = helpers.convert_to_vcard(
+                        "country", country,
+                        ObjectType.string_or_list_with_strings))
+            if self.get_version() == "4.0":
+                if pref > 0:
+                    adr_obj.params['PREF'] = str(pref)
+            else:
+                if pref > 0:
+                    standard_types.append("pref")
             if standard_types:
-                adr_obj.type_param = standard_types
+                adr_obj.params['TYPE'] = standard_types
             if custom_types:
                 number_of_custom_post_address_labels = 0
                 for label in self.vcard.getChildren():
@@ -674,40 +732,75 @@ class CarddavObject:
 
     def get_birthday(self):
         """:returns: contacts birthday or None if not available
-            :rtype: datetime.datetime
+            :rtype: datetime.datetime or str
         """
+        # vcard 4.0 could contain a single text value
+        try:
+            if self.vcard.bday.params.get("VALUE")[0] == "text":
+                return self.vcard.bday.value
+        except (AttributeError, IndexError, TypeError):
+            pass
+        # else try to convert to a datetime object
         try:
             return helpers.string_to_date(self.vcard.bday.value)
         except (AttributeError, ValueError):
-            return None
+            pass
+        return None
 
     def get_formatted_birthday(self):
         date = self.get_birthday()
         if date:
-            if (date.tzname() and date.tzname()[3:]) or \
+            if isinstance(date, str):
+                return date
+            elif date.year == 1900 and date.month != 0 and date.day != 0 \
+                    and date.hour == 0 and date.minute == 0 and date.second == 0:
+                return "--%.2d-%.2d" % (date.month, date.day)
+            elif (date.tzname() and date.tzname()[3:]) or \
                     (date.hour != 0 or date.minute != 0 or date.second != 0):
-                date_format = locale.nl_langinfo(locale.D_T_FMT)
+                return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
             else:
-                date_format = locale.nl_langinfo(locale.D_FMT)
-            if date_format:
-                return date.strftime(date_format)
-            else:
-                return "%.4d-%.2d-%.2d" % (date.year, date.month, date.day)
+                return date.strftime(locale.nl_langinfo(locale.D_FMT))
         return ""
 
     def add_birthday(self, date):
-        bday_obj = self.vcard.add('bday')
-        if date.tzname() and date.tzname()[3:]:
-            bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" \
-                    % (date.year, date.month, date.day, date.hour, date.minute,
-                            date.second, date.tzname()[3:])
+        if isinstance(date, str):
+            if self.get_version() == "4.0":
+                bday_obj = self.vcard.add('bday')
+                bday_obj.params['VALUE'] = ["text"]
+                bday_obj.value = date.strip()
+        elif date.year == 1900 and date.month != 0 and date.day != 0 \
+                and date.hour == 0 and date.minute == 0 and date.second == 0:
+            if self.get_version() == "4.0":
+                bday_obj = self.vcard.add('bday')
+                bday_obj.value = "--%.2d%.2d" % (date.month, date.day)
+        elif date.tzname() and date.tzname()[3:]:
+            bday_obj = self.vcard.add('bday')
+            if self.get_version() == "4.0":
+                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" \
+                        % (date.year, date.month, date.day, date.hour,
+                                date.minute, date.second, date.tzname()[3:])
+            else:
+                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" \
+                        % (date.year, date.month, date.day, date.hour,
+                                date.minute, date.second, date.tzname()[3:])
         elif date.hour != 0 or date.minute != 0 or date.second != 0:
-            bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" \
-                    % (date.year, date.month, date.day, date.hour, date.minute,
-                            date.second)
+            bday_obj = self.vcard.add('bday')
+            if self.get_version() == "4.0":
+                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
+                        % (date.year, date.month, date.day, date.hour,
+                                date.minute, date.second)
+            else:
+                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" \
+                        % (date.year, date.month, date.day, date.hour,
+                                date.minute, date.second)
         else:
-            bday_obj.value = "%.4d-%.2d-%.2d" \
-                    % (date.year, date.month, date.day)
+            bday_obj = self.vcard.add('bday')
+            if self.get_version() == "4.0":
+                bday_obj.value = "%.4d%.2d%.2d" \
+                        % (date.year, date.month, date.day)
+            else:
+                bday_obj.value = "%.4d-%.2d-%.2d" \
+                        % (date.year, date.month, date.day)
 
 
     #######################
@@ -746,10 +839,6 @@ class CarddavObject:
                 and not bool(contact_data.get("Organisation")):
             raise ValueError(
                     "Error: You must either enter a name or an organisation")
-
-        # delete vcard version
-        # the correct version is added automatically on saving again
-        self.delete_vcard_object("VERSION")
 
         # update rev
         self.delete_vcard_object("REV")
@@ -949,14 +1038,32 @@ class CarddavObject:
         self.delete_vcard_object("BDAY")
         if bool(contact_data.get("Birthday")):
             if isinstance(contact_data.get("Birthday"), str):
-                try:
-                    date = helpers.string_to_date(contact_data.get("Birthday"))
-                except ValueError as e:
+                if contact_data.get("Birthday").startswith("text="):
+                    if self.get_version() == "4.0":
+                        date = contact_data.get("Birthday") \
+                                .split("text=")[1].strip()
+                    else:
+                        raise ValueError(
+                                "Error: Free text format for birthday only "
+                                "usable with vcard version 4.0")
+                elif re.match("^--\d{4}$", contact_data.get("Birthday")) \
+                        and self.get_version() != "4.0":
                     raise ValueError(
-                            "Error: Wrong birthday format or invalid date\n"
-                            "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
+                            "Error: Birthday format --mmdd only usable "
+                            "with vcard version 4.0")
+                elif re.match("^--\d{2}-\d{2}$", contact_data.get("Birthday")) \
+                        and self.get_version() != "4.0":
+                    raise ValueError(
+                            "Error: Birthday format --mm-dd only usable "
+                            "with vcard version 4.0")
                 else:
-                    self.add_birthday(date)
+                    try:
+                        date = helpers.string_to_date(contact_data.get("Birthday"))
+                    except ValueError as e:
+                        raise ValueError(
+                                "Error: Wrong birthday format or invalid date\n"
+                                "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
+                self.add_birthday(date)
             else:
                 raise ValueError("Error: birthday must be a string object.")
 
@@ -1121,7 +1228,14 @@ class CarddavObject:
             elif line.lower().startswith("birthday"):
                 birthday = self.get_birthday()
                 if birthday:
-                    if (birthday.tzname() and birthday.tzname()[3:]) or \
+                    if isinstance(birthday, str):
+                        strings.append("Birthday : text= %s" % birthday)
+                    elif birthday.year == 1900 and birthday.month != 0 and \
+                            birthday.day != 0 and birthday.hour == 0 and \
+                            birthday.minute == 0 and birthday.second == 0:
+                        strings.append("Birthday : --%.2d-%.2d" \
+                                % (birthday.month, birthday.day))
+                    elif (birthday.tzname() and birthday.tzname()[3:]) or \
                             (birthday.hour != 0 or birthday.minute != 0 \
                                 or birthday.second != 0):
                         strings.append("Birthday : %s" % birthday.isoformat())
@@ -1311,13 +1425,26 @@ class CarddavObject:
                 standard_types = [standard_types]
             for type in standard_types:
                 type = type.strip()
-                if type:
+                if type and type.lower() != "pref":
                     if not type.lower().startswith("x-"):
                         type_list.append(type)
                     elif type[2:].lower() not in [x.lower() for x in type_list]:
                         # add x-custom type in case it's not already added by
                         # custom label for loop above but strip x- before
                         type_list.append(type[2:])
+        # try to get pref parameter from vcard version 4.0
+        try:
+            type_list.append("pref=%d"
+                    % int(object.params.get("PREF")[0]))
+        except (IndexError, TypeError, ValueError):
+            # else try to determine, if type params contain pref attribute
+            try:
+                for x in object.params.get("TYPE"):
+                    if x.lower() == "pref" and "pref" not in type_list:
+                        type_list.append("pref")
+            except TypeError:
+                pass
+        # return type_list or default type
         if type_list:
             return type_list
         return [default_type]
@@ -1330,16 +1457,21 @@ class CarddavObject:
         :type value: str
         :param supported_types: all allowed standard types
         :type supported_types: list(str)
-        :returns: tuple of standard and custom types
-        :rtype: tuple(list(str), list(str))
+        :returns: tuple of standard and custom types and pref integer
+        :rtype: tuple(list(str), list(str), int)
         """
         custom_types = []
         standard_types = []
+        pref = 0
         for type in types:
             type = type.strip()
             if type:
                 if type.lower() in supported_types:
                     standard_types.append(type)
+                elif type.lower() == "pref":
+                    pref += 1
+                elif re.match("^pref=\d{1,2}$", type.lower()):
+                    pref += int(type.split("=")[1])
                 else:
                     if type.lower().startswith("x-"):
                         custom_types.append(type[2:])
@@ -1347,5 +1479,5 @@ class CarddavObject:
                     else:
                         custom_types.append(type)
                         standard_types.append("X-%s" % type)
-        return (standard_types, custom_types)
+        return (standard_types, custom_types, pref)
 

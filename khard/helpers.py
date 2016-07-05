@@ -47,6 +47,16 @@ def string_to_list(input, delimiter):
 
 def string_to_date(input):
     """convert string to date object"""
+    # try date format --mmdd
+    try:
+        return datetime.strptime(input, "--%m%d")
+    except ValueError as e:
+        pass
+    # try date format --mm-dd
+    try:
+        return datetime.strptime(input, "--%m-%d")
+    except ValueError as e:
+        pass
     # try date format yyyymmdd
     try:
         return datetime.strptime(input, "%Y%m%d")
@@ -57,17 +67,33 @@ def string_to_date(input):
         return datetime.strptime(input, "%Y-%m-%d")
     except ValueError as e:
         pass
-    # try datetime format yyyy-mm-ddThh-mm-ss
+    # try datetime format yyyymmddThhmmss
+    try:
+        return datetime.strptime(input, "%Y%m%dT%H%M%S")
+    except ValueError as e:
+        pass
+    # try datetime format yyyy-mm-ddThh:mm:ss
     try:
         return datetime.strptime(input, "%Y-%m-%dT%H:%M:%S")
     except ValueError as e:
         pass
-    # try datetime format yyyy-mm-ddThh-mm-ssZ
+    # try datetime format yyyymmddThhmmssZ
+    try:
+        return datetime.strptime(input, "%Y%m%dT%H%M%SZ")
+    except ValueError as e:
+        pass
+    # try datetime format yyyy-mm-ddThh:mm:ssZ
     try:
         return datetime.strptime(input, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError as e:
         pass
-    # try datetime format yyyy-mm-ddThh-mm-sstz where tz may look like -06:00
+    # try datetime format yyyymmddThhmmsstz where tz may look like -06:00
+    try:
+        return datetime.strptime(
+                ''.join(input.rsplit(":", 1)), "%Y%m%dT%H%M%S%z")
+    except ValueError as e:
+        pass
+    # try datetime format yyyy-mm-ddThh:mm:sstz where tz may look like -06:00
     try:
         return datetime.strptime(
                 ''.join(input.rsplit(":", 1)), "%Y-%m-%dT%H:%M:%S%z")
@@ -231,7 +257,9 @@ Suffix     :
 # person related information
 #
 # birthday
-# Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
+# Formats:
+#   vcard 3.0 and 4.0: yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
+#   vcard 4.0 only: --mm-dd or text= string value
 Birthday : 
 # nickname
 # may contain a string or a list of strings
@@ -270,7 +298,8 @@ Role  :
 #           - number2
 #       custom: number
 # allowed types:
-#   At least one of: bbs, car, cell, fax, home, isdn, msg, modem, pager, pcs, pref, video, voice, work
+#   vcard 3.0: At least one of bbs, car, cell, fax, home, isdn, msg, modem, pager, pcs, pref, video, voice, work
+#   vcard 4.0: At least one of home, work, pref, text, voice, fax, cell, video, pager, textphone
 #   Alternatively you may use a single custom label (only letters).
 #   But beware, that not all address book clients will support custom labels.
 Phone :
@@ -280,7 +309,8 @@ Phone :
 # email addresses
 # format like phone numbers above
 # allowed types:
-#   At least one of: home, internet, pref, uri, work, x400
+#   vcard 3.0: At least one of home, internet, pref, work, x400
+#   vcard 4.0: At least one of home, internet, pref, work
 #   Alternatively you may use a single custom label (only letters).
 Email :
     home : 
@@ -288,7 +318,8 @@ Email :
 
 # post addresses
 # allowed types:
-#   At least one of: home, pref, work
+#   vcard 3.0: At least one of dom, intl, home, parcel, postal, pref, work
+#   vcard 4.0: At least one of home, pref, work
 #   Alternatively you may use a single custom label (only letters).
 Address :
     home :

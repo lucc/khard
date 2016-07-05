@@ -198,6 +198,18 @@ class Config:
                                 "at least surrounded by one letter or digit.")
                         sys.exit(2)
 
+            # preferred vcard version
+            if "preferred_version" not in self.config['vcard']:
+                self.config['vcard']['preferred_version'] = "3.0"
+            elif self.config['vcard']['preferred_version'] not in \
+                    self.get_supported_vcard_versions():
+                print("Error in config file\n" \
+                        "Invalid value for preferred_version parameter\n" \
+                        "Possible values: %s"
+                        % self.get_supported_vcard_versions())
+                sys.exit(2)
+
+
             # load address books
             if "addressbooks" not in self.config:
                 print("Error in config file\nMissing main section \"[addressbooks]\".")
@@ -364,6 +376,14 @@ class Config:
 
         def get_supported_private_objects(self):
             return self.config['vcard']['private_objects']
+
+
+        def get_preferred_vcard_version(self):
+            return self.config['vcard']['preferred_version']
+
+
+        def get_supported_vcard_versions(self):
+            return ["3.0", "4.0"]
 
 
         def display_by_name(self):
