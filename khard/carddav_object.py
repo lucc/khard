@@ -3,16 +3,18 @@
 # contact object class
 # vcard version 3.0: https://tools.ietf.org/html/rfc2426
 
-import os
-import sys
+import datetime
 import locale
+import os
 import re
+import sys
+
+from atomicwrites import atomic_write
 import vobject
 import yaml
-from atomicwrites import atomic_write
+
 from . import helpers
 from .object_type import ObjectType
-from datetime import date, datetime, time
 
 
 class CarddavObject:
@@ -856,7 +858,7 @@ class CarddavObject:
 
         # update rev
         self.delete_vcard_object("REV")
-        self.add_rev(datetime.now())
+        self.add_rev(datetime.datetime.now())
 
         # name
         self.delete_vcard_object("FN")

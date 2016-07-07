@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os, random, string
 from datetime import datetime
+import os
+import random
+import string
+
 from .object_type import ObjectType
 
 

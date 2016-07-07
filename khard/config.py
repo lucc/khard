@@ -3,17 +3,19 @@
 # singleton code comes from:
 # http://code.activestate.com/recipes/52558/#as_content
 
-import os
-import sys
+from distutils.spawn import find_executable
 import glob
 import locale
+import os
 import re
+import sys
+
+import configobj
 import vobject
+
 from .actions import Actions
 from .carddav_object import CarddavObject
 from . import helpers
-from configobj import ConfigObj, ParseError
-from distutils.spawn import find_executable
 from .address_book import AddressBook
 
 

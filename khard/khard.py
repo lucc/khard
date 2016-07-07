@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import email.header
 import logging
 import os
 import re
 import subprocess
 import sys
 import tempfile
+
 from . import helpers
-from email.header import decode_header
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config
@@ -607,7 +608,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         # remove quotes from name string, otherwise decoding fails
         name = name.replace("\"", "")
         # fix encoding of senders name
-        name, encoding = decode_header(name)[0]
+        name, encoding = email.header.decode_header(name)[0]
         if encoding:
             name = name.decode(encoding).replace("\"", "")
         # query user input.
