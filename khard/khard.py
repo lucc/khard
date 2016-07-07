@@ -297,7 +297,7 @@ def copy_contact(contact, target_address_book, delete_source_contact):
 def list_address_books(address_book_list):
     table = [["Index", "Address book"]]
     for index, address_book in enumerate(address_book_list):
-        table.append([ index+1, address_book.name ])
+        table.append([index+1, address_book.name])
     print(helpers.pretty_print(table))
 
 
@@ -1465,7 +1465,7 @@ def main():
     if "search_terms" in args and args.search_terms:
         search_query_list.append(
                 ".*".join(
-                    [ x.replace("*", ".*") for x in args.search_terms ]))
+                    [x.replace("*", ".*") for x in args.search_terms]))
     if "target_contact" in args and args.target_contact:
         search_query_list.append(
                 args.target_contact.replace("*", ".*").replace(" ", ".*"))

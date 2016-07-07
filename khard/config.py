@@ -359,7 +359,7 @@ class Config:
             self.uid_dict.clear()
             flat_contact_list = sorted(
                     self.original_uid_dict.values(),
-                    key = lambda x: x.get_uid())
+                    key=lambda x: x.get_uid())
             if len(flat_contact_list) == 1:
                 current = flat_contact_list[0]
                 self.uid_dict[current.get_uid()[:1]] = current

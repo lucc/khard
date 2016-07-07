@@ -4,21 +4,21 @@
 class Actions:
 
     action_map = {
-            "addressbooks" : ["abooks"],
-            "add-email"    : [],
-            "birthdays"    : ["bdays"],
-            "copy"         : ["cp"],
-            "details"      : [],
-            "email"        : [],
-            "export"       : [],
-            "list"         : ["ls"],
-            "merge"        : [],
-            "modify"       : ["edit"],
-            "move"         : ["mv"],
-            "new"          : ["add"],
-            "phone"        : [],
-            "remove"       : ["delete", "del", "rm"],
-            "source"       : []
+            "addressbooks": ["abooks"],
+            "add-email":    [],
+            "birthdays":    ["bdays"],
+            "copy":         ["cp"],
+            "details":      [],
+            "email":        [],
+            "export":       [],
+            "list":         ["ls"],
+            "merge":        [],
+            "modify":       ["edit"],
+            "move":         ["mv"],
+            "new":          ["add"],
+            "phone":        [],
+            "remove":       ["delete", "del", "rm"],
+            "source":       []
     }
 
     @classmethod
