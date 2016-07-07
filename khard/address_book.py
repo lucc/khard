@@ -2,6 +2,7 @@
 
 import os
 
+
 class AddressBook:
     def __init__(self, name, path):
         self.loaded = False
@@ -32,4 +33,3 @@ class AddressBook:
 
     def add_contact(self, contact):
         self.contact_list.append(contact)
-

@@ -14,7 +14,9 @@ from . import helpers
 from .object_type import ObjectType
 from datetime import date, datetime, time
 
+
 class CarddavObject:
+
     def __init__(self, address_book, filename, supported_private_objects,
             vcard_version):
         self.vcard = None
@@ -66,7 +68,6 @@ class CarddavObject:
                 except vobject.base.ParseError as e:
                     raise
 
-
     #######################################
     # factory methods to create new contact
     #######################################
@@ -97,7 +98,6 @@ class CarddavObject:
         contact.process_user_input(user_input)
         return contact
 
-
     ######################################
     # overwrite some default class methods
     ######################################
@@ -114,7 +114,6 @@ class CarddavObject:
 
     def __ne__(self, other):
         return not self == other
-
 
     #####################
     # getters and setters
@@ -695,7 +694,7 @@ class CarddavObject:
         for child in self.vcard.getChildren():
             if child.name.lower().startswith("x-"):
                 try:
-                    key_index = [ x.lower() 
+                    key_index = [ x.lower()
                             for x in self.supported_private_objects ] \
                             .index(child.name[2:].lower())
                 except ValueError as e:
@@ -801,7 +800,6 @@ class CarddavObject:
             else:
                 bday_obj.value = "%.4d-%.2d-%.2d" \
                         % (date.year, date.month, date.day)
-
 
     #######################
     # object helper methods
@@ -1109,7 +1107,6 @@ class CarddavObject:
                         "Error: note must be a string or a list of strings\n"
                         "Use the | character to create a multi-line note.")
 
-
     def get_template(self):
         strings = []
         for line in helpers.get_new_contact_template().splitlines():
@@ -1293,7 +1290,7 @@ class CarddavObject:
                 or len(self.get_titles()) > 0:
             strings.append("General:")
             if self.get_birthday():
-                strings.append("    Birthday: %s" 
+                strings.append("    Birthday: %s"
                         % self.get_formatted_birthday())
             if len(self.get_nicknames()) > 0:
                 strings += helpers.convert_to_yaml(
@@ -1358,7 +1355,6 @@ class CarddavObject:
                         "Note", self.get_notes(), 4, -1, False)
         return '\n'.join(strings)
 
-
     def write_to_file(self, overwrite=False):
         try:
             with atomic_write(self.filename, overwrite=overwrite) as f:
@@ -1394,7 +1390,6 @@ class CarddavObject:
         else:
             print("Error: Vcard file %s does not exist." % self.filename)
             sys.exit(4)
-
 
     #######################
     # static helper methods
@@ -1480,4 +1475,3 @@ class CarddavObject:
                         custom_types.append(type)
                         standard_types.append("X-%s" % type)
         return (standard_types, custom_types, pref)
-

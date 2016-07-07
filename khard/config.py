@@ -22,6 +22,7 @@ class Config:
 
     class __impl:
         """ Implementation of the singleton interface """
+
         def __init__(self):
             self.config = None
             self.address_book_list = []
@@ -244,7 +245,6 @@ class Config:
                     # add address book to list
                     self.address_book_list.append(address_book)
 
-
         def get_all_address_books(self):
             """
             return a list of all address books from config file
@@ -255,7 +255,6 @@ class Config:
             :rtype: list(AddressBook)
             """
             return self.address_book_list
-
 
         def get_address_book(self, name, search_queries=None):
             """
@@ -304,7 +303,7 @@ class Config:
                                     % (error_counter, number_of_contacts))
                             sys.exit(2)
 
-                        # check uniqueness of vcard uids and create short uid 
+                        # check uniqueness of vcard uids and create short uid
                         # dictionary that can be disabled with the show_uids
                         # option in the config file, if desired
                         if self.config['contact table']['show_uids']:
@@ -334,10 +333,8 @@ class Config:
                     return address_book
             return None
 
-
         def has_uids(self):
             return len(self.uid_dict.keys()) > 0
-
 
         def create_shortened_uid_dictionary(self):
             # uniqueness of uids is guaranteed but they are much to long for
@@ -378,7 +375,6 @@ class Config:
                 same = helpers.compare_uids(prev.get_uid(), current.get_uid())
                 self.uid_dict[current.get_uid()[:same+1]] = current
 
-
         def get_shortened_uid(self, uid):
             if bool(uid):
                 for length_of_uid in range(len(uid), 0, -1):
@@ -386,74 +382,56 @@ class Config:
                         return uid[:length_of_uid]
             return ""
 
-
         def get_editor(self):
             return self.config['general']['editor']
-
 
         def get_merge_editor(self):
             return self.config['general']['merge_editor']
 
-
         def get_default_action(self):
             return self.config['general']['default_action']
-
 
         def get_supported_private_objects(self):
             return self.config['vcard']['private_objects']
 
-
         def get_preferred_vcard_version(self):
             return self.config['vcard']['preferred_version']
-
 
         def get_supported_vcard_versions(self):
             return ["3.0", "4.0"]
 
-
         def search_in_source_files(self):
             return self.config['vcard']['search_in_source_files']
-
 
         def set_search_in_source_files(self, bool):
             self.config['vcard']['search_in_source_files'] = bool
 
-
         def display_by_name(self):
             return self.config['contact table']['display']
-
 
         def set_display_by_name(self, criteria):
             self.config['contact table']['display'] = criteria
 
-
         def sort_by_name(self):
             return self.config['contact table']['sort']
-
 
         def set_sort_by_name(self, criteria):
             self.config['contact table']['sort'] = criteria
 
-
         def group_by_addressbook(self):
             return self.config['contact table']['group_by_addressbook']
-
 
         def set_group_by_addressbook(self, bool):
             self.config['contact table']['group_by_addressbook'] = bool
 
-
         def reverse(self):
             return self.config['contact table']['reverse']
-
 
         def set_reverse(self, bool):
             self.config['contact table']['reverse'] = bool
 
-
         def show_nicknames(self):
             return self.config['contact table']['show_nicknames']
-
 
     ####################################
     # storage for the instance reference
@@ -469,13 +447,10 @@ class Config:
         # Store instance reference as the only member in the handle
         self.__dict__['_Config__instance'] = Config.__instance
 
-
     def __getattr__(self, attr):
         """ Delegate access to implementation """
         return getattr(self.__instance, attr)
 
-
     def __setattr__(self, attr, value):
         """ Delegate access to implementation """
         return setattr(self.__instance, attr, value)
-

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 class Actions:
 
     action_map = {
@@ -34,4 +35,3 @@ class Actions:
     @classmethod
     def get_list_of_all_actions(cls):
         return list(cls.action_map.keys())
-

@@ -2,6 +2,7 @@
 
 from enum import Enum
 
+
 class ObjectType(Enum):
     string = 1
     list_with_strings = 2
