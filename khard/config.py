@@ -18,10 +18,7 @@ from .address_book import AddressBook
 
 
 class Config:
-    """ A python singleton """
 
-    class __impl:
-        """ Implementation of the singleton interface """
         def __init__(self):
             self.config = None
             self.address_book_list = []
@@ -304,7 +301,7 @@ class Config:
                                     % (error_counter, number_of_contacts))
                             sys.exit(2)
 
-                        # check uniqueness of vcard uids and create short uid 
+                        # check uniqueness of vcard uids and create short uid
                         # dictionary that can be disabled with the show_uids
                         # option in the config file, if desired
                         if self.config['contact table']['show_uids']:
@@ -453,29 +450,3 @@ class Config:
 
         def show_nicknames(self):
             return self.config['contact table']['show_nicknames']
-
-
-    ####################################
-    # storage for the instance reference
-    ####################################
-    __instance = None
-
-    def __init__(self):
-        """ Create singleton instance """
-        # Check whether we already have an instance
-        if Config.__instance is None:
-            # Create and remember instance
-            Config.__instance = Config.__impl()
-        # Store instance reference as the only member in the handle
-        self.__dict__['_Config__instance'] = Config.__instance
-
-
-    def __getattr__(self, attr):
-        """ Delegate access to implementation """
-        return getattr(self.__instance, attr)
-
-
-    def __setattr__(self, attr, value):
-        """ Delegate access to implementation """
-        return setattr(self.__instance, attr, value)
-

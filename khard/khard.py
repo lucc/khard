@@ -15,6 +15,9 @@ from .config import Config
 from .version import khard_version
 
 
+config = None
+
+
 def create_new_contact(address_book):
     # create temp file
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
@@ -23,7 +26,7 @@ def create_new_contact(address_book):
             "# Address book: %s\n" \
             "# Vcard version: %s\n" \
             "# if you want to cancel, exit without saving\n\n%s" \
-            % (address_book.get_name(), Config().get_preferred_vcard_version(),
+            % (address_book.get_name(), config.get_preferred_vcard_version(),
                     helpers.get_new_contact_template())
     tf.write(old_contact_template)
     tf.close()
@@ -31,7 +34,7 @@ def create_new_contact(address_book):
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start vim to edit contact template
-        child = subprocess.Popen([Config().get_editor(), temp_file_name])
+        child = subprocess.Popen([config.get_editor(), temp_file_name])
         child.communicate()
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
@@ -48,8 +51,8 @@ def create_new_contact(address_book):
         try:
             new_contact = CarddavObject.from_user_input(
                     address_book, new_contact_template,
-                    Config().get_supported_private_objects(),
-                    Config().get_preferred_vcard_version())
+                    config.get_supported_private_objects(),
+                    config.get_preferred_vcard_version())
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
@@ -92,7 +95,7 @@ def modify_existing_contact(old_contact):
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start editor to edit contact template
-        child = subprocess.Popen([Config().get_editor(), temp_file_name])
+        child = subprocess.Popen([config.get_editor(), temp_file_name])
         child.communicate()
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
@@ -138,14 +141,14 @@ def merge_existing_contacts(source_contact, target_contact,
                             delete_source_contact):
     # show warning, if target vcard version is not 3.0 or 4.0
     if target_contact.get_version() not in \
-            Config().get_supported_vcard_versions():
+            config.get_supported_vcard_versions():
         print("Warning:\nThe target contact in which to merge is based on "
                 "vcard version %s but khard only supports the modification of "
                 "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
                 "will be converted to vcard version %s but beware: This could "
                 "corrupt the contact file or cause data loss."
                 % (target_contact.get_version(),
-                    Config().get_preferred_vcard_version()))
+                    config.get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -186,7 +189,7 @@ def merge_existing_contacts(source_contact, target_contact,
             target_temp_file_name)
     while True:
         # start editor to edit contact template
-        child = subprocess.Popen([Config().get_merge_editor(),
+        child = subprocess.Popen([config.get_merge_editor(),
                                   source_temp_file_name,
                                   target_temp_file_name])
         child.communicate()
@@ -313,7 +316,7 @@ def list_contacts(vcard_list):
         print("Address books: %s" % ', '.join(
             [str(book) for book in selected_address_books]))
         table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
-    if Config().has_uids():
+    if config.has_uids():
         table_header.append("UID")
     table.append(table_header)
     # table body
@@ -321,8 +324,8 @@ def list_contacts(vcard_list):
         row = []
         row.append(index+1)
         if len(vcard.get_nicknames()) > 0 \
-                and Config().show_nicknames():
-            if Config().display_by_name() == "first_name":
+                and config.show_nicknames():
+            if config.display_by_name() == "first_name":
                 row.append("%s (Nickname: %s)" % (
                     vcard.get_first_name_last_name(),
                     vcard.get_nicknames()[0]))
@@ -331,7 +334,7 @@ def list_contacts(vcard_list):
                     vcard.get_last_name_first_name(),
                     vcard.get_nicknames()[0]))
         else:
-            if Config().display_by_name() == "first_name":
+            if config.display_by_name() == "first_name":
                 row.append(vcard.get_first_name_last_name())
             else:
                 row.append(vcard.get_last_name_first_name())
@@ -353,9 +356,9 @@ def list_contacts(vcard_list):
             row.append("")
         if len(selected_address_books) > 1:
             row.append(vcard.get_address_book().get_name())
-        if Config().has_uids():
-            if Config().get_shortened_uid(vcard.get_uid()):
-                row.append(Config().get_shortened_uid(vcard.get_uid()))
+        if config.has_uids():
+            if config.get_shortened_uid(vcard.get_uid()):
+                row.append(config.get_shortened_uid(vcard.get_uid()))
             else:
                 row.append("")
         table.append(row)
@@ -400,7 +403,7 @@ def choose_address_book_from_list(header_string, address_book_list):
                 addr_index = int(input_string)
                 if addr_index > 0:
                     # make sure the address book is loaded afterwards
-                    selected_address_book = Config().get_address_book(
+                    selected_address_book = config.get_address_book(
                             address_book_list[addr_index-1].name)
                 else:
                     raise ValueError
@@ -450,8 +453,8 @@ def get_contact_list_by_user_selection(address_books, search, strict_search):
     """
     return get_contacts(
             address_books, search, "name" if strict_search else "all",
-            Config().reverse(), Config().group_by_addressbook(),
-            Config().sort_by_name())
+            config.reverse(), config.group_by_addressbook(),
+            config.sort_by_name())
 
 
 def get_contacts(address_books, query, method="all", reverse=False,
@@ -556,8 +559,8 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
         try:
             new_contact = CarddavObject.from_user_input(
                     selected_address_book, input_from_stdin_or_file,
-                    Config().get_supported_private_objects(),
-                    Config().get_preferred_vcard_version())
+                    config.get_supported_private_objects(),
+                    config.get_preferred_vcard_version())
         except ValueError as e:
             print(e)
             sys.exit(1)
@@ -630,7 +633,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         # ask for address book, in which to create the new contact
         selected_address_book = choose_address_book_from_list(
                 "Select address book for new contact",
-                Config().get_all_address_books())
+                config.get_all_address_books())
         # ask for name and organisation of new contact
         while True:
             first_name = input("First name: ")
@@ -643,8 +646,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         selected_vcard = CarddavObject.from_user_input(selected_address_book,
                 "First name : %s\nLast name : %s\nOrganisation : %s"
                     % (first_name, last_name, organisation),
-                Config().get_supported_private_objects(),
-                Config().get_preferred_vcard_version())
+                config.get_supported_private_objects(),
+                config.get_preferred_vcard_version())
 
     # check if the contact already contains the email address
     for type, email_list in sorted(
@@ -707,7 +710,7 @@ def birthdays_subcommand(vcard_list, parsable):
     for vcard in vcard_list:
         date = vcard.get_birthday()
         if parsable:
-            if Config().display_by_name() == "first_name":
+            if config.display_by_name() == "first_name":
                 birthday_list.append("%04d.%02d.%02d\t%s"
                         % (date.year, date.month, date.day,
                             vcard.get_first_name_last_name()))
@@ -716,7 +719,7 @@ def birthdays_subcommand(vcard_list, parsable):
                         % (date.year, date.month, date.day,
                             vcard.get_last_name_first_name()))
         else:
-            if Config().display_by_name() == "first_name":
+            if config.display_by_name() == "first_name":
                 birthday_list.append("%s\t%s"
                         % (vcard.get_first_name_last_name(),
                             vcard.get_formatted_birthday()))
@@ -761,7 +764,7 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                 # create output line
                 if parsable:
                     # parsable option: start with phone number
-                    if Config().display_by_name() == "first_name":
+                    if config.display_by_name() == "first_name":
                         phone_number_line = "%s\t%s\t%s" % \
                                 (number, vcard.get_first_name_last_name(), type)
                     else:
@@ -769,7 +772,7 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                                 (number, vcard.get_last_name_first_name(), type)
                 else:
                     # else: start with name
-                    if Config().display_by_name() == "first_name":
+                    if config.display_by_name() == "first_name":
                         phone_number_line = "%s\t%s\t%s" % \
                                 (vcard.get_first_name_last_name(), type, number)
                     else:
@@ -840,7 +843,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
                 # create output line
                 if parsable:
                     # parsable option: start with email address
-                    if Config().display_by_name() == "first_name":
+                    if config.display_by_name() == "first_name":
                         email_address_line = "%s\t%s\t%s" \
                                 % (email, vcard.get_first_name_last_name(), type)
                     else:
@@ -848,7 +851,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
                                 % (email, vcard.get_last_name_first_name(), type)
                 else:
                     # else: start with name
-                    if Config().display_by_name() == "first_name":
+                    if config.display_by_name() == "first_name":
                         email_address_line = "%s\t%s\t%s" \
                                 % (vcard.get_first_name_last_name(), type, email)
                     else:
@@ -915,14 +918,14 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
     """
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
     if selected_vcard.get_version() not in \
-            Config().get_supported_vcard_versions():
+            config.get_supported_vcard_versions():
         print("Warning:\nThe selected contact is based on vcard version %s but "
                 "khard only supports the creation and modification of vcards "
                 "with version 3.0 and 4.0.\nIf you proceed, the contact will be "
                 "converted to vcard version %s but beware: This could corrupt "
                 "the contact file or cause data loss."
                 % (selected_vcard.get_version(),
-                    Config().get_preferred_vcard_version()))
+                    config.get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -1144,45 +1147,6 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                 if input_string.lower() in ["", "q"]:
                     print("Canceled")
                     break
-
-
-# Patch argparse.ArgumentParser, taken from http://stackoverflow.com/a/26379693
-def set_default_subparser(self, name):
-    """Default subparser selection. Call after setup, just before parse_args().
-
-    :param name: the name of the subparser to call by default
-    :type name: str
-    :returns: None
-    :rtype: None
-
-    """
-    for arg in sys.argv[1:]:
-        if arg in ['-h', '--help']:  # global help if no subparser
-            break
-    else:
-        for x in self._subparsers._actions:
-            if not isinstance(x, argparse._SubParsersAction):
-                continue
-            for sp_name in x._name_parser_map.keys():
-                if sp_name in sys.argv[1:]:
-                    return  # found a subcommand
-        else:
-            # Find position to insert default command.
-            options = self._option_string_actions.keys()
-            for index, arg in enumerate(sys.argv[1:], 1):
-                if arg in options:
-                    continue
-                else:
-                    # Insert command before first non option string (possibly
-                    # an argument for the subcommand).
-                    sys.argv.insert(index, name)
-                    break
-            else:
-                # Otherwise append default command.
-                sys.argv.append(name)
-
-
-argparse.ArgumentParser.set_default_subparser = set_default_subparser
 
 
 def main():
@@ -1418,11 +1382,14 @@ def main():
             description="list addressbooks",
             help="list addressbooks")
 
-    parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("args={}".format(args))
+    global config
+    config = Config()
+    if args.action is None:
+        args.action = config.get_default_action()
 
     # if args.action isn't one of the defined actions, it must be an alias
     if args.action not in Actions.get_list_of_all_actions():
@@ -1432,23 +1399,23 @@ def main():
 
     # display by name: first or last name
     if "display" in args and args.display:
-        Config().set_display_by_name(args.display)
+        config.set_display_by_name(args.display)
 
     # group by address book
     if "group_by_addressbook" in args and args.group_by_addressbook:
-        Config().set_group_by_addressbook(True)
+        config.set_group_by_addressbook(True)
 
     # reverse contact list
     if "reverse" in args and args.reverse:
-        Config().set_reverse(True)
+        config.set_reverse(True)
 
     # sort criteria: first or last name
     if "sort" in args and args.sort:
-        Config().set_sort_by_name(args.sort)
+        config.set_sort_by_name(args.sort)
 
     # search in source files
     if "search_in_source_files" in args and args.search_in_source_files:
-        Config().set_search_in_source_files(True)
+        config.set_search_in_source_files(True)
 
     # get all possible search queries for address book parsing
     search_query_list = []
@@ -1478,41 +1445,41 @@ def main():
     if "addressbook" in args and args.addressbook != []:
         # load address books which are defined in the configuration file
         for index, name in enumerate(args.addressbook):
-            address_book = Config().get_address_book(name, search_queries)
+            address_book = config.get_address_book(name, search_queries)
             if address_book is None:
                 print("Error: The entered address book \"%s\" does not exist."
                       "\nPossible values are: %s" % (
                           name, ', '.join([str(book) for book in
-                                           Config().get_all_address_books()])))
+                                           config.get_all_address_books()])))
                 sys.exit(1)
             else:
                 args.addressbook[index] = address_book
     else:
         # load contacts of all address books
         args.addressbook = []
-        for address_book in Config().get_all_address_books():
+        for address_book in config.get_all_address_books():
             args.addressbook.append(
-                    Config().get_address_book(
+                    config.get_address_book(
                         address_book.get_name(), search_queries))
     logging.debug("addressbooks: {}".format(args.addressbook))
 
     # load target address books
     if "target_addressbook" in args and args.target_addressbook != []:
         for index, name in enumerate(args.target_addressbook):
-            address_book = Config().get_address_book(name, search_queries)
+            address_book = config.get_address_book(name, search_queries)
             if address_book is None:
                 print("Error: The entered address book \"%s\" does not exist."
                       "\nPossible values are: %s" % (
                           name, ', '.join([str(book) for book in
-                                           Config().get_all_address_books()])))
+                                           config.get_all_address_books()])))
                 sys.exit(1)
             else:
                 args.target_addressbook[index] = address_book
     else:
         args.target_addressbook = []
-        for address_book in Config().get_all_address_books():
+        for address_book in config.get_all_address_books():
             args.target_addressbook.append(
-                    Config().get_address_book(
+                    config.get_address_book(
                         address_book.get_name(), search_queries))
     logging.debug("target addressbooks: {}".format(args.target_addressbook))
 
@@ -1531,7 +1498,7 @@ def main():
             # set search terms to the empty string to prevent errors in
             # phone and email actions
             args.search_terms = ""
-        vcard_list = get_contacts(Config().get_all_address_books(),
+        vcard_list = get_contacts(config.get_all_address_books(),
                                   args.uid, method="uid")
         # We require that the uid given can uniquely identify a contact.
         if len(vcard_list) != 1:
@@ -1628,12 +1595,12 @@ def main():
         elif args.action == "remove":
             remove_subcommand(selected_vcard)
         elif args.action == "source":
-            source_subcommand(selected_vcard, Config().get_editor())
+            source_subcommand(selected_vcard, config.get_editor())
     elif args.action == "merge":
         merge_subcommand(vcard_list, args.target_addressbook,
                          args.target_contact, args.target_uid)
     elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
-        print('\n'.join(str(book) for book in Config().get_all_address_books()))
+        print('\n'.join(str(book) for book in config.get_all_address_books()))
 
