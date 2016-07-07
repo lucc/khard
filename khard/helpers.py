@@ -8,7 +8,7 @@ import string
 from .object_type import ObjectType
 
 
-def pretty_print(table, justify = "L"):
+def pretty_print(table, justify="L"):
     # get width for every column
     column_widths = [0] * table[0].__len__()
     offset = 3
@@ -21,13 +21,13 @@ def pretty_print(table, justify = "L"):
     for row in table:
         single_row_list = []
         for col_index, col in enumerate(row):
-            if justify == "R": # justify right
+            if justify == "R":  # justify right
                 formated_column = str(col).rjust(
                     column_widths[col_index] + offset)
-            elif justify == "L": # justify left
+            elif justify == "L":  # justify left
                 formated_column = str(col).ljust(
                     column_widths[col_index] + offset)
-            elif justify == "C": # justify center
+            elif justify == "C":  # justify center
                 formated_column = str(col).center(
                     column_widths[col_index] + offset)
             single_row_list.append(formated_column)
@@ -50,7 +50,7 @@ def list_to_string(input, delimiter):
 def string_to_list(input, delimiter):
     if isinstance(input, list):
         return input
-    return [ x.strip() for x in input.split(delimiter) ]
+    return [x.strip() for x in input.split(delimiter)]
 
 
 def string_to_date(input):
@@ -163,12 +163,12 @@ def convert_to_yaml(
             # same applies to value = [["string"]]
             value = value[0][0]
     if isinstance(value, str):
-        strings.append("%s%s%s: %s" \
+        strings.append("%s%s%s: %s"
                 % (' ' * indentation, name, ' ' * (indexOfColon-len(name)),
                     indent_multiline_string(
                         value, indentation+4, show_multi_line_character)))
     elif isinstance(value, list):
-        strings.append("%s%s%s: " \
+        strings.append("%s%s%s: "
                 % (' ' * indentation, name, ' ' * (indexOfColon-len(name))))
         for outer in value:
             # special case for single item sublists
@@ -223,7 +223,7 @@ def convert_to_vcard(name, value, allowed_object_type):
                     raise ValueError(
                         "Error: " + name + " must not contain a nested list")
             # filter out empty list items and strip leading and trailing space
-            return [ x.strip() for x in value if x ]
+            return [x.strip() for x in value if x]
     else:
         if allowed_object_type == ObjectType.string:
             raise ValueError(

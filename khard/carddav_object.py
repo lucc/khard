@@ -296,19 +296,19 @@ class CarddavObject:
         # n
         name_obj = self.vcard.add('n')
         name_obj.value = vobject.vcard.Name(
-                prefix = helpers.convert_to_vcard(
+                prefix=helpers.convert_to_vcard(
                     "name prefix", prefix,
                     ObjectType.string_or_list_with_strings),
-                given = helpers.convert_to_vcard(
+                given=helpers.convert_to_vcard(
                     "first name", first_name,
                     ObjectType.string_or_list_with_strings),
-                additional = helpers.convert_to_vcard(
+                additional=helpers.convert_to_vcard(
                     "additional name", additional_name,
                     ObjectType.string_or_list_with_strings),
-                family = helpers.convert_to_vcard(
+                family=helpers.convert_to_vcard(
                     "last name", last_name,
                     ObjectType.string_or_list_with_strings),
-                suffix = helpers.convert_to_vcard(
+                suffix=helpers.convert_to_vcard(
                     "name suffix", suffix,
                     ObjectType.string_or_list_with_strings))
         # fn
@@ -347,7 +347,7 @@ class CarddavObject:
                         start_index = match.start()+2
                     child.value = org_list + [child.value[start_index:]]
                 organisations.append(
-                        [ x.replace("\\", "") for x in child.value ])
+                        [x.replace("\\", "") for x in child.value])
         return sorted(organisations)
 
     def add_organisation(self, organisation):
@@ -421,7 +421,7 @@ class CarddavObject:
     def add_phone_number(self, type, number):
         standard_types, custom_types, pref = self.parse_type_value(
                 helpers.string_to_list(type, ","), number,
-                self.phone_types_v4 if self.get_version() == "4.0" \
+                self.phone_types_v4 if self.get_version() == "4.0"
                         else self.phone_types_v3)
         if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
             raise ValueError("Error: "
@@ -479,7 +479,7 @@ class CarddavObject:
     def add_email_address(self, type, address):
         standard_types, custom_types, pref = self.parse_type_value(
                 helpers.string_to_list(type, ","), address,
-                self.email_types_v4 if self.get_version() == "4.0" \
+                self.email_types_v4 if self.get_version() == "4.0"
                         else self.email_types_v3)
         if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
             raise ValueError("Error: "
@@ -526,13 +526,13 @@ class CarddavObject:
                     post_adr_dict[type] = []
                 post_adr_dict[type].append(
                         {
-                            "box" : child.value.box,
-                            "extended" : child.value.extended,
-                            "street" : child.value.street,
-                            "code" : child.value.code,
-                            "city" : child.value.city,
-                            "region" : child.value.region,
-                            "country" : child.value.country
+                            "box": child.value.box,
+                            "extended": child.value.extended,
+                            "street": child.value.street,
+                            "code": child.value.code,
+                            "city": child.value.city,
+                            "region": child.value.region,
+                            "country": child.value.country
                         })
         # sort post address lists
         for post_adr_list in post_adr_dict.values():
@@ -589,7 +589,7 @@ class CarddavObject:
         standard_types, custom_types, pref = self.parse_type_value(
                 helpers.string_to_list(type, ","),
                 "%s, %s" % (street, city),
-                self.address_types_v4 if self.get_version() == "4.0" \
+                self.address_types_v4 if self.get_version() == "4.0"
                         else self.address_types_v3)
         if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
             raise ValueError("Error: "
@@ -601,25 +601,25 @@ class CarddavObject:
         else:
             adr_obj = self.vcard.add('adr')
             adr_obj.value = vobject.vcard.Address(
-                    box = helpers.convert_to_vcard(
+                    box=helpers.convert_to_vcard(
                         "box address field", box,
                         ObjectType.string_or_list_with_strings),
-                    extended = helpers.convert_to_vcard(
+                    extended=helpers.convert_to_vcard(
                         "extended address field", extended,
                         ObjectType.string_or_list_with_strings),
-                    street = helpers.convert_to_vcard(
+                    street=helpers.convert_to_vcard(
                         "street", street,
                         ObjectType.string_or_list_with_strings),
-                    code = helpers.convert_to_vcard(
+                    code=helpers.convert_to_vcard(
                         "post code", code,
                         ObjectType.string_or_list_with_strings),
-                    city = helpers.convert_to_vcard(
+                    city=helpers.convert_to_vcard(
                         "city", city,
                         ObjectType.string_or_list_with_strings),
-                    region = helpers.convert_to_vcard(
+                    region=helpers.convert_to_vcard(
                         "region", region,
                         ObjectType.string_or_list_with_strings),
-                    country = helpers.convert_to_vcard(
+                    country=helpers.convert_to_vcard(
                         "country", country,
                         ObjectType.string_or_list_with_strings))
             if self.get_version() == "4.0":
@@ -701,8 +701,8 @@ class CarddavObject:
         for child in self.vcard.getChildren():
             if child.name.lower().startswith("x-"):
                 try:
-                    key_index = [ x.lower()
-                            for x in self.supported_private_objects ] \
+                    key_index = [x.lower()
+                            for x in self.supported_private_objects] \
                             .index(child.name[2:].lower())
                 except ValueError as e:
                     pass
@@ -1064,12 +1064,13 @@ class CarddavObject:
                         raise ValueError(
                                 "Error: Free text format for birthday only "
                                 "usable with vcard version 4.0")
-                elif re.match("^--\d{4}$", contact_data.get("Birthday")) \
+                elif re.match(r"^--\d{4}$", contact_data.get("Birthday")) \
                         and self.get_version() != "4.0":
                     raise ValueError(
                             "Error: Birthday format --mmdd only usable "
                             "with vcard version 4.0")
-                elif re.match("^--\d{2}-\d{2}$", contact_data.get("Birthday"))\
+                elif re.match(
+                        r"^--\d{2}-\d{2}$", contact_data.get("Birthday")) \
                         and self.get_version() != "4.0":
                     raise ValueError(
                             "Error: Birthday format --mm-dd only usable "
@@ -1252,14 +1253,14 @@ class CarddavObject:
                     elif birthday.year == 1900 and birthday.month != 0 and \
                             birthday.day != 0 and birthday.hour == 0 and \
                             birthday.minute == 0 and birthday.second == 0:
-                        strings.append("Birthday : --%.2d-%.2d" \
+                        strings.append("Birthday : --%.2d-%.2d"
                                 % (birthday.month, birthday.day))
                     elif (birthday.tzname() and birthday.tzname()[3:]) or \
-                            (birthday.hour != 0 or birthday.minute != 0 \
+                            (birthday.hour != 0 or birthday.minute != 0
                                 or birthday.second != 0):
                         strings.append("Birthday : %s" % birthday.isoformat())
                     else:
-                        strings.append("Birthday : %.4d-%.2d-%.2d" \
+                        strings.append("Birthday : %.4d-%.2d-%.2d"
                             % (birthday.year, birthday.month, birthday.day))
                 else:
                     strings.append("Birthday : ")
@@ -1274,7 +1275,7 @@ class CarddavObject:
                         "Webpage", self.get_webpages(), 0, 8, True)
         return '\n'.join(strings)
 
-    def print_vcard(self, show_address_book = True, show_uid = True):
+    def print_vcard(self, show_address_book=True, show_uid=True):
         strings = []
         # name
         if self.get_first_names() or self.get_last_names():
@@ -1492,7 +1493,7 @@ class CarddavObject:
                     standard_types.append(type)
                 elif type.lower() == "pref":
                     pref += 1
-                elif re.match("^pref=\d{1,2}$", type.lower()):
+                elif re.match(r"^pref=\d{1,2}$", type.lower()):
                     pref += int(type.split("=")[1])
                 else:
                     if type.lower().startswith("x-"):
