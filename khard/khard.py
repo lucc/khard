@@ -505,8 +505,10 @@ def get_contacts(address_books, query, method="all", reverse=False,
                     contact_details = contact.print_vcard()
                     contact_details_without_special_chars = re.sub(
                             "[^a-zA-Z0-9]", "", contact_details)
-                    if regexp.search(contact_details) != None or regexp.search(
-                                contact_details_without_special_chars) != None:
+                    if regexp.search(contact_details) is not None or \
+                            regexp.search(
+                                    contact_details_without_special_chars) \
+                            is not None:
                         contacts.append(contact)
     # Sort the contacts.
     if group:
@@ -703,7 +705,7 @@ def birthdays_subcommand(vcard_list, parsable):
     """
     # filter out contacts without a birthday date
     vcard_list = [
-        vcard for vcard in vcard_list if vcard.get_birthday() != None]
+        vcard for vcard in vcard_list if vcard.get_birthday() is not None]
     # sort by date (month and day)
     vcard_list.sort(
         key=lambda x: (x.get_birthday().month, x.get_birthday().day))

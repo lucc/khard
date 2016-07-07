@@ -758,9 +758,8 @@ class CarddavObject:
         if date:
             if isinstance(date, str):
                 return date
-            elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                    and date.hour == 0 and date.minute == 0 \
-                    and date.second == 0:
+            elif (date.year, date.month, date.day, date.hour, date.minute,
+                    date.second) == (1900, 0, 0, 0, 0, 0):
                 return "--%.2d-%.2d" % (date.month, date.day)
             elif (date.tzname() and date.tzname()[3:]) or \
                     (date.hour != 0 or date.minute != 0 or date.second != 0):
@@ -1307,7 +1306,7 @@ class CarddavObject:
             strings.append("Address book: %s" % self.address_book.get_name())
 
         # person related information
-        if self.get_birthday() != None \
+        if self.get_birthday() is not None \
                 or len(self.get_nicknames()) > 0 \
                 or len(self.get_roles()) > 0 \
                 or len(self.get_titles()) > 0:

@@ -39,7 +39,7 @@ class Config:
                     os.path.expanduser("~/.config")
             config_file = os.environ.get("KHARD_CONFIG") or \
                     os.path.join(xdg_config_home, "khard", "khard.conf")
-            if os.path.exists(config_file) == False:
+            if not os.path.exists(config_file):
                 print("Config file %s not available" % config_file)
                 sys.exit(2)
 
