@@ -79,7 +79,9 @@ class CarddavObject:
 
     @classmethod
     def from_file(cls, address_book, filename, supported_private_objects):
-        """ Use this if you want to create a new contact from an existing .vcf file """
+        """
+        Use this if you want to create a new contact from an existing .vcf file
+        """
         return cls(address_book, filename, supported_private_objects, None)
 
     @classmethod
@@ -92,7 +94,10 @@ class CarddavObject:
 
     @classmethod
     def from_existing_contact_with_new_user_input(cls, contact, user_input):
-        """ use this if you want to clone an existing contact and  replace its data with new user input in one step """
+        """
+        use this if you want to clone an existing contact and  replace its data
+        with new user input in one step
+        """
         contact = cls(contact.get_address_book(), contact.get_filename(),
                 contact.get_supported_private_objects(), None)
         contact.process_user_input(user_input)
@@ -106,9 +111,9 @@ class CarddavObject:
         return self.get_full_name()
 
     def __eq__(self, other):
-        if isinstance(other, CarddavObject) \
-                and self.print_vcard(show_address_book=False, show_uid=False) == \
-                    other.print_vcard(show_address_book=False, show_uid=False):
+        if isinstance(other, CarddavObject) and \
+                self.print_vcard(show_address_book=False, show_uid=False) == \
+                other.print_vcard(show_address_book=False, show_uid=False):
             return True
         return False
 
@@ -277,7 +282,7 @@ class CarddavObject:
         if self.get_first_names() and self.get_last_names():
             return "%s, %s" \
                     % (helpers.list_to_string(self.get_last_names(), " "),
-                            helpers.list_to_string(self.get_first_names(), " "))
+                       helpers.list_to_string(self.get_first_names(), " "))
         elif self.get_first_names():
             return helpers.list_to_string(self.get_first_names(), " ")
         elif self.get_last_names():
@@ -460,7 +465,7 @@ class CarddavObject:
         for child in self.vcard.getChildren():
             if child.name == "EMAIL":
                 type = helpers.list_to_string(
-                        self.get_types_for_vcard_object(child, "internet"), ", ")
+                    self.get_types_for_vcard_object(child, "internet"), ", ")
                 if email_dict.get(type) is None:
                     email_dict[type] = []
                 email_dict[type].append(child.value)
@@ -543,17 +548,17 @@ class CarddavObject:
                 strings = []
                 if post_adr.get("street"):
                     strings.append(
-                            helpers.list_to_string(post_adr.get("street"), "\n"))
+                        helpers.list_to_string(post_adr.get("street"), "\n"))
                 if post_adr.get("box") and post_adr.get("extended"):
                     strings.append("%s %s" % (
-                            helpers.list_to_string(post_adr.get("box"), " "),
-                            helpers.list_to_string(post_adr.get("extended"), " ")))
+                        helpers.list_to_string(post_adr.get("box"), " "),
+                        helpers.list_to_string(post_adr.get("extended"), " ")))
                 elif post_adr.get("box"):
                     strings.append(
                             helpers.list_to_string(post_adr.get("box"), " "))
                 elif post_adr.get("extended"):
                     strings.append(
-                            helpers.list_to_string(post_adr.get("extended"), " "))
+                        helpers.list_to_string(post_adr.get("extended"), " "))
                 if post_adr.get("code") and post_adr.get("city"):
                     strings.append("%s %s" % (
                             helpers.list_to_string(post_adr.get("code"), " "),
@@ -566,14 +571,14 @@ class CarddavObject:
                             helpers.list_to_string(post_adr.get("city"), " "))
                 if post_adr.get("region") and post_adr.get("country"):
                     strings.append("%s, %s" % (
-                            helpers.list_to_string(post_adr.get("region"), " "),
-                            helpers.list_to_string(post_adr.get("country"), " ")))
+                        helpers.list_to_string(post_adr.get("region"), " "),
+                        helpers.list_to_string(post_adr.get("country"), " ")))
                 elif post_adr.get("region"):
                     strings.append(
-                            helpers.list_to_string(post_adr.get("region"), " "))
+                        helpers.list_to_string(post_adr.get("region"), " "))
                 elif post_adr.get("country"):
                     strings.append(
-                            helpers.list_to_string(post_adr.get("country"), " "))
+                        helpers.list_to_string(post_adr.get("country"), " "))
                 formatted_post_adr_dict[type].append('\n'.join(strings))
         return formatted_post_adr_dict
 
@@ -752,7 +757,8 @@ class CarddavObject:
             if isinstance(date, str):
                 return date
             elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                    and date.hour == 0 and date.minute == 0 and date.second == 0:
+                    and date.hour == 0 and date.minute == 0 \
+                    and date.second == 0:
                 return "--%.2d-%.2d" % (date.month, date.day)
             elif (date.tzname() and date.tzname()[3:]) or \
                     (date.hour != 0 or date.minute != 0 or date.second != 0):
@@ -806,16 +812,26 @@ class CarddavObject:
     #######################
 
     def filter_invalid_tags(self, contents):
-        contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'), 'X-GADUGADU', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/groupwise-All'), 'X-GROUPWISE', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/icq-All'), 'X-ICQ', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/xmpp-All'), 'X-JABBER', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/msn-All'), 'X-MSN', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/yahoo-All'), 'X-YAHOO', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/skype-All'), 'X-SKYPE', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/irc-All'), 'X-IRC', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/sip-All'), 'X-SIP', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM',
+                          contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'),
+                          'X-GADUGADU', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/groupwise-All'),
+                          'X-GROUPWISE', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/icq-All'), 'X-ICQ',
+                          contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/xmpp-All'),
+                          'X-JABBER', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/msn-All'), 'X-MSN',
+                          contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/yahoo-All'),
+                          'X-YAHOO', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/skype-All'),
+                          'X-SKYPE', contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/irc-All'), 'X-IRC',
+                          contents)
+        contents = re.sub('(?i)' + re.escape('X-messaging/sip-All'), 'X-SIP',
+                          contents)
         return contents
 
     def process_user_input(self, input):
@@ -845,7 +861,8 @@ class CarddavObject:
         # name
         self.delete_vcard_object("FN")
         self.delete_vcard_object("N")
-        # although the "n" attribute is not explisitely required by the vcard specification,
+        # although the "n" attribute is not explisitely required by the vcard
+        # specification,
         # the vobject library throws an exception, if it doesn't exist
         # so add the name regardless if it's empty or not
         self.add_name(
@@ -865,7 +882,7 @@ class CarddavObject:
                         self.add_nickname(nickname)
             else:
                 raise ValueError(
-                        "Error: nickname must be a string or a list of strings")
+                    "Error: nickname must be a string or a list of strings")
 
         # organisation
         self.delete_vcard_object("ORG")
@@ -882,7 +899,8 @@ class CarddavObject:
                             self.add_organisation(organisation)
             else:
                 raise ValueError(
-                        "Error: organisation must be a string or a list of strings")
+                    "Error: organisation must be a string or a list of "
+                    "strings")
 
         # role
         self.delete_vcard_object("ROLE")
@@ -1017,7 +1035,7 @@ class CarddavObject:
                                 self.add_category(sub_category)
             else:
                 raise ValueError(
-                        "Error: category must be a string or a list of strings")
+                    "Error: category must be a string or a list of strings")
 
         # urls
         self.delete_vcard_object("URL")
@@ -1049,18 +1067,19 @@ class CarddavObject:
                     raise ValueError(
                             "Error: Birthday format --mmdd only usable "
                             "with vcard version 4.0")
-                elif re.match("^--\d{2}-\d{2}$", contact_data.get("Birthday")) \
+                elif re.match("^--\d{2}-\d{2}$", contact_data.get("Birthday"))\
                         and self.get_version() != "4.0":
                     raise ValueError(
                             "Error: Birthday format --mm-dd only usable "
                             "with vcard version 4.0")
                 else:
                     try:
-                        date = helpers.string_to_date(contact_data.get("Birthday"))
+                        date = helpers.string_to_date(
+                            contact_data.get("Birthday"))
                     except ValueError as e:
                         raise ValueError(
-                                "Error: Wrong birthday format or invalid date\n"
-                                "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
+                            "Error: Wrong birthday format or invalid date\n"
+                            "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
                 self.add_birthday(date)
             else:
                 raise ValueError("Error: birthday must be a string object.")
@@ -1163,7 +1182,8 @@ class CarddavObject:
                     strings.append("    home : ")
                     strings.append("    work : ")
                 else:
-                    longest_key = max(self.get_email_addresses().keys(), key=len)
+                    longest_key = max(self.get_email_addresses().keys(),
+                                      key=len)
                     for type, email_list in sorted(
                             self.get_email_addresses().items(),
                             key=lambda k: k[0].lower()):
@@ -1238,7 +1258,7 @@ class CarddavObject:
                         strings.append("Birthday : %s" % birthday.isoformat())
                     else:
                         strings.append("Birthday : %.4d-%.2d-%.2d" \
-                                % (birthday.year, birthday.month, birthday.day))
+                            % (birthday.year, birthday.month, birthday.day))
                 else:
                     strings.append("Birthday : ")
             elif line.lower().startswith("categories"):
@@ -1306,7 +1326,8 @@ class CarddavObject:
         if len(self.get_phone_numbers().keys()) > 0:
             strings.append("Phone")
             for type, number_list in sorted(
-                    self.get_phone_numbers().items(), key=lambda k: k[0].lower()):
+                    self.get_phone_numbers().items(),
+                    key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                         type, number_list, 4, -1, False)
 
@@ -1333,8 +1354,9 @@ class CarddavObject:
             strings.append("Private:")
             for object in self.supported_private_objects:
                 if self.get_private_objects().get(object):
-                    strings += helpers.convert_to_yaml(object,
-                            self.get_private_objects().get(object), 4, -1, False)
+                    strings += helpers.convert_to_yaml(
+                        object, self.get_private_objects().get(object), 4, -1,
+                        False)
 
         # misc stuff
         if len(self.get_categories()) > 0 \
@@ -1377,7 +1399,8 @@ class CarddavObject:
             if child.name == object_name:
                 if child.group:
                     for label in self.vcard.getChildren():
-                        if label.name == "X-ABLABEL" and label.group == child.group:
+                        if label.name == "X-ABLABEL" and label.group == \
+                                child.group:
                             to_be_removed.append(label)
                 to_be_removed.append(child)
         # then delete them one by one
@@ -1423,7 +1446,8 @@ class CarddavObject:
                 if type and type.lower() != "pref":
                     if not type.lower().startswith("x-"):
                         type_list.append(type)
-                    elif type[2:].lower() not in [x.lower() for x in type_list]:
+                    elif type[2:].lower() not in \
+                            [x.lower() for x in type_list]:
                         # add x-custom type in case it's not already added by
                         # custom label for loop above but strip x- before
                         type_list.append(type[2:])
@@ -1448,7 +1472,8 @@ class CarddavObject:
         """ parse type value of phone numbers, email and post addresses
         :param types: list of type values
         :type types: list(str)
-        :param value: the corresponding label, required for more verbose exceptions
+        :param value: the corresponding label, required for more verbose
+            exceptions
         :type value: str
         :param supported_types: all allowed standard types
         :type supported_types: list(str)

@@ -19,18 +19,23 @@ def pretty_print(table, justify = "L"):
         single_row_list = []
         for col_index, col in enumerate(row):
             if justify == "R": # justify right
-                formated_column = str(col).rjust(column_widths[col_index] + offset)
+                formated_column = str(col).rjust(
+                    column_widths[col_index] + offset)
             elif justify == "L": # justify left
-                formated_column = str(col).ljust(column_widths[col_index] + offset)
+                formated_column = str(col).ljust(
+                    column_widths[col_index] + offset)
             elif justify == "C": # justify center
-                formated_column = str(col).center(column_widths[col_index] + offset)
+                formated_column = str(col).center(
+                    column_widths[col_index] + offset)
             single_row_list.append(formated_column)
         table_row_list.append(' '.join(single_row_list))
     return '\n'.join(table_row_list)
 
 
 def list_to_string(input, delimiter):
-    """converts list to string recursively so that nested lists are supported"""
+    """
+    converts list to string recursively so that nested lists are supported
+    """
     if isinstance(input, list):
         flat_list = []
         for item in input:
@@ -103,7 +108,8 @@ def string_to_date(input):
 
 
 def get_random_uid():
-    return ''.join([ random.choice(string.ascii_lowercase + string.digits) for _ in range(36) ])
+    return ''.join([random.choice(string.ascii_lowercase + string.digits)
+                    for _ in range(36)])
 
 
 def compare_uids(uid1, uid2):
@@ -192,7 +198,8 @@ def convert_to_vcard(name, value, allowed_object_type):
     :type name: str
     :param value: user input
     :type value: str or list(str)
-    :param allowed_object_type: set the accepted return type for vcard attribute
+    :param allowed_object_type: set the accepted return type for vcard
+        attribute
     :type allowed_object_type: enum of type ObjectType
     :returns: cleaned user input, ready for vcard or a ValueError
     :rtype: str or list(str)
@@ -211,7 +218,7 @@ def convert_to_vcard(name, value, allowed_object_type):
             for entry in value:
                 if not isinstance(entry, str):
                     raise ValueError(
-                            "Error: " + name + " must not contain a nested list")
+                        "Error: " + name + " must not contain a nested list")
             # filter out empty list items and strip leading and trailing space
             return [ x.strip() for x in value if x ]
     else:
@@ -223,7 +230,7 @@ def convert_to_vcard(name, value, allowed_object_type):
                     "Error: " + name + " must be a list with strings.")
         else:
             raise ValueError(
-                    "Error: " + name + " must be a string or a list with strings.")
+                "Error: " + name + " must be a string or a list with strings.")
 
 
 def indent_multiline_string(input, indentation, show_multi_line_character):
@@ -298,8 +305,10 @@ Role  :
 #           - number2
 #       custom: number
 # allowed types:
-#   vcard 3.0: At least one of bbs, car, cell, fax, home, isdn, msg, modem, pager, pcs, pref, video, voice, work
-#   vcard 4.0: At least one of home, work, pref, text, voice, fax, cell, video, pager, textphone
+#   vcard 3.0: At least one of bbs, car, cell, fax, home, isdn, msg, modem,
+#                              pager, pcs, pref, video, voice, work
+#   vcard 4.0: At least one of home, work, pref, text, voice, fax, cell, video,
+#                              pager, textphone
 #   Alternatively you may use a single custom label (only letters).
 #   But beware, that not all address book clients will support custom labels.
 Phone :
@@ -346,7 +355,8 @@ Webpage :
 
 # private objects
 # define your own private objects in the vcard section of your khard.conf file
-# these objects are stored with a leading "X-" before the object name in the vcard files.
+# these objects are stored with a leading "X-" before the object name in the
+# vcard files.
 # every entry may contain a string or a list of strings
 Private :
 
