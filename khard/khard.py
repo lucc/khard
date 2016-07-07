@@ -368,6 +368,7 @@ def list_birthdays(birthday_list):
         table.append(row.split("\t"))
     print(helpers.pretty_print(table))
 
+
 def list_phone_numbers(phone_number_list):
     table = [["Name", "Type", "Phone"]]
     for row in phone_number_list:
@@ -1636,4 +1637,3 @@ def main():
         copy_or_move_subcommand(args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
         print('\n'.join(str(book) for book in Config().get_all_address_books()))
-
