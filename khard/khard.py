@@ -140,12 +140,12 @@ def merge_existing_contacts(source_contact, target_contact,
     if target_contact.get_version() not in \
             Config().get_supported_vcard_versions():
         print("Warning:\nThe target contact in which to merge is based on "
-                "vcard version %s but khard only supports the modification of "
-                "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
-                "will be converted to vcard version %s but beware: This could "
-                "corrupt the contact file or cause data loss."
-                % (target_contact.get_version(),
-                    Config().get_preferred_vcard_version()))
+              "vcard version %s but khard only supports the modification of "
+              "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
+              "will be converted to vcard version %s but beware: This could "
+              "corrupt the contact file or cause data loss."
+              % (target_contact.get_version(),
+                 Config().get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -268,7 +268,8 @@ def merge_existing_contacts(source_contact, target_contact,
 def copy_contact(contact, target_address_book, delete_source_contact):
     source_contact_filename = ""
     if delete_source_contact:
-        # if source file should be moved, get its file location to delete after successful movement
+        # if source file should be moved, get its file location to delete after
+        # successful movement
         source_contact_filename = contact.get_filename()
     else:
         # else create a new uid
@@ -406,8 +407,8 @@ def choose_address_book_from_list(header_string, address_book_list):
                 else:
                     raise ValueError
             except (EOFError, IndexError, ValueError):
-                print("Please enter an index value between 1 and %d or nothing "
-                        "to exit." % len(address_book_list))
+                print("Please enter an index value between 1 and %d or nothing"
+                      " to exit." % len(address_book_list))
             else:
                 break
         print("")
@@ -503,8 +504,8 @@ def get_contacts(address_books, query, method="all", reverse=False,
                     contact_details = contact.print_vcard()
                     contact_details_without_special_chars = re.sub(
                             "[^a-zA-Z0-9]", "", contact_details)
-                    if regexp.search(contact_details) != None \
-                            or regexp.search(contact_details_without_special_chars) != None:
+                    if regexp.search(contact_details) != None or regexp.search(
+                                contact_details_without_special_chars) != None:
                         contacts.append(contact)
     # Sort the contacts.
     if group:
@@ -700,9 +701,11 @@ def birthdays_subcommand(vcard_list, parsable):
 
     """
     # filter out contacts without a birthday date
-    vcard_list = [vcard for vcard in vcard_list if vcard.get_birthday() != None]
+    vcard_list = [
+        vcard for vcard in vcard_list if vcard.get_birthday() != None]
     # sort by date (month and day)
-    vcard_list.sort(key=lambda x: (x.get_birthday().month, x.get_birthday().day))
+    vcard_list.sort(
+        key=lambda x: (x.get_birthday().month, x.get_birthday().day))
     # add to string list
     birthday_list = []
     for vcard in vcard_list:
@@ -763,19 +766,19 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                 if parsable:
                     # parsable option: start with phone number
                     if Config().display_by_name() == "first_name":
-                        phone_number_line = "%s\t%s\t%s" % \
-                                (number, vcard.get_first_name_last_name(), type)
+                        phone_number_line = "%s\t%s\t%s" % (
+                            number, vcard.get_first_name_last_name(), type)
                     else:
-                        phone_number_line = "%s\t%s\t%s" % \
-                                (number, vcard.get_last_name_first_name(), type)
+                        phone_number_line = "%s\t%s\t%s" % (
+                            number, vcard.get_last_name_first_name(), type)
                 else:
                     # else: start with name
                     if Config().display_by_name() == "first_name":
-                        phone_number_line = "%s\t%s\t%s" % \
-                                (vcard.get_first_name_last_name(), type, number)
+                        phone_number_line = "%s\t%s\t%s" % (
+                            vcard.get_first_name_last_name(), type, number)
                     else:
-                        phone_number_line = "%s\t%s\t%s" % \
-                                (vcard.get_last_name_first_name(), type, number)
+                        phone_number_line = "%s\t%s\t%s" % (
+                            vcard.get_last_name_first_name(), type, number)
                 if len(re.sub("\D", "", search_terms)) >= 3:
                     # The user likely searches for a phone number cause the
                     # search string contains at least three digits.  So we
@@ -842,19 +845,19 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
                 if parsable:
                     # parsable option: start with email address
                     if Config().display_by_name() == "first_name":
-                        email_address_line = "%s\t%s\t%s" \
-                                % (email, vcard.get_first_name_last_name(), type)
+                        email_address_line = "%s\t%s\t%s" % (
+                            email, vcard.get_first_name_last_name(), type)
                     else:
-                        email_address_line = "%s\t%s\t%s" \
-                                % (email, vcard.get_last_name_first_name(), type)
+                        email_address_line = "%s\t%s\t%s" % (
+                            email, vcard.get_last_name_first_name(), type)
                 else:
                     # else: start with name
                     if Config().display_by_name() == "first_name":
-                        email_address_line = "%s\t%s\t%s" \
-                                % (vcard.get_first_name_last_name(), type, email)
+                        email_address_line = "%s\t%s\t%s" % (
+                            vcard.get_first_name_last_name(), type, email)
                     else:
-                        email_address_line = "%s\t%s\t%s" \
-                                % (vcard.get_last_name_first_name(), type, email)
+                        email_address_line = "%s\t%s\t%s" % (
+                            vcard.get_last_name_first_name(), type, email)
                 if regexp.search(email_address_line) is not None:
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
@@ -917,13 +920,13 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
     if selected_vcard.get_version() not in \
             Config().get_supported_vcard_versions():
-        print("Warning:\nThe selected contact is based on vcard version %s but "
-                "khard only supports the creation and modification of vcards "
-                "with version 3.0 and 4.0.\nIf you proceed, the contact will be "
-                "converted to vcard version %s but beware: This could corrupt "
-                "the contact file or cause data loss."
-                % (selected_vcard.get_version(),
-                    Config().get_preferred_vcard_version()))
+        print("Warning:\nThe selected contact is based on vcard version %s "
+              "but khard only supports the creation and modification of vcards"
+              " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
+              " converted to vcard version %s but beware: This could corrupt "
+              "the contact file or cause data loss."
+              % (selected_vcard.get_version(),
+                 Config().get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -999,7 +1002,8 @@ def source_subcommand(selected_vcard, editor):
     child.communicate()
 
 
-def merge_subcommand(vcard_list, selected_address_books, search_terms, target_uid):
+def merge_subcommand(vcard_list, selected_address_books, search_terms,
+        target_uid):
     """Merge two contacts into one.
 
     :param vcard_list: the vcards from which to choose contacts for mergeing
@@ -1098,7 +1102,8 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
-            [selected_target_address_book], source_vcard.get_full_name(), True))
+            [selected_target_address_book], source_vcard.get_full_name(),
+            True))
 
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
@@ -1199,225 +1204,224 @@ def main():
     # create address book subparsers with different help texts
     default_addressbook_parser = argparse.ArgumentParser(add_help=False)
     default_addressbook_parser.add_argument(
-            "-a", "--addressbook", default=[],
-            type=lambda x: [y.strip() for y in x.split(",")],
-            help="Specify one or several comma separated address book names to "
-            "narrow the list of contacts")
+        "-a", "--addressbook", default=[],
+        type=lambda x: [y.strip() for y in x.split(",")],
+        help="Specify one or several comma separated address book names to "
+        "narrow the list of contacts")
     new_addressbook_parser = argparse.ArgumentParser(add_help=False)
     new_addressbook_parser.add_argument(
-            "-a", "--addressbook", default=[],
-            type=lambda x: [y.strip() for y in x.split(",")],
-            help="Specify address book in which to create the new contact")
+        "-a", "--addressbook", default=[],
+        type=lambda x: [y.strip() for y in x.split(",")],
+        help="Specify address book in which to create the new contact")
     copy_move_addressbook_parser = argparse.ArgumentParser(add_help=False)
     copy_move_addressbook_parser.add_argument(
-            "-a", "--addressbook", default=[],
-            type=lambda x: [y.strip() for y in x.split(",")],
-            help="Specify one or several comma separated address book names to "
-            "narrow the list of contacts")
+        "-a", "--addressbook", default=[],
+        type=lambda x: [y.strip() for y in x.split(",")],
+        help="Specify one or several comma separated address book names to "
+        "narrow the list of contacts")
     copy_move_addressbook_parser.add_argument(
-            "-A", "--target-addressbook", default=[],
-            type=lambda x: [y.strip() for y in x.split(",")],
-            help="Specify target address book in which to copy / move the "
-            "selected contact")
+        "-A", "--target-addressbook", default=[],
+        type=lambda x: [y.strip() for y in x.split(",")],
+        help="Specify target address book in which to copy / move the "
+        "selected contact")
     merge_addressbook_parser = argparse.ArgumentParser(add_help=False)
     merge_addressbook_parser.add_argument(
-            "-a", "--addressbook", default=[],
-            type=lambda x: [y.strip() for y in x.split(",")],
-            help="Specify one or several comma separated address book names to "
-            "narrow the list of source contacts")
+        "-a", "--addressbook", default=[],
+        type=lambda x: [y.strip() for y in x.split(",")],
+        help="Specify one or several comma separated address book names to "
+        "narrow the list of source contacts")
     merge_addressbook_parser.add_argument(
-            "-A", "--target-addressbook", default=[],
-            type=lambda x: [y.strip() for y in x.split(",")],
-            help="Specify one or several comma separated address book names to "
-            "narrow the list of target contacts")
+        "-A", "--target-addressbook", default=[],
+        type=lambda x: [y.strip() for y in x.split(",")],
+        help="Specify one or several comma separated address book names to "
+        "narrow the list of target contacts")
 
     # create input file subparsers with different help texts
     email_header_input_file_parser = argparse.ArgumentParser(add_help=False)
     email_header_input_file_parser.add_argument(
-            "-i", "--input-file", default="-",
-            help="Specify input email header file name or use stdin by default")
+        "-i", "--input-file", default="-",
+        help="Specify input email header file name or use stdin by default")
     template_input_file_parser = argparse.ArgumentParser(add_help=False)
     template_input_file_parser.add_argument(
-            "-i", "--input-file", default="-",
-            help="Specify input template file name or use stdin by default")
+        "-i", "--input-file", default="-",
+        help="Specify input template file name or use stdin by default")
     template_input_file_parser.add_argument(
-            "--open-editor", action="store_true", help="Open the default text "
-            "editor after successful creation of new contact")
+        "--open-editor", action="store_true", help="Open the default text "
+        "editor after successful creation of new contact")
 
     # create sort subparser
     sort_parser = argparse.ArgumentParser(add_help=False)
     sort_parser.add_argument(
-            "-d", "--display", choices=("first_name", "last_name"),
-            help="Display names in contact table by first or last name")
+        "-d", "--display", choices=("first_name", "last_name"),
+        help="Display names in contact table by first or last name")
     sort_parser.add_argument(
-            "-g", "--group-by-addressbook", action="store_true",
-            help="Group contact table by address book")
+        "-g", "--group-by-addressbook", action="store_true",
+        help="Group contact table by address book")
     sort_parser.add_argument(
-            "-r", "--reverse", action="store_true",
-            help="Reverse order of contact table")
+        "-r", "--reverse", action="store_true",
+        help="Reverse order of contact table")
     sort_parser.add_argument(
-            "-s", "--sort", choices=("first_name", "last_name"),
-            help="Sort contact table by first or last name")
+        "-s", "--sort", choices=("first_name", "last_name"),
+        help="Sort contact table by first or last name")
 
     # create search subparsers
     default_search_parser = argparse.ArgumentParser(add_help=False)
     default_search_parser.add_argument(
-            "-c", "--search-in-source-files", action="store_true",
-            help="Look into source vcf files to speed up search queries in "
-                    "large address books. Beware that this option could lead "
-                    "to incomplete results.")
+        "-c", "--search-in-source-files", action="store_true",
+        help="Look into source vcf files to speed up search queries in "
+        "large address books. Beware that this option could lead "
+        "to incomplete results.")
     default_search_parser.add_argument(
-            "-u", "--uid", default="", help="select contact by uid")
+        "-u", "--uid", default="", help="select contact by uid")
     default_search_parser.add_argument(
-            "search_terms", nargs="*", metavar="search terms",
-            help="search in all fields to find matching contact")
+        "search_terms", nargs="*", metavar="search terms",
+        help="search in all fields to find matching contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
-            "-c", "--search-in-source-files", action="store_true",
-            help="Look into source vcf files to speed up search queries in "
-                    "large address books. Beware that this option could lead "
-                    "to incomplete results.")
+        "-c", "--search-in-source-files", action="store_true",
+        help="Look into source vcf files to speed up search queries in "
+        "large address books. Beware that this option could lead "
+        "to incomplete results.")
     merge_search_parser.add_argument(
-            "-t", "--target-contact", "--target", default="",
-            help="search in all fields to find matching target contact")
+        "-t", "--target-contact", "--target", default="",
+        help="search in all fields to find matching target contact")
     merge_search_parser.add_argument(
-            "-u", "--uid", default="", help="select source contact by uid")
+        "-u", "--uid", default="", help="select source contact by uid")
     merge_search_parser.add_argument(
-            "-U", "--target-uid", default="", help="select target contact by uid")
+        "-U", "--target-uid", default="", help="select target contact by uid")
     merge_search_parser.add_argument(
-            "source_search_terms", nargs="*", metavar="source",
-            help="search in all fields to find matching source contact")
+        "source_search_terms", nargs="*", metavar="source",
+        help="search in all fields to find matching source contact")
 
     # create subparsers for actions
     subparsers = parser.add_subparsers(dest="action")
     subparsers.add_parser(
-            "list",
-            aliases=Actions.get_alias_list_for_action("list"),
-            parents=[default_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="list all (selected) contacts",
-            help="list all (selected) contacts")
+        "list",
+        aliases=Actions.get_alias_list_for_action("list"),
+        parents=[default_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="list all (selected) contacts",
+        help="list all (selected) contacts")
     subparsers.add_parser(
-            "details",
-            aliases=Actions.get_alias_list_for_action("details"),
-            parents=[default_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="display detailed information about one contact",
-            help="display detailed information about one contact")
+        "details",
+        aliases=Actions.get_alias_list_for_action("details"),
+        parents=[default_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="display detailed information about one contact",
+        help="display detailed information about one contact")
     export_parser = subparsers.add_parser(
-            "export",
-            aliases=Actions.get_alias_list_for_action("export"),
-            parents=[default_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="export a contact to the custom yaml format that is "
-                "also used for editing and creating contacts",
-            help="export a contact to the custom yaml format that is also "
-                "used for editing and creating contacts")
+        "export",
+        aliases=Actions.get_alias_list_for_action("export"),
+        parents=[default_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="export a contact to the custom yaml format that is "
+        "also used for editing and creating contacts",
+        help="export a contact to the custom yaml format that is also "
+        "used for editing and creating contacts")
     export_parser.add_argument(
-            "--empty-contact-template", action="store_true",
-            help="Export an empty contact template")
+        "--empty-contact-template", action="store_true",
+        help="Export an empty contact template")
     export_parser.add_argument(
-            "-o", "--output-file", default=sys.stdout,
-            type=argparse.FileType("w"),
-            help="Specify output template file name or use stdout by default")
+        "-o", "--output-file", default=sys.stdout,
+        type=argparse.FileType("w"),
+        help="Specify output template file name or use stdout by default")
     birthdays_parser = subparsers.add_parser(
-            "birthdays",
-            aliases=Actions.get_alias_list_for_action("birthdays"),
-            parents=[default_addressbook_parser, default_search_parser],
-            description="list birthdays (sorted by month and day)",
-            help="list birthdays (sorted by month and day)")
+        "birthdays",
+        aliases=Actions.get_alias_list_for_action("birthdays"),
+        parents=[default_addressbook_parser, default_search_parser],
+        description="list birthdays (sorted by month and day)",
+        help="list birthdays (sorted by month and day)")
     birthdays_parser.add_argument(
-            "-d", "--display", choices=("first_name", "last_name"),
-            help="Display names in birthdays table by first or last name")
+        "-d", "--display", choices=("first_name", "last_name"),
+        help="Display names in birthdays table by first or last name")
     birthdays_parser.add_argument(
-            "-p", "--parsable", action="store_true",
-            help="Machine readable format: name\\tdate")
+        "-p", "--parsable", action="store_true",
+        help="Machine readable format: name\\tdate")
     email_parser = subparsers.add_parser(
-            "email",
-            aliases=Actions.get_alias_list_for_action("email"),
-            parents=[default_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="list email addresses",
-            help="list email addresses")
+        "email",
+        aliases=Actions.get_alias_list_for_action("email"),
+        parents=[default_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="list email addresses",
+        help="list email addresses")
     email_parser.add_argument(
-            "-p", "--parsable", action="store_true",
-            help="Machine readable format: address\\tname\\ttype")
+        "-p", "--parsable", action="store_true",
+        help="Machine readable format: address\\tname\\ttype")
     email_parser.add_argument(
-            "--remove-first-line", action="store_true",
-            help="remove \"searching for '' ...\" line from parsable output "
-                    "(that line is required by mutt)")
+        "--remove-first-line", action="store_true",
+        help="remove \"searching for '' ...\" line from parsable output "
+        "(that line is required by mutt)")
     phone_parser = subparsers.add_parser(
-            "phone",
-            aliases=Actions.get_alias_list_for_action("phone"),
-            parents=[default_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="list phone numbers",
-            help="list phone numbers")
+        "phone",
+        aliases=Actions.get_alias_list_for_action("phone"),
+        parents=[default_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="list phone numbers",
+        help="list phone numbers")
     phone_parser.add_argument(
-            "-p", "--parsable", action="store_true",
-            help="Machine readable format: number\\tname\\ttype")
+        "-p", "--parsable", action="store_true",
+        help="Machine readable format: number\\tname\\ttype")
     subparsers.add_parser(
-            "source",
-            aliases=Actions.get_alias_list_for_action("source"),
-            parents=[default_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="edit the vcard file of a contact directly",
-            help="edit the vcard file of a contact directly")
+        "source",
+        aliases=Actions.get_alias_list_for_action("source"),
+        parents=[default_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="edit the vcard file of a contact directly",
+        help="edit the vcard file of a contact directly")
     subparsers.add_parser(
-            "new",
-            aliases=Actions.get_alias_list_for_action("new"),
-            parents=[new_addressbook_parser, template_input_file_parser],
-            description="create a new contact",
-            help="create a new contact")
+        "new",
+        aliases=Actions.get_alias_list_for_action("new"),
+        parents=[new_addressbook_parser, template_input_file_parser],
+        description="create a new contact",
+        help="create a new contact")
     subparsers.add_parser(
-            "add-email",
-            aliases=Actions.get_alias_list_for_action("add-email"),
-            parents=[default_addressbook_parser, email_header_input_file_parser,
-                sort_parser, default_search_parser],
-            description="Extract email address from the \"From:\" field of an "
-                "email header and add to an existing contact or create a new one",
-            help="Extract email address from the \"From:\" field of an email "
-                "header and add to an existing contact or create a new one")
+        "add-email",
+        aliases=Actions.get_alias_list_for_action("add-email"),
+        parents=[default_addressbook_parser, email_header_input_file_parser,
+                 sort_parser, default_search_parser],
+        description="Extract email address from the \"From:\" field of an "
+        "email header and add to an existing contact or create a new one",
+        help="Extract email address from the \"From:\" field of an email "
+        "header and add to an existing contact or create a new one")
     subparsers.add_parser(
-            "merge",
-            aliases=Actions.get_alias_list_for_action("merge"),
-            parents=[merge_addressbook_parser, sort_parser,
-                merge_search_parser],
-            description="merge two contacts",
-            help="merge two contacts")
+        "merge",
+        aliases=Actions.get_alias_list_for_action("merge"),
+        parents=[merge_addressbook_parser, sort_parser, merge_search_parser],
+        description="merge two contacts",
+        help="merge two contacts")
     subparsers.add_parser(
-            "modify",
-            aliases=Actions.get_alias_list_for_action("modify"),
-            parents=[default_addressbook_parser, template_input_file_parser,
-                    sort_parser, default_search_parser],
-            description="edit the data of a contact",
-            help="edit the data of a contact")
+        "modify",
+        aliases=Actions.get_alias_list_for_action("modify"),
+        parents=[default_addressbook_parser, template_input_file_parser,
+                 sort_parser, default_search_parser],
+        description="edit the data of a contact",
+        help="edit the data of a contact")
     subparsers.add_parser(
-            "copy",
-            aliases=Actions.get_alias_list_for_action("copy"),
-            parents=[copy_move_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="copy a contact to a different addressbook",
-            help="copy a contact to a different addressbook")
+        "copy",
+        aliases=Actions.get_alias_list_for_action("copy"),
+        parents=[copy_move_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="copy a contact to a different addressbook",
+        help="copy a contact to a different addressbook")
     subparsers.add_parser(
-            "move",
-            aliases=Actions.get_alias_list_for_action("move"),
-            parents=[copy_move_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="move a contact to a different addressbook",
-            help="move a contact to a different addressbook")
+        "move",
+        aliases=Actions.get_alias_list_for_action("move"),
+        parents=[copy_move_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="move a contact to a different addressbook",
+        help="move a contact to a different addressbook")
     subparsers.add_parser(
-            "remove",
-            aliases=Actions.get_alias_list_for_action("remove"),
-            parents=[default_addressbook_parser, sort_parser,
-                default_search_parser],
-            description="remove a contact",
-            help="remove a contact")
+        "remove",
+        aliases=Actions.get_alias_list_for_action("remove"),
+        parents=[default_addressbook_parser, sort_parser,
+                 default_search_parser],
+        description="remove a contact",
+        help="remove a contact")
     subparsers.add_parser(
-            "addressbooks",
-            aliases=Actions.get_alias_list_for_action("addressbooks"),
-            description="list addressbooks",
-            help="list addressbooks")
+        "addressbooks",
+        aliases=Actions.get_alias_list_for_action("addressbooks"),
+        description="list addressbooks",
+        help="list addressbooks")
 
     parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
@@ -1456,7 +1460,7 @@ def main():
     if "source_search_terms" in args and args.source_search_terms:
         search_query_list.append(
                 ".*".join(
-                    [ x.replace("*", ".*") for x in args.source_search_terms ]))
+                    [x.replace("*", ".*") for x in args.source_search_terms]))
     if "search_terms" in args and args.search_terms:
         search_query_list.append(
                 ".*".join(
@@ -1537,11 +1541,11 @@ def main():
         # We require that the uid given can uniquely identify a contact.
         if len(vcard_list) != 1:
             if len(vcard_list) == 0:
-                print("Found no contact for %suid %s" \
-                        % ("source " if args.action == "merge" else "", args.uid))
+                print("Found no contact for %suid %s" % (
+                    "source " if args.action == "merge" else "", args.uid))
             else:
-                print("Found multiple contacts for %suid %s" \
-                        % ("source " if args.action == "merge" else "", args.uid))
+                print("Found multiple contacts for %suid %s" % (
+                    "source " if args.action == "merge" else "", args.uid))
                 for vcard in vcard_list:
                     print("    %s: %s" % (vcard.get_full_name(),
                                           vcard.get_uid()))
@@ -1634,6 +1638,8 @@ def main():
         merge_subcommand(vcard_list, args.target_addressbook,
                          args.target_contact, args.target_uid)
     elif args.action in ["copy", "move"]:
-        copy_or_move_subcommand(args.action, vcard_list, args.target_addressbook)
+        copy_or_move_subcommand(
+            args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
-        print('\n'.join(str(book) for book in Config().get_all_address_books()))
+        print(
+            '\n'.join(str(book) for book in Config().get_all_address_books()))

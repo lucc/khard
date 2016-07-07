@@ -50,7 +50,8 @@ class Config:
 
             # general settings
             if "general" not in self.config:
-                print("Error in config file\nMissing main section \"[general]\".")
+                print('Error in config file\n'
+                      'Missing main section "[general]".')
                 sys.exit(2)
 
             # editor
@@ -90,9 +91,11 @@ class Config:
 
             # default action
             if "default_action" not in self.config['general']:
-                print("Error in config file\nMissing default action parameter.")
+                print("Error in config file\n"
+                      "Missing default action parameter.")
                 sys.exit(2)
-            elif self.config['general']['default_action'] not in Actions.get_list_of_all_actions():
+            elif self.config['general']['default_action'] not in \
+                    Actions.get_list_of_all_actions():
                 print("Error in config file\n" \
                         "Invalid value for default_action parameter\n" \
                         "Possible values: %s" \
@@ -106,7 +109,8 @@ class Config:
             # sort contact table by first or last name
             if "sort" not in self.config['contact table']:
                 self.config['contact table']['sort'] = "first_name"
-            elif self.config['contact table']['sort'] not in ["first_name", "last_name"]:
+            elif self.config['contact table']['sort'] not in \
+                    ["first_name", "last_name"]:
                 print("Error in config file\n" \
                         "Invalid value for sort parameter\n" \
                         "Possible values: first_name, last_name")
@@ -114,11 +118,12 @@ class Config:
 
             # display names in contact table by first or last name
             if "display" not in self.config['contact table']:
-                # if display by name attribute is not present in the config file
-                # use the sort attribute value for backwards compatibility
+                # if display by name attribute is not present in the config
+                # file use the sort attribute value for backwards compatibility
                 self.config['contact table']['display'] = \
                         self.config['contact table']['sort']
-            elif self.config['contact table']['display'] not in ["first_name", "last_name"]:
+            elif self.config['contact table']['display'] not in \
+                    ["first_name", "last_name"]:
                 print("Error in config file\n" \
                         "Invalid value for display parameter\n" \
                         "Possible values: first_name, last_name")
@@ -187,9 +192,9 @@ class Config:
                 # check if object only contains letters, digits or -
                 for object in self.config['vcard']['private_objects']:
                     if object != re.sub("[^a-zA-Z0-9-]", "", object):
-                        print("Error in config file\n" \
-                                "private object %s may only contain letters, " \
-                                "digits and the \"-\" character." % object)
+                        print("Error in config file\n"
+                              "private object %s may only contain letters, "
+                              "digits and the \"-\" character." % object)
                         sys.exit(2)
                     if object == re.sub("[^-]", "", object) \
                             or object.startswith("-") \
@@ -218,22 +223,25 @@ class Config:
             elif self.config['vcard']['search_in_source_files'] == "no":
                 self.config['vcard']['search_in_source_files'] = False
             else:
-                print("Error in config file\n" \
-                        "Invalid value for search_in_source_files parameter\n" \
-                        "Possible values: yes, no")
+                print("Error in config file\n"
+                      "Invalid value for search_in_source_files parameter\n"
+                      "Possible values: yes, no")
                 sys.exit(2)
 
             # load address books
             if "addressbooks" not in self.config:
-                print("Error in config file\nMissing main section \"[addressbooks]\".")
+                print('Error in config file\n'
+                      'Missing main section "[addressbooks]".')
                 sys.exit(2)
             if len(self.config['addressbooks'].keys()) == 0:
-                print("Error in config file\nNo address book entries available.")
+                print("Error in config file\n"
+                      "No address book entries available.")
                 sys.exit(2)
             for name in self.config['addressbooks'].keys():
                 # create address book object
                 try:
-                    address_book = AddressBook(name, self.config['addressbooks'][name]['path'])
+                    address_book = AddressBook(
+                        name, self.config['addressbooks'][name]['path'])
                 except KeyError as e:
                     print("Error in config file\n"
                             "Missing path to the \"%s\" address book." % name)
@@ -269,9 +277,10 @@ class Config:
                         error_counter = 0
                         # load vcard files of address book
                         filename_list = []
-                        for filename in glob.glob(
-                                os.path.join(address_book.get_path(), "*.vcf")):
-                            if search_queries and self.search_in_source_files():
+                        for filename in glob.glob(os.path.join(
+                                address_book.get_path(), "*.vcf")):
+                            if search_queries \
+                                    and self.search_in_source_files():
                                 with open(filename, "r") as f:
                                     if re.search(search_queries, f.read(),
                                             re.IGNORECASE | re.DOTALL):
@@ -284,10 +293,9 @@ class Config:
                             number_of_contacts += 1
                             try:
                                 address_book.add_contact(
-                                        CarddavObject.from_file(
-                                            address_book, filename,
-                                            self.get_supported_private_objects())
-                                        )
+                                    CarddavObject.from_file(
+                                        address_book, filename,
+                                        self.get_supported_private_objects()))
                             except IOError as e:
                                 print("Error: Could not open file %s\n%s"
                                         % (filename, e))
@@ -316,16 +324,17 @@ class Config:
                                     if matching_contact is None:
                                         self.original_uid_dict[uid] = contact
                                     else:
-                                        print("The contact %s from address "
-                                                "book %s and the contact %s "
-                                                "from address book %s have the "
-                                                "same uid %s" % (
-                                                    matching_contact.get_full_name(),
-                                                    matching_contact.get_address_book().get_name(),
-                                                    contact.get_full_name(),
-                                                    contact.get_address_book().get_name(),
-                                                    contact.get_uid())
-                                                )
+                                        print(
+                                            "The contact %s from address book "
+                                            "%s and the contact %s from "
+                                            "address book %s have the same "
+                                            "uid %s" % (
+                                                  matching_contact.get_full_name(),
+                                                  matching_contact.get_address_book().get_name(),
+                                                  contact.get_full_name(),
+                                                  contact.get_address_book().get_name(),
+                                                  contact.get_uid())
+                                              )
                                         sys.exit(2)
                             # rebuild shortened uid dictionary
                             self.create_shortened_uid_dictionary()
