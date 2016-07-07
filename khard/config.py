@@ -209,6 +209,18 @@ class Config:
                         % self.get_supported_vcard_versions())
                 sys.exit(2)
 
+            # speed up program by pre-searching in the vcard source files
+            if 'search_in_source_files' not in self.config['vcard']:
+                self.config['vcard']['search_in_source_files'] = False
+            elif self.config['vcard']['search_in_source_files'] == "yes":
+                self.config['vcard']['search_in_source_files'] = True
+            elif self.config['vcard']['search_in_source_files'] == "no":
+                self.config['vcard']['search_in_source_files'] = False
+            else:
+                print("Error in config file\n" \
+                        "Invalid value for search_in_source_files parameter\n" \
+                        "Possible values: yes, no")
+                sys.exit(2)
 
             # load address books
             if "addressbooks" not in self.config:
@@ -245,7 +257,7 @@ class Config:
             return self.address_book_list
 
 
-        def get_address_book(self, name):
+        def get_address_book(self, name, search_queries=None):
             """
             return address book object or None, if the address book with the
             given name does not exist
@@ -257,8 +269,19 @@ class Config:
                         number_of_contacts = 0
                         error_counter = 0
                         # load vcard files of address book
+                        filename_list = []
                         for filename in glob.glob(
                                 os.path.join(address_book.get_path(), "*.vcf")):
+                            if search_queries and self.search_in_source_files():
+                                with open(filename, "r") as f:
+                                    if re.search(search_queries, f.read(),
+                                            re.IGNORECASE | re.DOTALL):
+                                        filename_list.append(filename)
+                            else:
+                                filename_list.append(filename)
+
+                        # create CarddavObject
+                        for filename in filename_list:
                             number_of_contacts += 1
                             try:
                                 address_book.add_contact(
@@ -274,11 +297,13 @@ class Config:
                                 print("Error: Could not parse file %s\n%s"
                                         % (filename, e))
                                 error_counter += 1
+
                         # check if one or more contacts could not be parsed
                         if error_counter > 0:
                             print("\n%d of %d vcard files could not be parsed"
                                     % (error_counter, number_of_contacts))
                             sys.exit(2)
+
                         # check uniqueness of vcard uids and create short uid 
                         # dictionary that can be disabled with the show_uids
                         # option in the config file, if desired
@@ -384,6 +409,14 @@ class Config:
 
         def get_supported_vcard_versions(self):
             return ["3.0", "4.0"]
+
+
+        def search_in_source_files(self):
+            return self.config['vcard']['search_in_source_files']
+
+
+        def set_search_in_source_files(self, bool):
+            self.config['vcard']['search_in_source_files'] = bool
 
 
         def display_by_name(self):

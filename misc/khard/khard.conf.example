@@ -33,3 +33,7 @@ sort = last_name
 # example:
 #   private_objects = Jabber, Skype, Twitter
 private_objects = Jabber, Skype, Twitter
+# preferred vcard version: 3.0 / 4.0
+preferred_version = 3.0
+# Look into source vcf files to speed up search queries: yes / no
+search_in_source_files = no

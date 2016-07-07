@@ -1261,11 +1261,21 @@ def main():
     # create search subparsers
     default_search_parser = argparse.ArgumentParser(add_help=False)
     default_search_parser.add_argument(
+            "-c", "--search-in-source-files", action="store_true",
+            help="Look into source vcf files to speed up search queries in "
+                    "large address books. Beware that this option could lead "
+                    "to incomplete results.")
+    default_search_parser.add_argument(
             "-u", "--uid", default="", help="select contact by uid")
     default_search_parser.add_argument(
             "search_terms", nargs="*", metavar="search terms",
             help="search in all fields to find matching contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
+    merge_search_parser.add_argument(
+            "-c", "--search-in-source-files", action="store_true",
+            help="Look into source vcf files to speed up search queries in "
+                    "large address books. Beware that this option could lead "
+                    "to incomplete results.")
     merge_search_parser.add_argument(
             "-t", "--target-contact", "--target", default="",
             help="search in all fields to find matching target contact")
@@ -1410,7 +1420,6 @@ def main():
 
     parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
-
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("args={}".format(args))
@@ -1420,43 +1429,6 @@ def main():
         # convert alias to corresponding action
         # example: "ls" --> "list"
         args.action = Actions.get_action_for_alias(args.action)
-
-    if "addressbook" in args and args.addressbook != []:
-        # load address books which are defined in the configuration file
-        for index, name in enumerate(args.addressbook):
-            address_book = Config().get_address_book(name)
-            if address_book is None:
-                print("Error: The entered address book \"%s\" does not exist."
-                      "\nPossible values are: %s" % (
-                          name, ', '.join([str(book) for book in
-                                           Config().get_all_address_books()])))
-                sys.exit(1)
-            else:
-                args.addressbook[index] = address_book
-    else:
-        # load contacts of all address books
-        args.addressbook = []
-        for address_book in Config().get_all_address_books():
-            args.addressbook.append(
-                    Config().get_address_book(address_book.get_name()))
-    logging.debug("addressbooks: {}".format(args.addressbook))
-    if "target_addressbook" in args and args.target_addressbook != []:
-        for index, name in enumerate(args.target_addressbook):
-            address_book = Config().get_address_book(name)
-            if address_book is None:
-                print("Error: The entered address book \"%s\" does not exist."
-                      "\nPossible values are: %s" % (
-                          name, ', '.join([str(book) for book in
-                                           Config().get_all_address_books()])))
-                sys.exit(1)
-            else:
-                args.target_addressbook[index] = address_book
-    else:
-        args.target_addressbook = []
-        for address_book in Config().get_all_address_books():
-            args.target_addressbook.append(
-                    Config().get_address_book(address_book.get_name()))
-    logging.debug("target addressbooks: {}".format(args.target_addressbook))
 
     # display by name: first or last name
     if "display" in args and args.display:
@@ -1474,6 +1446,77 @@ def main():
     if "sort" in args and args.sort:
         Config().set_sort_by_name(args.sort)
 
+    # search in source files
+    if "search_in_source_files" in args and args.search_in_source_files:
+        Config().set_search_in_source_files(True)
+
+    # get all possible search queries for address book parsing
+    search_query_list = []
+    if "source_search_terms" in args and args.source_search_terms:
+        search_query_list.append(
+                ".*".join(
+                    [ x.replace("*", ".*") for x in args.source_search_terms ]))
+    if "search_terms" in args and args.search_terms:
+        search_query_list.append(
+                ".*".join(
+                    [ x.replace("*", ".*") for x in args.search_terms ]))
+    if "target_contact" in args and args.target_contact:
+        search_query_list.append(
+                args.target_contact.replace("*", ".*").replace(" ", ".*"))
+    if "uid" in args and args.uid:
+        search_query_list.append(
+                args.uid.replace("*", ".*").replace(" ", ".*"))
+    if "target_uid" in args and args.target_uid:
+        search_query_list.append(
+                args.target_uid.replace("*", ".*").replace(" ", ".*"))
+    # create regexp
+    search_queries = None
+    if search_query_list:
+        search_queries = "^.*(%s).*$" % ')|('.join(search_query_list)
+
+    # load address books
+    if "addressbook" in args and args.addressbook != []:
+        # load address books which are defined in the configuration file
+        for index, name in enumerate(args.addressbook):
+            address_book = Config().get_address_book(name, search_queries)
+            if address_book is None:
+                print("Error: The entered address book \"%s\" does not exist."
+                      "\nPossible values are: %s" % (
+                          name, ', '.join([str(book) for book in
+                                           Config().get_all_address_books()])))
+                sys.exit(1)
+            else:
+                args.addressbook[index] = address_book
+    else:
+        # load contacts of all address books
+        args.addressbook = []
+        for address_book in Config().get_all_address_books():
+            args.addressbook.append(
+                    Config().get_address_book(
+                        address_book.get_name(), search_queries))
+    logging.debug("addressbooks: {}".format(args.addressbook))
+
+    # load target address books
+    if "target_addressbook" in args and args.target_addressbook != []:
+        for index, name in enumerate(args.target_addressbook):
+            address_book = Config().get_address_book(name, search_queries)
+            if address_book is None:
+                print("Error: The entered address book \"%s\" does not exist."
+                      "\nPossible values are: %s" % (
+                          name, ', '.join([str(book) for book in
+                                           Config().get_all_address_books()])))
+                sys.exit(1)
+            else:
+                args.target_addressbook[index] = address_book
+    else:
+        args.target_addressbook = []
+        for address_book in Config().get_all_address_books():
+            args.target_addressbook.append(
+                    Config().get_address_book(
+                        address_book.get_name(), search_queries))
+    logging.debug("target addressbooks: {}".format(args.target_addressbook))
+
+    # fill contact list
     vcard_list = []
     if "uid" in args and args.uid != "":
         # If an uid was given we use it to find the contact.

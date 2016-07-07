@@ -278,7 +278,13 @@ bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
 
-Then you can complete email addresses by pressing the Tab-key in mutt's new mail dialog.
+Then you can complete email addresses by pressing the Tab-key in mutt's new mail dialog. If your
+address books contain hundreds or even thousands of contacts and the query process is very slow, you
+may try the --search-in-source-files option to speed up the search:
+
+```
+set query_command= "khard email --parsable --search-in-source-files %s"
+```
 
 To add email addresses to khard's address book, you may also add the following lines to your muttrc file:
 
