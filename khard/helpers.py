@@ -58,54 +58,54 @@ def string_to_date(input):
     # try date format --mmdd
     try:
         return datetime.strptime(input, "--%m%d")
-    except ValueError as e:
+    except ValueError:
         pass
     # try date format --mm-dd
     try:
         return datetime.strptime(input, "--%m-%d")
-    except ValueError as e:
+    except ValueError:
         pass
     # try date format yyyymmdd
     try:
         return datetime.strptime(input, "%Y%m%d")
-    except ValueError as e:
+    except ValueError:
         pass
     # try date format yyyy-mm-dd
     try:
         return datetime.strptime(input, "%Y-%m-%d")
-    except ValueError as e:
+    except ValueError:
         pass
     # try datetime format yyyymmddThhmmss
     try:
         return datetime.strptime(input, "%Y%m%dT%H%M%S")
-    except ValueError as e:
+    except ValueError:
         pass
     # try datetime format yyyy-mm-ddThh:mm:ss
     try:
         return datetime.strptime(input, "%Y-%m-%dT%H:%M:%S")
-    except ValueError as e:
+    except ValueError:
         pass
     # try datetime format yyyymmddThhmmssZ
     try:
         return datetime.strptime(input, "%Y%m%dT%H%M%SZ")
-    except ValueError as e:
+    except ValueError:
         pass
     # try datetime format yyyy-mm-ddThh:mm:ssZ
     try:
         return datetime.strptime(input, "%Y-%m-%dT%H:%M:%SZ")
-    except ValueError as e:
+    except ValueError:
         pass
     # try datetime format yyyymmddThhmmsstz where tz may look like -06:00
     try:
         return datetime.strptime(
                 ''.join(input.rsplit(":", 1)), "%Y%m%dT%H%M%S%z")
-    except ValueError as e:
+    except ValueError:
         pass
     # try datetime format yyyy-mm-ddThh:mm:sstz where tz may look like -06:00
     try:
         return datetime.strptime(
                 ''.join(input.rsplit(":", 1)), "%Y-%m-%dT%H:%M:%S%z")
-    except ValueError as e:
+    except ValueError:
         pass
     raise ValueError
 

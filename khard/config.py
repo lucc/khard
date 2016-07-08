@@ -45,9 +45,10 @@ class Config:
 
             # parse config file contents
             try:
-                self.config = ConfigObj(config_file, interpolation=False)
-            except ParseError as e:
-                print("Error in config file\n%s" % e)
+                self.config = configobj.ConfigObj(
+                    config_file, interpolation=False)
+            except configobj.ParseError as err:
+                print("Error in config file\n%s" % err)
                 sys.exit(2)
 
             # general settings
