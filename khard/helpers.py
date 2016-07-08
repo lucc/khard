@@ -98,13 +98,13 @@ def string_to_date(input):
     # try datetime format yyyymmddThhmmsstz where tz may look like -06:00
     try:
         return datetime.strptime(
-                ''.join(input.rsplit(":", 1)), "%Y%m%dT%H%M%S%z")
+            ''.join(input.rsplit(":", 1)), "%Y%m%dT%H%M%S%z")
     except ValueError:
         pass
     # try datetime format yyyy-mm-ddThh:mm:sstz where tz may look like -06:00
     try:
         return datetime.strptime(
-                ''.join(input.rsplit(":", 1)), "%Y-%m-%dT%H:%M:%S%z")
+            ''.join(input.rsplit(":", 1)), "%Y-%m-%dT%H:%M:%S%z")
     except ValueError:
         pass
     raise ValueError
@@ -163,13 +163,13 @@ def convert_to_yaml(
             # same applies to value = [["string"]]
             value = value[0][0]
     if isinstance(value, str):
-        strings.append("%s%s%s: %s"
-                % (' ' * indentation, name, ' ' * (indexOfColon-len(name)),
-                    indent_multiline_string(
-                        value, indentation+4, show_multi_line_character)))
+        strings.append("%s%s%s: %s" % (
+            ' ' * indentation, name, ' ' * (indexOfColon-len(name)),
+            indent_multiline_string(value, indentation+4,
+                                    show_multi_line_character)))
     elif isinstance(value, list):
-        strings.append("%s%s%s: "
-                % (' ' * indentation, name, ' ' * (indexOfColon-len(name))))
+        strings.append("%s%s%s: " % (
+            ' ' * indentation, name, ' ' * (indexOfColon-len(name))))
         for outer in value:
             # special case for single item sublists
             if isinstance(outer, list) \
@@ -181,17 +181,17 @@ def convert_to_yaml(
                 # but to "- string" instead
                 outer = outer[0]
             if isinstance(outer, str):
-                strings.append("%s- %s" % (' ' * (indentation+4),
-                        indent_multiline_string(
-                            outer, indentation+8, show_multi_line_character)))
+                strings.append("%s- %s" % (
+                    ' ' * (indentation+4), indent_multiline_string(
+                        outer, indentation+8, show_multi_line_character)))
             elif isinstance(outer, list):
                 strings.append("%s- " % (' ' * (indentation+4)))
                 for inner in outer:
                     if isinstance(inner, str):
-                        strings.append("%s- %s" % (' ' * (indentation+8),
-                                indent_multiline_string(
-                                    inner, indentation+12,
-                                    show_multi_line_character)))
+                        strings.append("%s- %s" % (
+                            ' ' * (indentation+8), indent_multiline_string(
+                                inner, indentation+12,
+                                show_multi_line_character)))
     return strings
 
 
@@ -210,13 +210,13 @@ def convert_to_vcard(name, value, allowed_object_type):
     if isinstance(value, str):
         if allowed_object_type == ObjectType.list_with_strings:
             raise ValueError(
-                    "Error: " + name + " must not contain a single string.")
+                "Error: " + name + " must not contain a single string.")
         else:
             return value.strip()
     elif isinstance(value, list):
         if allowed_object_type == ObjectType.string:
             raise ValueError(
-                    "Error: " + name + " must not contain a list.")
+                "Error: " + name + " must not contain a list.")
         else:
             for entry in value:
                 if not isinstance(entry, str):
@@ -227,10 +227,10 @@ def convert_to_vcard(name, value, allowed_object_type):
     else:
         if allowed_object_type == ObjectType.string:
             raise ValueError(
-                    "Error: " + name + " must be a string.")
+                "Error: " + name + " must be a string.")
         elif allowed_object_type == ObjectType.list_with_strings:
             raise ValueError(
-                    "Error: " + name + " must be a list with strings.")
+                "Error: " + name + " must be a list with strings.")
         else:
             raise ValueError(
                 "Error: " + name + " must be a string or a list with strings.")
