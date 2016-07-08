@@ -56,18 +56,18 @@ class CarddavObject:
                 file = open(self.filename, "r")
                 contents = file.read()
                 file.close()
-            except IOError as e:
+            except IOError:
                 raise
             # create vcard object
             try:
                 self.vcard = vobject.readOne(contents)
-            except vobject.base.ParseError as e:
+            except vobject.base.ParseError:
                 # if creation fails, try to repair vcard contents
                 try:
                     self.vcard = vobject.readOne(
                             self.filter_invalid_tags(contents))
                     self.write_to_file(overwrite=True)
-                except vobject.base.ParseError as e:
+                except vobject.base.ParseError:
                     raise
 
     #######################################
@@ -144,7 +144,7 @@ class CarddavObject:
         """
         try:
             return self.vcard.rev.value
-        except AttributeError as e:
+        except AttributeError:
             return ""
 
     def add_rev(self, dt):
@@ -158,7 +158,7 @@ class CarddavObject:
         """
         try:
             return self.vcard.uid.value
-        except AttributeError as e:
+        except AttributeError:
             return ""
 
     def add_uid(self, uid):
@@ -172,7 +172,7 @@ class CarddavObject:
         """
         try:
             return self.vcard.version.value
-        except AttributeError as e:
+        except AttributeError:
             return ""
 
     def add_version(self, vcard_version):
@@ -186,7 +186,7 @@ class CarddavObject:
         """
         try:
             prefix_list = self.vcard.n.value.prefix
-        except AttributeError as e:
+        except AttributeError:
             prefix_list = []
         else:
             # check if list only contains an empty string ([""])
@@ -200,7 +200,7 @@ class CarddavObject:
         """
         try:
             first_name_list = self.vcard.n.value.given
-        except AttributeError as e:
+        except AttributeError:
             first_name_list = []
         else:
             # check if list only contains an empty string ([""])
@@ -215,7 +215,7 @@ class CarddavObject:
         """
         try:
             additional_name_list = self.vcard.n.value.additional
-        except AttributeError as e:
+        except AttributeError:
             additional_name_list = []
         else:
             # check if list only contains an empty string ([""])
@@ -230,7 +230,7 @@ class CarddavObject:
         """
         try:
             last_name_list = self.vcard.n.value.family
-        except AttributeError as e:
+        except AttributeError:
             last_name_list = []
         else:
             # check if list only contains an empty string ([""])
@@ -245,7 +245,7 @@ class CarddavObject:
         """
         try:
             suffix_list = self.vcard.n.value.suffix
-        except AttributeError as e:
+        except AttributeError:
             suffix_list = []
         else:
             # check if list only contains an empty string ([""])
@@ -259,7 +259,7 @@ class CarddavObject:
         """
         try:
             return self.vcard.fn.value
-        except AttributeError as e:
+        except AttributeError:
             return ""
 
     def get_first_name_last_name(self):
@@ -704,7 +704,7 @@ class CarddavObject:
                     key_index = [x.lower()
                             for x in self.supported_private_objects] \
                             .index(child.name[2:].lower())
-                except ValueError as e:
+                except ValueError:
                     pass
                 else:
                     key = self.supported_private_objects[key_index]
@@ -839,10 +839,10 @@ class CarddavObject:
         # parse user input string
         try:
             contact_data = yaml.load(input, Loader=yaml.BaseLoader)
-        except yaml.parser.ParserError as e:
-            raise ValueError(e)
-        except yaml.scanner.ScannerError as e:
-            raise ValueError(e)
+        except yaml.parser.ParserError as err:
+            raise ValueError(err)
+        except yaml.scanner.ScannerError as err:
+            raise ValueError(err)
         else:
             if contact_data is None:
                 raise ValueError("Error: Found no contact information")
@@ -1078,7 +1078,7 @@ class CarddavObject:
                     try:
                         date = helpers.string_to_date(
                             contact_data.get("Birthday"))
-                    except ValueError as e:
+                    except ValueError:
                         raise ValueError(
                             "Error: Wrong birthday format or invalid date\n"
                             "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
@@ -1383,15 +1383,15 @@ class CarddavObject:
         try:
             with atomic_write(self.filename, overwrite=overwrite) as f:
                 f.write(self.vcard.serialize())
-        except vobject.base.ValidateError as e:
-            print("Error: Vcard is not valid.\n%s" % e)
+        except vobject.base.ValidateError as err:
+            print("Error: Vcard is not valid.\n%s" % err)
             sys.exit(4)
-        except IOError as e:
-            print("Error: Can't write\n%s" % e)
+        except IOError as err:
+            print("Error: Can't write\n%s" % err)
             sys.exit(4)
-        except OSError as e:
-            print("Error: vcard with the file name %s already exists\n%s" \
-                    % (os.path.basename(self.filename), e))
+        except OSError as err:
+            print("Error: vcard with the file name %s already exists\n%s"
+                    % (os.path.basename(self.filename), err))
             sys.exit(4)
 
     def delete_vcard_object(self, object_name):
