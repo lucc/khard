@@ -1,6 +1,6 @@
 #compdef khard
 
-# Zsh completion definition for khard version >= 0.10.0
+# Zsh completion definition for khard version >= 0.11.0
 # Install by copying to a directory where zsh searches for completion
 # functions (the $fpath array).
 #
@@ -37,7 +37,7 @@ options=(
 _arguments -C -s \
   $options \
   '(- *)'{-v,--version}'[show version information]' \
-  '(-d)'{-d,--debug}'[enable debug output]' \
+  '--debug[enable debug output]' \
   ':subcommand:->subcommand' \
   '*::options:->options' && ret=0
 
@@ -96,6 +96,7 @@ case $state in
     # sort options
     local -a sort_options
     sort_options=(
+      '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:sort by:(first_name last_name)'
       '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
       '(-r)'{-r,--reverse}'[reverse order of contact table]'
       '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name)'
@@ -103,10 +104,12 @@ case $state in
     # search options
     local -a default_search_options merge_search_options
     default_search_options=(
+      '(-c)'{-c,--search-in-source-files}'[Look into source vcf files to speed up search queries in large address books]'
       '(-u)'{-u+,--uid=}'[select contact by uid]:uid'
       '*::search terms'
     )
     merge_search_options=(
+      '(-c)'{-c,--search-in-source-files}'[Look into source vcf files to speed up search queries in large address books]'
       '(-t)'{-t+,--target-contact=}'[search in all fields to find matching target contact]:search string'
       '(-u)'{-u+,--uid=}'[select source contact by uid]:uid'
       '(-U)'{-U+,--target-uid=}'[select target contact by uid]:uid'
@@ -117,15 +120,16 @@ case $state in
     # Add the correct options for the subcommand to $options, depending on the
     # subcommand found in $word[1].
     case $words[1] in
-      addressbooks)
+      addressbooks|abooks)
         options+=();;
-      list|details|source|remove)
+      list|ls|details|source|remove|delete|del|rm)
         options+=(
           $default_addressbook_options $sort_options $default_search_options
         );;
-      birthdays)
+      birthdays|bdays)
         options+=(
           $default_addressbook_options $default_search_options
+          '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:sort by:(first_name last_name)'
           '(-p)'{-p,--parsable}'[Machine readable birthday table]'
         );;
       email)
@@ -145,7 +149,7 @@ case $state in
           '--empty-contact-template[export empty contact template]'
           '(-o)'{-o+,--output-file=}'[Specify output template file name or use stdout]:output file:_files'
         );;
-      new)
+      new|add)
     	options+=(
           $new_addressbook_options $template_file_input_options
         );;
@@ -153,11 +157,11 @@ case $state in
         options+=(
           $default_addressbook_options $email_header_input_options $sort_options $default_search_options
         );;
-      copy|move)
+      copy|cp|move|mv)
         options+=(
           $copy_move_addressbook_options $sort_options $default_search_options
         );;
-      modify)
+      modify|edit)
         options+=(
           $default_addressbook_options $template_file_input_options $sort_options $default_search_options
         );;

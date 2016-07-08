@@ -1,3 +1,6 @@
+# example configuration file for khard version >= 0.11.0
+# place it under $HOME/.config/khard/khard.conf
+
 [addressbooks]
 [[family]]
 path = ~/.contacts/family/
@@ -10,8 +13,27 @@ editor = vim
 merge_editor = vimdiff
 
 [contact table]
+# display names by first or last name: first_name / last_name
+display = first_name
+# group by address book: yes / no
 group_by_addressbook = no
+# reverse table ordering: yes / no
 reverse = no
+# append nicknames to name column: yes / no
 show_nicknames = no
+# show uid table column: yes / no
 show_uids = yes
+# sort by first or last name: first_name / last_name
 sort = last_name
+
+[vcard]
+# extend contacts with your own private objects
+# these objects are stored with a leading "X-" before the object name in the vcard files
+# every object label may only contain letters, digits and the - character
+# example:
+#   private_objects = Jabber, Skype, Twitter
+private_objects = Jabber, Skype, Twitter
+# preferred vcard version: 3.0 / 4.0
+preferred_version = 3.0
+# Look into source vcf files to speed up search queries: yes / no
+search_in_source_files = no

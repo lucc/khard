@@ -1,20 +1,54 @@
-# Contact template for khard version >= 0.9.0
+# Contact template for khard version >= 0.11.0
 #
 # Use this yaml formatted template to create a new contact:
 #   either with: khard new -a address_book -i template_for_contact_creation.yaml
 #   or with: cat template_for_contact_creation.yaml | khard new -a address_book
 
 # name components
+# every entry may contain a string or a list of strings
+# format:
+#   First name : name1
+#   Additional : 
+#       - name2
+#       - name3
+#   Last name  : name4
 Prefix     : 
 First name : 
 Additional : 
 Last name  : 
 Suffix     : 
 
-# organisation, title and role
+# person related information
+# birthday
+# example: yyyy.mm.dd
+Birthday : 
+# nickname
+# may contain a string or a list of strings
+Nickname : 
+
+# organisation
+# format:
+#   Organisation : company
+# or
+#   Organisation :
+#       - company1
+#       - company2
+# or
+#   Organisation :
+#       -
+#           - company
+#           - unit
 Organisation : 
-Role         : 
-Title        : 
+
+# organisation title and role
+# every entry may contain a string or a list of strings
+#
+# title at organisation
+# example usage: research scientist
+Title : 
+# role at organisation
+# example usage: project leader
+Role  : 
 
 # phone numbers
 # format:
@@ -30,9 +64,10 @@ Title        :
 #   But beware, that not all address book clients will support custom labels.
 Phone :
     cell : 
-    work : 
+    home : 
 
 # email addresses
+# format like phone numbers above
 # allowed types:
 #   At least one of: home, internet, pref, uri, work, x400
 #   Alternatively you may use a single custom label (only letters).
@@ -54,33 +89,27 @@ Address :
         Region   : 
         Country  : 
 
-# web pages
-# either
-#   Webpage: http://example.com
-# or
-#   Webpage:
-#       - http://example.com
-#       - http://example.org
-Webpage : 
-
-# instant messaging and social networks
-# Warning: may only work with the contacts app of some Android devices
-Jabber  : 
-Skype   : 
-Twitter : 
-
-# birthday
-# day.month.year or year.month.day
-Birthday : 
-
 # categories or tags
-# format: category1, category2, ...
+# format:
+#   Categories : single category
+# or
+#   Categories :
+#       - category1
+#       - category2
 Categories : 
 
-# nickname
-Nickname : 
+# web pages
+# may contain a string or a list of strings
+Webpage : 
 
-# note
+# private objects
+# define your own private objects in the vcard section of your khard.conf file
+# these objects are stored with a leading "X-" before the object name in the vcard files.
+# every entry may contain a string or a list of strings
+Private :
+
+# notes
+# may contain a string or a list of strings
 # for multi-line notes use:
 #   Note : |
 #       line one

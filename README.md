@@ -20,6 +20,9 @@ your contacts with an Android or iOS device, expect problems. You are on the sav
 use khard to read contacts. For further information about the vcard compatibility issues have a look
 into [this blog post](http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/).
 
+With version 0.11.0, khard changed from python2 to python3.  So if you come from a prior khard
+version, it may be necessary to reinstall in a newly created python3 virtual environment.
+
 
 Prerequisites
 -------------
@@ -41,40 +44,26 @@ sudo easy_install pip
 Installation
 ------------
 
-Khard is installable via pip. You can choose between the following three methods:
+Khard is installable via pip. I recommend virtualenv to create a separate python3 environment. So
+your system stays clean. Additionally you don't have to struggle with different python instances,
+especially if your operating system still defaults to python2.
 
-1. Install system wide:
-
-    ```
-    sudo pip install khard
-    ```
-
-    But that's not recommended due to security issues and cause it can damage dependencies of other python modules.
-
-2. Install into user space:
-
-    ```
-    pip install --user khard
-    ```
-
-    Then you can find the executable under ~/.local/bin.
-
-3. Use virtualenv to create a separate python environment for every module. That's recommended cause
-   it keeps your system clean:
-
-    ```
-    # install virtualenv package
-    sudo pip install virtualenv
-    # create folder for all virtualenv's
-    mkdir ~/.virtualenvs
-    # create new virtual environment with the name "khard"
-    virtualenv ~/.virtualenvs/khard
-    # to install khard, use the pip command from that newly created environment
-    # otherwise it would be installed in the users home directory
-    ~/.virtualenvs/khard/bin/pip install khard
-    # create a symlink to the local binary folder
-    ln -s ~/.virtualenvs/khard/bin/khard ~/bin
-    ```
+```
+# install virtualenv package
+sudo pip install virtualenv
+# create folder for all virtualenv's and put ~/.virtualenvs/bin in your shell's executable path
+mkdir ~/.virtualenvs
+# create new python3 virtual environment with the name "khard"
+virtualenv -p python3 ~/.virtualenvs/khard
+# to install khard, use the pip command from that newly created environment
+# otherwise it would be installed in the users home directory
+~/.virtualenvs/khard/bin/pip install khard
+# create subfolder for symlinks of local binaries
+# and don't forget to add it to your shell's executable path too
+mkdir ~/.virtualenvs/bin
+# create a symlink to the local binary folder
+ln -s ~/.virtualenvs/khard/bin/khard ~/.virtualenvs/bin
+```
 
 More information about virtualenv at http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
@@ -89,9 +78,9 @@ Or download and extract with pip:
 
 ```
 pip install --download /tmp --no-deps --no-use-wheel khard
-tar xfz /tmp/khard-0.2.1.tar.gz
-rm /tmp/khard-0.2.1.tar.gz
-cd khard-0.2.1/
+tar xfz /tmp/khard-x.x.x.tar.gz
+rm /tmp/khard-x.x.x.tar.gz
+cd khard-x.x.x/
 ```
 
 Now copy the example config file and adapt it's contents to your needs:
@@ -101,32 +90,28 @@ mkdir ~/.config/khard/
 cp misc/khard/khard.conf.example ~/.config/khard/khard.conf
 ```
 
-Khard also contains a helper utility called davcontroller. It's designed to create and remove
-address books and calendars at the server. I have created davcontroller cause my previously used
-CalDAV server (Darwin calendarserver) offered no simple way to create new address books and
-calendars. But davcontroller should be considered as a hacky solution and it's only tested against
-the Darwin calendarserver. So if your CalDAV server offers a way to create new address books and
-calendars I recommend to prefer that method over davcontroller.
+Khard also contains a helper script called davcontroller. It's designed to create and remove address
+books and calendars at the server. I have created davcontroller cause my previously used CalDAV
+server (Darwin calendarserver) offered no simple way to create new address books and calendars. But
+davcontroller should be considered as a hacky solution and it's only tested against the Darwin
+calendarserver. So if your CalDAV server offers a way to create new address books and calendars I
+recommend to prefer that method over davcontroller.
 
-If you nonetheless want to try davcontroller, you have to install the CalDAVClientLibrary first:
+If you nonetheless want to try davcontroller, you have to install the CalDAVClientLibrary first.
+Unfortunately that library isn't compatible to python3 so you have to create an extra python2
+virtual environment and install in there:
 
 ```
+# create python2 virtual environment
+virtualenv -p python2 ~/.virtualenvs/davcontroller
+# get library from svn repository
 sudo aptitude install subversion
 svn checkout http://svn.calendarserver.org/repository/calendarserver/CalDAVClientLibrary/trunk CalDAVClientLibrary
 cd CalDAVClientLibrary
-```
-
-For user space installation:
-
-```
-python setup.py install --user
-```
-
-Or if you use the virtual environment:
-
-```
-~/.virtualenvs/khard/bin/python setup.py install
-ln -s ~/.virtualenvs/khard/bin/davcontroller ~/bin
+# install library
+~/.virtualenvs/davcontroller/bin/python setup.py install
+# start davcontroller script
+~/.virtualenvs/davcontroller/bin/python /path/to/khard-x.x.x/misc/davcontroller/davcontroller.py
 ```
 
 
@@ -173,6 +158,7 @@ input produces unambiguous results, you may pick the contacts from a list instea
 The search parameter searches in all data fields. Therefore you aren't limited to the contact's name
 but you also could for example search for a part of a phone number, email address or post address.
 
+
 ### Create contact ###
 
 Add new contact with the following command:
@@ -194,7 +180,10 @@ Email :
     work : john.smith@example.org
 Phone :
     home : xxx 555 1234
-Categories : cat1, cat2, cat3
+Categories :
+    - cat1
+    - cat2
+    - cat3
 """ | khard new -a "address book name"
 ```
 
@@ -209,6 +198,7 @@ You may get an empty contact template with the following command:
 ```
 khard export --empty-contact-template -o empty.yaml
 ```
+
 
 ### Edit contacts ###
 
@@ -263,7 +253,7 @@ khard remove [-a addr_name] [-u uid|search terms [search terms ...]]
 davcontroller
 -------------
 
-This small utility helps to create and remove new address books and calendars at the carddav and
+This small script helps to create and remove new address books and calendars at the carddav and
 caldav server.
 
 List available resources:
@@ -283,12 +273,18 @@ Khard may be used as an external address book for the email client mutt. To acco
 following to your mutt config file (mostly ~/.mutt/muttrc):
 
 ```
-set query_command= "khard email -p %s"
+set query_command= "khard email --parsable %s"
 bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
 
-Then you can complete email addresses by pressing the Tab-key in mutt's new mail dialog.
+Then you can complete email addresses by pressing the Tab-key in mutt's new mail dialog. If your
+address books contain hundreds or even thousands of contacts and the query process is very slow, you
+may try the --search-in-source-files option to speed up the search:
+
+```
+set query_command= "khard email --parsable --search-in-source-files %s"
+```
 
 To add email addresses to khard's address book, you may also add the following lines to your muttrc file:
 
@@ -311,7 +307,7 @@ Add the following lines to your alot config file:
     [[youraccount]]
         [[[abook]]]
             type = shellcommand
-            command = khard email -p
+            command = khard email --parsable
             regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
             ignorecase = True
 ```
