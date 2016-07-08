@@ -36,9 +36,9 @@ class Config:
 
             # load config file
             xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
-                    os.path.expanduser("~/.config")
+                os.path.expanduser("~/.config")
             config_file = os.environ.get("KHARD_CONFIG") or \
-                    os.path.join(xdg_config_home, "khard", "khard.conf")
+                os.path.join(xdg_config_home, "khard", "khard.conf")
             if not os.path.exists(config_file):
                 print("Config file %s not available" % config_file)
                 sys.exit(2)
@@ -59,37 +59,36 @@ class Config:
 
             # editor
             self.config['general']['editor'] = \
-                       self.config['general'].get("editor") \
-                    or os.environ.get("EDITOR")
+                self.config['general'].get("editor") \
+                or os.environ.get("EDITOR")
             if self.config['general']['editor'] is None:
                 print("Error in config file\n"
-                        "Set path to your preferred text editor in khard's "
-                        "config file or the $EDITOR shell variable\n"
-                        "Example for khard.conf: editor = vim")
+                      "Set path to your preferred text editor in khard's "
+                      "config file or the $EDITOR shell variable\n"
+                      "Example for khard.conf: editor = vim")
                 sys.exit(2)
             self.config['general']['editor'] = find_executable(
-                    os.path.expanduser(self.config['general']['editor']))
+                os.path.expanduser(self.config['general']['editor']))
             if self.config['general']['editor'] is None:
                 print("Error in config file\n"
-                        "Invalid editor path or executable not found.")
+                      "Invalid editor path or executable not found.")
                 sys.exit(2)
 
             # merge editor
             self.config['general']['merge_editor'] = \
-                       self.config['general'].get("merge_editor") \
-                    or os.environ.get("MERGE_EDITOR")
+                self.config['general'].get("merge_editor") \
+                or os.environ.get("MERGE_EDITOR")
             if self.config['general']['merge_editor'] is None:
-                print("Error in config file\n" \
-                        "Set path to your preferred text merge editor in "
-                        "khard's config file or the $MERGE_EDITOR shell "
-                        "variable\n"
-                        "Example for khard.conf: merge_editor = vimdiff")
+                print("Error in config file\nSet path to your preferred text "
+                      "merge editor in khard's config file or the "
+                      "$MERGE_EDITOR shell variable\n"
+                      "Example for khard.conf: merge_editor = vimdiff")
                 sys.exit(2)
             self.config['general']['merge_editor'] = find_executable(
-                    os.path.expanduser(self.config['general']['merge_editor']))
+                os.path.expanduser(self.config['general']['merge_editor']))
             if self.config['general']['merge_editor'] is None:
                 print("Error in config file\n"
-                        "Invalid merge editor path or executable not found.")
+                      "Invalid merge editor path or executable not found.")
                 sys.exit(2)
 
             # default action
@@ -99,10 +98,9 @@ class Config:
                 sys.exit(2)
             elif self.config['general']['default_action'] not in \
                     Actions.get_list_of_all_actions():
-                print("Error in config file\n" \
-                        "Invalid value for default_action parameter\n" \
-                        "Possible values: %s" \
-                        % ', '.join(sorted(Actions.get_list_of_all_actions())))
+                print("Error in config file\nInvalid value for default_action "
+                      "parameter\nPossible values: %s" % ', '.join(
+                          sorted(Actions.get_list_of_all_actions())))
                 sys.exit(2)
 
             # contact table settings
@@ -114,9 +112,9 @@ class Config:
                 self.config['contact table']['sort'] = "first_name"
             elif self.config['contact table']['sort'] not in \
                     ["first_name", "last_name"]:
-                print("Error in config file\n" \
-                        "Invalid value for sort parameter\n" \
-                        "Possible values: first_name, last_name")
+                print("Error in config file\n"
+                      "Invalid value for sort parameter\n"
+                      "Possible values: first_name, last_name")
                 sys.exit(2)
 
             # display names in contact table by first or last name
@@ -127,9 +125,9 @@ class Config:
                         self.config['contact table']['sort']
             elif self.config['contact table']['display'] not in \
                     ["first_name", "last_name"]:
-                print("Error in config file\n" \
-                        "Invalid value for display parameter\n" \
-                        "Possible values: first_name, last_name")
+                print("Error in config file\n"
+                      "Invalid value for display parameter\n"
+                      "Possible values: first_name, last_name")
                 sys.exit(2)
 
             # reverse contact table
@@ -140,9 +138,9 @@ class Config:
             elif self.config['contact table']['reverse'] == "no":
                 self.config['contact table']['reverse'] = False
             else:
-                print("Error in config file\n" \
-                        "Invalid value for reverse parameter\n" \
-                        "Possible values: yes, no")
+                print("Error in config file\n"
+                      "Invalid value for reverse parameter\n"
+                      "Possible values: yes, no")
                 sys.exit(2)
 
             # group contact table by address book
@@ -153,9 +151,9 @@ class Config:
             elif self.config['contact table']['group_by_addressbook'] == "no":
                 self.config['contact table']['group_by_addressbook'] = False
             else:
-                print("Error in config file\n" \
-                        "Invalid value for group_by_addressbook parameter\n" \
-                        "Possible values: yes, no")
+                print("Error in config file\n"
+                      "Invalid value for group_by_addressbook parameter\n"
+                      "Possible values: yes, no")
                 sys.exit(2)
 
             # nickname
@@ -166,9 +164,9 @@ class Config:
             elif self.config['contact table']['show_nicknames'] == "no":
                 self.config['contact table']['show_nicknames'] = False
             else:
-                print("Error in config file\n" \
-                        "Invalid value for show_nicknames parameter\n" \
-                        "Possible values: yes, no")
+                print("Error in config file\n"
+                      "Invalid value for show_nicknames parameter\n"
+                      "Possible values: yes, no")
                 sys.exit(2)
 
             # show uids
@@ -179,9 +177,9 @@ class Config:
             elif self.config['contact table']['show_uids'] == "no":
                 self.config['contact table']['show_uids'] = False
             else:
-                print("Error in config file\n" \
-                        "Invalid value for show_uids parameter\n" \
-                        "Possible values: yes, no")
+                print("Error in config file\n"
+                      "Invalid value for show_uids parameter\n"
+                      "Possible values: yes, no")
                 sys.exit(2)
 
             # vcard settings
@@ -202,9 +200,9 @@ class Config:
                     if object == re.sub("[^-]", "", object) \
                             or object.startswith("-") \
                             or object.endswith("-"):
-                        print("Error in config file\n" \
-                                "A \"-\" in a private object label must be " \
-                                "at least surrounded by one letter or digit.")
+                        print("Error in config file\n"
+                              "A \"-\" in a private object label must be "
+                              "at least surrounded by one letter or digit.")
                         sys.exit(2)
 
             # preferred vcard version
@@ -212,10 +210,10 @@ class Config:
                 self.config['vcard']['preferred_version'] = "3.0"
             elif self.config['vcard']['preferred_version'] not in \
                     self.get_supported_vcard_versions():
-                print("Error in config file\n" \
-                        "Invalid value for preferred_version parameter\n" \
-                        "Possible values: %s"
-                        % self.get_supported_vcard_versions())
+                print("Error in config file\n"
+                      "Invalid value for preferred_version parameter\n"
+                      "Possible values: %s"
+                      % self.get_supported_vcard_versions())
                 sys.exit(2)
 
             # speed up program by pre-searching in the vcard source files
@@ -247,7 +245,7 @@ class Config:
                         name, self.config['addressbooks'][name]['path'])
                 except KeyError as e:
                     print("Error in config file\n"
-                            "Missing path to the \"%s\" address book." % name)
+                          "Missing path to the \"%s\" address book." % name)
                     sys.exit(2)
                 except IOError as e:
                     print("Error in config file\n%s" % e)
@@ -286,7 +284,7 @@ class Config:
                                     and self.search_in_source_files():
                                 with open(filename, "r") as f:
                                     if re.search(search_queries, f.read(),
-                                            re.IGNORECASE | re.DOTALL):
+                                                 re.IGNORECASE | re.DOTALL):
                                         filename_list.append(filename)
                             else:
                                 filename_list.append(filename)
@@ -301,17 +299,17 @@ class Config:
                                         self.get_supported_private_objects()))
                             except IOError as e:
                                 print("Error: Could not open file %s\n%s"
-                                        % (filename, e))
+                                      % (filename, e))
                                 error_counter += 1
                             except vobject.base.ParseError as e:
                                 print("Error: Could not parse file %s\n%s"
-                                        % (filename, e))
+                                      % (filename, e))
                                 error_counter += 1
 
                         # check if one or more contacts could not be parsed
                         if error_counter > 0:
                             print("\n%d of %d vcard files could not be parsed"
-                                    % (error_counter, number_of_contacts))
+                                  % (error_counter, number_of_contacts))
                             sys.exit(2)
 
                         # check uniqueness of vcard uids and create short uid
@@ -332,12 +330,12 @@ class Config:
                                             "%s and the contact %s from "
                                             "address book %s have the same "
                                             "uid %s" % (
-                                                  matching_contact.get_full_name(),
-                                                  matching_contact.get_address_book().get_name(),
-                                                  contact.get_full_name(),
-                                                  contact.get_address_book().get_name(),
-                                                  contact.get_uid())
-                                              )
+                                                matching_contact.get_full_name(),
+                                                matching_contact.get_address_book().get_name(),
+                                                contact.get_full_name(),
+                                                contact.get_address_book().get_name(),
+                                                contact.get_uid())
+                                            )
                                         sys.exit(2)
                             # rebuild shortened uid dictionary
                             self.create_shortened_uid_dictionary()
@@ -359,8 +357,8 @@ class Config:
             # then two or three characters
             self.uid_dict.clear()
             flat_contact_list = sorted(
-                    self.original_uid_dict.values(),
-                    key=lambda x: x.get_uid())
+                self.original_uid_dict.values(),
+                key=lambda x: x.get_uid())
             if len(flat_contact_list) == 1:
                 current = flat_contact_list[0]
                 self.uid_dict[current.get_uid()[:1]] = current
@@ -375,11 +373,10 @@ class Config:
                     prev = flat_contact_list[index-1]
                     current = flat_contact_list[index]
                     next = flat_contact_list[index+1]
-                    same = max(
-                            helpers.compare_uids(
-                                prev.get_uid(), current.get_uid()),
-                            helpers.compare_uids(
-                                current.get_uid(), next.get_uid()))
+                    same = max(helpers.compare_uids(prev.get_uid(),
+                                                    current.get_uid()),
+                               helpers.compare_uids(current.get_uid(),
+                                                    next.get_uid()))
                     self.uid_dict[current.get_uid()[:same+1]] = current
                 # last list element
                 prev = flat_contact_list[-2]

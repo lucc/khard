@@ -21,11 +21,11 @@ def create_new_contact(address_book):
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     temp_file_name = tf.name
     old_contact_template = "# create new contact\n" \
-            "# Address book: %s\n" \
-            "# Vcard version: %s\n" \
-            "# if you want to cancel, exit without saving\n\n%s" \
-            % (address_book.get_name(), Config().get_preferred_vcard_version(),
-                    helpers.get_new_contact_template())
+        "# Address book: %s\n" \
+        "# Vcard version: %s\n" \
+        "# if you want to cancel, exit without saving\n\n%s" \
+        % (address_book.get_name(), Config().get_preferred_vcard_version(),
+           helpers.get_new_contact_template())
     tf.write(old_contact_template)
     tf.close()
 
@@ -48,14 +48,14 @@ def create_new_contact(address_book):
         # try to create new contact
         try:
             new_contact = CarddavObject.from_user_input(
-                    address_book, new_contact_template,
-                    Config().get_supported_private_objects(),
-                    Config().get_preferred_vcard_version())
+                address_book, new_contact_template,
+                Config().get_supported_private_objects(),
+                Config().get_preferred_vcard_version())
         except ValueError as e:
             print("\n%s\n" % e)
             while True:
                 input_string = input(
-                        "Do you want to open the editor again (y/n)? ")
+                    "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     os.remove(temp_file_name)
@@ -79,15 +79,11 @@ def modify_existing_contact(old_contact):
     # create temp file and open it with the specified text editor
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     temp_file_name = tf.name
-    tf.write(
-            "# Edit contact: %s\n"
-            "# Address book: %s\n"
-            "# Vcard version: %s\n"
-            "# if you want to cancel, exit without saving\n\n%s"
-            % (old_contact.get_full_name(),
+    tf.write("# Edit contact: %s\n# Address book: %s\n# Vcard version: %s\n"
+             "# if you want to cancel, exit without saving\n\n%s"
+             % (old_contact.get_full_name(),
                 old_contact.get_address_book().get_name(),
-                old_contact.get_version(),
-                old_contact.get_template()))
+                old_contact.get_version(), old_contact.get_template()))
     tf.close()
 
     temp_file_creation = helpers.file_modification_date(temp_file_name)
@@ -115,7 +111,7 @@ def modify_existing_contact(old_contact):
             print("\n%s\n" % e)
             while True:
                 input_string = input(
-                        "Do you want to open the editor again (y/n)? ")
+                    "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     os.remove(temp_file_name)
@@ -158,33 +154,29 @@ def merge_existing_contacts(source_contact, target_contact,
     # source vcard
     source_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     source_temp_file_name = source_tf.name
-    source_tf.write(
-            "# merge from %s\n"
-            "# Address book: %s\n"
-            "# Vcard version: %s\n"
-            "# if you want to cancel, exit without saving\n\n%s"
-            % (source_contact.get_full_name(),
-                source_contact.get_address_book().get_name(),
-                source_contact.get_version(),
-                source_contact.get_template()))
+    source_tf.write("# merge from %s\n# Address book: %s\n"
+                    "# Vcard version: %s\n"
+                    "# if you want to cancel, exit without saving\n\n%s"
+                    % (source_contact.get_full_name(),
+                       source_contact.get_address_book().get_name(),
+                       source_contact.get_version(),
+                       source_contact.get_template()))
     source_tf.close()
 
     # target vcard
     target_tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     target_temp_file_name = target_tf.name
-    target_tf.write(
-            "# merge into %s\n"
-            "# Address book: %s\n"
-            "# Vcard version: %s\n"
-            "# if you want to cancel, exit without saving\n\n%s"
-            % (target_contact.get_full_name(),
-                target_contact.get_address_book().get_name(),
-                target_contact.get_version(),
-                target_contact.get_template()))
+    target_tf.write("# merge into %s\n# Address book: %s\n"
+                    "# Vcard version: %s\n"
+                    "# if you want to cancel, exit without saving\n\n%s"
+                    % (target_contact.get_full_name(),
+                       target_contact.get_address_book().get_name(),
+                       target_contact.get_version(),
+                       target_contact.get_template()))
     target_tf.close()
 
     target_temp_file_creation = helpers.file_modification_date(
-            target_temp_file_name)
+        target_temp_file_name)
     while True:
         # start editor to edit contact template
         child = subprocess.Popen([Config().get_merge_editor(),
@@ -212,7 +204,7 @@ def merge_existing_contacts(source_contact, target_contact,
             print("\n%s\n" % e)
             while True:
                 input_string = input(
-                        "Do you want to open the editor again (y/n)? ")
+                    "Do you want to open the editor again (y/n)? ")
                 if input_string.lower() in ["", "n", "q"]:
                     print("Canceled")
                     os.remove(source_temp_file_name)
@@ -233,26 +225,26 @@ def merge_existing_contacts(source_contact, target_contact,
     while True:
         if delete_source_contact:
             input_string = input(
-                    "Merge contact %s from address book %s into contact %s "
-                    "from address book %s\n\nTo be removed\n\n%s\n\n"
-                    "Merged\n\n%s\n\nAre you sure? (y/n): " % (
-                        source_contact.get_full_name(),
-                        source_contact.get_address_book().get_name(),
-                        merged_contact.get_full_name(),
-                        merged_contact.get_address_book().get_name(),
-                        source_contact.print_vcard(),
-                        merged_contact.print_vcard()))
+                "Merge contact %s from address book %s into contact %s from "
+                "address book %s\n\nTo be removed\n\n%s\n\nMerged\n\n%s\n\n"
+                "Are you sure? (y/n): " % (
+                    source_contact.get_full_name(),
+                    source_contact.get_address_book().get_name(),
+                    merged_contact.get_full_name(),
+                    merged_contact.get_address_book().get_name(),
+                    source_contact.print_vcard(),
+                    merged_contact.print_vcard()))
         else:
             input_string = input(
-                    "Merge contact %s from address book %s into contact %s "
-                    "from address book %s\n\nKeep unchanged\n\n%s\n\n"
-                    "Merged:\n\n%s\n\nAre you sure? (y/n): " % (
-                        source_contact.get_full_name(),
-                        source_contact.get_address_book().get_name(),
-                        merged_contact.get_full_name(),
-                        merged_contact.get_address_book().get_name(),
-                        source_contact.print_vcard(),
-                        merged_contact.print_vcard()))
+                "Merge contact %s from address book %s into contact %s from "
+                "address book %s\n\nKeep unchanged\n\n%s\n\nMerged:\n\n%s\n\n"
+                "Are you sure? (y/n): " % (
+                    source_contact.get_full_name(),
+                    source_contact.get_address_book().get_name(),
+                    merged_contact.get_full_name(),
+                    merged_contact.get_address_book().get_name(),
+                    source_contact.print_vcard(),
+                    merged_contact.print_vcard()))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
             return
@@ -278,10 +270,8 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         contact.add_uid(helpers.get_random_uid())
     # set destination file name
     contact.set_filename(
-            os.path.join(
-                target_address_book.get_path(),
-                "%s.vcf" % contact.get_uid())
-            )
+        os.path.join(target_address_book.get_path(),
+                     "%s.vcf" % contact.get_uid()))
     # save
     contact.write_to_file()
     # delete old file
@@ -404,7 +394,7 @@ def choose_address_book_from_list(header_string, address_book_list):
                 if addr_index > 0:
                     # make sure the address book is loaded afterwards
                     selected_address_book = Config().get_address_book(
-                            address_book_list[addr_index-1].name)
+                        address_book_list[addr_index-1].name)
                 else:
                     raise ValueError
             except (EOFError, IndexError, ValueError):
@@ -452,9 +442,9 @@ def get_contact_list_by_user_selection(address_books, search, strict_search):
     :rtype: list(CarddavObject)
     """
     return get_contacts(
-            address_books, search, "name" if strict_search else "all",
-            Config().reverse(), Config().group_by_addressbook(),
-            Config().sort_by_name())
+        address_books, search, "name" if strict_search else "all",
+        Config().reverse(), Config().group_by_addressbook(),
+        Config().sort_by_name())
 
 
 def get_contacts(address_books, query, method="all", reverse=False,
@@ -504,7 +494,7 @@ def get_contacts(address_books, query, method="all", reverse=False,
                     # search in all contact fields
                     contact_details = contact.print_vcard()
                     contact_details_without_special_chars = re.sub(
-                            "[^a-zA-Z0-9]", "", contact_details)
+                        "[^a-zA-Z0-9]", "", contact_details)
                     if regexp.search(contact_details) is not None or \
                             regexp.search(
                                     contact_details_without_special_chars) \
@@ -514,12 +504,12 @@ def get_contacts(address_books, query, method="all", reverse=False,
     if group:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
-                              x.get_address_book().get_name().lower(),
-                              x.get_first_name_last_name().lower()))
+                x.get_address_book().get_name().lower(),
+                x.get_first_name_last_name().lower()))
         elif sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
-                              x.get_address_book().get_name().lower(),
-                              x.get_last_name_first_name().lower()))
+                x.get_address_book().get_name().lower(),
+                x.get_last_name_first_name().lower()))
         else:
             raise ValueError('sort must be "first_name" or "last_name" not '
                              '{}.'.format(sort))
@@ -536,7 +526,7 @@ def get_contacts(address_books, query, method="all", reverse=False,
 
 
 def new_subcommand(selected_address_books, input_from_stdin_or_file,
-        open_editor):
+                   open_editor):
     """Create a new contact.
 
     :param selected_address_books: a list of addressbooks that were selected on
@@ -554,15 +544,15 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
     """
     # ask for address book, in which to create the new contact
     selected_address_book = choose_address_book_from_list(
-            "Select address book for new contact", selected_address_books)
+        "Select address book for new contact", selected_address_books)
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
         try:
             new_contact = CarddavObject.from_user_input(
-                    selected_address_book, input_from_stdin_or_file,
-                    Config().get_supported_private_objects(),
-                    Config().get_preferred_vcard_version())
+                selected_address_book, input_from_stdin_or_file,
+                Config().get_supported_private_objects(),
+                Config().get_preferred_vcard_version())
         except ValueError as e:
             print(e)
             sys.exit(1)
@@ -620,8 +610,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
 
     # search for an existing contact
     selected_vcard = choose_vcard_from_list(
-            get_contact_list_by_user_selection(
-                selected_address_books, name, True))
+        get_contact_list_by_user_selection(selected_address_books, name, True))
     if selected_vcard is None:
         # create new contact
         while True:
@@ -634,8 +623,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
                 break
         # ask for address book, in which to create the new contact
         selected_address_book = choose_address_book_from_list(
-                "Select address book for new contact",
-                Config().get_all_address_books())
+            "Select address book for new contact",
+            Config().get_all_address_books())
         # ask for name and organisation of new contact
         while True:
             first_name = input("First name: ")
@@ -645,11 +634,12 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
                 print("Error: All fields are empty.")
             else:
                 break
-        selected_vcard = CarddavObject.from_user_input(selected_address_book,
-                "First name : %s\nLast name : %s\nOrganisation : %s"
-                    % (first_name, last_name, organisation),
-                Config().get_supported_private_objects(),
-                Config().get_preferred_vcard_version())
+        selected_vcard = CarddavObject.from_user_input(
+            selected_address_book,
+            "First name : %s\nLast name : %s\nOrganisation : %s" % (
+                first_name, last_name, organisation),
+            Config().get_supported_private_objects(),
+            Config().get_preferred_vcard_version())
 
     # check if the contact already contains the email address
     for type, email_list in sorted(
@@ -664,8 +654,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     # ask for confirmation again
     while True:
         input_string = input(
-                "Do you want to add the email address %s to the contact %s "
-                "(y/n)? " % (email_address, selected_vcard.get_full_name()))
+            "Do you want to add the email address %s to the contact %s (y/n)? "
+            % (email_address, selected_vcard.get_full_name()))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
             sys.exit(0)
@@ -716,21 +706,21 @@ def birthdays_subcommand(vcard_list, parsable):
         if parsable:
             if Config().display_by_name() == "first_name":
                 birthday_list.append("%04d.%02d.%02d\t%s"
-                        % (date.year, date.month, date.day,
-                            vcard.get_first_name_last_name()))
+                                     % (date.year, date.month, date.day,
+                                        vcard.get_first_name_last_name()))
             else:
                 birthday_list.append("%04d.%02d.%02d\t%s"
-                        % (date.year, date.month, date.day,
-                            vcard.get_last_name_first_name()))
+                                     % (date.year, date.month, date.day,
+                                        vcard.get_last_name_first_name()))
         else:
             if Config().display_by_name() == "first_name":
                 birthday_list.append("%s\t%s"
-                        % (vcard.get_first_name_last_name(),
-                            vcard.get_formatted_birthday()))
+                                     % (vcard.get_first_name_last_name(),
+                                        vcard.get_formatted_birthday()))
             else:
                 birthday_list.append("%s\t%s"
-                        % (vcard.get_last_name_first_name(),
-                            vcard.get_formatted_birthday()))
+                                     % (vcard.get_last_name_first_name(),
+                                        vcard.get_formatted_birthday()))
     if len(birthday_list) > 0:
         if parsable:
             print('\n'.join(birthday_list))
@@ -978,9 +968,9 @@ def remove_subcommand(selected_vcard):
     """
     while True:
         input_string = input(
-                "Deleting contact %s from address book %s. Are you sure? "
-                "(y/n): " % (selected_vcard.get_full_name(),
-                             selected_vcard.get_address_book().get_name()))
+            "Deleting contact %s from address book %s. Are you sure? (y/n): "
+            % (selected_vcard.get_full_name(),
+               selected_vcard.get_address_book().get_name()))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
             sys.exit(0)
@@ -1006,7 +996,7 @@ def source_subcommand(selected_vcard, editor):
 
 
 def merge_subcommand(vcard_list, selected_address_books, search_terms,
-        target_uid):
+                     target_uid):
     """Merge two contacts into one.
 
     :param vcard_list: the vcards from which to choose contacts for mergeing
@@ -1030,7 +1020,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     # Find possible target contacts.
     if target_uid != "":
         target_vcards = get_contacts(selected_address_books, target_uid,
-                method="uid")
+                                     method="uid")
         # We require that the uid given can uniquely identify a contact.
         if len(target_vcards) != 1:
             if len(target_vcards) == 0:
@@ -1043,7 +1033,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
             sys.exit(1)
     else:
         target_vcards = get_contact_list_by_user_selection(
-                selected_address_books, search_terms, False)
+            selected_address_books, search_terms, False)
     # get the source vcard, from which to merge
     source_vcard = choose_vcard_from_list(vcard_list)
     if source_vcard is None:
@@ -1085,15 +1075,15 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
         sys.exit(1)
     else:
         print("%s contact %s from address book %s"
-                % (action.title(), source_vcard.get_full_name(),
-                    source_vcard.get_address_book().get_name()))
+              % (action.title(), source_vcard.get_full_name(),
+                 source_vcard.get_address_book().get_name()))
 
     # get target address book
     if len(target_address_book_list) == 1 \
             and target_address_book_list[0] == source_vcard.get_address_book():
         print("The address book %s already contains the contact %s"
-                % (source_vcard.get_full_name(),
-                    target_address_book_list[0].get_name()))
+              % (source_vcard.get_full_name(),
+                 target_address_book_list[0].get_name()))
         sys.exit(1)
     else:
         available_address_books = []
@@ -1105,14 +1095,13 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
-            [selected_target_address_book], source_vcard.get_full_name(),
-            True))
+        [selected_target_address_book], source_vcard.get_full_name(), True))
 
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
         copy_contact(source_vcard, selected_target_address_book,
-                action == "move")
+                     action == "move")
     else:
         if source_vcard == target_vcard:
             # source and target contact are identical
@@ -1139,11 +1128,11 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                 input_string = input("Your choice: ")
                 if input_string.lower() == "a":
                     copy_contact(source_vcard, selected_target_address_book,
-                            action == "move")
+                                 action == "move")
                     break
                 if input_string.lower() == "o":
                     copy_contact(source_vcard, selected_target_address_book,
-                            action == "move")
+                                 action == "move")
                     target_vcard.delete_vcard_file()
                     break
                 if input_string.lower() == "m":
@@ -1197,8 +1186,8 @@ argparse.ArgumentParser.set_default_subparser = set_default_subparser
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
-            description="Khard is a carddav address book for the console",
-            formatter_class=argparse.RawTextHelpFormatter)
+        description="Khard is a carddav address book for the console",
+        formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--debug", action="store_true",
                         help="enable debug output")
     parser.add_argument("-v", "--version", action="version",
@@ -1461,22 +1450,20 @@ def main():
     # get all possible search queries for address book parsing
     search_query_list = []
     if "source_search_terms" in args and args.source_search_terms:
-        search_query_list.append(
-                ".*".join(
-                    [x.replace("*", ".*") for x in args.source_search_terms]))
+        search_query_list.append(".*".join(
+            [x.replace("*", ".*") for x in args.source_search_terms]))
     if "search_terms" in args and args.search_terms:
-        search_query_list.append(
-                ".*".join(
-                    [x.replace("*", ".*") for x in args.search_terms]))
+        search_query_list.append(".*".join(
+            [x.replace("*", ".*") for x in args.search_terms]))
     if "target_contact" in args and args.target_contact:
         search_query_list.append(
-                args.target_contact.replace("*", ".*").replace(" ", ".*"))
+            args.target_contact.replace("*", ".*").replace(" ", ".*"))
     if "uid" in args and args.uid:
         search_query_list.append(
-                args.uid.replace("*", ".*").replace(" ", ".*"))
+            args.uid.replace("*", ".*").replace(" ", ".*"))
     if "target_uid" in args and args.target_uid:
         search_query_list.append(
-                args.target_uid.replace("*", ".*").replace(" ", ".*"))
+            args.target_uid.replace("*", ".*").replace(" ", ".*"))
     # create regexp
     search_queries = None
     if search_query_list:
@@ -1499,9 +1486,8 @@ def main():
         # load contacts of all address books
         args.addressbook = []
         for address_book in Config().get_all_address_books():
-            args.addressbook.append(
-                    Config().get_address_book(
-                        address_book.get_name(), search_queries))
+            args.addressbook.append(Config().get_address_book(
+                address_book.get_name(), search_queries))
     logging.debug("addressbooks: {}".format(args.addressbook))
 
     # load target address books
@@ -1519,9 +1505,8 @@ def main():
     else:
         args.target_addressbook = []
         for address_book in Config().get_all_address_books():
-            args.target_addressbook.append(
-                    Config().get_address_book(
-                        address_book.get_name(), search_queries))
+            args.target_addressbook.append(Config().get_address_book(
+                address_book.get_name(), search_queries))
     logging.debug("target addressbooks: {}".format(args.target_addressbook))
 
     # fill contact list
@@ -1567,7 +1552,7 @@ def main():
             args.search_terms = ""
         logging.debug("args.search_terms={}".format(args.search_terms))
         vcard_list = get_contact_list_by_user_selection(
-                args.addressbook, args.search_terms, False)
+            args.addressbook, args.search_terms, False)
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
@@ -1597,7 +1582,7 @@ def main():
 
     if args.action == "new":
         new_subcommand(args.addressbook, input_from_stdin_or_file,
-                args.open_editor)
+                       args.open_editor)
     elif args.action == "add-email":
         add_email_subcommand(input_from_stdin_or_file, args.addressbook)
     elif args.action == "birthdays":
@@ -1606,16 +1591,15 @@ def main():
         phone_subcommand(args.search_terms, vcard_list, args.parsable)
     elif args.action == "email":
         email_subcommand(args.search_terms, vcard_list,
-                args.parsable, args.remove_first_line)
+                         args.parsable, args.remove_first_line)
     elif args.action == "list":
         list_subcommand(vcard_list)
     elif args.action == "export" \
             and "empty_contact_template" in args \
             and args.empty_contact_template:
         # export empty template must work without selecting a contact first
-        args.output_file.write(
-                "# Contact template for khard version %s\n"
-                % (khard_version, helpers.get_new_contact_template()))
+        args.output_file.write("# Contact template for khard version %s\n" % (
+            khard_version, helpers.get_new_contact_template()))
     elif args.action in ["details", "modify", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(vcard_list)
         if selected_vcard is None:
@@ -1625,14 +1609,14 @@ def main():
             print(selected_vcard.print_vcard())
         elif args.action == "export":
             args.output_file.write(
-                    "# Contact template for khard version %s\n"
-                    "# Name: %s\n# Vcard version: %s\n\n%s"
-                    % (khard_version, selected_vcard.get_full_name(),
-                        selected_vcard.get_version(),
-                        selected_vcard.get_template()))
+                "# Contact template for khard version %s\n"
+                "# Name: %s\n# Vcard version: %s\n\n%s"
+                % (khard_version, selected_vcard.get_full_name(),
+                   selected_vcard.get_version(),
+                   selected_vcard.get_template()))
         elif args.action == "modify":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
-                    args.open_editor)
+                              args.open_editor)
         elif args.action == "remove":
             remove_subcommand(selected_vcard)
         elif args.action == "source":
