@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import email.header
 import logging
 import os
 import re
 import subprocess
 import sys
 import tempfile
+
+from email.header import decode_header
 
 from . import helpers
 from .actions import Actions
@@ -377,8 +378,7 @@ def list_email_addresses(email_address_list):
 
 def choose_address_book_from_list(header_string, address_book_list):
     if len(address_book_list) == 0:
-        print("%s\nError: address book list is empty" % header_string)
-        sys.exit(1)
+        return None
     elif len(address_book_list) == 1:
         return address_book_list[0]
     else:
@@ -406,28 +406,32 @@ def choose_address_book_from_list(header_string, address_book_list):
         return selected_address_book
 
 
-def choose_vcard_from_list(vcard_list):
+def choose_vcard_from_list(header_string, vcard_list):
     if vcard_list.__len__() == 0:
         return None
     elif vcard_list.__len__() == 1:
         return vcard_list[0]
     else:
+        print(header_string)
         list_contacts(vcard_list)
         while True:
-            input_string = input("Enter Index: ")
-            if input_string in ["", "q", "Q"]:
-                print("Canceled")
-                sys.exit(0)
             try:
-                vcard_index = int(input_string)
-                if vcard_index > 0 and vcard_index <= vcard_list.__len__():
-                    break
-            except ValueError:
-                pass
-            print("Please enter an index value between 1 and %d or nothing or "
-                  "q to exit." % len(vcard_list))
+                input_string = input("Enter Index: ")
+                if input_string in ["", "q", "Q"]:
+                    print("Canceled")
+                    sys.exit(0)
+                addr_index = int(input_string)
+                if addr_index > 0:
+                    selected_vcard = vcard_list[addr_index-1]
+                else:
+                    raise ValueError
+            except (EOFError, IndexError, ValueError):
+                print("Please enter an index value between 1 and %d or nothing"
+                      " to exit." % len(vcard_list))
+            else:
+                break
         print("")
-        return vcard_list[vcard_index-1]
+        return selected_vcard
 
 
 def get_contact_list_by_user_selection(address_books, search, strict_search):
@@ -545,6 +549,9 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
     # ask for address book, in which to create the new contact
     selected_address_book = choose_address_book_from_list(
         "Select address book for new contact", selected_address_books)
+    if selected_address_book is None:
+        print("Error: address book list is empty")
+        sys.exit(1)
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
@@ -600,7 +607,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         # remove quotes from name string, otherwise decoding fails
         name = name.replace("\"", "")
         # fix encoding of senders name
-        name, encoding = email.header.decode_header(name)[0]
+        name, encoding = decode_header(name)[0]
         if encoding:
             name = name.decode(encoding).replace("\"", "")
         # query user input.
@@ -610,6 +617,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
 
     # search for an existing contact
     selected_vcard = choose_vcard_from_list(
+        "Select contact for the found e-mail address",
         get_contact_list_by_user_selection(selected_address_books, name, True))
     if selected_vcard is None:
         # create new contact
@@ -625,6 +633,9 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         selected_address_book = choose_address_book_from_list(
             "Select address book for new contact",
             Config().get_all_address_books())
+        if selected_address_book is None:
+            print("Error: address book list is empty")
+            sys.exit(1)
         # ask for name and organisation of new contact
         while True:
             first_name = input("First name: ")
@@ -665,7 +676,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     # ask for the email label
     print("\nAdding email address %s to contact %s\n"
           "Enter email label\n"
-          "    At least one of: home, internet, pref, uri, work, x400\n"
+          "    vcard 3.0: At least one of home, internet, pref, work, x400\n"
+          "    vcard 4.0: At least one of home, internet, pref, work\n"
           "    Or a custom label (only letters" %
           (email_address, selected_vcard))
     while True:
@@ -1035,19 +1047,25 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
         target_vcards = get_contact_list_by_user_selection(
             selected_address_books, search_terms, False)
     # get the source vcard, from which to merge
-    source_vcard = choose_vcard_from_list(vcard_list)
+    source_vcard = choose_vcard_from_list(
+            "Select contact from which to merge", vcard_list)
     if source_vcard is None:
         print("Found no source contact for merging")
         sys.exit(1)
+    else:
+        print("Merge from %s from address book %s\n\n"
+              % (source_vcard.get_full_name(),
+                 source_vcard.get_address_book().get_name()))
     # get the target vcard, into which to merge
-    print("Merge from %s from address book %s\n\n"
-          "Now choose the contact into which to merge:"
-          % (source_vcard.get_full_name(),
-             source_vcard.get_address_book().get_name()))
-    target_vcard = choose_vcard_from_list(target_vcards)
+    target_vcard = choose_vcard_from_list(
+            "Select contact into which to merge", target_vcards)
     if target_vcard is None:
         print("Found no target contact for merging")
         sys.exit(1)
+    else:
+        print("Merge into %s from address book %s\n\n"
+              % (target_vcard.get_full_name(),
+                 target_vcard.get_address_book().get_name()))
     # merging
     if source_vcard == target_vcard:
         print("The selected contacts are already identical")
@@ -1069,7 +1087,8 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
 
     """
     # get the source vcard, which to copy or move
-    source_vcard = choose_vcard_from_list(vcard_list)
+    source_vcard = choose_vcard_from_list(
+            "Select contact to %s" % action.title(), vcard_list)
     if source_vcard is None:
         print("Found no contact")
         sys.exit(1)
@@ -1092,11 +1111,16 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                 available_address_books.append(address_book)
         selected_target_address_book = choose_address_book_from_list(
             "Select target address book", available_address_books)
+        if selected_target_address_book is None:
+            print("Error: address book list is empty")
+            sys.exit(1)
 
     # check if a contact already exists in the target address book
-    target_vcard = choose_vcard_from_list(get_contact_list_by_user_selection(
-        [selected_target_address_book], source_vcard.get_full_name(), True))
-
+    target_vcard = choose_vcard_from_list(
+            "Select target contact which to overwrite",
+            get_contact_list_by_user_selection(
+                [selected_target_address_book], source_vcard.get_full_name(),
+                True))
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
@@ -1117,9 +1141,10 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                   "Source\n\n%s\n\nTarget\n\n%s\n\n"
                   "Possible actions:\n"
                   "  a: %s anyway\n"
-                  "m: Merge from source into target contact\n"
-                  "o: Overwrite target contact\n"
-                  "q: Quit" % (
+                  "  m: Merge from source into target contact\n"
+                  "  o: Overwrite target contact\n"
+                  "  q: Quit"
+                  % (
                       target_vcard.get_address_book().get_name(),
                       source_vcard.get_full_name(), source_vcard.print_vcard(),
                       target_vcard.print_vcard(),
@@ -1360,13 +1385,16 @@ def main():
                  default_search_parser],
         description="edit the vcard file of a contact directly",
         help="edit the vcard file of a contact directly")
-    subparsers.add_parser(
+    new_parser = subparsers.add_parser(
         "new",
         aliases=Actions.get_alias_list_for_action("new"),
         parents=[new_addressbook_parser, template_input_file_parser],
         description="create a new contact",
         help="create a new contact")
-    subparsers.add_parser(
+    new_parser.add_argument(
+        "-v", "--vcard-version", choices=("3.0", "4.0"),
+        help="Select preferred vcard version for new contact")
+    add_email_parser = subparsers.add_parser(
         "add-email",
         aliases=Actions.get_alias_list_for_action("add-email"),
         parents=[default_addressbook_parser, email_header_input_file_parser,
@@ -1375,6 +1403,9 @@ def main():
         "email header and add to an existing contact or create a new one",
         help="Extract email address from the \"From:\" field of an email "
         "header and add to an existing contact or create a new one")
+    add_email_parser.add_argument(
+        "-v", "--vcard-version", choices=("3.0", "4.0"),
+        help="Select preferred vcard version for new contact")
     subparsers.add_parser(
         "merge",
         aliases=Actions.get_alias_list_for_action("merge"),
@@ -1442,6 +1473,10 @@ def main():
     # sort criteria: first or last name
     if "sort" in args and args.sort:
         Config().set_sort_by_name(args.sort)
+
+    # preferred vcard version
+    if "vcard_version" in args and args.vcard_version:
+        Config().set_preferred_vcard_version(args.vcard_version)
 
     # search in source files
     if "search_in_source_files" in args and args.search_in_source_files:
@@ -1598,10 +1633,16 @@ def main():
             and "empty_contact_template" in args \
             and args.empty_contact_template:
         # export empty template must work without selecting a contact first
-        args.output_file.write("# Contact template for khard version %s\n" % (
-            khard_version, helpers.get_new_contact_template()))
+        args.output_file.write(
+                "# Contact template for khard version %s\n#\n"
+                "# Use this yaml formatted template to create a new contact:\n"
+                "#   either with: khard new -a address_book -i template.yaml\n"
+                "#   or with: cat template.yaml | khard new -a address_book\n\n"
+                "%s" % (khard_version, helpers.get_new_contact_template()))
     elif args.action in ["details", "modify", "remove", "source", "export"]:
-        selected_vcard = choose_vcard_from_list(vcard_list)
+        selected_vcard = choose_vcard_from_list(
+                "Select contact for %s action" % args.action.title(),
+                vcard_list)
         if selected_vcard is None:
             print("Found no contact")
             sys.exit(1)

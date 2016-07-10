@@ -12,11 +12,11 @@
 #       - name2
 #       - name3
 #   Last name  : name4
-Prefix     : 
-First name : 
+Prefix     : Dr.
+First name : Paula
 Additional : 
-Last name  : 
-Suffix     : 
+Last name  : Smith
+Suffix     : II
 
 # person related information
 #
@@ -24,10 +24,10 @@ Suffix     :
 # Formats:
 #   vcard 3.0 and 4.0: yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
 #   vcard 4.0 only: --mm-dd or text= string value
-Birthday : 
+Birthday : 1983-02-01
 # nickname
 # may contain a string or a list of strings
-Nickname : 
+Nickname : myNick
 
 # organisation
 # format:
@@ -41,17 +41,17 @@ Nickname :
 #       -
 #           - company
 #           - unit
-Organisation : 
+Organisation : Example Company
 
 # organisation title and role
 # every entry may contain a string or a list of strings
 #
 # title at organisation
 # example usage: research scientist
-Title : 
+Title        : research scientist
 # role at organisation
 # example usage: project leader
-Role  : 
+Role         : Project leader
 
 # phone numbers
 # format:
@@ -69,8 +69,8 @@ Role  :
 #   Alternatively you may use a single custom label (only letters).
 #   But beware, that not all address book clients will support custom labels.
 Phone :
-    cell : 
-    home : 
+    cell : 0152 12345678
+    work : 090 87654321
 
 # email addresses
 # format like phone numbers above
@@ -79,8 +79,7 @@ Phone :
 #   vcard 4.0: At least one of home, internet, pref, work
 #   Alternatively you may use a single custom label (only letters).
 Email :
-    home : 
-    work : 
+    work : paula.smith@example.com
 
 # post addresses
 # allowed types:
@@ -91,11 +90,11 @@ Address :
     home :
         Box      : 
         Extended : 
-        Street   : 
-        Code     : 
-        City     : 
-        Region   : 
-        Country  : 
+        Street   : Mainstreet 123
+        Code     : 31415
+        City     : A City
+        Region   : Region
+        Country  : Country
 
 # categories or tags
 # format:
@@ -104,11 +103,11 @@ Address :
 #   Categories :
 #       - category1
 #       - category2
-Categories : 
+Categories : a single one
 
 # web pages
 # may contain a string or a list of strings
-Webpage : 
+Webpage : http://example.com
 
 # private objects
 # define your own private objects in the vcard section of your khard.conf file
@@ -116,6 +115,9 @@ Webpage :
 # vcard files.
 # every entry may contain a string or a list of strings
 Private :
+    Jabber  : paula@jabber.org
+    Skype   : sky_paula
+    Twitter : twi_paula
 
 # notes
 # may contain a string or a list of strings
@@ -123,4 +125,6 @@ Private :
 #   Note : |
 #       line one
 #       line two
-Note : 
+Note : |
+    first line
+    second line

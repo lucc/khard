@@ -12,11 +12,15 @@
 #       - name2
 #       - name3
 #   Last name  : name4
-Prefix     : 
-First name : 
-Additional : 
-Last name  : 
-Suffix     : 
+Prefix     :
+    - Prof.
+    - Dr.
+First name : Mark
+Additional :
+    - Stephe
+    - Tom
+Last name  : Schröder
+Suffix     : II
 
 # person related information
 #
@@ -24,10 +28,12 @@ Suffix     :
 # Formats:
 #   vcard 3.0 and 4.0: yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
 #   vcard 4.0 only: --mm-dd or text= string value
-Birthday : 
+Birthday : 1992-12-21
 # nickname
 # may contain a string or a list of strings
 Nickname : 
+    - several
+    - nicknames
 
 # organisation
 # format:
@@ -42,6 +48,10 @@ Nickname :
 #           - company
 #           - unit
 Organisation : 
+    -
+        - Company1
+        - Sub-Company1
+    - Company2
 
 # organisation title and role
 # every entry may contain a string or a list of strings
@@ -49,9 +59,13 @@ Organisation :
 # title at organisation
 # example usage: research scientist
 Title : 
+    - research scientist
+    - Manager
 # role at organisation
 # example usage: project leader
 Role  : 
+    - CEO
+    - CTO
 
 # phone numbers
 # format:
@@ -69,8 +83,11 @@ Role  :
 #   Alternatively you may use a single custom label (only letters).
 #   But beware, that not all address book clients will support custom labels.
 Phone :
-    cell : 
-    home : 
+    cell, pref : 0161 99999999
+    work :
+        - 090 11122200
+        - 090 33344400
+        - 090 55566600
 
 # email addresses
 # format like phone numbers above
@@ -80,7 +97,8 @@ Phone :
 #   Alternatively you may use a single custom label (only letters).
 Email :
     home : 
-    work : 
+    work : mark@example.com
+    pref : mark@example.org
 
 # post addresses
 # allowed types:
@@ -88,14 +106,28 @@ Email :
 #   vcard 4.0: At least one of home, pref, work
 #   Alternatively you may use a single custom label (only letters).
 Address :
-    home :
+    Custom :
         Box      : 
         Extended : 
-        Street   : 
-        Code     : 
-        City     : 
-        Region   : 
-        Country  : 
+        Street   : Riverlane 1
+        Code     : 99A99
+        City     : A City
+        Region   : Region
+        Country  : Country
+    home :
+        -
+            Extended : 1st Floor
+            Street   : Main street 1
+            Code     : 12345
+            City     : Another City
+        -
+            Extended : 
+            Street   : |
+                Market Street 1
+                33333 City
+                Region, Country
+            Code     : 
+            City     : 
 
 # categories or tags
 # format:
@@ -105,10 +137,17 @@ Address :
 #       - category1
 #       - category2
 Categories : 
+    -
+        - cat1
+        - cat2
+        - cät3
+    - one more
 
 # web pages
 # may contain a string or a list of strings
 Webpage : 
+    - http://example.com
+    - https://example.org
 
 # private objects
 # define your own private objects in the vcard section of your khard.conf file
@@ -116,6 +155,16 @@ Webpage :
 # vcard files.
 # every entry may contain a string or a list of strings
 Private :
+    Jabber  :
+        - jabber1
+        - jabber2
+    Skype   :
+        - skype1
+        - skype2
+    Twitter :
+        - twitter1
+        - twitter2
+        - twitter3
 
 # notes
 # may contain a string or a list of strings
@@ -124,3 +173,7 @@ Private :
 #       line one
 #       line two
 Note : 
+    - single line note
+    - |
+        multi-line
+        note

@@ -403,11 +403,14 @@ class Config:
         def get_supported_private_objects(self):
             return self.config['vcard']['private_objects']
 
+        def get_supported_vcard_versions(self):
+            return ["3.0", "4.0"]
+
         def get_preferred_vcard_version(self):
             return self.config['vcard']['preferred_version']
 
-        def get_supported_vcard_versions(self):
-            return ["3.0", "4.0"]
+        def set_preferred_vcard_version(self, vcard_version):
+            self.config['vcard']['preferred_version'] = vcard_version
 
         def search_in_source_files(self):
             return self.config['vcard']['search_in_source_files']
