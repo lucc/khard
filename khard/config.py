@@ -57,6 +57,19 @@ class Config:
                       'Missing main section "[general]".')
                 sys.exit(2)
 
+            # debug
+            if 'debug' not in self.config['general']:
+                self.config['general']['debug'] = False
+            elif self.config['general']['debug'] == "yes":
+                self.config['general']['debug'] = True
+            elif self.config['general']['debug'] == "no":
+                self.config['general']['debug'] = False
+            else:
+                print("Error in config file\n"
+                      "Invalid value for debug parameter\n"
+                      "Possible values: yes, no")
+                sys.exit(2)
+
             # editor
             self.config['general']['editor'] = \
                 self.config['general'].get("editor") \
@@ -229,6 +242,19 @@ class Config:
                       "Possible values: yes, no")
                 sys.exit(2)
 
+            # skip unparsable vcards
+            if 'skip_unparsable' not in self.config['vcard']:
+                self.config['vcard']['skip_unparsable'] = False
+            elif self.config['vcard']['skip_unparsable'] == "yes":
+                self.config['vcard']['skip_unparsable'] = True
+            elif self.config['vcard']['skip_unparsable'] == "no":
+                self.config['vcard']['skip_unparsable'] = False
+            else:
+                print("Error in config file\n"
+                      "Invalid value for skip_unparsable parameter\n"
+                      "Possible values: yes, no")
+                sys.exit(2)
+
             # load address books
             if "addressbooks" not in self.config:
                 print('Error in config file\n'
@@ -298,19 +324,34 @@ class Config:
                                         address_book, filename,
                                         self.get_supported_private_objects()))
                             except IOError as e:
-                                print("Error: Could not open file %s\n%s"
-                                      % (filename, e))
+                                if self.debug():
+                                    print("Error: Could not open file %s\n%s"
+                                          % (filename, e))
                                 error_counter += 1
-                            except vobject.base.ParseError as e:
-                                print("Error: Could not parse file %s\n%s"
-                                      % (filename, e))
+                            except Exception as e:
+                                if self.debug():
+                                    print("Error: Could not parse file %s\n%s"
+                                            % (filename, e))
                                 error_counter += 1
 
                         # check if one or more contacts could not be parsed
                         if error_counter > 0:
-                            print("\n%d of %d vcard files could not be parsed"
-                                  % (error_counter, number_of_contacts))
-                            sys.exit(2)
+                            if self.debug():
+                                print("\n%d of %d vcard files of address book "
+                                        "%s could not be parsed"
+                                        % (error_counter, number_of_contacts,
+                                            name))
+                            elif not self.skip_unparsable():
+                                print("%d of %d vcard files of address book "
+                                        "%s could not be parsed\nUse the "
+                                        "--debug option for more information"
+                                        % (error_counter, number_of_contacts,
+                                            name))
+                            if self.skip_unparsable():
+                                if self.debug():
+                                    print("")
+                            else:
+                                sys.exit(2)
 
                         # check uniqueness of vcard uids and create short uid
                         # dictionary that can be disabled with the show_uids
@@ -391,6 +432,12 @@ class Config:
                         return uid[:length_of_uid]
             return ""
 
+        def debug(self):
+            return self.config['general']['debug']
+
+        def set_debug(self, bool):
+            self.config['general']['debug'] = bool
+
         def get_editor(self):
             return self.config['general']['editor']
 
@@ -417,6 +464,12 @@ class Config:
 
         def set_search_in_source_files(self, bool):
             self.config['vcard']['search_in_source_files'] = bool
+
+        def skip_unparsable(self):
+            return self.config['vcard']['skip_unparsable']
+
+        def set_skip_unparsable(self, bool):
+            self.config['vcard']['skip_unparsable'] = bool
 
         def display_by_name(self):
             return self.config['contact table']['display']

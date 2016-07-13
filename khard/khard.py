@@ -1448,7 +1448,11 @@ def main():
 
     parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
-    if args.debug:
+
+    # debug
+    if "debug" in args and args.debug:
+        Config().set_debug(True)
+    if Config().debug():
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("args={}".format(args))
 

@@ -62,14 +62,16 @@ class CarddavObject:
             # create vcard object
             try:
                 self.vcard = vobject.readOne(contents)
-            except vobject.base.ParseError:
+            except Exception:
                 # if creation fails, try to repair vcard contents
                 try:
                     self.vcard = vobject.readOne(
                         self.filter_invalid_tags(contents))
                     self.write_to_file(overwrite=True)
-                except vobject.base.ParseError:
+                except Exception:
                     raise
+            # fix organisation values
+            self.get_organisations()
 
     #######################################
     # factory methods to create new contact
