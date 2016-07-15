@@ -343,8 +343,9 @@ class Config:
                                             name))
                             elif not self.skip_unparsable():
                                 print("%d of %d vcard files of address book "
-                                        "%s could not be parsed\nUse the "
-                                        "--debug option for more information"
+                                        "%s could not be parsed\nUse "
+                                        "--debug for more information "
+                                        "or --skip-unparsable to proceed"
                                         % (error_counter, number_of_contacts,
                                             name))
                             if self.skip_unparsable():
