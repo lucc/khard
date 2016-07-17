@@ -1400,7 +1400,7 @@ def main():
         description="create a new contact",
         help="create a new contact")
     new_parser.add_argument(
-        "-v", "--vcard-version", choices=("3.0", "4.0"),
+        "--vcard-version", choices=("3.0", "4.0"),
         help="Select preferred vcard version for new contact")
     add_email_parser = subparsers.add_parser(
         "add-email",
@@ -1412,7 +1412,7 @@ def main():
         help="Extract email address from the \"From:\" field of an email "
         "header and add to an existing contact or create a new one")
     add_email_parser.add_argument(
-        "-v", "--vcard-version", choices=("3.0", "4.0"),
+        "--vcard-version", choices=("3.0", "4.0"),
         help="Select preferred vcard version for new contact")
     subparsers.add_parser(
         "merge",

@@ -2,6 +2,7 @@
 
 # contact object class
 # vcard version 3.0: https://tools.ietf.org/html/rfc2426
+# vcard version 4.0: https://tools.ietf.org/html/rfc6350
 
 import datetime
 import locale
@@ -349,8 +350,10 @@ class CarddavObject:
                             child.value[start_index:match.start()+1])
                         start_index = match.start()+2
                     child.value = org_list + [child.value[start_index:]]
+                # remove all backslashes except \n
                 organisations.append(
-                    [x.replace("\\", "") for x in child.value])
+                    [x.replace("\\n", "bckslshn").replace("\\", "") \
+                            .replace("bckslshn", "\n") for x in child.value])
         return sorted(organisations)
 
     def add_organisation(self, organisation):
@@ -361,9 +364,9 @@ class CarddavObject:
         if not self.vcard.getChildValue("fn") \
                 and self.get_organisations():
             # if not, set fn to organisation name
+            org_value = helpers.list_to_string(self.get_organisations()[0], ", ")
             name_obj = self.vcard.add('fn')
-            name_obj.value = helpers.list_to_string(
-                self.get_organisations()[0], ", ")
+            name_obj.value = org_value.replace("\n", " ").replace("\\", "")
             showas_obj = self.vcard.add('x-abshowas')
             showas_obj.value = "COMPANY"
 
@@ -1288,14 +1291,8 @@ class CarddavObject:
             strings.append("Name: %s" % helpers.list_to_string(names, " "))
         # organisation
         if len(self.get_organisations()) > 0:
-            if len(self.get_organisations()) == 1:
-                strings.append("Organisation: %s" % helpers.list_to_string(
-                    self.get_organisations(), ", "))
-            else:
-                strings.append("Organisations:")
-                for organisation in self.get_organisations():
-                    strings.append("    - %s" % helpers.list_to_string(
-                        organisation, ", "))
+            strings += helpers.convert_to_yaml(
+                    "Organisation", self.get_organisations(), 0, -1, False)
         # address book name
         if show_address_book:
             strings.append("Address book: %s" % self.address_book.get_name())

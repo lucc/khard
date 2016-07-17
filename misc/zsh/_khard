@@ -155,12 +155,12 @@ case $state in
       new|add)
     	options+=(
           $new_addressbook_options $template_file_input_options
-          '(-v)'{-v+,--vcard-version=}'[Select preferred vcard version for new contact]:sort by:(3.0 4.0)'
+          '--vcard-version=[Select preferred vcard version for new contact]:sort by:(3.0 4.0)'
         );;
       add-email)
         options+=(
           $default_addressbook_options $email_header_input_options $default_search_options $sort_options
-          '(-v)'{-v+,--vcard-version=}'[Select preferred vcard version for new contact]:sort by:(3.0 4.0)'
+          '--vcard-version=[Select preferred vcard version for new contact]:sort by:(3.0 4.0)'
         );;
       copy|cp|move|mv)
         options+=(

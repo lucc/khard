@@ -143,7 +143,7 @@ khard details
 or search for it:
 
 ```
-khard details name of contact
+khard details [--strict-search] name of contact
 ```
 
 or select the contact by it's uid, which you can find at the contacts table:
@@ -157,6 +157,8 @@ input produces unambiguous results, you may pick the contacts from a list instea
 
 The search parameter searches in all data fields. Therefore you aren't limited to the contact's name
 but you also could for example search for a part of a phone number, email address or post address.
+However if you explicitly want to narrow your search to the name field, you may use the
+--strict-search parameter instead.
 
 
 ### Create contact ###

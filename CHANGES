@@ -112,3 +112,20 @@ v0.10.0: 2016.05.02
   phone number table is the default now. Please adapt the configuration files of potential email and
   phone applications (e.g.: mutt email -p %s)
 
+v0.11.0: 2016.07.17
+- Made khard python3 compatible (#59)
+- Enhanced read and write support for vcard versions 3.0 and 4.0
+- user input parser:
+    - Improved robustness and error handling
+    - Fixed org attribute parsing (#57)
+    - Support for private vcard extensions (#51)
+- New action birthdays (#64)
+- New options:
+    --display to display contacts by first or last name (#66)
+    --search-in-source-files to speed up program initialization (#75)
+    --skip-unparsable to skip unparsable vcard files (#75)
+    --strict-search to narrow the contact search to the name field
+- Added some aliases for program actions (#65)
+- Removed davcontroler module due to the python3 incompatibility (script moved into the misc folder)
+- Updated zsh completion function and khards example config file
+
