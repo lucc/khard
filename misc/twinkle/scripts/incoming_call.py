@@ -47,7 +47,7 @@ def create_ringtone(caller_id):
 
 # main part of the script
 if os.path.exists(config.constant_ringtone_segment) == False:
-    print "The constant part of the ringtone file is missing. Create the sounds folder in your twinkle config and put a wav file in it"
+    print("The constant part of the ringtone file is missing. Create the sounds folder in your twinkle config and put a wav file in it")
     sys.exit(1)
 
 # pause the music playback
@@ -81,5 +81,5 @@ if "SIP_FROM" in os.environ:
     # if the file creation was successful and the file exists, tell twinkle to use it as the ringtone
     # else do nothing and play the standard ringtone
     if os.path.exists(config.new_ringtone) == True:
-        print "ringtone=" + config.new_ringtone
+        print("ringtone=" + config.new_ringtone)
 sys.exit()
