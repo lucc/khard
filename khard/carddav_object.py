@@ -101,7 +101,7 @@ class CarddavObject:
         use this if you want to clone an existing contact and  replace its data
         with new user input in one step
         """
-        contact = cls(contact.get_address_book(), contact.get_filename(),
+        contact = cls(contact.get_address_book(), contact.filename,
                       contact.get_supported_private_objects(), None)
         contact.process_user_input(user_input)
         return contact
@@ -129,9 +129,6 @@ class CarddavObject:
 
     def get_address_book(self):
         return self.address_book
-
-    def get_filename(self):
-        return self.filename
 
     def set_filename(self, filename):
         self.filename = filename

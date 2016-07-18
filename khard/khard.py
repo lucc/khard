@@ -266,7 +266,7 @@ def copy_contact(contact, target_address_book, delete_source_contact):
     if delete_source_contact:
         # if source file should be moved, get its file location to delete after
         # successful movement
-        source_contact_filename = contact.get_filename()
+        source_contact_filename = contact.filename
     if not delete_source_contact \
             or not contact.get_uid():
         # if copy contact or contact has no uid yet
@@ -1005,7 +1005,7 @@ def source_subcommand(selected_vcard, editor):
     :rtype: None
 
     """
-    child = subprocess.Popen([editor, selected_vcard.get_filename()])
+    child = subprocess.Popen([editor, selected_vcard.filename])
     child.communicate()
 
 
