@@ -353,9 +353,9 @@ class Config:
                                           " and the contact %s from address "
                                           "book %s have the same uid %s" % (
                                               matching_contact.get_full_name(),
-                                              matching_contact.get_address_book().name,
+                                              matching_contact.address_book.name,
                                               contact.get_full_name(),
-                                              contact.get_address_book().name,
+                                              contact.address_book.name,
                                               contact.get_uid()))
                                     sys.exit(2)
                         # rebuild shortened uid dictionary

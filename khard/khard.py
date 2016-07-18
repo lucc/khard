@@ -85,7 +85,7 @@ def modify_existing_contact(old_contact):
     tf.write("# Edit contact: %s\n# Address book: %s\n# Vcard version: %s\n"
              "# if you want to cancel, exit without saving\n\n%s"
              % (old_contact.get_full_name(),
-                old_contact.get_address_book().name,
+                old_contact.address_book.name,
                 old_contact.get_version(), old_contact.get_template()))
     tf.close()
 
@@ -161,7 +161,7 @@ def merge_existing_contacts(source_contact, target_contact,
                     "# Vcard version: %s\n"
                     "# if you want to cancel, exit without saving\n\n%s"
                     % (source_contact.get_full_name(),
-                       source_contact.get_address_book().name,
+                       source_contact.address_book.name,
                        source_contact.get_version(),
                        source_contact.get_template()))
     source_tf.close()
@@ -173,7 +173,7 @@ def merge_existing_contacts(source_contact, target_contact,
                     "# Vcard version: %s\n"
                     "# if you want to cancel, exit without saving\n\n%s"
                     % (target_contact.get_full_name(),
-                       target_contact.get_address_book().name,
+                       target_contact.address_book.name,
                        target_contact.get_version(),
                        target_contact.get_template()))
     target_tf.close()
@@ -232,9 +232,9 @@ def merge_existing_contacts(source_contact, target_contact,
                 "address book %s\n\nTo be removed\n\n%s\n\nMerged\n\n%s\n\n"
                 "Are you sure? (y/n): " % (
                     source_contact.get_full_name(),
-                    source_contact.get_address_book().name,
+                    source_contact.address_book.name,
                     merged_contact.get_full_name(),
-                    merged_contact.get_address_book().name,
+                    merged_contact.address_book.name,
                     source_contact.print_vcard(),
                     merged_contact.print_vcard()))
         else:
@@ -243,9 +243,9 @@ def merge_existing_contacts(source_contact, target_contact,
                 "address book %s\n\nKeep unchanged\n\n%s\n\nMerged:\n\n%s\n\n"
                 "Are you sure? (y/n): " % (
                     source_contact.get_full_name(),
-                    source_contact.get_address_book().name,
+                    source_contact.address_book.name,
                     merged_contact.get_full_name(),
-                    merged_contact.get_address_book().name,
+                    merged_contact.address_book.name,
                     source_contact.print_vcard(),
                     merged_contact.print_vcard()))
         if input_string.lower() in ["", "n", "q"]:
@@ -284,7 +284,7 @@ def copy_contact(contact, target_address_book, delete_source_contact):
     print("%s contact %s from address book %s to %s" % (
         "Moved" if delete_source_contact else "Copied",
         contact.get_full_name(),
-        contact.get_address_book().name,
+        contact.address_book.name,
         target_address_book.name))
 
 
@@ -298,8 +298,8 @@ def list_address_books(address_book_list):
 def list_contacts(vcard_list):
     selected_address_books = []
     for contact in vcard_list:
-        if contact.get_address_book() not in selected_address_books:
-            selected_address_books.append(contact.get_address_book())
+        if contact.address_book not in selected_address_books:
+            selected_address_books.append(contact.address_book)
     table = []
     # table header
     if len(selected_address_books) == 1:
@@ -348,7 +348,7 @@ def list_contacts(vcard_list):
         else:
             row.append("")
         if len(selected_address_books) > 1:
-            row.append(vcard.get_address_book().name)
+            row.append(vcard.address_book.name)
         if config.has_uids():
             if config.get_shortened_uid(vcard.get_uid()):
                 row.append(config.get_shortened_uid(vcard.get_uid()))
@@ -510,11 +510,11 @@ def get_contacts(address_books, query, method="all", reverse=False,
     if group:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
-                x.get_address_book().name.lower(),
+                x.address_book.name.lower(),
                 x.get_first_name_last_name().lower()))
         elif sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
-                x.get_address_book().name.lower(),
+                x.address_book.name.lower(),
                 x.get_last_name_first_name().lower()))
         else:
             raise ValueError('sort must be "first_name" or "last_name" not '
@@ -984,7 +984,7 @@ def remove_subcommand(selected_vcard):
         input_string = input(
             "Deleting contact %s from address book %s. Are you sure? (y/n): "
             % (selected_vcard.get_full_name(),
-               selected_vcard.get_address_book().name))
+               selected_vcard.address_book.name))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
             sys.exit(0)
@@ -1057,7 +1057,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     else:
         print("Merge from %s from address book %s\n\n"
               % (source_vcard.get_full_name(),
-                 source_vcard.get_address_book().name))
+                 source_vcard.address_book.name))
     # get the target vcard, into which to merge
     target_vcard = choose_vcard_from_list(
             "Select contact into which to merge", target_vcards)
@@ -1067,7 +1067,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     else:
         print("Merge into %s from address book %s\n\n"
               % (target_vcard.get_full_name(),
-                 target_vcard.get_address_book().name))
+                 target_vcard.address_book.name))
     # merging
     if source_vcard == target_vcard:
         print("The selected contacts are already identical")
@@ -1097,11 +1097,11 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     else:
         print("%s contact %s from address book %s"
               % (action.title(), source_vcard.get_full_name(),
-                 source_vcard.get_address_book().name))
+                 source_vcard.address_book.name))
 
     # get target address book
     if len(target_address_book_list) == 1 \
-            and target_address_book_list[0] == source_vcard.get_address_book():
+            and target_address_book_list[0] == source_vcard.address_book:
         print("The address book %s already contains the contact %s"
               % (source_vcard.get_full_name(),
                  target_address_book_list[0].name))
@@ -1109,7 +1109,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     else:
         available_address_books = []
         for address_book in target_address_book_list:
-            if address_book != source_vcard.get_address_book():
+            if address_book != source_vcard.address_book:
                 available_address_books.append(address_book)
         selected_target_address_book = choose_address_book_from_list(
             "Select target address book", available_address_books)
@@ -1147,7 +1147,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                   "  o: Overwrite target contact\n"
                   "  q: Quit"
                   % (
-                      target_vcard.get_address_book().name,
+                      target_vcard.address_book.name,
                       source_vcard.get_full_name(), source_vcard.print_vcard(),
                       target_vcard.print_vcard(),
                       "Move" if action == "move" else "Copy"))
