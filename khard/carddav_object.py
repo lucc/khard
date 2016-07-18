@@ -102,7 +102,7 @@ class CarddavObject:
         with new user input in one step
         """
         contact = cls(contact.address_book, contact.filename,
-                      contact.get_supported_private_objects(), None)
+                      contact.supported_private_objects, None)
         contact.process_user_input(user_input)
         return contact
 
@@ -126,9 +126,6 @@ class CarddavObject:
     #####################
     # getters and setters
     #####################
-
-    def get_supported_private_objects(self):
-        return self.supported_private_objects
 
     def get_rev(self):
         """
