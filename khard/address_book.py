@@ -17,13 +17,10 @@ class AddressBook:
         return self.name
 
     def __eq__(self, other):
-        return isinstance(other, AddressBook) and self.name == other.get_name()
+        return isinstance(other, AddressBook) and self.name == other.name
 
     def __ne__(self, other):
         return not self == other
-
-    def get_name(self):
-        return self.name
 
     def get_path(self):
         return self.path

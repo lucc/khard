@@ -285,7 +285,7 @@ class Config:
         :rtype: AddressBook
         """
         for address_book in self.address_book_list:
-            if name == address_book.get_name():
+            if name == address_book.name:
                 if not address_book.loaded:
                     number_of_contacts = 0
                     error_counter = 0
@@ -353,9 +353,9 @@ class Config:
                                           " and the contact %s from address "
                                           "book %s have the same uid %s" % (
                                               matching_contact.get_full_name(),
-                                              matching_contact.get_address_book().get_name(),
+                                              matching_contact.get_address_book().name,
                                               contact.get_full_name(),
-                                              contact.get_address_book().get_name(),
+                                              contact.get_address_book().name,
                                               contact.get_uid()))
                                     sys.exit(2)
                         # rebuild shortened uid dictionary
