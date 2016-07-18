@@ -478,20 +478,20 @@ def get_contacts(address_books, query, method="all", reverse=False,
     if method == "uid":
         # Search for contacts with uid == query.
         for address_book in address_books:
-            for contact in address_book.get_contact_list():
+            for contact in address_book.contact_list:
                 if contact.get_uid() == query:
                     contacts.append(contact)
         # If that fails, search for contacts where uid starts with query.
         if len(contacts) == 0:
             for address_book in address_books:
-                for contact in address_book.get_contact_list():
+                for contact in address_book.contact_list:
                     if contact.get_uid().startswith(query):
                         contacts.append(contact)
     else:
         regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
                             re.IGNORECASE | re.DOTALL)
         for address_book in address_books:
-            for contact in address_book.get_contact_list():
+            for contact in address_book.contact_list:
                 if method == "name":
                     # only search in contact name
                     if regexp.search(contact.get_full_name()) is not None:

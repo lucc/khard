@@ -22,8 +22,5 @@ class AddressBook:
     def __ne__(self, other):
         return not self == other
 
-    def get_contact_list(self):
-        return self.contact_list
-
     def add_contact(self, contact):
         self.contact_list.append(contact)
