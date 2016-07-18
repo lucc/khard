@@ -11,7 +11,6 @@ import re
 import sys
 
 import configobj
-import vobject
 
 from .actions import Actions
 from .carddav_object import CarddavObject
@@ -331,23 +330,23 @@ class Config:
                             except Exception as e:
                                 if self.debug():
                                     print("Error: Could not parse file %s\n%s"
-                                            % (filename, e))
+                                          % (filename, e))
                                 error_counter += 1
 
                         # check if one or more contacts could not be parsed
                         if error_counter > 0:
                             if self.debug():
                                 print("\n%d of %d vcard files of address book "
-                                        "%s could not be parsed"
-                                        % (error_counter, number_of_contacts,
-                                            name))
+                                      "%s could not be parsed"
+                                      % (error_counter, number_of_contacts,
+                                         name))
                             elif not self.skip_unparsable():
                                 print("%d of %d vcard files of address book "
-                                        "%s could not be parsed\nUse "
-                                        "--debug for more information "
-                                        "or --skip-unparsable to proceed"
-                                        % (error_counter, number_of_contacts,
-                                            name))
+                                      "%s could not be parsed\nUse --debug "
+                                      "for more information or "
+                                      "--skip-unparsable to proceed"
+                                      % (error_counter, number_of_contacts,
+                                         name))
                             if self.skip_unparsable():
                                 if self.debug():
                                     print("")
@@ -367,17 +366,15 @@ class Config:
                                     if matching_contact is None:
                                         self.original_uid_dict[uid] = contact
                                     else:
-                                        print(
-                                            "The contact %s from address book "
-                                            "%s and the contact %s from "
-                                            "address book %s have the same "
-                                            "uid %s" % (
-                                                matching_contact.get_full_name(),
-                                                matching_contact.get_address_book().get_name(),
-                                                contact.get_full_name(),
-                                                contact.get_address_book().get_name(),
-                                                contact.get_uid())
-                                            )
+                                        print("The contact %s from address "
+                                              "book %s and the contact %s from"
+                                              " address book %s have the same "
+                                              "uid %s" % (
+                                                  matching_contact.get_full_name(),
+                                                  matching_contact.get_address_book().get_name(),
+                                                  contact.get_full_name(),
+                                                  contact.get_address_book().get_name(),
+                                                  contact.get_uid()))
                                         sys.exit(2)
                             # rebuild shortened uid dictionary
                             self.create_shortened_uid_dictionary()

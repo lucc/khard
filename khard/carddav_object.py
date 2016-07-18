@@ -361,8 +361,8 @@ class CarddavObject:
                     child.value = org_list + [child.value[start_index:]]
                 # remove all backslashes except \n
                 organisations.append(
-                    [x.replace("\\n", "bckslshn").replace("\\", "") \
-                            .replace("bckslshn", "\n") for x in child.value])
+                    [x.replace("\\n", "bckslshn").replace("\\", "")
+                     .replace("bckslshn", "\n") for x in child.value])
         return sorted(organisations)
 
     def add_organisation(self, organisation):
@@ -373,7 +373,8 @@ class CarddavObject:
         if not self.vcard.getChildValue("fn") \
                 and self.get_organisations():
             # if not, set fn to organisation name
-            org_value = helpers.list_to_string(self.get_organisations()[0], ", ")
+            org_value = helpers.list_to_string(self.get_organisations()[0],
+                                               ", ")
             name_obj = self.vcard.add('fn')
             name_obj.value = org_value.replace("\n", " ").replace("\\", "")
             showas_obj = self.vcard.add('x-abshowas')
@@ -1315,7 +1316,7 @@ class CarddavObject:
         # organisation
         if len(self.get_organisations()) > 0:
             strings += helpers.convert_to_yaml(
-                    "Organisation", self.get_organisations(), 0, -1, False)
+                "Organisation", self.get_organisations(), 0, -1, False)
         # address book name
         if show_address_book:
             strings.append("Address book: %s" % self.address_book.get_name())

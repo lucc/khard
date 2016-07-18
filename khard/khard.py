@@ -1654,8 +1654,8 @@ def main():
                 "# Contact template for khard version %s\n#\n"
                 "# Use this yaml formatted template to create a new contact:\n"
                 "#   either with: khard new -a address_book -i template.yaml\n"
-                "#   or with: cat template.yaml | khard new -a address_book\n\n"
-                "%s" % (khard_version, helpers.get_new_contact_template()))
+                "#   or with: cat template.yaml | khard new -a address_book\n"
+                "\n%s" % (khard_version, helpers.get_new_contact_template()))
     elif args.action in ["details", "modify", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(
                 "Select contact for %s action" % args.action.title(),
