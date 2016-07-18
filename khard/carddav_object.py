@@ -127,9 +127,6 @@ class CarddavObject:
     # getters and setters
     #####################
 
-    def set_filename(self, filename):
-        self.filename = filename
-
     def get_supported_private_objects(self):
         return self.supported_private_objects
 

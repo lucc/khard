@@ -274,8 +274,8 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         contact.delete_vcard_object("UID")
         contact.add_uid(helpers.get_random_uid())
     # set destination file name
-    contact.set_filename(
-        os.path.join(target_address_book.path, "%s.vcf" % contact.get_uid()))
+    contact.filename = os.path.join(target_address_book.path,
+                                    "%s.vcf" % contact.get_uid())
     # save
     contact.write_to_file()
     # delete old file
