@@ -1287,7 +1287,7 @@ class CarddavObject:
                 "Organisation", self.get_organisations(), 0, -1, False)
         # address book name
         if show_address_book:
-            strings.append("Address book: %s" % self.address_book.get_name())
+            strings.append("Address book: %s" % self.address_book.name)
 
         # person related information
         if self.get_birthday() is not None \
