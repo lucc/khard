@@ -22,9 +22,6 @@ class AddressBook:
     def __ne__(self, other):
         return not self == other
 
-    def get_path(self):
-        return self.path
-
     def get_contact_list(self):
         return self.contact_list
 
