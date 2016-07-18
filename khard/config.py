@@ -292,7 +292,7 @@ class Config:
                     # load vcard files of address book
                     filename_list = []
                     for filename in glob.glob(os.path.join(
-                            address_book.get_path(), "*.vcf")):
+                            address_book.path, "*.vcf")):
                         if search_queries and self.search_in_source_files():
                             with open(filename, "r") as f:
                                 if re.search(search_queries, f.read(),

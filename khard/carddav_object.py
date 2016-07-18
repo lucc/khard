@@ -47,7 +47,7 @@ class CarddavObject:
             # add uid
             self.add_uid(helpers.get_random_uid())
             # use uid for vcard filename
-            self.filename = os.path.join(address_book.get_path(),
+            self.filename = os.path.join(address_book.path,
                                          self.get_uid() + ".vcf")
             # add preferred vcard version
             self.add_version(vcard_version)
