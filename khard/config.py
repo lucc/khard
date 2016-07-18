@@ -341,7 +341,7 @@ class Config:
                     # option in the config file, if desired
                     if self.config['contact table']['show_uids']:
                         # check, if multiple contacts have the same uid
-                        for contact in address_book.get_contact_list():
+                        for contact in address_book.contact_list:
                             uid = contact.get_uid()
                             if bool(uid):
                                 matching_contact = self.original_uid_dict.get(
