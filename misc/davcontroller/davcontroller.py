@@ -70,7 +70,7 @@ def main():
         else:
             for index, addressbook in enumerate(addressbook_list):
                 print("%d. %s" % (index+1, addressbook.getDisplayName()))
-        print
+        print()
         # calendars
         print("Available calendars")
         calendar_list = account.getPrincipal().listCalendars()
@@ -85,7 +85,7 @@ def main():
             sys.exit(2)
 
         if args.action == "remove":
-            print
+            print()
             while True:
                 input_string = input("Enter Id: ")
                 if input_string == "":
