@@ -1465,9 +1465,7 @@ def parse_args():
 
     # Check the log level again and merge the value from the command line with
     # the config file.
-    if "debug" in args and args.debug:
-        config.set_debug(True)
-    if config.debug():
+    if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("first args={}".format(args))
     logging.debug("remainder={}".format(remainder))

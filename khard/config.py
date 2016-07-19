@@ -6,6 +6,7 @@
 from distutils.spawn import find_executable
 import glob
 import locale
+import logging
 import os
 import re
 import sys
@@ -53,11 +54,11 @@ class Config:
 
         # debug
         if 'debug' not in self.config['general']:
-            self.config['general']['debug'] = False
+            self.debug = False
         elif self.config['general']['debug'] == "yes":
-            self.config['general']['debug'] = True
+            self.debug = True
         elif self.config['general']['debug'] == "no":
-            self.config['general']['debug'] = False
+            self.debug = False
         else:
             print("Error in config file\nInvalid value for debug parameter\n"
                   "Possible values: yes, no")
@@ -309,30 +310,29 @@ class Config:
                                 address_book, filename,
                                 self.get_supported_private_objects()))
                         except IOError as e:
-                            if self.debug():
-                                print("Error: Could not open file %s\n%s"
-                                      % (filename, e))
+                            logging.debug("Error: Could not open file %s\n%s",
+                                          filename, e)
                             error_counter += 1
                         except Exception as e:
-                            if self.debug():
-                                print("Error: Could not parse file %s\n%s"
-                                      % (filename, e))
+                            logging.debug("Error: Could not parse file %s\n%s",
+                                          filename, e)
                             error_counter += 1
 
                     # check if one or more contacts could not be parsed
                     if error_counter > 0:
-                        if self.debug():
-                            print("\n%d of %d vcard files of address book %s "
-                                  "could not be parsed"
-                                  % (error_counter, number_of_contacts, name))
-                        elif not self.skip_unparsable():
-                            print("%d of %d vcard files of address book %s "
-                                  "could not be parsed\nUse --debug for more "
-                                  "information or --skip-unparsable to proceed"
-                                  % (error_counter, number_of_contacts, name))
+                        if not self.skip_unparsable():
+                            logging.info(
+                                "%d of %d vcard files of address book %s "
+                                "could not be parsed\nUse --debug for more "
+                                "information or --skip-unparsable to proceed",
+                                error_counter, number_of_contacts, name)
+                        else:
+                            logging.debug(
+                                "\n%d of %d vcard files of address book %s "
+                                "could not be parsed\n", error_counter,
+                                number_of_contacts, name)
                         if self.skip_unparsable():
-                            if self.debug():
-                                print("")
+                            logging.debug("")
                         else:
                             sys.exit(2)
 
@@ -410,12 +410,6 @@ class Config:
                 if self.uid_dict.get(uid[:length_of_uid]) is not None:
                     return uid[:length_of_uid]
         return ""
-
-    def debug(self):
-        return self.config['general']['debug']
-
-    def set_debug(self, bool):
-        self.config['general']['debug'] = bool
 
     def get_editor(self):
         return self.config['general']['editor']
