@@ -47,8 +47,8 @@ class CarddavObject:
             # add uid
             self.add_uid(helpers.get_random_uid())
             # use uid for vcard filename
-            self.filename = os.path.join(
-                address_book.get_path(), self.get_uid() + ".vcf")
+            self.filename = os.path.join(address_book.get_path(),
+                                         self.get_uid() + ".vcf")
             # add preferred vcard version
             self.add_version(vcard_version)
 
@@ -153,8 +153,8 @@ class CarddavObject:
 
     def add_rev(self, dt):
         rev_obj = self.vcard.add('rev')
-        rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" \
-            % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+        rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
+                dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def get_uid(self):
         """
@@ -271,9 +271,9 @@ class CarddavObject:
         :rtype: str
         """
         if self.get_first_names() and self.get_last_names():
-            return "%s %s" \
-                    % (helpers.list_to_string(self.get_first_names(), " "),
-                       helpers.list_to_string(self.get_last_names(), " "))
+            return "%s %s" % (
+                helpers.list_to_string(self.get_first_names(), " "),
+                helpers.list_to_string(self.get_last_names(), " "))
         elif self.get_first_names():
             return helpers.list_to_string(self.get_first_names(), " ")
         elif self.get_last_names():
@@ -286,9 +286,9 @@ class CarddavObject:
         :rtype: str
         """
         if self.get_first_names() and self.get_last_names():
-            return "%s, %s" \
-                    % (helpers.list_to_string(self.get_last_names(), " "),
-                       helpers.list_to_string(self.get_first_names(), " "))
+            return "%s, %s" % (
+                helpers.list_to_string(self.get_last_names(), " "),
+                helpers.list_to_string(self.get_first_names(), " "))
         elif self.get_first_names():
             return helpers.list_to_string(self.get_first_names(), " ")
         elif self.get_last_names():
@@ -301,8 +301,7 @@ class CarddavObject:
         name_obj = self.vcard.add('n')
         name_obj.value = vobject.vcard.Name(
             prefix=helpers.convert_to_vcard(
-                "name prefix", prefix,
-                ObjectType.string_or_list_with_strings),
+                "name prefix", prefix, ObjectType.string_or_list_with_strings),
             given=helpers.convert_to_vcard(
                 "first name", first_name,
                 ObjectType.string_or_list_with_strings),
@@ -313,8 +312,7 @@ class CarddavObject:
                 "last name", last_name,
                 ObjectType.string_or_list_with_strings),
             suffix=helpers.convert_to_vcard(
-                "name suffix", suffix,
-                ObjectType.string_or_list_with_strings))
+                "name suffix", suffix, ObjectType.string_or_list_with_strings))
         # fn
         if not self.vcard.getChildValue("fn") \
                 and (self.get_first_names() or self.get_last_names()):
@@ -352,8 +350,8 @@ class CarddavObject:
                     child.value = org_list + [child.value[start_index:]]
                 # remove all backslashes except \n
                 organisations.append(
-                    [x.replace("\\n", "bckslshn").replace("\\", "") \
-                            .replace("bckslshn", "\n") for x in child.value])
+                    [x.replace("\\n", "bckslshn").replace("\\", "")
+                     .replace("bckslshn", "\n") for x in child.value])
         return sorted(organisations)
 
     def add_organisation(self, organisation):
@@ -364,7 +362,8 @@ class CarddavObject:
         if not self.vcard.getChildValue("fn") \
                 and self.get_organisations():
             # if not, set fn to organisation name
-            org_value = helpers.list_to_string(self.get_organisations()[0], ", ")
+            org_value = helpers.list_to_string(self.get_organisations()[0],
+                                               ", ")
             name_obj = self.vcard.add('fn')
             name_obj.value = org_value.replace("\n", " ").replace("\\", "")
             showas_obj = self.vcard.add('x-abshowas')
@@ -609,17 +608,13 @@ class CarddavObject:
                     "extended address field", extended,
                     ObjectType.string_or_list_with_strings),
                 street=helpers.convert_to_vcard(
-                    "street", street,
-                    ObjectType.string_or_list_with_strings),
+                    "street", street, ObjectType.string_or_list_with_strings),
                 code=helpers.convert_to_vcard(
-                    "post code", code,
-                    ObjectType.string_or_list_with_strings),
+                    "post code", code, ObjectType.string_or_list_with_strings),
                 city=helpers.convert_to_vcard(
-                    "city", city,
-                    ObjectType.string_or_list_with_strings),
+                    "city", city, ObjectType.string_or_list_with_strings),
                 region=helpers.convert_to_vcard(
-                    "region", region,
-                    ObjectType.string_or_list_with_strings),
+                    "region", region, ObjectType.string_or_list_with_strings),
                 country=helpers.convert_to_vcard(
                     "country", country,
                     ObjectType.string_or_list_with_strings))
@@ -702,9 +697,9 @@ class CarddavObject:
         for child in self.vcard.getChildren():
             if child.name.lower().startswith("x-"):
                 try:
-                    key_index = [x.lower()
-                                 for x in self.supported_private_objects] \
-                                .index(child.name[2:].lower())
+                    key_index = [
+                        x.lower() for x in self.supported_private_objects
+                    ].index(child.name[2:].lower())
                 except ValueError:
                     pass
                 else:
@@ -900,9 +895,8 @@ class CarddavObject:
                         else:
                             self.add_organisation(organisation)
             else:
-                raise ValueError(
-                    "Error: organisation must be a string or a list of "
-                    "strings")
+                raise ValueError("Error: organisation must be a string or a "
+                                 "list of strings")
 
         # role
         self.delete_vcard_object("ROLE")
@@ -1106,8 +1100,8 @@ class CarddavObject:
                     else:
                         raise ValueError(
                             "Error: private object key " + key + " was "
-                            "changed.\nSupported private keys: " +
-                            ', '.join(self.supported_private_objects))
+                            "changed.\nSupported private keys: " + ', '.join(
+                                self.supported_private_objects))
             else:
                 raise ValueError(
                     "Error: private objects must consist of a key : value "
@@ -1240,8 +1234,8 @@ class CarddavObject:
                     longest_key = max(self.supported_private_objects, key=len)
                     for object in self.supported_private_objects:
                         strings += helpers.convert_to_yaml(
-                            object, self.get_private_objects().get(object) or
-                            "", 4, len(longest_key)+1, True)
+                            object, self.get_private_objects().get(object)
+                            or "", 4, len(longest_key)+1, True)
 
             elif line.lower().startswith("birthday"):
                 birthday = self.get_birthday()
@@ -1292,7 +1286,7 @@ class CarddavObject:
         # organisation
         if len(self.get_organisations()) > 0:
             strings += helpers.convert_to_yaml(
-                    "Organisation", self.get_organisations(), 0, -1, False)
+                "Organisation", self.get_organisations(), 0, -1, False)
         # address book name
         if show_address_book:
             strings.append("Address book: %s" % self.address_book.get_name())
@@ -1393,8 +1387,8 @@ class CarddavObject:
             if child.name == object_name:
                 if child.group:
                     for label in self.vcard.getChildren():
-                        if label.name == "X-ABLABEL" and label.group == \
-                                child.group:
+                        if label.name == "X-ABLABEL" and \
+                                label.group == child.group:
                             to_be_removed.append(label)
                 to_be_removed.append(child)
         # then delete them one by one

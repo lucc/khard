@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from email.header import decode_header
 import logging
 import os
 import re
 import subprocess
 import sys
 import tempfile
-
-from email.header import decode_header
 
 from . import helpers
 from .actions import Actions
@@ -21,12 +20,11 @@ def create_new_contact(address_book):
     # create temp file
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     temp_file_name = tf.name
-    old_contact_template = "# create new contact\n" \
-        "# Address book: %s\n" \
-        "# Vcard version: %s\n" \
-        "# if you want to cancel, exit without saving\n\n%s" \
+    old_contact_template = (
+        "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
+        "# if you want to cancel, exit without saving\n\n%s"
         % (address_book.get_name(), Config().get_preferred_vcard_version(),
-           helpers.get_new_contact_template())
+           helpers.get_new_contact_template()))
     tf.write(old_contact_template)
     tf.close()
 
@@ -501,7 +499,7 @@ def get_contacts(address_books, query, method="all", reverse=False,
                         "[^a-zA-Z0-9\n]", "", contact_details)
                     if regexp.search(contact_details) is not None or \
                             regexp.search(
-                                    contact_details_without_special_chars) \
+                                contact_details_without_special_chars) \
                             is not None:
                         contacts.append(contact)
     # Sort the contacts.
@@ -1654,8 +1652,8 @@ def main():
                 "# Contact template for khard version %s\n#\n"
                 "# Use this yaml formatted template to create a new contact:\n"
                 "#   either with: khard new -a address_book -i template.yaml\n"
-                "#   or with: cat template.yaml | khard new -a address_book\n\n"
-                "%s" % (khard_version, helpers.get_new_contact_template()))
+                "#   or with: cat template.yaml | khard new -a address_book\n"
+                "\n%s" % (khard_version, helpers.get_new_contact_template()))
     elif args.action in ["details", "modify", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(
                 "Select contact for %s action" % args.action.title(),
@@ -1686,5 +1684,5 @@ def main():
         copy_or_move_subcommand(
             args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
-        print(
-            '\n'.join(str(book) for book in Config().get_all_address_books()))
+        print('\n'.join(
+            str(book) for book in Config().get_all_address_books()))

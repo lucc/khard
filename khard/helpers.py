@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
+import datetime
 import os
 import random
 import string
+from textwrap import dedent
 
 from .object_type import ObjectType
 
@@ -22,14 +23,14 @@ def pretty_print(table, justify="L"):
         single_row_list = []
         for col_index, col in enumerate(row):
             if justify == "R":  # justify right
-                formated_column = str(col).rjust(
-                    column_widths[col_index] + offset)
+                formated_column = str(col).rjust(column_widths[col_index] +
+                                                 offset)
             elif justify == "L":  # justify left
-                formated_column = str(col).ljust(
-                    column_widths[col_index] + offset)
+                formated_column = str(col).ljust(column_widths[col_index] +
+                                                 offset)
             elif justify == "C":  # justify center
-                formated_column = str(col).center(
-                    column_widths[col_index] + offset)
+                formated_column = str(col).center(column_widths[col_index] +
+                                                  offset)
             single_row_list.append(formated_column)
         table_row_list.append(' '.join(single_row_list))
     return '\n'.join(table_row_list)
@@ -97,14 +98,14 @@ def string_to_date(input):
         pass
     # try datetime format yyyymmddThhmmsstz where tz may look like -06:00
     try:
-        return datetime.strptime(
-            ''.join(input.rsplit(":", 1)), "%Y%m%dT%H%M%S%z")
+        return datetime.strptime(''.join(input.rsplit(":", 1)),
+                                 "%Y%m%dT%H%M%S%z")
     except ValueError:
         pass
     # try datetime format yyyy-mm-ddThh:mm:sstz where tz may look like -06:00
     try:
-        return datetime.strptime(
-            ''.join(input.rsplit(":", 1)), "%Y-%m-%dT%H:%M:%S%z")
+        return datetime.strptime(''.join(input.rsplit(":", 1)),
+                                 "%Y-%m-%dT%H:%M:%S%z")
     except ValueError:
         pass
     raise ValueError
@@ -250,123 +251,124 @@ def indent_multiline_string(input, indentation, show_multi_line_character):
 
 
 def get_new_contact_template():
-    return """# name components
-# every entry may contain a string or a list of strings
-# format:
-#   First name : name1
-#   Additional : 
-#       - name2
-#       - name3
-#   Last name  : name4
-Prefix     : 
-First name : 
-Additional : 
-Last name  : 
-Suffix     : 
+    return dedent("""
+        # name components
+        # every entry may contain a string or a list of strings
+        # format:
+        #   First name : name1
+        #   Additional : 
+        #       - name2
+        #       - name3
+        #   Last name  : name4
+        Prefix     : 
+        First name : 
+        Additional : 
+        Last name  : 
+        Suffix     : 
 
-# person related information
-#
-# birthday
-# Formats:
-#   vcard 3.0 and 4.0: yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
-#   vcard 4.0 only: --mm-dd or text= string value
-Birthday : 
-# nickname
-# may contain a string or a list of strings
-Nickname : 
+        # person related information
+        #
+        # birthday
+        # Formats:
+        #   vcard 3.0 and 4.0: yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
+        #   vcard 4.0 only: --mm-dd or text= string value
+        Birthday : 
+        # nickname
+        # may contain a string or a list of strings
+        Nickname : 
 
-# organisation
-# format:
-#   Organisation : company
-# or
-#   Organisation :
-#       - company1
-#       - company2
-# or
-#   Organisation :
-#       -
-#           - company
-#           - unit
-Organisation : 
+        # organisation
+        # format:
+        #   Organisation : company
+        # or
+        #   Organisation :
+        #       - company1
+        #       - company2
+        # or
+        #   Organisation :
+        #       -
+        #           - company
+        #           - unit
+        Organisation : 
 
-# organisation title and role
-# every entry may contain a string or a list of strings
-#
-# title at organisation
-# example usage: research scientist
-Title : 
-# role at organisation
-# example usage: project leader
-Role  : 
+        # organisation title and role
+        # every entry may contain a string or a list of strings
+        #
+        # title at organisation
+        # example usage: research scientist
+        Title : 
+        # role at organisation
+        # example usage: project leader
+        Role  : 
 
-# phone numbers
-# format:
-#   Phone:
-#       type1, type2: number
-#       type3:
-#           - number1
-#           - number2
-#       custom: number
-# allowed types:
-#   vcard 3.0: At least one of bbs, car, cell, fax, home, isdn, msg, modem,
-#                              pager, pcs, pref, video, voice, work
-#   vcard 4.0: At least one of home, work, pref, text, voice, fax, cell, video,
-#                              pager, textphone
-#   Alternatively you may use a single custom label (only letters).
-#   But beware, that not all address book clients will support custom labels.
-Phone :
-    cell : 
-    home : 
+        # phone numbers
+        # format:
+        #   Phone:
+        #       type1, type2: number
+        #       type3:
+        #           - number1
+        #           - number2
+        #       custom: number
+        # allowed types:
+        #   vcard 3.0: At least one of bbs, car, cell, fax, home, isdn, msg, modem,
+        #                              pager, pcs, pref, video, voice, work
+        #   vcard 4.0: At least one of home, work, pref, text, voice, fax, cell, video,
+        #                              pager, textphone
+        #   Alternatively you may use a single custom label (only letters).
+        #   But beware, that not all address book clients will support custom labels.
+        Phone :
+            cell : 
+            home : 
 
-# email addresses
-# format like phone numbers above
-# allowed types:
-#   vcard 3.0: At least one of home, internet, pref, work, x400
-#   vcard 4.0: At least one of home, internet, pref, work
-#   Alternatively you may use a single custom label (only letters).
-Email :
-    home : 
-    work : 
+        # email addresses
+        # format like phone numbers above
+        # allowed types:
+        #   vcard 3.0: At least one of home, internet, pref, work, x400
+        #   vcard 4.0: At least one of home, internet, pref, work
+        #   Alternatively you may use a single custom label (only letters).
+        Email :
+            home : 
+            work : 
 
-# post addresses
-# allowed types:
-#   vcard 3.0: At least one of dom, intl, home, parcel, postal, pref, work
-#   vcard 4.0: At least one of home, pref, work
-#   Alternatively you may use a single custom label (only letters).
-Address :
-    home :
-        Box      : 
-        Extended : 
-        Street   : 
-        Code     : 
-        City     : 
-        Region   : 
-        Country  : 
+        # post addresses
+        # allowed types:
+        #   vcard 3.0: At least one of dom, intl, home, parcel, postal, pref, work
+        #   vcard 4.0: At least one of home, pref, work
+        #   Alternatively you may use a single custom label (only letters).
+        Address :
+            home :
+                Box      : 
+                Extended : 
+                Street   : 
+                Code     : 
+                City     : 
+                Region   : 
+                Country  : 
 
-# categories or tags
-# format:
-#   Categories : single category
-# or
-#   Categories :
-#       - category1
-#       - category2
-Categories : 
+        # categories or tags
+        # format:
+        #   Categories : single category
+        # or
+        #   Categories :
+        #       - category1
+        #       - category2
+        Categories : 
 
-# web pages
-# may contain a string or a list of strings
-Webpage : 
+        # web pages
+        # may contain a string or a list of strings
+        Webpage : 
 
-# private objects
-# define your own private objects in the vcard section of your khard.conf file
-# these objects are stored with a leading "X-" before the object name in the
-# vcard files.
-# every entry may contain a string or a list of strings
-Private :
+        # private objects
+        # define your own private objects in the vcard section of your khard.conf file
+        # these objects are stored with a leading "X-" before the object name in the
+        # vcard files.
+        # every entry may contain a string or a list of strings
+        Private :
 
-# notes
-# may contain a string or a list of strings
-# for multi-line notes use:
-#   Note : |
-#       line one
-#       line two
-Note : """
+        # notes
+        # may contain a string or a list of strings
+        # for multi-line notes use:
+        #   Note : |
+        #       line one
+        #       line two
+        Note : """)
