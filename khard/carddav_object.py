@@ -25,6 +25,7 @@ class CarddavObject:
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
+        self.photo_data = []
         self.supported_private_objects = supported_private_objects
 
         # vcard v3.0 supports the following type values
@@ -64,13 +65,21 @@ class CarddavObject:
             try:
                 self.vcard = vobject.readOne(contents)
             except Exception:
-                # if creation fails, try to repair vcard contents
+                # due to a bug in the object library 0.9.2 it's possible, that
+                # the library fails to parse the photo attribute
+                # workaround: strip photo data from vcard string and add it back
+                # after editing of vcard file was successful
                 try:
                     self.vcard = vobject.readOne(
-                        self.filter_invalid_tags(contents))
-                    self.write_to_file(overwrite=True)
+                        self.filter_photo_attribute(contents))
                 except Exception:
-                    raise
+                    # if creation still fails, try to repair some vcard
+                    # attributes
+                    try:
+                        self.vcard = vobject.readOne(
+                            self.filter_invalid_tags(contents))
+                    except Exception:
+                        raise
             # fix organisation values
             self.get_organisations()
 
@@ -813,6 +822,20 @@ class CarddavObject:
     # object helper methods
     #######################
 
+    def filter_photo_attribute(self, contents):
+        filtered = []
+        append_line = True
+        for line in contents.split("\n"):
+            if not append_line and re.search("^\S.*$", line, re.IGNORECASE):
+                append_line = True
+            if append_line and re.search("^photo.*:.*$", line, re.IGNORECASE):
+                append_line = False
+            if append_line:
+                filtered.append(line)
+            else:
+                self.photo_data.append(line)
+        return '\n'.join(filtered)
+
     def filter_invalid_tags(self, contents):
         contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM',
                           contents)
@@ -1373,8 +1396,15 @@ class CarddavObject:
 
     def write_to_file(self, overwrite=False):
         try:
+            vcard_string = self.vcard.serialize()
+            index_of_ent_attribute = vcard_string.find("END:VCARD")
+            if index_of_ent_attribute >= 0 and self.photo_data:
+                # restore stored photo data
+                vcard_string = vcard_string[:index_of_ent_attribute] \
+                               + '\r\n'.join(self.photo_data) + "\r\n" \
+                               + vcard_string[index_of_ent_attribute:]
             with atomic_write(self.filename, overwrite=overwrite) as f:
-                f.write(self.vcard.serialize())
+                f.write(vcard_string)
         except vobject.base.ValidateError as err:
             print("Error: Vcard is not valid.\n%s" % err)
             sys.exit(4)
