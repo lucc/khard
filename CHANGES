@@ -130,5 +130,8 @@ v0.11.0: 2016.07.17
 - Updated zsh completion function and khards example config file
 
 v0.11.1-b1: 2016.07.23
-- Workaround for the photo attribute parsing issue of vobject library 0.9.2
+Workaround for the photo attribute parsing issue of vobject library 0.9.2
+
+v0.11.1-b1: 2016.07.29
+setup.py: try to convert readme file into restructured text format (pypi requirement)
 

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import os
 import random
 import string
+from datetime import datetime
 from textwrap import dedent
 
 from .object_type import ObjectType
