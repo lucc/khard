@@ -25,7 +25,7 @@ class CarddavObject:
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
-        self.photo_data = []
+        self.excluded_data = []
         self.supported_private_objects = supported_private_objects
 
         # vcard v3.0 supports the following type values
@@ -71,7 +71,7 @@ class CarddavObject:
                 # after editing of vcard file was successful
                 try:
                     self.vcard = vobject.readOne(
-                        self.filter_photo_attribute(contents))
+                        self.filter_base64_encoded_attributes(contents))
                 except Exception:
                     # if creation still fails, try to repair some vcard
                     # attributes
@@ -817,18 +817,24 @@ class CarddavObject:
     # object helper methods
     #######################
 
-    def filter_photo_attribute(self, contents):
+    def filter_base64_encoded_attributes(self, contents):
         filtered = []
         append_line = True
         for line in contents.split("\n"):
-            if not append_line and re.search("^\S.*$", line, re.IGNORECASE):
+            if not append_line and \
+                    re.search("^\S.*$", line, re.IGNORECASE):
+                # skipped all the indented lines and found the next attribute
                 append_line = True
-            if append_line and re.search("^photo.*:.*$", line, re.IGNORECASE):
+            if append_line and \
+                    re.search("^\S.*;encoding=b[;:].*$", line, re.IGNORECASE):
+                # found an attribute with base64 encoding
+                # skip that due to a bug in the vobject library
+                # refers to khard issues #80 and #86
                 append_line = False
             if append_line:
                 filtered.append(line)
             else:
-                self.photo_data.append(line)
+                self.excluded_data.append(line)
         return '\n'.join(filtered)
 
     def filter_invalid_tags(self, contents):
@@ -1392,10 +1398,10 @@ class CarddavObject:
         try:
             vcard_string = self.vcard.serialize()
             index_of_ent_attribute = vcard_string.find("END:VCARD")
-            if index_of_ent_attribute >= 0 and self.photo_data:
-                # restore stored photo data
+            if index_of_ent_attribute >= 0 and self.excluded_data:
+                # restore excluded base64 encoded attributes
                 vcard_string = vcard_string[:index_of_ent_attribute] \
-                               + '\r\n'.join(self.photo_data) + "\r\n" \
+                               + '\r\n'.join(self.excluded_data) + "\r\n" \
                                + vcard_string[index_of_ent_attribute:]
             with atomic_write(self.filename, overwrite=overwrite) as f:
                 f.write(vcard_string)
