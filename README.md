@@ -24,6 +24,7 @@ With version 0.11.0, khard changed from python2 to python3.  So if you come from
 version, it may be necessary to reinstall in a newly created python3 virtual environment.
 
 
+
 Prerequisites
 -------------
 
@@ -41,8 +42,11 @@ sudo easy_install pip
 ```
 
 
+
 Installation
 ------------
+
+### From pypi ###
 
 Khard is installable via pip. I recommend virtualenv to create a separate python3 environment. So
 your system stays clean. Additionally you don't have to struggle with different python instances,
@@ -67,14 +71,24 @@ ln -s ~/.virtualenvs/khard/bin/khard ~/.virtualenvs/bin
 
 More information about virtualenv at http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
-To get the example config file and the other extra data, you can clone from git:
 
-```
+### From source ###
+
+If you instead want to run the source code directly, you may install required python modules by
+hand, clone from git and run the khard-runner.py script:
+
+~~~
+pip install --user atomicwrites, configobj, pyyaml, vobject
 git clone https://github.com/scheibler/khard.git
 cd khard/
-```
+./khard-runner.py [action [options]]
+~~~
 
-Or download and extract with pip:
+
+### Configuration ###
+
+To get the example config file and the other extra data, you can clone from git (see above) or
+download package from pypi:
 
 ```
 pip install --download /tmp --no-deps --no-use-wheel khard
@@ -89,6 +103,9 @@ Now copy the example config file and adapt it's contents to your needs:
 mkdir ~/.config/khard/
 cp misc/khard/khard.conf.example ~/.config/khard/khard.conf
 ```
+
+
+### Davcontroller ###
 
 Khard also contains a helper script called davcontroller. It's designed to create and remove address
 books and calendars at the server. I have created davcontroller cause my previously used CalDAV
@@ -113,6 +130,7 @@ cd CalDAVClientLibrary
 # start davcontroller script
 ~/.virtualenvs/davcontroller/bin/python /path/to/khard-x.x.x/misc/davcontroller/davcontroller.py
 ```
+
 
 
 Usage
@@ -252,6 +270,7 @@ khard remove [-a addr_name] [-u uid|search terms [search terms ...]]
 ```
 
 
+
 davcontroller
 -------------
 
@@ -266,6 +285,7 @@ davcontroller -H example.com -p 11111 -u USERNAME -P PASSWORD list
 
 Possible actions are: list, new-addressbook, new-calendar and remove. After creating or removing you
 must adapt your vdirsyncer config.
+
 
 
 mutt
@@ -299,6 +319,7 @@ macro index,pager A \
 Then navigate to an email message in mutt's index view and press "A" to start the address import dialog.
 
 
+
 Alot
 ----
 
@@ -313,6 +334,7 @@ Add the following lines to your alot config file:
             regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
             ignorecase = True
 ```
+
 
 
 Twinkle
@@ -358,6 +380,7 @@ script_remote_release=/home/USERNAME/.twinkle/scripts/incoming_call_ended.py
 ```
 
 
+
 Zsh
 ---
 
@@ -374,6 +397,7 @@ compinit
 ```
 
 
+
 sdiff
 -----
 
@@ -383,6 +407,7 @@ merging tool. Just make the script executable and set it as your merge editor in
 ```
 merge_editor = /path/to/sdiff_khard_wrapper.sh
 ```
+
 
 
 Related projects

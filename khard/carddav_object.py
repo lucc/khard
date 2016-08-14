@@ -825,9 +825,15 @@ class CarddavObject:
                     re.search("^\S.*$", line, re.IGNORECASE):
                 # skipped all the indented lines and found the next attribute
                 append_line = True
-            if append_line and \
-                    re.search("^\S.*;encoding=b[;:].*$", line, re.IGNORECASE):
+            if append_line and ( \
+                    re.search(
+                        "^\S.*;encoding=base64[;:].*$", line, re.IGNORECASE) \
+                    or re.search(
+                        "^\S.*;encoding=b[;:].*$", line, re.IGNORECASE) \
+                    or re.search(
+                        "^\S.*:data.*[;:]base64,.*$", line, re.IGNORECASE)):
                 # found an attribute with base64 encoding
+                # for vcard versions 2.1, 3.0 or 4.0
                 # skip that due to a bug in the vobject library
                 # refers to khard issues #80 and #86
                 append_line = False
