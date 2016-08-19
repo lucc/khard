@@ -279,14 +279,15 @@ class CarddavObject:
         """
         :rtype: str
         """
-        if self.get_first_names() and self.get_last_names():
-            return "%s %s" % (
-                helpers.list_to_string(self.get_first_names(), " "),
-                helpers.list_to_string(self.get_last_names(), " "))
-        elif self.get_first_names():
-            return helpers.list_to_string(self.get_first_names(), " ")
-        elif self.get_last_names():
-            return helpers.list_to_string(self.get_last_names(), " ")
+        names = []
+        if self.get_first_names():
+            names += self.get_first_names()
+        if self.get_additional_names():
+            names += self.get_additional_names()
+        if self.get_last_names():
+            names += self.get_last_names()
+        if names:
+            return helpers.list_to_string(names, " ")
         else:
             return self.get_full_name()
 
@@ -294,14 +295,22 @@ class CarddavObject:
         """
         :rtype: str
         """
-        if self.get_first_names() and self.get_last_names():
+        last_names = []
+        if self.get_last_names():
+            last_names += self.get_last_names()
+        first_and_additional_names = []
+        if self.get_first_names():
+            first_and_additional_names += self.get_first_names()
+        if self.get_additional_names():
+            first_and_additional_names += self.get_additional_names()
+        if last_names and first_and_additional_names:
             return "%s, %s" % (
-                helpers.list_to_string(self.get_last_names(), " "),
-                helpers.list_to_string(self.get_first_names(), " "))
-        elif self.get_first_names():
-            return helpers.list_to_string(self.get_first_names(), " ")
-        elif self.get_last_names():
-            return helpers.list_to_string(self.get_last_names(), " ")
+                helpers.list_to_string(last_names, " "),
+                helpers.list_to_string(first_and_additional_names, " "))
+        elif last_names:
+            return helpers.list_to_string(last_names, " ")
+        elif first_and_additional_names:
+            return helpers.list_to_string(first_and_additional_names, " ")
         else:
             return self.get_full_name()
 
