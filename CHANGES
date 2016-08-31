@@ -133,3 +133,8 @@ v0.11.1: 2016.07.31
 - Workaround for the photo attribute parsing issue of vobject library 0.9.2 (#80)
 - setup.py: try to convert readme file into restructured text format (pypi requirement) and specify encoding explicitly (#83)
 
+v0.11.2: 2016.08.31
+- Extended the photo parsing workaround from khard version 0.11.1 to all base64 encoded vcard attributes (#86 and #87)
+- Show additional/middle names in name column of contact table (#89)
+- Added khard-runner.py helper script to simplify source code launching
+
