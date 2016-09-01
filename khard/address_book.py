@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""A simple class to load and manage the vcard files from disk."""
 
 import glob
 import logging
@@ -9,6 +10,10 @@ from .carddav_object import CarddavObject
 
 
 class AddressBook:
+
+    """Holds the contacts inside one address book folder.  On disk they are
+    stored in vcard files."""
+
     def __init__(self, name, path):
         self.loaded = False
         self.contact_list = []
