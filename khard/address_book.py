@@ -47,9 +47,6 @@ class AddressBook:
             else:
                 yield filename
 
-    def add_contact(self, contact):
-        self.contact_list.append(contact)
-
     def load_all_vcards(self, private_objects=tuple(), search=None):
         """Load all vcard files in this address book from disk.  If a search
         string is given only files which contents match that will be loaded.
@@ -81,6 +78,6 @@ class AddressBook:
                               err)
                 errors += 1
             else:
-                self.add_contact(card)
+                self.contact_list.append(card)
         self.loaded = True
         return contacts, errors
