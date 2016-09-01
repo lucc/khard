@@ -4,7 +4,6 @@
 # http://code.activestate.com/recipes/52558/#as_content
 
 from distutils.spawn import find_executable
-import glob
 import locale
 import logging
 import os
@@ -15,7 +14,6 @@ import configobj
 
 from .actions import Actions
 from .address_book import AddressBook
-from .carddav_object import CarddavObject
 from . import helpers
 
 
@@ -285,41 +283,17 @@ class Config:
         given name does not exist
         :rtype: AddressBook
         """
+        if not self.search_in_source_files():
+            search_queries = None
         for address_book in self.address_book_list:
             if name == address_book.name:
                 if not address_book.loaded:
-                    number_of_contacts = 0
-                    error_counter = 0
                     # load vcard files of address book
-                    filename_list = []
-                    for filename in glob.glob(os.path.join(
-                            address_book.path, "*.vcf")):
-                        if search_queries and self.search_in_source_files():
-                            with open(filename, "r") as f:
-                                if re.search(search_queries, f.read(),
-                                             re.IGNORECASE | re.DOTALL):
-                                    filename_list.append(filename)
-                        else:
-                            filename_list.append(filename)
-
-                    # create CarddavObject
-                    for filename in filename_list:
-                        number_of_contacts += 1
-                        try:
-                            address_book.add_contact(CarddavObject.from_file(
-                                address_book, filename,
-                                self.get_supported_private_objects()))
-                        except IOError as e:
-                            logging.debug("Error: Could not open file %s\n%s",
-                                          filename, e)
-                            error_counter += 1
-                        except Exception as e:
-                            logging.debug("Error: Could not parse file %s\n%s",
-                                          filename, e)
-                            error_counter += 1
+                    contacts, errors = address_book.load_all_vcards(
+                        self.get_supported_private_objects(), search_queries)
 
                     # check if one or more contacts could not be parsed
-                    if error_counter > 0:
+                    if errors > 0:
                         if not self.skip_unparsable():
                             logging.info(
                                 "%d of %d vcard files of address book %s "
@@ -360,8 +334,8 @@ class Config:
                                     sys.exit(2)
                         # rebuild shortened uid dictionary
                         self.create_shortened_uid_dictionary()
-                    address_book.loaded = True
                 return address_book
+        # Return None if no address book did match the given name.
         return None
 
     def has_uids(self):

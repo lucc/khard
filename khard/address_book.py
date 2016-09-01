@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import glob
+import logging
 import os
+import re
+
+from .carddav_object import CarddavObject
 
 
 class AddressBook:
@@ -23,5 +28,59 @@ class AddressBook:
     def __ne__(self, other):
         return not self == other
 
+    def _find_vcard_files(self, search=None):
+        """Find all vcard files inside this address book.  If a search string
+        is given only files which contents match that will be returned.
+
+        :param search: a regular expression to limit the results
+        :type search: str
+        :returns: the paths of the vcard files
+        :rtype: generator
+
+        """
+        for filename in glob.glob(os.path.join(self.path, "*.vcf")):
+            if search:
+                with open(filename, "r") as filehandle:
+                    if re.search(search, filehandle.read(),
+                                 re.IGNORECASE | re.DOTALL):
+                        yield filename
+            else:
+                yield filename
+
     def add_contact(self, contact):
         self.contact_list.append(contact)
+
+    def load_all_vcards(self, private_objects=tuple(), search=None):
+        """Load all vcard files in this address book from disk.  If a search
+        string is given only files which contents match that will be loaded.
+
+        :param private_objects: the names of private vcard extension fields to
+            load
+        :type private_objects: list(str) or tuple(str)
+        :param search: a regular expression to limit the results
+        :type search: str
+        :returns: the number of successfully loaded cards and the number of
+            errors
+        :rtype: int, int
+
+        """
+        if self.loaded:
+            return len(self.contact_list), 0
+        contacts = 0
+        errors = 0
+        for filename in self._find_vcard_files(search=search):
+            contacts += 1
+            try:
+                card = CarddavObject.from_file(self, filename, private_objects)
+            except IOError as err:
+                logging.debug("Error: Could not open file %s\n%s", filename,
+                              err)
+                errors += 1
+            except Exception as err:
+                logging.debug("Error: Could not parse file %s\n%s", filename,
+                              err)
+                errors += 1
+            else:
+                self.add_contact(card)
+        self.loaded = True
+        return contacts, errors
