@@ -17,6 +17,7 @@ class AddressBook:
     def __init__(self, name, path):
         self.loaded = False
         self.contact_list = []
+        self._uids = set()
         self.name = name
         self.path = os.path.expanduser(path)
         if not os.path.isdir(self.path):
@@ -52,6 +53,23 @@ class AddressBook:
             else:
                 yield filename
 
+    def _check_uids(self):
+        """Check that the uids of all cards are unique across this address
+        book.
+
+        :returns: the set of duplicate uids
+        :rtype: set(str)
+
+        """
+        duplicates = set()
+        for contact in self.contact_list:
+            uid = contact.get_uid()
+            if uid in self._uids:
+                duplicates.add(uid)
+            else:
+                self._uids.add(uid)
+        return duplicates
+
     def load_all_vcards(self, private_objects=tuple(), search=None):
         """Load all vcard files in this address book from disk.  If a search
         string is given only files which contents match that will be loaded.
@@ -84,5 +102,10 @@ class AddressBook:
                 errors += 1
             else:
                 self.contact_list.append(card)
+        duplicates = self._check_uids()
+        if duplicates:
+            logging.warning(
+                "There are duplicate UIDs in the address book %s: %s",
+                self.name, duplicates)
         self.loaded = True
         return contacts, errors
