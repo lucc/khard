@@ -3,6 +3,9 @@
 
 class Actions:
 
+    """A class to manage the names and aliases of the command line
+    subcommands."""
+
     action_map = {
         "add-email":    [],
         "addressbooks": ["abooks"],
@@ -44,7 +47,7 @@ class Actions:
 
         :param action: the action name to look up
         :type action: str
-        :returns: the list of aliases or None
+        :returns: the list of aliases corresponding to the action or None
         :rtype: list(str) or NoneType
 
         """
