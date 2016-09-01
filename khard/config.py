@@ -32,24 +32,22 @@ class Config:
         # load config file
         xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
             os.path.expanduser("~/.config")
-        config_file = os.environ.get("KHARD_CONFIG") or \
-            os.path.join(xdg_config_home, "khard", "khard.conf")
+        config_file = os.environ.get("KHARD_CONFIG") or os.path.join(
+            xdg_config_home, "khard", "khard.conf")
         if not os.path.exists(config_file):
             print("Config file %s not available" % config_file)
             sys.exit(2)
 
         # parse config file contents
         try:
-            self.config = configobj.ConfigObj(
-                config_file, interpolation=False)
+            self.config = configobj.ConfigObj(config_file, interpolation=False)
         except configobj.ParseError as err:
             print("Error in config file\n%s" % err)
             sys.exit(2)
 
         # general settings
         if "general" not in self.config:
-            print('Error in config file\n'
-                  'Missing main section "[general]".')
+            print('Error in config file\nMissing main section "[general]".')
             sys.exit(2)
 
         # debug
@@ -60,20 +58,17 @@ class Config:
         elif self.config['general']['debug'] == "no":
             self.config['general']['debug'] = False
         else:
-            print("Error in config file\n"
-                  "Invalid value for debug parameter\n"
+            print("Error in config file\nInvalid value for debug parameter\n"
                   "Possible values: yes, no")
             sys.exit(2)
 
         # editor
         self.config['general']['editor'] = \
-            self.config['general'].get("editor") \
-            or os.environ.get("EDITOR")
+            self.config['general'].get("editor") or os.environ.get("EDITOR")
         if self.config['general']['editor'] is None:
-            print("Error in config file\n"
-                  "Set path to your preferred text editor in khard's "
-                  "config file or the $EDITOR shell variable\n"
-                  "Example for khard.conf: editor = vim")
+            print("Error in config file\nSet path to your preferred text "
+                  "editor in khard's config file or the $EDITOR shell variable"
+                  "\nExample for khard.conf: editor = vim")
             sys.exit(2)
         self.config['general']['editor'] = find_executable(
             os.path.expanduser(self.config['general']['editor']))
@@ -87,10 +82,9 @@ class Config:
             self.config['general'].get("merge_editor") \
             or os.environ.get("MERGE_EDITOR")
         if self.config['general']['merge_editor'] is None:
-            print("Error in config file\nSet path to your preferred text "
-                  "merge editor in khard's config file or the "
-                  "$MERGE_EDITOR shell variable\n"
-                  "Example for khard.conf: merge_editor = vimdiff")
+            print("Error in config file\nSet path to your preferred text merge"
+                  " editor in khard's config file or the $MERGE_EDITOR shell "
+                  "variable\nExample for khard.conf: merge_editor = vimdiff")
             sys.exit(2)
         self.config['general']['merge_editor'] = find_executable(
             os.path.expanduser(self.config['general']['merge_editor']))
@@ -101,8 +95,7 @@ class Config:
 
         # default action
         if "default_action" not in self.config['general']:
-            print("Error in config file\n"
-                  "Missing default action parameter.")
+            print("Error in config file\nMissing default action parameter.")
             sys.exit(2)
         elif self.config['general']['default_action'] not in \
                 Actions.get_list_of_all_actions():
@@ -118,23 +111,21 @@ class Config:
         # sort contact table by first or last name
         if "sort" not in self.config['contact table']:
             self.config['contact table']['sort'] = "first_name"
-        elif self.config['contact table']['sort'] not in \
-                ["first_name", "last_name"]:
-            print("Error in config file\n"
-                  "Invalid value for sort parameter\n"
+        elif self.config['contact table']['sort'] not in ["first_name",
+                                                          "last_name"]:
+            print("Error in config file\nInvalid value for sort parameter\n"
                   "Possible values: first_name, last_name")
             sys.exit(2)
 
         # display names in contact table by first or last name
         if "display" not in self.config['contact table']:
-            # if display by name attribute is not present in the config
-            # file use the sort attribute value for backwards compatibility
+            # if display by name attribute is not present in the config file
+            # use the sort attribute value for backwards compatibility
             self.config['contact table']['display'] = \
                     self.config['contact table']['sort']
-        elif self.config['contact table']['display'] not in \
-                ["first_name", "last_name"]:
-            print("Error in config file\n"
-                  "Invalid value for display parameter\n"
+        elif self.config['contact table']['display'] not in ["first_name",
+                                                             "last_name"]:
+            print("Error in config file\nInvalid value for display parameter\n"
                   "Possible values: first_name, last_name")
             sys.exit(2)
 
@@ -146,8 +137,7 @@ class Config:
         elif self.config['contact table']['reverse'] == "no":
             self.config['contact table']['reverse'] = False
         else:
-            print("Error in config file\n"
-                  "Invalid value for reverse parameter\n"
+            print("Error in config file\nInvalid value for reverse parameter\n"
                   "Possible values: yes, no")
             sys.exit(2)
 
@@ -201,13 +191,12 @@ class Config:
             # check if object only contains letters, digits or -
             for object in self.config['vcard']['private_objects']:
                 if object != re.sub("[^a-zA-Z0-9-]", "", object):
-                    print("Error in config file\n"
-                          "private object %s may only contain letters, "
-                          "digits and the \"-\" character." % object)
+                    print("Error in config file\nprivate object %s may only "
+                          "contain letters, digits and the \"-\" character."
+                          % object)
                     sys.exit(2)
                 if object == re.sub("[^-]", "", object) \
-                        or object.startswith("-") \
-                        or object.endswith("-"):
+                        or object.startswith("-") or object.endswith("-"):
                     print("Error in config file\n"
                           "A \"-\" in a private object label must be "
                           "at least surrounded by one letter or digit.")
@@ -218,9 +207,8 @@ class Config:
             self.config['vcard']['preferred_version'] = "3.0"
         elif self.config['vcard']['preferred_version'] not in \
                 self.get_supported_vcard_versions():
-            print("Error in config file\n"
-                  "Invalid value for preferred_version parameter\n"
-                  "Possible values: %s"
+            print("Error in config file\nInvalid value for preferred_version "
+                  "parameter\nPossible values: %s"
                   % self.get_supported_vcard_versions())
             sys.exit(2)
 
@@ -256,8 +244,7 @@ class Config:
                   'Missing main section "[addressbooks]".')
             sys.exit(2)
         if len(self.config['addressbooks'].keys()) == 0:
-            print("Error in config file\n"
-                  "No address book entries available.")
+            print("Error in config file\nNo address book entries available.")
             sys.exit(2)
         for name in self.config['addressbooks'].keys():
             # create address book object
@@ -301,8 +288,7 @@ class Config:
                     filename_list = []
                     for filename in glob.glob(os.path.join(
                             address_book.get_path(), "*.vcf")):
-                        if search_queries \
-                                and self.search_in_source_files():
+                        if search_queries and self.search_in_source_files():
                             with open(filename, "r") as f:
                                 if re.search(search_queries, f.read(),
                                              re.IGNORECASE | re.DOTALL):
@@ -314,10 +300,9 @@ class Config:
                     for filename in filename_list:
                         number_of_contacts += 1
                         try:
-                            address_book.add_contact(
-                                CarddavObject.from_file(
-                                    address_book, filename,
-                                    self.get_supported_private_objects()))
+                            address_book.add_contact(CarddavObject.from_file(
+                                address_book, filename,
+                                self.get_supported_private_objects()))
                         except IOError as e:
                             if self.debug():
                                 print("Error: Could not open file %s\n%s"
@@ -332,17 +317,14 @@ class Config:
                     # check if one or more contacts could not be parsed
                     if error_counter > 0:
                         if self.debug():
-                            print("\n%d of %d vcard files of address book "
-                                  "%s could not be parsed"
-                                  % (error_counter, number_of_contacts,
-                                     name))
+                            print("\n%d of %d vcard files of address book %s "
+                                  "could not be parsed"
+                                  % (error_counter, number_of_contacts, name))
                         elif not self.skip_unparsable():
-                            print("%d of %d vcard files of address book "
-                                  "%s could not be parsed\nUse --debug "
-                                  "for more information or "
-                                  "--skip-unparsable to proceed"
-                                  % (error_counter, number_of_contacts,
-                                     name))
+                            print("%d of %d vcard files of address book %s "
+                                  "could not be parsed\nUse --debug for more "
+                                  "information or --skip-unparsable to proceed"
+                                  % (error_counter, number_of_contacts, name))
                         if self.skip_unparsable():
                             if self.debug():
                                 print("")
@@ -357,15 +339,14 @@ class Config:
                         for contact in address_book.get_contact_list():
                             uid = contact.get_uid()
                             if bool(uid):
-                                matching_contact = \
-                                        self.original_uid_dict.get(uid)
+                                matching_contact = self.original_uid_dict.get(
+                                    uid)
                                 if matching_contact is None:
                                     self.original_uid_dict[uid] = contact
                                 else:
-                                    print("The contact %s from address "
-                                          "book %s and the contact %s from"
-                                          " address book %s have the same "
-                                          "uid %s" % (
+                                    print("The contact %s from address book %s"
+                                          " and the contact %s from address "
+                                          "book %s have the same uid %s" % (
                                               matching_contact.get_full_name(),
                                               matching_contact.get_address_book().get_name(),
                                               contact.get_full_name(),
@@ -382,18 +363,17 @@ class Config:
         return len(self.uid_dict.keys()) > 0
 
     def create_shortened_uid_dictionary(self):
-        # uniqueness of uids is guaranteed but they are much to long for
-        # the -u / --uid command line option
+        # uniqueness of uids is guaranteed but they are much to long for the -u
+        # / --uid command line option
         #
         # Therefore clear previously filled uid_dict and recreate with the
         # shortest possible uids, so they are still unique but much handier
         #
-        # with around 100 contacts that short id should not be longer
-        # then two or three characters
+        # with around 100 contacts that short id should not be longer then two
+        # or three characters
         self.uid_dict.clear()
-        flat_contact_list = sorted(
-            self.original_uid_dict.values(),
-            key=lambda x: x.get_uid())
+        flat_contact_list = sorted(self.original_uid_dict.values(),
+                                   key=lambda x: x.get_uid())
         if len(flat_contact_list) == 1:
             current = flat_contact_list[0]
             self.uid_dict[current.get_uid()[:1]] = current
