@@ -36,6 +36,11 @@ class ListToString(unittest.TestCase):
         actual = helpers.list_to_string(the_list, delimiter)
         self.assertEqual(actual, expected)
 
+    def test_list_to_string_passes_through_other_objects(self):
+        self.assertIs(helpers.list_to_string(None, "foo"), None)
+        self.assertIs(helpers.list_to_string(42, "foo"), 42)
+        self.assertIs(helpers.list_to_string("foo bar", "foo"), "foo bar")
+
 
 class StringToDate(unittest.TestCase):
 
