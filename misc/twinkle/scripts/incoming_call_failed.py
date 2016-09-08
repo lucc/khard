@@ -15,9 +15,8 @@ if os.path.exists(config.mpd_lockfile) == True:
 
 # try to get the caller name / id from the previously created temp file
 try:
-    caller_id_file = open(config.caller_id_filename, "r")
-    caller_id = caller_id_file.read().strip()
-    caller_id_file.close()
+    with open(config.caller_id_filename, "r") as caller_id_file:
+        caller_id = caller_id_file.read().strip()
 except:
     caller_id = "anonymous"
 if config.language == "de":
@@ -30,7 +29,5 @@ except:
     pass
 
 # log into file
-log = open(config.call_log_file, "a")
-log.write(message)
-log.close()
-
+with open(config.call_log_file, "a") as log:
+    log.write(message)

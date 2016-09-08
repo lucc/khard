@@ -75,9 +75,8 @@ if "SIP_FROM" in os.environ:
     else:
         create_ringtone("Call from " + caller_id)
     # save the caller id for later use
-    caller_id_file = open(config.caller_id_filename, "w")
-    caller_id_file.write(caller_id)
-    caller_id_file.close()
+    with open(config.caller_id_filename, "w") as caller_id_file:
+        caller_id_file.write(caller_id)
     # if the file creation was successful and the file exists, tell twinkle to use it as the ringtone
     # else do nothing and play the standard ringtone
     if os.path.exists(config.new_ringtone) == True:
