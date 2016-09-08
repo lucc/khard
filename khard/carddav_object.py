@@ -52,12 +52,8 @@ class CarddavObject:
 
         else:
             # create vcard from .vcf file
-            try:
-                file = open(self.filename, "r")
+            with open(self.filename, "r") as file:
                 contents = file.read()
-                file.close()
-            except IOError:
-                raise
             # create vcard object
             try:
                 self.vcard = vobject.readOne(contents)

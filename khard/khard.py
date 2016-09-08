@@ -44,9 +44,8 @@ def create_new_contact(address_book):
             break
 
         # read temp file contents after editing
-        tf = open(temp_file_name, "r")
-        new_contact_template = tf.read()
-        tf.close()
+        with open(temp_file_name, "r") as tf:
+            new_contact_template = tf.read()
 
         # try to create new contact
         try:
@@ -101,9 +100,8 @@ def modify_existing_contact(old_contact):
             break
 
         # read temp file contents after editing
-        tf = open(temp_file_name, "r")
-        new_contact_template = tf.read()
-        tf.close()
+        with open(temp_file_name, "r") as tf:
+            new_contact_template = tf.read()
 
         # try to create contact from user input
         try:
@@ -194,9 +192,8 @@ def merge_existing_contacts(source_contact, target_contact,
             break
 
         # load target template contents
-        target_tf = open(target_temp_file_name, "r")
-        merged_contact_template = target_tf.read()
-        target_tf.close()
+        with open(target_temp_file_name, "r") as target_tf:
+            merged_contact_template = target_tf.read()
 
         # try to create contact from user input
         try:
