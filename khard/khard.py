@@ -470,39 +470,10 @@ def get_contacts(address_books, query, method="all", reverse=False,
     :rtype: list(CarddavObject)
 
     """
-    # Search for the contacts.
+    # Search for the contacts in all address books.
     contacts = []
-    if method == "uid":
-        # Search for contacts with uid == query.
-        for address_book in address_books:
-            for contact in address_book.contact_list:
-                if contact.get_uid() == query:
-                    contacts.append(contact)
-        # If that fails, search for contacts where uid starts with query.
-        if len(contacts) == 0:
-            for address_book in address_books:
-                for contact in address_book.contact_list:
-                    if contact.get_uid().startswith(query):
-                        contacts.append(contact)
-    else:
-        regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
-                            re.IGNORECASE | re.DOTALL)
-        for address_book in address_books:
-            for contact in address_book.contact_list:
-                if method == "name":
-                    # only search in contact name
-                    if regexp.search(contact.get_full_name()) is not None:
-                        contacts.append(contact)
-                elif method == "all":
-                    # search in all contact fields
-                    contact_details = contact.print_vcard()
-                    contact_details_without_special_chars = re.sub(
-                        "[^a-zA-Z0-9\n]", "", contact_details)
-                    if regexp.search(contact_details) is not None or \
-                            regexp.search(
-                                contact_details_without_special_chars) \
-                            is not None:
-                        contacts.append(contact)
+    for address_book in address_books:
+        contacts.extend(address_book.search(query, method=method))
     # Sort the contacts.
     if group:
         if sort == "first_name":

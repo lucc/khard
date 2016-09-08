@@ -109,3 +109,83 @@ class AddressBook:
                 self.name, duplicates)
         self.loaded = True
         return contacts, errors
+
+    def _search_all(self, query):
+        """Search in all fields for contacts matching query.
+
+        :param query: the query to search for
+        :type query: str
+        :yields: all found contacts
+        :rtype: generator(carddav_object.CarddavObject)
+
+        """
+        regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
+                            re.IGNORECASE | re.DOTALL)
+        for contact in self.contact_list:
+            # search in all contact fields
+            contact_details = contact.print_vcard()
+            contact_details_without_special_chars = re.sub("[^a-zA-Z0-9\n]",
+                                                           "", contact_details)
+            if regexp.search(contact_details) is not None or regexp.search(
+                    contact_details_without_special_chars) is not None:
+                yield contact
+
+    def _search_names(self, query):
+        """Search in the name filed for contacts matching query.
+
+        :param query: the query to search for
+        :type query: str
+        :yields: all found contacts
+        :rtype: generator(carddav_object.CarddavObject)
+
+        """
+        regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
+                            re.IGNORECASE | re.DOTALL)
+        for contact in self.contact_list:
+            # only search in contact name
+            if regexp.search(contact.get_full_name()) is not None:
+                yield contact
+
+    def _search_uid(self, query):
+        """Search for contacts with a matching uid.
+
+        :param query: the query to search for
+        :type query: str
+        :yields: all found contacts
+        :rtype: generator(carddav_object.CarddavObject)
+
+        """
+        contacts = []
+        # Search for contacts with uid == query.
+        for contact in self.contact_list:
+            if contact.get_uid() == query:
+                contacts.append(contact)
+        # If that fails, search for contacts where uid starts with query.
+        if len(contacts) == 0:
+            for contact in self.contact_list:
+                if contact.get_uid().startswith(query):
+                    contacts.append(contact)
+        return contacts
+
+    def search(self, query, method="all"):
+        """Search this address book for contacts matching the query.  The
+        method can be one of "all", "name" and "uid".
+
+        :param query: the query to search for
+        :type query: str
+        :param method: the type of fileds to use when seaching
+        :type method: str
+        :returns: all found contacts
+        :rtype: list(carddav_object.CarddavObject)
+
+        """
+        if method == "all":
+            search_function = self._search_all
+        elif method == "name":
+            search_function = self._search_names
+        elif method == "uid":
+            search_function = self._search_names
+        else:
+            raise ValueError('Only the search methods "all", "name" and "uid" '
+                             'are supported.')
+        return list(search_function(query))
