@@ -20,25 +20,23 @@ from .object_type import ObjectType
 
 class CarddavObject:
 
+    # vcard v3.0 supports the following type values
+    phone_types_v3 = ("bbs", "car", "cell", "fax", "home", "isdn", "msg",
+                      "modem", "pager", "pcs", "video", "voice", "work")
+    email_types_v3 = ("home", "internet", "work", "x400")
+    address_types_v3 = ("dom", "intl", "home", "parcel", "postal", "work")
+    # vcard v4.0 supports the following type values
+    phone_types_v4 = ("text", "voice", "fax", "cell", "video", "pager",
+                      "textphone", "home", "work")
+    email_types_v4 = ("home", "internet", "work")
+    address_types_v4 = ("home", "work")
+
     def __init__(self, address_book, filename, supported_private_objects,
                  vcard_version):
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
         self.supported_private_objects = supported_private_objects
-
-        # vcard v3.0 supports the following type values
-        self.phone_types_v3 = ["bbs", "car", "cell", "fax", "home", "isdn",
-                               "msg", "modem", "pager", "pcs", "video",
-                               "voice", "work"]
-        self.email_types_v3 = ["home", "internet", "work", "x400"]
-        self.address_types_v3 = ["dom", "intl", "home", "parcel", "postal",
-                                 "work"]
-        # vcard v4.0 supports the following type values
-        self.phone_types_v4 = ["text", "voice", "fax", "cell", "video",
-                               "pager", "textphone", "home", "work"]
-        self.email_types_v4 = ["home", "internet", "work"]
-        self.address_types_v4 = ["home", "work"]
 
         # load vcard
         if self.filename is None:
