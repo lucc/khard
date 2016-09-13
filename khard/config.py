@@ -54,16 +54,9 @@ class Config:
             sys.exit(2)
 
         # debug
-        if 'debug' not in self.config['general']:
-            self.debug = False
-        elif self.config['general']['debug'] == "yes":
-            self.debug = True
-        elif self.config['general']['debug'] == "no":
-            self.debug = False
-        else:
-            print("Error in config file\nInvalid value for debug parameter\n"
-                  "Possible values: yes, no")
-            sys.exit(2)
+        self._convert_boolean_config_value(self.config["general"],
+                                           "debug", False)
+        self.debug = self.config["general"]["debug"]
 
         # editor
         self.config['general']['editor'] = \
@@ -133,55 +126,17 @@ class Config:
             sys.exit(2)
 
         # reverse contact table
-        if 'reverse' not in self.config['contact table']:
-            self.config['contact table']['reverse'] = False
-        elif self.config['contact table']['reverse'] == "yes":
-            self.config['contact table']['reverse'] = True
-        elif self.config['contact table']['reverse'] == "no":
-            self.config['contact table']['reverse'] = False
-        else:
-            print("Error in config file\nInvalid value for reverse parameter\n"
-                  "Possible values: yes, no")
-            sys.exit(2)
-
+        self._convert_boolean_config_value(self.config["contact table"],
+                                           "reverse", False)
         # group contact table by address book
-        if "group_by_addressbook" not in self.config['contact table']:
-            self.config['contact table']['group_by_addressbook'] = False
-        elif self.config['contact table']['group_by_addressbook'] == "yes":
-            self.config['contact table']['group_by_addressbook'] = True
-        elif self.config['contact table']['group_by_addressbook'] == "no":
-            self.config['contact table']['group_by_addressbook'] = False
-        else:
-            print("Error in config file\n"
-                  "Invalid value for group_by_addressbook parameter\n"
-                  "Possible values: yes, no")
-            sys.exit(2)
-
+        self._convert_boolean_config_value(self.config["contact table"],
+                                           "group_by_addressbook", False)
         # nickname
-        if "show_nicknames" not in self.config['contact table']:
-            self.config['contact table']['show_nicknames'] = False
-        elif self.config['contact table']['show_nicknames'] == "yes":
-            self.config['contact table']['show_nicknames'] = True
-        elif self.config['contact table']['show_nicknames'] == "no":
-            self.config['contact table']['show_nicknames'] = False
-        else:
-            print("Error in config file\n"
-                  "Invalid value for show_nicknames parameter\n"
-                  "Possible values: yes, no")
-            sys.exit(2)
-
+        self._convert_boolean_config_value(self.config["contact table"],
+                                           "show_nicknames", False)
         # show uids
-        if "show_uids" not in self.config['contact table']:
-            self.config['contact table']['show_uids'] = True
-        elif self.config['contact table']['show_uids'] == "yes":
-            self.config['contact table']['show_uids'] = True
-        elif self.config['contact table']['show_uids'] == "no":
-            self.config['contact table']['show_uids'] = False
-        else:
-            print("Error in config file\n"
-                  "Invalid value for show_uids parameter\n"
-                  "Possible values: yes, no")
-            sys.exit(2)
+        self._convert_boolean_config_value(self.config["contact table"],
+                                           "show_uids", True)
 
         # vcard settings
         if "vcard" not in self.config:
@@ -220,30 +175,11 @@ class Config:
             sys.exit(2)
 
         # speed up program by pre-searching in the vcard source files
-        if 'search_in_source_files' not in self.config['vcard']:
-            self.config['vcard']['search_in_source_files'] = False
-        elif self.config['vcard']['search_in_source_files'] == "yes":
-            self.config['vcard']['search_in_source_files'] = True
-        elif self.config['vcard']['search_in_source_files'] == "no":
-            self.config['vcard']['search_in_source_files'] = False
-        else:
-            print("Error in config file\n"
-                  "Invalid value for search_in_source_files parameter\n"
-                  "Possible values: yes, no")
-            sys.exit(2)
-
+        self._convert_boolean_config_value(self.config["vcard"],
+                                           "search_in_source_files", False)
         # skip unparsable vcards
-        if 'skip_unparsable' not in self.config['vcard']:
-            self.config['vcard']['skip_unparsable'] = False
-        elif self.config['vcard']['skip_unparsable'] == "yes":
-            self.config['vcard']['skip_unparsable'] = True
-        elif self.config['vcard']['skip_unparsable'] == "no":
-            self.config['vcard']['skip_unparsable'] = False
-        else:
-            print("Error in config file\n"
-                  "Invalid value for skip_unparsable parameter\n"
-                  "Possible values: yes, no")
-            sys.exit(2)
+        self._convert_boolean_config_value(self.config["vcard"],
+                                           "skip_unparsable", False)
 
         # load address books
         if "addressbooks" not in self.config:
@@ -268,6 +204,31 @@ class Config:
             else:
                 # add address book to list
                 self.address_book_list.append(address_book)
+
+    @staticmethod
+    def _convert_boolean_config_value(config, name, default=True):
+        """Convert the named field to a bool represented by its previous string
+        value.  If no such field was present use the default.
+
+        :param config: the config section where to set the option
+        :type config: configobj.ConfigObj
+        :param name: the name of the option to convert
+        :type name: str
+        :param default: the default value to use if the option was not
+            previously set
+        :type default: bool
+        :returns: None
+
+        """
+        if name not in config:
+            config[name] = default
+        elif config[name] == "yes":
+            config[name] = True
+        elif config[name] == "no":
+            config[name] = False
+        else:
+            raise ValueError("Error in config file\nInvalid value for %s "
+                             "parameter\nPossible values: yes, no" % name)
 
     def get_all_address_books(self):
         """
