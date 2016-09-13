@@ -1455,8 +1455,10 @@ class CarddavObject:
             return type_list
         return [default_type]
 
-    def parse_type_value(self, types, value, supported_types):
-        """ parse type value of phone numbers, email and post addresses
+    @staticmethod
+    def parse_type_value(types, value, supported_types):
+        """Parse type value of phone numbers, email and post addresses.
+
         :param types: list of type values
         :type types: list(str)
         :param value: the corresponding label, required for more verbose
@@ -1466,6 +1468,7 @@ class CarddavObject:
         :type supported_types: list(str)
         :returns: tuple of standard and custom types and pref integer
         :rtype: tuple(list(str), list(str), int)
+
         """
         custom_types = []
         standard_types = []
