@@ -320,7 +320,7 @@ class Config:
                         # check, if multiple contacts have the same uid
                         for contact in address_book.contact_list:
                             uid = contact.get_uid()
-                            if bool(uid):
+                            if uid:
                                 matching_contact = self.original_uid_dict.get(
                                     uid)
                                 if matching_contact is None:
@@ -382,7 +382,7 @@ class Config:
             self.uid_dict[current.get_uid()[:same+1]] = current
 
     def get_shortened_uid(self, uid):
-        if bool(uid):
+        if uid:
             for length_of_uid in range(len(uid), 0, -1):
                 if self.uid_dict.get(uid[:length_of_uid]) is not None:
                     return uid[:length_of_uid]
