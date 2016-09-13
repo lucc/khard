@@ -149,7 +149,7 @@ class CarddavObject:
     def add_rev(self, dt):
         rev_obj = self.vcard.add('rev')
         rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
-                dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+            dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def get_uid(self):
         """
@@ -574,8 +574,8 @@ class CarddavObject:
                 formatted_post_adr_dict[type].append('\n'.join(strings))
         return formatted_post_adr_dict
 
-    def add_post_address(
-            self, type, box, extended, street, code, city, region, country):
+    def add_post_address(self, type, box, extended, street, code, city, region,
+                         country):
         standard_types, custom_types, pref = self.parse_type_value(
             helpers.string_to_list(type, ","), "%s, %s" % (street, city),
             self.address_types_v4 if self.get_version() == "4.0" else
@@ -974,8 +974,7 @@ class CarddavObject:
                                         break
                                 if address_not_empty:
                                     self.add_post_address(
-                                        type,
-                                        post_adr.get("Box") or "",
+                                        type, post_adr.get("Box") or "",
                                         post_adr.get("Extended") or "",
                                         post_adr.get("Street") or "",
                                         post_adr.get("Code") or "",
@@ -1099,9 +1098,8 @@ class CarddavObject:
                             "changed.\nSupported private keys: " + ', '.join(
                                 self.supported_private_objects))
             else:
-                raise ValueError(
-                    "Error: private objects must consist of a key : value "
-                    "pair.")
+                raise ValueError("Error: private objects must consist of a "
+                                 "key : value pair.")
 
         # notes
         self.delete_vcard_object("NOTE")
