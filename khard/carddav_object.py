@@ -919,10 +919,9 @@ class CarddavObject:
         if contact_data.get("Phone"):
             if isinstance(contact_data.get("Phone"), dict):
                 for type, number_list in contact_data.get("Phone").items():
-                    if isinstance(number_list, list) \
-                            or isinstance(number_list, str):
-                        if isinstance(number_list, str):
-                            number_list = [number_list]
+                    if isinstance(number_list, str):
+                        number_list = [number_list]
+                    if isinstance(number_list, list):
                         for number in number_list:
                             if number:
                                 self.add_phone_number(type, number)
@@ -939,10 +938,9 @@ class CarddavObject:
         if contact_data.get("Email"):
             if isinstance(contact_data.get("Email"), dict):
                 for type, email_list in contact_data.get("Email").items():
-                    if isinstance(email_list, list) \
-                            or isinstance(email_list, str):
-                        if isinstance(email_list, str):
-                            email_list = [email_list]
+                    if isinstance(email_list, str):
+                        email_list = [email_list]
+                    if isinstance(email_list, list):
                         for email in email_list:
                             if email:
                                 self.add_email_address(type, email)
@@ -959,10 +957,9 @@ class CarddavObject:
         if contact_data.get("Address"):
             if isinstance(contact_data.get("Address"), dict):
                 for type, post_adr_list in contact_data.get("Address").items():
-                    if isinstance(post_adr_list, dict) \
-                            or isinstance(post_adr_list, list):
-                        if isinstance(post_adr_list, dict):
-                            post_adr_list = [post_adr_list]
+                    if isinstance(post_adr_list, dict):
+                        post_adr_list = [post_adr_list]
+                    if isinstance(post_adr_list, list):
                         for post_adr in post_adr_list:
                             if isinstance(post_adr, dict):
                                 address_not_empty = False
@@ -1081,10 +1078,9 @@ class CarddavObject:
             if isinstance(contact_data.get("Private"), dict):
                 for key, value_list in contact_data.get("Private").items():
                     if key in self.supported_private_objects:
-                        if isinstance(value_list, list) \
-                                or isinstance(value_list, str):
-                            if isinstance(value_list, str):
-                                value_list = [value_list]
+                        if isinstance(value_list, str):
+                            value_list = [value_list]
+                        if isinstance(value_list, list):
                             for value in value_list:
                                 if value:
                                     self.add_private_object(key, value)
