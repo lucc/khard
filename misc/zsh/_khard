@@ -95,7 +95,7 @@ case $state in
     )
     template_file_input_options=(
       '(-i)'{-i+,--input-file=}'[specify input template file name or use stdin]:input file:_files'
-      '--open-editor[open text editor after successful creation of new contact from stdin or template]'
+      {--edit,--open-editor}'[open text editor after successful creation of new contact from stdin or template]'
     )
     # sort options
     local -a sort_options

@@ -1470,8 +1470,8 @@ def parse_args(argv):
         "-i", "--input-file", default="-",
         help="Specify input template file name or use stdin by default")
     template_input_file_parser.add_argument(
-        "--open-editor", action="store_true", help="Open the default text "
-        "editor after successful creation of new contact")
+        "--open-editor", "--edit", action="store_true", help="Open the "
+        "default text editor after successful creation of new contact")
 
     # create sort subparser
     sort_parser = argparse.ArgumentParser(add_help=False)
