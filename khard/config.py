@@ -18,6 +18,23 @@ from .address_book import AddressBook
 from . import helpers
 
 
+def exit(message, prefix="Error in config file\n"):
+    """Exit with a message and a return code indicating an error in the config
+    file.
+
+    This function doesn't return, it calls sys.exit.
+
+    :param message: the message to print
+    :type message: str
+    :param prefix: the prefix to put in front of the message
+    :type prefix: str
+    :returns: does not return
+
+    """
+    print(prefix+message)
+    sys.exit(3)
+
+
 class Config:
 
     supported_vcard_versions = ("3.0", "4.0")
@@ -38,20 +55,17 @@ class Config:
             config_file = os.getenv("KHARD_CONFIG", os.path.join(
                 xdg_config_home, "khard", "khard.conf"))
         if not os.path.exists(config_file):
-            print("Config file %s not available" % config_file)
-            sys.exit(2)
+            exit("Config file %s not available" % config_file, prefix="")
 
         # parse config file contents
         try:
             self.config = configobj.ConfigObj(config_file, interpolation=False)
         except configobj.ParseError as err:
-            print("Error in config file\n%s" % err)
-            sys.exit(2)
+            exit(str(err))
 
         # general settings
         if "general" not in self.config:
-            print('Error in config file\nMissing main section "[general]".')
-            sys.exit(2)
+            exit('Missing main section "[general]".')
 
         # debug
         self._convert_boolean_config_value(self.config["general"],
@@ -62,43 +76,35 @@ class Config:
         self.config['general']['editor'] = \
             self.config['general'].get("editor") or os.environ.get("EDITOR")
         if self.config['general']['editor'] is None:
-            print("Error in config file\nSet path to your preferred text "
-                  "editor in khard's config file or the $EDITOR shell variable"
-                  "\nExample for khard.conf: editor = vim")
-            sys.exit(2)
+            exit("Set path to your preferred text editor in khard's config "
+                 "file or the $EDITOR shell variable\n"
+                 "Example for khard.conf: editor = vim")
         self.config['general']['editor'] = find_executable(
             os.path.expanduser(self.config['general']['editor']))
         if self.config['general']['editor'] is None:
-            print("Error in config file\n"
-                  "Invalid editor path or executable not found.")
-            sys.exit(2)
+            exit("Invalid editor path or executable not found.")
 
         # merge editor
         self.config['general']['merge_editor'] = \
             self.config['general'].get("merge_editor") \
             or os.environ.get("MERGE_EDITOR")
         if self.config['general']['merge_editor'] is None:
-            print("Error in config file\nSet path to your preferred text merge"
-                  " editor in khard's config file or the $MERGE_EDITOR shell "
-                  "variable\nExample for khard.conf: merge_editor = vimdiff")
-            sys.exit(2)
+            exit("Set path to your preferred text merge editor in khard's "
+                 "config file or the $MERGE_EDITOR shell variable\n"
+                 "Example for khard.conf: merge_editor = vimdiff")
         self.config['general']['merge_editor'] = find_executable(
             os.path.expanduser(self.config['general']['merge_editor']))
         if self.config['general']['merge_editor'] is None:
-            print("Error in config file\n"
-                  "Invalid merge editor path or executable not found.")
-            sys.exit(2)
+            exit("Invalid merge editor path or executable not found.")
 
         # default action
         if "default_action" not in self.config['general']:
-            print("Error in config file\nMissing default action parameter.")
-            sys.exit(2)
+            exit("Missing default action parameter.")
         elif self.config['general']['default_action'] not in \
                 Actions.get_list_of_all_actions():
-            print("Error in config file\nInvalid value for default_action "
-                  "parameter\nPossible values: %s" % ', '.join(
-                      sorted(Actions.get_list_of_all_actions())))
-            sys.exit(2)
+            exit("Invalid value for default_action parameter\n"
+                 "Possible values: %s" % ', '.join(
+                     sorted(Actions.get_list_of_all_actions())))
 
         # contact table settings
         if "contact table" not in self.config:
@@ -109,9 +115,8 @@ class Config:
             self.config['contact table']['sort'] = "first_name"
         elif self.config['contact table']['sort'] not in ["first_name",
                                                           "last_name"]:
-            print("Error in config file\nInvalid value for sort parameter\n"
-                  "Possible values: first_name, last_name")
-            sys.exit(2)
+            exit("Invalid value for sort parameter\n"
+                 "Possible values: first_name, last_name")
 
         # display names in contact table by first or last name
         if "display" not in self.config['contact table']:
@@ -121,9 +126,8 @@ class Config:
                     self.config['contact table']['sort']
         elif self.config['contact table']['display'] not in ["first_name",
                                                              "last_name"]:
-            print("Error in config file\nInvalid value for display parameter\n"
-                  "Possible values: first_name, last_name")
-            sys.exit(2)
+            exit("Invalid value for display parameter\n"
+                 "Possible values: first_name, last_name")
 
         # reverse contact table
         self._convert_boolean_config_value(self.config["contact table"],
@@ -153,26 +157,20 @@ class Config:
             # check if object only contains letters, digits or -
             for object in self.config['vcard']['private_objects']:
                 if object != re.sub("[^a-zA-Z0-9-]", "", object):
-                    print("Error in config file\nprivate object %s may only "
-                          "contain letters, digits and the \"-\" character."
-                          % object)
-                    sys.exit(2)
+                    exit("private object %s may only contain letters, digits "
+                         "and the \"-\" character." % object)
                 if object == re.sub("[^-]", "", object) \
                         or object.startswith("-") or object.endswith("-"):
-                    print("Error in config file\n"
-                          "A \"-\" in a private object label must be "
-                          "at least surrounded by one letter or digit.")
-                    sys.exit(2)
+                    exit("A \"-\" in a private object label must be at least "
+                         "surrounded by one letter or digit.")
 
         # preferred vcard version
         if "preferred_version" not in self.config['vcard']:
             self.config['vcard']['preferred_version'] = "3.0"
         elif self.config['vcard']['preferred_version'] not in \
                 self.supported_vcard_versions:
-            print("Error in config file\nInvalid value for preferred_version "
-                  "parameter\nPossible values: %s"
-                  % self.supported_vcard_versions)
-            sys.exit(2)
+            exit("Invalid value for preferred_version parameter\n"
+                 "Possible values: %s" % self.supported_vcard_versions)
 
         # speed up program by pre-searching in the vcard source files
         self._convert_boolean_config_value(self.config["vcard"],
@@ -183,24 +181,18 @@ class Config:
 
         # load address books
         if "addressbooks" not in self.config:
-            print('Error in config file\n'
-                  'Missing main section "[addressbooks]".')
-            sys.exit(2)
+            exit('Missing main section "[addressbooks]".')
         if self.config['addressbooks'].keys():
-            print("Error in config file\nNo address book entries available.")
-            sys.exit(2)
+            exit("No address book entries available.")
         for name in self.config['addressbooks'].keys():
             # create address book object
             try:
                 address_book = AddressBook(
                     name, self.config['addressbooks'][name]['path'])
             except KeyError:
-                print("Error in config file\n"
-                      "Missing path to the \"%s\" address book." % name)
-                sys.exit(2)
+                exit("Missing path to the \"%s\" address book." % name)
             except IOError as err:
-                print("Error in config file\n%s" % err)
-                sys.exit(2)
+                exit(str(err))
             else:
                 # add address book to list
                 self.address_book_list.append(address_book)
