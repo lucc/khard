@@ -1608,7 +1608,7 @@ def main():
             # try to read from stdin
             try:
                 input_from_stdin_or_file = sys.stdin.read()
-            except IOError as e:
+            except IOError:
                 print("Error: Can't read from stdin")
                 sys.exit(1)
             # try to reopen console
@@ -1616,7 +1616,7 @@ def main():
             # selecting a contact from the contact table)
             try:
                 sys.stdin = open('/dev/tty')
-            except IOError as e:
+            except IOError:
                 pass
 
     if args.action == "new":
