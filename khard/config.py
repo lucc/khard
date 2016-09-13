@@ -20,6 +20,8 @@ from . import helpers
 
 class Config:
 
+    supported_vcard_versions = ("3.0", "4.0")
+
     def __init__(self, config_file=""):
         self.config = None
         self.address_book_list = []
@@ -211,10 +213,10 @@ class Config:
         if "preferred_version" not in self.config['vcard']:
             self.config['vcard']['preferred_version'] = "3.0"
         elif self.config['vcard']['preferred_version'] not in \
-                self.get_supported_vcard_versions():
+                self.supported_vcard_versions:
             print("Error in config file\nInvalid value for preferred_version "
                   "parameter\nPossible values: %s"
-                  % self.get_supported_vcard_versions())
+                  % self.supported_vcard_versions)
             sys.exit(2)
 
         # speed up program by pre-searching in the vcard source files
@@ -397,9 +399,6 @@ class Config:
 
     def get_supported_private_objects(self):
         return self.config['vcard']['private_objects']
-
-    def get_supported_vcard_versions(self):
-        return ["3.0", "4.0"]
 
     def get_preferred_vcard_version(self):
         return self.config['vcard']['preferred_version']
