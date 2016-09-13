@@ -797,7 +797,8 @@ class CarddavObject:
     # object helper methods
     #######################
 
-    def filter_invalid_tags(self, contents):
+    @staticmethod
+    def filter_invalid_tags(contents):
         contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM',
                           contents)
         contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'),
