@@ -7,7 +7,7 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
+from tempfile import NamedTemporaryFile
 
 from . import helpers
 from .actions import Actions
@@ -19,17 +19,28 @@ from .version import khard_version
 config = None
 
 
+def write_temp_file(text=""):
+    """Create a new temporary file and write some initial text to it.
+
+    :param text: the text to write to the temp file
+    :type text: str
+    :returns: the file name of the newly created temp file
+    :rtype: str
+
+    """
+    with NamedTemporaryFile(mode='w+t', delete=False) as tempfile:
+        tempfile.write(text)
+        return tempfile.name
+
+
 def create_new_contact(address_book):
+    old_contact_template = (
+        "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
+        "# if you want to cancel, exit without saving\n\n%s"
+        % (address_book.name, config.get_preferred_vcard_version(),
+           helpers.get_new_contact_template(
+               config.get_supported_private_objects())))
     # create temp file
-    with tempfile.NamedTemporaryFile(mode='w+t', delete=False) as tf:
-        temp_file_name = tf.name
-        old_contact_template = (
-            "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
-            "# if you want to cancel, exit without saving\n\n%s"
-            % (address_book.name, config.get_preferred_vcard_version(),
-               helpers.get_new_contact_template(
-                   config.get_supported_private_objects())))
-        tf.write(old_contact_template)
 
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
@@ -78,14 +89,11 @@ def create_new_contact(address_book):
 
 def modify_existing_contact(old_contact):
     # create temp file and open it with the specified text editor
-    with tempfile.NamedTemporaryFile(mode='w+t', delete=False) as tf:
-        temp_file_name = tf.name
-        tf.write("# Edit contact: %s\n# Address book: %s\n"
-                 "# Vcard version: %s\n"
-                 "# if you want to cancel, exit without saving\n\n%s"
-                 % (old_contact.get_full_name(),
-                    old_contact.address_book.name,
-                    old_contact.get_version(), old_contact.get_template()))
+    temp_file_name = write_temp_file(
+        "# Edit contact: %s\n# Address book: %s\n# Vcard version: %s\n"
+        "# if you want to cancel, exit without saving\n\n%s"
+        % (old_contact.get_full_name(), old_contact.address_book.name,
+           old_contact.get_version(), old_contact.get_template()))
 
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
@@ -152,26 +160,17 @@ def merge_existing_contacts(source_contact, target_contact,
                 break
     # create temp files for each vcard
     # source vcard
-    with tempfile.NamedTemporaryFile(mode='w+t', delete=False) as source_tf:
-        source_temp_file_name = source_tf.name
-        source_tf.write("# merge from %s\n# Address book: %s\n"
-                        "# Vcard version: %s\n"
-                        "# if you want to cancel, exit without saving\n\n%s"
-                        % (source_contact.get_full_name(),
-                           source_contact.address_book.name,
-                           source_contact.get_version(),
-                           source_contact.get_template()))
-
+    source_temp_file_name = write_temp_file(
+        "# merge from %s\n# Address book: %s\n# Vcard version: %s\n"
+        "# if you want to cancel, exit without saving\n\n%s"
+        % (source_contact.get_full_name(), source_contact.address_book.name,
+           source_contact.get_version(), source_contact.get_template()))
     # target vcard
-    with tempfile.NamedTemporaryFile(mode='w+t', delete=False) as target_tf:
-        target_temp_file_name = target_tf.name
-        target_tf.write("# merge into %s\n# Address book: %s\n"
-                        "# Vcard version: %s\n"
-                        "# if you want to cancel, exit without saving\n\n%s"
-                        % (target_contact.get_full_name(),
-                           target_contact.address_book.name,
-                           target_contact.get_version(),
-                           target_contact.get_template()))
+    target_temp_file_name = write_temp_file(
+        "# merge into %s\n# Address book: %s\n# Vcard version: %s\n"
+        "# if you want to cancel, exit without saving\n\n%s"
+        % (target_contact.get_full_name(), target_contact.address_book.name,
+           target_contact.get_version(), target_contact.get_template()))
 
     target_temp_file_creation = helpers.file_modification_date(
         target_temp_file_name)
