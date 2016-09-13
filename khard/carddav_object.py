@@ -916,7 +916,7 @@ class CarddavObject:
 
         # phone
         self.delete_vcard_object("TEL")
-        if bool(contact_data.get("Phone")):
+        if contact_data.get("Phone"):
             if isinstance(contact_data.get("Phone"), dict):
                 for type, number_list in contact_data.get("Phone").items():
                     if isinstance(number_list, list) \
@@ -924,7 +924,7 @@ class CarddavObject:
                         if isinstance(number_list, str):
                             number_list = [number_list]
                         for number in number_list:
-                            if bool(number):
+                            if number:
                                 self.add_phone_number(type, number)
                     else:
                         raise ValueError(
@@ -936,7 +936,7 @@ class CarddavObject:
 
         # email
         self.delete_vcard_object("EMAIL")
-        if bool(contact_data.get("Email")):
+        if contact_data.get("Email"):
             if isinstance(contact_data.get("Email"), dict):
                 for type, email_list in contact_data.get("Email").items():
                     if isinstance(email_list, list) \
@@ -944,7 +944,7 @@ class CarddavObject:
                         if isinstance(email_list, str):
                             email_list = [email_list]
                         for email in email_list:
-                            if bool(email):
+                            if email:
                                 self.add_email_address(type, email)
                     else:
                         raise ValueError(
@@ -956,7 +956,7 @@ class CarddavObject:
 
         # post addresses
         self.delete_vcard_object("ADR")
-        if bool(contact_data.get("Address")):
+        if contact_data.get("Address"):
             if isinstance(contact_data.get("Address"), dict):
                 for type, post_adr_list in contact_data.get("Address").items():
                     if isinstance(post_adr_list, dict) \
@@ -996,7 +996,7 @@ class CarddavObject:
 
         # categories
         self.delete_vcard_object("CATEGORIES")
-        if bool(contact_data.get("Categories")):
+        if contact_data.get("Categories"):
             if isinstance(contact_data.get("Categories"), str):
                 self.add_category([contact_data.get("Categories")])
             elif isinstance(contact_data.get("Categories"), list):
@@ -1011,7 +1011,7 @@ class CarddavObject:
                     self.add_category(contact_data.get("Categories"))
                 else:
                     for sub_category in contact_data.get("Categories"):
-                        if bool(sub_category):
+                        if sub_category:
                             if isinstance(sub_category, str):
                                 self.add_category([sub_category])
                             else:
@@ -1022,12 +1022,12 @@ class CarddavObject:
 
         # urls
         self.delete_vcard_object("URL")
-        if bool(contact_data.get("Webpage")):
+        if contact_data.get("Webpage"):
             if isinstance(contact_data.get("Webpage"), str):
                 self.add_webpage(contact_data.get("Webpage"))
             elif isinstance(contact_data.get("Webpage"), list):
                 for webpage in contact_data.get("Webpage"):
-                    if bool(webpage):
+                    if webpage:
                         self.add_webpage(webpage)
             else:
                 raise ValueError(
@@ -1035,7 +1035,7 @@ class CarddavObject:
 
         # birthday
         self.delete_vcard_object("BDAY")
-        if bool(contact_data.get("Birthday")):
+        if contact_data.get("Birthday"):
             if isinstance(contact_data.get("Birthday"), str):
                 if re.match(r"^text[\s]*=.*$", contact_data.get("Birthday")):
                     l = [x.strip() \
@@ -1077,7 +1077,7 @@ class CarddavObject:
         # private objects
         for supported in self.supported_private_objects:
             self.delete_vcard_object("X-%s" % supported.upper())
-        if bool(contact_data.get("Private")):
+        if contact_data.get("Private"):
             if isinstance(contact_data.get("Private"), dict):
                 for key, value_list in contact_data.get("Private").items():
                     if key in self.supported_private_objects:
@@ -1086,7 +1086,7 @@ class CarddavObject:
                             if isinstance(value_list, str):
                                 value_list = [value_list]
                             for value in value_list:
-                                if bool(value):
+                                if value:
                                     self.add_private_object(key, value)
                         else:
                             raise ValueError(
@@ -1103,12 +1103,12 @@ class CarddavObject:
 
         # notes
         self.delete_vcard_object("NOTE")
-        if bool(contact_data.get("Note")):
+        if contact_data.get("Note"):
             if isinstance(contact_data.get("Note"), str):
                 self.add_note(contact_data.get("Note"))
             elif isinstance(contact_data.get("Note"), list):
                 for note in contact_data.get("Note"):
-                    if bool(note):
+                    if note:
                         self.add_note(note)
             else:
                 raise ValueError(
