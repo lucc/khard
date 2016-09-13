@@ -33,6 +33,22 @@ class CarddavObject:
 
     def __init__(self, address_book, filename, supported_private_objects,
                  vcard_version):
+        """Initialize the vcard object.
+
+        :param address_book: a reference to the address book where this vcard
+            is stored
+        :type address_book: khard.address_book.AddressBook
+        :param filename: the path to the file where this vcard is stored or
+            None
+        :type filename: str or NoneType
+        :param supported_private_objects: the list of private property names
+            that will be loaded from the actual vcard and represented in this
+            pobject
+        :type supported_private_objects: list(str)
+        :param vcard_version: TODO or None
+        :type vcard_version: TODO
+
+        """
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
