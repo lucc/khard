@@ -142,8 +142,7 @@ def modify_existing_contact(old_contact):
 def merge_existing_contacts(source_contact, target_contact,
                             delete_source_contact):
     # show warning, if target vcard version is not 3.0 or 4.0
-    if target_contact.get_version() not in \
-            config.get_supported_vcard_versions():
+    if target_contact.get_version() not in config.supported_vcard_versions:
         print("Warning:\nThe target contact in which to merge is based on "
               "vcard version %s but khard only supports the modification of "
               "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
@@ -889,8 +888,7 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
 
     """
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
-    if selected_vcard.get_version() not in \
-            config.get_supported_vcard_versions():
+    if selected_vcard.get_version() not in config.supported_vcard_versions:
         print("Warning:\nThe selected contact is based on vcard version %s "
               "but khard only supports the creation and modification of vcards"
               " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
