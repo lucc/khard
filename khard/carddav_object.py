@@ -772,8 +772,8 @@ class CarddavObject:
         if date:
             if isinstance(date, str):
                 return date
-            elif (date.year, date.month, date.day, date.hour, date.minute,
-                  date.second) == (1900, 0, 0, 0, 0, 0):
+            elif date.year == 1900 and date.month != 0 and date.day != 0 \
+                    and date.hour == 0 and date.minute == 0 and date.second == 0:
                 return "--%.2d-%.2d" % (date.month, date.day)
             elif (date.tzname() and date.tzname()[3:]) or \
                     (date.hour != 0 or date.minute != 0 or date.second != 0):
@@ -789,10 +789,10 @@ class CarddavObject:
                 bday_obj.params['VALUE'] = ["text"]
                 bday_obj.value = date.strip()
         elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                and date.hour == 0 and date.minute == 0 and date.second == 0:
-            if self.get_version() == "4.0":
-                bday_obj = self.vcard.add('bday')
-                bday_obj.value = "--%.2d%.2d" % (date.month, date.day)
+                and date.hour == 0 and date.minute == 0 and date.second == 0 \
+                and self.get_version() == "4.0":
+            bday_obj = self.vcard.add('bday')
+            bday_obj.value = "--%.2d%.2d" % (date.month, date.day)
         elif date.tzname() and date.tzname()[3:]:
             bday_obj = self.vcard.add('bday')
             if self.get_version() == "4.0":
@@ -1092,25 +1092,30 @@ class CarddavObject:
         self.delete_vcard_object("BDAY")
         if bool(contact_data.get("Birthday")):
             if isinstance(contact_data.get("Birthday"), str):
-                if contact_data.get("Birthday").startswith("text="):
+                if re.match(r"^text[\s]*=.*$", contact_data.get("Birthday")):
+                    l = [x.strip() \
+                         for x in \
+                         re.split("text[\s]*=", contact_data.get("Birthday")) \
+                         if x.strip()]
                     if self.get_version() == "4.0":
-                        date = contact_data.get("Birthday") \
-                                .split("text=")[1].strip()
+                        date = ', '.join(l)
                     else:
                         raise ValueError(
                             "Error: Free text format for birthday only usable "
-                            "with vcard version 4.0")
+                            "with vcard version 4.0.")
                 elif re.match(r"^--\d{4}$", contact_data.get("Birthday")) \
                         and self.get_version() != "4.0":
                     raise ValueError(
-                        "Error: Birthday format --mmdd only usable with vcard "
-                        "version 4.0")
+                        "Error: Birthday format --mmdd only usable with "
+                        "vcard version 4.0. You may use 1900 as placeholder, "
+                        "if the year of birth is unknown.")
                 elif re.match(
                         r"^--\d{2}-\d{2}$", contact_data.get("Birthday")) \
                         and self.get_version() != "4.0":
                     raise ValueError(
                         "Error: Birthday format --mm-dd only usable with "
-                        "vcard version 4.0")
+                        "vcard version 4.0. You may use 1900 as placeholder, "
+                        "if the year of birth is unknown.")
                 else:
                     try:
                         date = helpers.string_to_date(
@@ -1119,7 +1124,8 @@ class CarddavObject:
                         raise ValueError(
                             "Error: Wrong birthday format or invalid date\n"
                             "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
-                self.add_birthday(date)
+                if date:
+                    self.add_birthday(date)
             else:
                 raise ValueError("Error: birthday must be a string object.")
 
@@ -1288,7 +1294,8 @@ class CarddavObject:
                         strings.append("Birthday : text= %s" % birthday)
                     elif birthday.year == 1900 and birthday.month != 0 and \
                             birthday.day != 0 and birthday.hour == 0 and \
-                            birthday.minute == 0 and birthday.second == 0:
+                            birthday.minute == 0 and birthday.second == 0 and \
+                            self.get_version() == "4.0":
                         strings.append("Birthday : --%.2d-%.2d"
                                        % (birthday.month, birthday.day))
                     elif (birthday.tzname() and birthday.tzname()[3:]) or \
