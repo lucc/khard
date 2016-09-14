@@ -14,6 +14,7 @@ class Actions:
         "details":      ["show"],
         "email":        [],
         "export":       [],
+        "filename":     ["file"],
         "list":         ["ls"],
         "merge":        [],
         "modify":       ["edit", "ed"],

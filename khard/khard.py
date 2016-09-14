@@ -1412,6 +1412,13 @@ def parse_args(argv):
         aliases=Actions.get_aliases("addressbooks"),
         description="list addressbooks",
         help="list addressbooks")
+    subparsers.add_parser(
+        "filename",
+        aliases=Actions.get_aliases("filename"),
+        parents=[default_addressbook_parser, default_search_parser,
+                 sort_parser],
+        description="list filenames of all matching contacts",
+        help="list filenames of all matching contacts")
 
     # Replace the print_help method of the first parser with the print_help
     # method of the main parser.  This makes it possible to have the first
@@ -1692,3 +1699,5 @@ def main(argv=sys.argv[1:]):
             args.action, vcard_list, args.target_addressbook)
     elif args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.get_all_address_books()))
+    elif args.action == "filename":
+        print('\n'.join(contact.filename for contact in vcard_list))
