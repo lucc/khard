@@ -1169,7 +1169,14 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                     break
 
 
-def main():
+def parse_args():
+    """Parse the command line arguments and return the namespace that was
+    creates by argparse.ArgumentParser.parse_args().
+
+    :returns: the namespace parsed from the command line
+    :rtype: argparse.Namespace
+
+    """
     # Create the base argument parser.  It will be reused for the first and
     # second round of argument parsing.
     base = argparse.ArgumentParser(
@@ -1464,8 +1471,12 @@ def main():
     # Parse the command line a second time, this time all argument will be
     # parsed.
     args = parser.parse_args()
-
     logging.debug("full args={}".format(args))
+    return args
+
+
+def main():
+    args = parse_args()
 
     # Set the default command from the config file if none was given on the
     # command line.
