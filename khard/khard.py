@@ -1169,56 +1169,30 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                     break
 
 
-# Patch argparse.ArgumentParser, taken from http://stackoverflow.com/a/26379693
-def set_default_subparser(self, name):
-    """Default subparser selection. Call after setup, just before parse_args().
-
-    :param name: the name of the subparser to call by default
-    :type name: str
-    :returns: None
-    :rtype: None
-
-    """
-    for arg in sys.argv[1:]:
-        if arg in ['-h', '--help']:  # global help if no subparser
-            break
-    else:
-        for x in self._subparsers._actions:
-            if not isinstance(x, argparse._SubParsersAction):
-                continue
-            for sp_name in x._name_parser_map.keys():
-                if sp_name in sys.argv[1:]:
-                    return  # found a subcommand
-        else:
-            # Find position to insert default command.
-            options = self._option_string_actions.keys()
-            for index, arg in enumerate(sys.argv[1:], 1):
-                if arg in options:
-                    continue
-                else:
-                    # Insert command before first non option string (possibly
-                    # an argument for the subcommand).
-                    sys.argv.insert(index, name)
-                    break
-            else:
-                # Otherwise append default command.
-                sys.argv.append(name)
-
-
-argparse.ArgumentParser.set_default_subparser = set_default_subparser
-
-
 def main():
-    # create the args parser
-    parser = argparse.ArgumentParser(
+    # Create the base argument parser.  It will be reused for the first and
+    # second round of argument parsing.
+    base = argparse.ArgumentParser(
         description="Khard is a carddav address book for the console",
-        formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--debug", action="store_true",
+        formatter_class=argparse.RawTextHelpFormatter, add_help=False)
+    base.add_argument("-c", "--config", default="", help="config file to use")
+    base.add_argument("--debug", action="store_true",
                         help="enable debug output")
-    parser.add_argument("--skip-unparsable", action="store_true",
+    base.add_argument("--skip-unparsable", action="store_true",
                         help="skip unparsable vcard files")
-    parser.add_argument("-v", "--version", action="version",
+    base.add_argument("-v", "--version", action="version",
                         version="Khard version %s" % khard_version)
+
+    # Create the first argument parser.  Its main job is to set the correct
+    # config file.  The config file is needed to get the default command if no
+    # subcommand is given on the command line.  This parser will ignore most
+    # arguments, as they will be parsed by the second parser.
+    first_parser = argparse.ArgumentParser(parents=[base])
+
+    # Create the main argument parser.  It will handle the complete command
+    # line only ignoring the config and debug options as these have already
+    # been set.
+    parser = argparse.ArgumentParser(parents=[base])
 
     # create address book subparsers with different help texts
     default_addressbook_parser = argparse.ArgumentParser(add_help=False)
@@ -1454,20 +1428,49 @@ def main():
         description="list addressbooks",
         help="list addressbooks")
 
+    # Replace the print_help method of the first parser with the print_help
+    # method of the main parser.  This makes it possible to have the first
+    # parser handle the help option so that command line help can be printed
+    # without parsing the config file first (which is a problem if there are
+    # errors in the config file).  The config file will still be parsed before
+    # the full command line is parsed so errors in the config file might be
+    # reported before command line syntax errors.
+    first_parser.print_help = parser.print_help
+
+    # Parese the command line with the first argument parser.  It will handle
+    # the config option (its main job) and also the help, version and debug
+    # options as these do not depend on anything else.
+    args, remainder = first_parser.parse_known_args()
+
+    # Set the loglevel to debug if given on the command line.  This is done
+    # before parsing the config file to make it possible to debug the parsing
+    # of the config file.
+    if "debug" in args and args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
     # Create the global config instance.
     global config
-    config = Config()
+    config = Config(args.config)
 
-    # Set the default command from the config file and parse the command line.
-    parser.set_default_subparser(config.get_default_action())
-    args = parser.parse_args()
-
-    # debug
+    # Check the log level again and merge the value from the command line with
+    # the config file.
     if "debug" in args and args.debug:
         config.set_debug(True)
     if config.debug():
         logging.basicConfig(level=logging.DEBUG)
-    logging.debug("args={}".format(args))
+    logging.debug("first args={}".format(args))
+    logging.debug("remainder={}".format(remainder))
+
+    # Parse the command line a second time, this time all argument will be
+    # parsed.
+    args = parser.parse_args()
+
+    logging.debug("full args={}".format(args))
+
+    # Set the default command from the config file if none was given on the
+    # command line.
+    if args.action is None:
+        args.action = config.get_default_action()
 
     # if args.action isn't one of the defined actions, it must be an alias
     if args.action not in Actions.get_list_of_all_actions():
