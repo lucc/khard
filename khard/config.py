@@ -20,7 +20,7 @@ from . import helpers
 
 class Config:
 
-    def __init__(self):
+    def __init__(self, config_file=""):
         self.config = None
         self.address_book_list = []
         self.original_uid_dict = {}
@@ -30,10 +30,11 @@ class Config:
         locale.setlocale(locale.LC_ALL, '')
 
         # load config file
-        xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or \
-            os.path.expanduser("~/.config")
-        config_file = os.environ.get("KHARD_CONFIG") or os.path.join(
-            xdg_config_home, "khard", "khard.conf")
+        if config_file == "":
+            xdg_config_home = os.getenv("XDG_CONFIG_HOME",
+                                        os.path.expanduser("~/.config"))
+            config_file = os.getenv("KHARD_CONFIG", os.path.join(
+                xdg_config_home, "khard", "khard.conf"))
         if not os.path.exists(config_file):
             print("Config file %s not available" % config_file)
             sys.exit(2)
