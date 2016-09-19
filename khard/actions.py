@@ -58,3 +58,17 @@ class Actions:
         :rtype: iterable(str)
         """
         return cls.action_map.keys()
+
+    @classmethod
+    def get_all_actions_and_aliases(cls):
+        """Find the names of all defined actions and their aliases.
+
+        :returns: the names of all actions and aliases
+        :rtype: list(str)
+
+        """
+        all = []
+        for key, value in cls.action_map.items():
+            all.append(key)
+            all.extend(value)
+        return all
