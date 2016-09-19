@@ -88,5 +88,17 @@ class TestConvertBooleanConfigValue(unittest.TestCase):
                                                         'realfalse')
 
 
+class ConfigPreferredVcardVersion(unittest.TestCase):
+
+    def test_default_value_is_3(self):
+        c = config.Config("test/templates/minimal.conf")
+        self.assertEqual(c.get_preferred_vcard_version(), "3.0")
+
+    def test_set_preferred_version(self):
+        c = config.Config("test/templates/minimal.conf")
+        c.set_preferred_vcard_version("11")
+        self.assertEqual(c.get_preferred_vcard_version(), "11")
+
+
 if __name__ == "__main__":
     unittest.main()
