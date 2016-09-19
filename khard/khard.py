@@ -1468,20 +1468,22 @@ def parse_args():
     logging.debug("first args={}".format(args))
     logging.debug("remainder={}".format(remainder))
 
-    # Parse the command line a second time, this time all argument will be
-    # parsed.
-    args = parser.parse_args()
+    # Set the default command from the config file if none was given on the
+    # command line.
+    if len(remainder) == 0 or \
+            remainder[0] not in Actions.get_all_actions_and_aliases():
+        remainder.insert(0, config.get_default_action())
+        logging.debug("updated remainder={}".format(remainder))
+
+    # Parse the remainder of the command line.  All options from the previous
+    # run have already been processed and are not needed any more.
+    args = parser.parse_args(remainder)
     logging.debug("full args={}".format(args))
     return args
 
 
 def main():
     args = parse_args()
-
-    # Set the default command from the config file if none was given on the
-    # command line.
-    if args.action is None:
-        args.action = config.get_default_action()
 
     # if args.action isn't one of the defined actions, it must be an alias
     if args.action not in Actions.get_list_of_all_actions():
