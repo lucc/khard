@@ -138,3 +138,8 @@ v0.11.2: 2016.08.31
 - Show additional/middle names in name column of contact table (#89)
 - Added khard-runner.py helper script to simplify source code launching
 
+v0.11.3: 2016.09.20
+- Pinned version of vcard library vobject to version 0.9.2 due to bug https://github.com/eventable/vobject/issues/39
+- Added some new action aliases
+- Fix for birthday date processing (#95)
+

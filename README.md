@@ -7,8 +7,8 @@ alot and the SIP client twinkle. You can find more information about khard and t
 synchronization process
 [here](http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/).
 
-Khard is developed and tested on Debian operating system, version 7 and 8 but should run on
-all Unix-like systems.
+Khard is developed and tested on Debian operating system, versions 7, 8 and testing but should run
+on all Unix-like systems.
 
 If you encounter bugs, please contact me via email: email (at) eric-scheibler (dot) de.
 
@@ -136,6 +136,23 @@ cd CalDAVClientLibrary
 Usage
 -----
 
+The following subsections give an overview of khard's main features.
+
+You may get general help and all available actions with
+
+```
+khard --help
+```
+
+If you need help on a specific action, use:
+
+```
+khard action --help
+```
+
+Beware, that the order of the command line parameters matters.
+
+
 ### Show contacts ###
 
 After you have created a new address book or calendar and you have synced it to your local machine,
@@ -184,7 +201,7 @@ However if you explicitly want to narrow your search to the name field, you may 
 Add new contact with the following command:
 
 ```
-khard new -a "address book name"
+khard new [-a "address book name"]
 ```
 
 The template for the new contact opens in the text editor, which you can set in the khard.conf file.
@@ -204,13 +221,13 @@ Categories :
     - cat1
     - cat2
     - cat3
-""" | khard new -a "address book name"
+""" | khard new [-a "address book name"]
 ```
 
 or create from input template file:
 
 ```
-khard new -a "address book name" -i contact.yaml
+khard new -i contact.yaml [-a "address book name"]
 ```
 
 You may get an empty contact template with the following command:
@@ -218,6 +235,18 @@ You may get an empty contact template with the following command:
 ```
 khard export --empty-contact-template -o empty.yaml
 ```
+
+Per default khard creates vcards of version 3.0. If your other contact applications support vcards
+of the more recent version 4.0, you may change this with the option --vcard-version. Example:
+
+```
+khard new --vcard-version=4.0 [-a "address book name"]
+```
+
+For a more permanent solution you may set the preferred_version parameter in the vcard section of
+the khard config file (see misc/khard/khard.conf.example for more details).  But beware, that khard
+cannot convert already existing contacts from version 3.0 to 4.0. Therefore this setting is not
+applicable to the modify action.
 
 
 ### Edit contacts ###
