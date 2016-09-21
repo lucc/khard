@@ -31,17 +31,18 @@ class HelpOption(unittest.TestCase):
     def test_global_help(self):
         self.assertRaises(SystemExit, khard.main, ['-h'])
         text = self.output.getvalue().splitlines()
-        self.assertRegex(text[0], r'^usage: setup.py \[-h\]')
+        self.assertRegex(text[0], r'^usage: {} \[-h\]'.format(sys.argv[0]))
 
     def test_subcommand_help(self):
         self.assertRaises(SystemExit, khard.main, ['list', '-h'])
         text = self.output.getvalue().splitlines()
-        self.assertTrue(text[0].startswith('usage: setup.py list [-h]'))
+        self.assertRegex(text[0], r'^usage: {} list \[-h\]'.format(
+            sys.argv[0]))
 
     def test_global_help_with_subcommand(self):
         self.assertRaises(SystemExit, khard.main, ['-h', 'list'])
         text = self.output.getvalue().splitlines()
-        self.assertRegex(text[0], r'^usage: setup.py \[-h\]')
+        self.assertRegex(text[0], r'^usage: {} \[-h\]'.format(sys.argv[0]))
 
 
 if __name__ == "__main__":
