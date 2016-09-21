@@ -1125,7 +1125,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                     break
 
 
-def parse_args():
+def parse_args(argv):
     """Parse the command line arguments and return the namespace that was
     creates by argparse.ArgumentParser.parse_args().
 
@@ -1404,7 +1404,7 @@ def parse_args():
     # Parese the command line with the first argument parser.  It will handle
     # the config option (its main job) and also the help, version and debug
     # options as these do not depend on anything else.
-    args = first_parser.parse_args()
+    args = first_parser.parse_args(argv)
     remainder = args.remainder
 
     # Set the loglevel to debug if given on the command line.  This is done
@@ -1438,8 +1438,8 @@ def parse_args():
     return args
 
 
-def main():
-    args = parse_args()
+def main(argv=sys.argv[1:]):
+    args = parse_args(argv)
 
     # if args.action isn't one of the defined actions, it must be an alias
     if args.action not in Actions.get_list_of_all_actions():
