@@ -812,23 +812,17 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
         for type, email_list in sorted(vcard.get_email_addresses().items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
+                if config.display_by_name() == "first_name":
+                    name = vcard.get_first_name_last_name()
+                else:
+                    name = vcard.get_last_name_first_name()
                 # create output line
                 if parsable:
                     # parsable option: start with email address
-                    if config.display_by_name() == "first_name":
-                        email_address_line = "%s\t%s\t%s" % (
-                            email, vcard.get_first_name_last_name(), type)
-                    else:
-                        email_address_line = "%s\t%s\t%s" % (
-                            email, vcard.get_last_name_first_name(), type)
+                    email_address_line = "\t".join([email, name, type])
                 else:
                     # else: start with name
-                    if config.display_by_name() == "first_name":
-                        email_address_line = "%s\t%s\t%s" % (
-                            vcard.get_first_name_last_name(), type, email)
-                    else:
-                        email_address_line = "%s\t%s\t%s" % (
-                            vcard.get_last_name_first_name(), type, email)
+                    email_address_line = "\t".join([name, type, email])
                 if regexp.search(email_address_line) is not None:
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
