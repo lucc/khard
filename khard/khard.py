@@ -1195,6 +1195,7 @@ def parse_args():
     # subcommand is given on the command line.  This parser will ignore most
     # arguments, as they will be parsed by the second parser.
     first_parser = argparse.ArgumentParser(parents=[base])
+    first_parser.add_argument('remainder', nargs=argparse.REMAINDER)
 
     # Create the main argument parser.  It will handle the complete command
     # line only ignoring the config and debug options as these have already
@@ -1447,7 +1448,8 @@ def parse_args():
     # Parese the command line with the first argument parser.  It will handle
     # the config option (its main job) and also the help, version and debug
     # options as these do not depend on anything else.
-    args, remainder = first_parser.parse_known_args()
+    args = first_parser.parse_args()
+    remainder = args.remainder
 
     # Set the loglevel to debug if given on the command line.  This is done
     # before parsing the config file to make it possible to debug the parsing
@@ -1478,7 +1480,7 @@ def parse_args():
     # Parse the remainder of the command line.  All options from the previous
     # run have already been processed and are not needed any more.
     args = parser.parse_args(remainder)
-    logging.debug("full args={}".format(args))
+    logging.debug("second args={}".format(args))
     return args
 
 
