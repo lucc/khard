@@ -289,7 +289,7 @@ class Config:
                                               contact.get_uid()))
                                     sys.exit(2)
                         # rebuild shortened uid dictionary
-                        self.create_shortened_uid_dictionary()
+                        self._create_shortened_uid_dictionary()
                 return address_book
         # Return None if no address book did match the given name.
         return None
@@ -297,7 +297,7 @@ class Config:
     def has_uids(self):
         return len(self.uid_dict.keys()) > 0
 
-    def create_shortened_uid_dictionary(self):
+    def _create_shortened_uid_dictionary(self):
         # uniqueness of uids is guaranteed but they are much to long for the -u
         # / --uid command line option
         #
