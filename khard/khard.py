@@ -1268,7 +1268,7 @@ def parse_args():
     # create search subparsers
     default_search_parser = argparse.ArgumentParser(add_help=False)
     default_search_parser.add_argument(
-        "-c", "--search-in-source-files", action="store_true",
+        "-f", "--search-in-source-files", action="store_true",
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
@@ -1282,7 +1282,7 @@ def parse_args():
         help="search in all fields to find matching contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
-        "-c", "--search-in-source-files", action="store_true",
+        "-f", "--search-in-source-files", action="store_true",
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
