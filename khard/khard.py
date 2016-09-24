@@ -1167,45 +1167,6 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                     break
 
 
-# Patch argparse.ArgumentParser, taken from http://stackoverflow.com/a/26379693
-def set_default_subparser(self, name):
-    """Default subparser selection. Call after setup, just before parse_args().
-
-    :param name: the name of the subparser to call by default
-    :type name: str
-    :returns: None
-    :rtype: None
-
-    """
-    for arg in sys.argv[1:]:
-        if arg in ['-h', '--help']:  # global help if no subparser
-            break
-    else:
-        for x in self._subparsers._actions:
-            if not isinstance(x, argparse._SubParsersAction):
-                continue
-            for sp_name in x._name_parser_map.keys():
-                if sp_name in sys.argv[1:]:
-                    return  # found a subcommand
-        else:
-            # Find position to insert default command.
-            options = self._option_string_actions.keys()
-            for index, arg in enumerate(sys.argv[1:], 1):
-                if arg in options:
-                    continue
-                else:
-                    # Insert command before first non option string (possibly
-                    # an argument for the subcommand).
-                    sys.argv.insert(index, name)
-                    break
-            else:
-                # Otherwise append default command.
-                sys.argv.append(name)
-
-
-argparse.ArgumentParser.set_default_subparser = set_default_subparser
-
-
 def main():
     # create the args parser
     parser = argparse.ArgumentParser(
@@ -1452,7 +1413,6 @@ def main():
         description="list addressbooks",
         help="list addressbooks")
 
-    parser.set_default_subparser(Config().get_default_action())
     args = parser.parse_args()
 
     # debug
@@ -1461,6 +1421,9 @@ def main():
     if Config().debug():
         logging.basicConfig(level=logging.DEBUG)
     logging.debug("args={}".format(args))
+
+    if args.action is None:
+        args.action = Config().get_default_action()
 
     # if args.action isn't one of the defined actions, it must be an alias
     if args.action not in Actions.get_list_of_all_actions():
