@@ -87,20 +87,21 @@ class CarddavObject:
 
     @classmethod
     def new_contact(cls, address_book, supported_private_objects, version):
-        """ use this to create a new and empty contact """
+        """Use this to create a new and empty contact."""
         return cls(address_book, None, supported_private_objects, version)
 
     @classmethod
     def from_file(cls, address_book, filename, supported_private_objects):
         """
-        Use this if you want to create a new contact from an existing .vcf file
+        Use this if you want to create a new contact from an existing .vcf
+        file.
         """
         return cls(address_book, filename, supported_private_objects, None)
 
     @classmethod
-    def from_user_input(
-            cls, address_book, user_input, supported_private_objects, version):
-        """ Use this if you want to create a new contact from user input """
+    def from_user_input(cls, address_book, user_input,
+                        supported_private_objects, version):
+        """Use this if you want to create a new contact from user input."""
         contact = cls(address_book, None, supported_private_objects, version)
         contact.process_user_input(user_input)
         return contact
@@ -108,8 +109,8 @@ class CarddavObject:
     @classmethod
     def from_existing_contact_with_new_user_input(cls, contact, user_input):
         """
-        use this if you want to clone an existing contact and  replace its data
-        with new user input in one step
+        Use this if you want to clone an existing contact and  replace its data
+        with new user input in one step.
         """
         contact = cls(contact.address_book, contact.filename,
                       contact.supported_private_objects, None)
@@ -124,11 +125,9 @@ class CarddavObject:
         return self.get_full_name()
 
     def __eq__(self, other):
-        if isinstance(other, CarddavObject) and \
-                self.print_vcard(show_address_book=False, show_uid=False) == \
-                other.print_vcard(show_address_book=False, show_uid=False):
-            return True
-        return False
+        return isinstance(other, CarddavObject) and \
+            self.print_vcard(show_address_book=False, show_uid=False) == \
+            other.print_vcard(show_address_book=False, show_uid=False)
 
     def __ne__(self, other):
         return not self == other
@@ -318,8 +317,8 @@ class CarddavObject:
             suffix=helpers.convert_to_vcard(
                 "name suffix", suffix, ObjectType.string_or_list_with_strings))
         # fn
-        if not self.vcard.getChildValue("fn") \
-                and (self.get_first_names() or self.get_last_names()):
+        if not self.vcard.getChildValue("fn") and (self.get_first_names() or
+                                                   self.get_last_names()):
             names = []
             if self.get_name_prefixes():
                 names += self.get_name_prefixes()
@@ -744,7 +743,8 @@ class CarddavObject:
             if isinstance(date, str):
                 return date
             elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                    and date.hour == 0 and date.minute == 0 and date.second == 0:
+                    and date.hour == 0 and date.minute == 0 \
+                    and date.second == 0:
                 return "--%.2d-%.2d" % (date.month, date.day)
             elif (date.tzname() and date.tzname()[3:]) or \
                     (date.hour != 0 or date.minute != 0 or date.second != 0):
@@ -1035,9 +1035,8 @@ class CarddavObject:
         if contact_data.get("Birthday"):
             if isinstance(contact_data.get("Birthday"), str):
                 if re.match(r"^text[\s]*=.*$", contact_data.get("Birthday")):
-                    l = [x.strip() \
-                         for x in \
-                         re.split("text[\s]*=", contact_data.get("Birthday")) \
+                    l = [x.strip() for x in
+                         re.split("text[\s]*=", contact_data.get("Birthday"))
                          if x.strip()]
                     if self.get_version() == "4.0":
                         date = ', '.join(l)
