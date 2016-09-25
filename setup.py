@@ -24,7 +24,7 @@ try:
     # so try to convert from markdown to rst
     import pypandoc
     ld = pypandoc.convert_text(ld_md, 'rst', format='md')
-except Exception:
+except ImportError:
     # else use long description in markdown format
     ld = ld_md
 
