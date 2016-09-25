@@ -63,8 +63,8 @@ def create_new_contact(address_book):
                 address_book, new_contact_template,
                 config.get_supported_private_objects(),
                 config.get_preferred_vcard_version())
-        except ValueError as e:
-            print("\n%s\n" % e)
+        except ValueError as err:
+            print("\n%s\n" % err)
             while True:
                 input_string = input(
                     "Do you want to open the editor again (y/n)? ")
@@ -115,8 +115,8 @@ def modify_existing_contact(old_contact):
             new_contact = \
                     CarddavObject.from_existing_contact_with_new_user_input(
                         old_contact, new_contact_template)
-        except ValueError as e:
-            print("\n%s\n" % e)
+        except ValueError as err:
+            print("\n%s\n" % err)
             while True:
                 input_string = input(
                     "Do you want to open the editor again (y/n)? ")
@@ -196,8 +196,8 @@ def merge_existing_contacts(source_contact, target_contact,
             merged_contact = \
                     CarddavObject.from_existing_contact_with_new_user_input(
                         target_contact, merged_contact_template)
-        except ValueError as e:
-            print("\n%s\n" % e)
+        except ValueError as err:
+            print("\n%s\n" % err)
             while True:
                 input_string = input(
                     "Do you want to open the editor again (y/n)? ")
@@ -526,8 +526,8 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
                 selected_address_book, input_from_stdin_or_file,
                 config.get_supported_private_objects(),
                 config.get_preferred_vcard_version())
-        except ValueError as e:
-            print(e)
+        except ValueError as err:
+            print(err)
             sys.exit(1)
         else:
             new_contact.write_to_file()
@@ -650,8 +650,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         label = input("email label [internet]: ") or "internet"
         try:
             selected_vcard.add_email_address(label, email_address)
-        except ValueError as e:
-            print(e)
+        except ValueError as err:
+            print(err)
         else:
             break
     # save to disk
@@ -912,8 +912,8 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
             new_contact = \
                     CarddavObject.from_existing_contact_with_new_user_input(
                         selected_vcard, input_from_stdin_or_file)
-        except ValueError as e:
-            print(e)
+        except ValueError as err:
+            print(err)
             sys.exit(1)
         if selected_vcard == new_contact:
             print("Nothing changed\n\n%s" % new_contact.print_vcard())
@@ -1601,8 +1601,9 @@ def main():
             try:
                 with open(args.input_file, "r") as f:
                     input_from_stdin_or_file = f.read()
-            except IOError as e:
-                print("Error: %s\n       File: %s" % (e.strerror, e.filename))
+            except IOError as err:
+                print("Error: %s\n       File: %s" % (err.strerror,
+                                                      err.filename))
                 sys.exit(1)
         elif not sys.stdin.isatty():
             # try to read from stdin
