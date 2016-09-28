@@ -41,7 +41,7 @@ _arguments -C -s \
   '--debug[enable debug output]' \
   '--skip-unparsable[skip unparsable vcard files]' \
   ':subcommand:->subcommand' \
-  '*::options:->options' && ret=0
+  '*::option:->options' && ret=0
 
 case $state in
   subcommand)
@@ -65,7 +65,7 @@ case $state in
       {source,src}:'edit the source vcard of a contact'
     )
     # Use this array to complete the subcommands.
-    _describe -t subcommands 'khard subcommands' subcommands_array && ret=0
+    _describe -t subcommands 'khard subcommand' subcommands_array && ret=0
     ;;
 
   options)
@@ -89,16 +89,16 @@ case $state in
     # input file options
     local -a email_header_input_options template_file_input_options
     email_header_input_options=(
-      '(-i)'{-i+,--input-file=}'[Specify input email header file name or use stdin]:input file:_files'
+      '(-i)'{-i+,--input-file=}'[specify input email header file name or use stdin]:input file:_files'
     )
     template_file_input_options=(
-      '(-i)'{-i+,--input-file=}'[Specify input template file name or use stdin]:input file:_files'
-      '--open-editor[Open text editor after successful creation of new contact from stdin or template]'
+      '(-i)'{-i+,--input-file=}'[specify input template file name or use stdin]:input file:_files'
+      '--open-editor[open text editor after successful creation of new contact from stdin or template]'
     )
     # sort options
     local -a sort_options
     sort_options=(
-      '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:sort by:(first_name last_name)'
+      '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:name:(first_name last_name)'
       '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
       '(-r)'{-r,--reverse}'[reverse order of contact table]'
       '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name)'
@@ -106,18 +106,18 @@ case $state in
     # search options
     local -a default_search_options merge_search_options
     default_search_options=(
-      '(-f)'{-f,--search-in-source-files}'[Look into source vcf files to speed up search queries in large address books]'
+      '(-f)'{-f,--search-in-source-files}'[look into source vcf files to speed up search queries in large address books]'
       '(-e)'{-e,--strict-search}'[narrow contact search to name field]'
       '(-u)'{-u+,--uid=}'[select contact by uid]:uid'
-      '*::search terms'
+      '*: :_guard "^-*" "search term"'
     )
     merge_search_options=(
-      '(-f)'{-f,--search-in-source-files}'[Look into source vcf files to speed up search queries in large address books]'
+      '(-f)'{-f,--search-in-source-files}'[look into source vcf files to speed up search queries in large address books]'
       '(-e)'{-e,--strict-search}'[narrow contact search to name fields]'
       '(-t)'{-t+,--target-contact=}'[search in all fields to find matching target contact]:search string'
       '(-u)'{-u+,--uid=}'[select source contact by uid]:uid'
       '(-U)'{-U+,--target-uid=}'[select target contact by uid]:uid'
-      '*::search terms'
+      '*: :_guard "^-*" "search term"'
     )
 
     curcontext="${curcontext%:*}-${words[1]}:"
@@ -133,35 +133,35 @@ case $state in
       birthdays|bdays)
         options+=(
           $default_addressbook_options $default_search_options
-          '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:sort by:(first_name last_name)'
-          '(-p)'{-p,--parsable}'[Machine readable birthday table]'
+          '(-d)'{-d+,--display=}'[display names in contact table by first or last name]:name:(first_name last_name)'
+          '(-p)'{-p,--parsable}'[machine readable birthday table]'
         );;
       email)
         options+=(
           $default_addressbook_options $default_search_options $sort_options
-          '(-p)'{-p,--parsable}'[Machine readable email address table]'
+          '(-p)'{-p,--parsable}'[machine readable email address table]'
           '--remove-first-line[remove first line from output]'
         );;
       phone)
         options+=(
           $default_addressbook_options $default_search_options $sort_options
-          '(-p)'{-p,--parsable}'[Machine readable phone number table]'
+          '(-p)'{-p,--parsable}'[machine readable phone number table]'
         );;
       export)
 	    options+=(
           $default_addressbook_options $default_search_options $sort_options
           '--empty-contact-template[export empty contact template]'
-          '(-o)'{-o+,--output-file=}'[Specify output template file name or use stdout]:output file:_files'
+          '(-o)'{-o+,--output-file=}'[specify output template file name or use stdout]:output file:_files'
         );;
       new|add)
     	options+=(
           $new_addressbook_options $template_file_input_options
-          '--vcard-version=[Select preferred vcard version for new contact]:sort by:(3.0 4.0)'
+          '--vcard-version=[select preferred vcard version for new contact]:version:(3.0 4.0)'
         );;
       add-email)
         options+=(
           $default_addressbook_options $email_header_input_options $default_search_options $sort_options
-          '--vcard-version=[Select preferred vcard version for new contact]:sort by:(3.0 4.0)'
+          '--vcard-version=[select preferred vcard version for new contact]:version:(3.0 4.0)'
         );;
       copy|cp|move|mv)
         options+=(
@@ -177,7 +177,7 @@ case $state in
         );;
     esac
     # Complete the subcommand options.
-    _arguments -A "-*" $options && ret=0
+    _arguments -S $options && ret=0
     ;;
 esac
 
