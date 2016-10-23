@@ -186,9 +186,13 @@ class Config:
             self.config['vcard'] = {}
 
         # get supported private objects
-        if "private_objects" not in self.config['vcard']:
+        if "private_objects" not in self.config['vcard'] \
+                or not self.config['vcard']['private_objects']:
             self.config['vcard']['private_objects'] = []
         else:
+            if not isinstance(self.config['vcard']['private_objects'], list):
+                self.config['vcard']['private_objects'] = [
+                        self.config['vcard']['private_objects']]
             # check if object only contains letters, digits or -
             for object in self.config['vcard']['private_objects']:
                 if object != re.sub("[^a-zA-Z0-9-]", "", object):
