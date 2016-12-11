@@ -479,6 +479,30 @@ class CarddavObject:
                 label_obj.group = group_name
                 label_obj.value = custom_types[0]
 
+    def get_impp_addresses(self):
+        """
+        : returns: dict of type and IMPP address list
+        :rtype: dict(str, list(str))
+        """
+        impp_dict = {}
+        for child in self.vcard.getChildren():
+
+            if child.name == "IMPP":
+
+                # Retrieve the IMPP type and address
+                type, address = child.value.split(":")
+
+                try:
+                    impp_dict[type].append( address )
+                except KeyError:
+                    impp_dict[type] = [ address ]
+
+        # sort IMPP address list
+        for impp_list in impp_dict.values():
+            impp_list.sort()
+
+        return impp_dict
+
     def get_email_addresses(self):
         """
         : returns: dict of type and email address list
@@ -1378,6 +1402,15 @@ class CarddavObject:
                     key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                     type, email_list, 4, -1, False)
+
+        # IMPP addresses
+        if len(self.get_impp_addresses().keys()) > 0:
+            strings.append("IMPP")
+            for type, impp_list in sorted(
+                    self.get_impp_addresses().items(),
+                    key=lambda k: k[0].lower()):
+                strings += helpers.convert_to_yaml(
+                    type, impp_list, 4, -1, False)
 
         # post addresses
         if len(self.get_post_addresses().keys()) > 0:
