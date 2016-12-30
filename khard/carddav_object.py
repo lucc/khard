@@ -1417,6 +1417,9 @@ class CarddavObject:
         return '\n'.join(strings)
 
     def write_to_file(self, overwrite=False):
+        # make sure, that every contact contains a uid
+        if not self.get_uid():
+            self.add_uid(helpers.get_random_uid())
         try:
             vcard_string = self.vcard.serialize()
             index_of_ent_attribute = vcard_string.find("END:VCARD")

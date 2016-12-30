@@ -266,8 +266,10 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         # if source file should be moved, get its file location to delete after
         # successful movement
         source_contact_filename = contact.get_filename()
-    else:
-        # else create a new uid
+    if not delete_source_contact \
+            or not contact.get_uid():
+        # if copy contact or contact has no uid yet
+        # create a new uid
         contact.delete_vcard_object("UID")
         contact.add_uid(helpers.get_random_uid())
     # set destination file name
