@@ -4,9 +4,6 @@
 #   - https://packaging.python.org/en/latest/distributing.html
 #   - https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
 #   - https://gehrcke.de/2014/02/distributing-a-python-command-line-application/
-#
-# vobject version is pinned to 0.9.2 for now because of bug
-# https://github.com/eventable/vobject/issues/39
 
 import re
 import sys
@@ -50,7 +47,7 @@ setup(
         "Operating System :: POSIX",
         "Programming Language :: Python :: 3 :: Only",
     ],
-    install_requires = ['atomicwrites', 'configobj', 'pyyaml', 'vobject==0.9.2'],
+    install_requires = ['atomicwrites', 'configobj', 'pyyaml', 'vobject'],
     packages = [ 'khard' ],
     entry_points = {
         'console_scripts': [ 'khard = khard.khard:main' ]

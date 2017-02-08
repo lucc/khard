@@ -25,7 +25,6 @@ class CarddavObject:
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
-        self.excluded_data = []
         self.supported_private_objects = supported_private_objects
 
         # vcard v3.0 supports the following type values
@@ -65,23 +64,12 @@ class CarddavObject:
             try:
                 self.vcard = vobject.readOne(contents)
             except Exception:
-                # due to a bug in the object library 0.9.2 it's possible, that
-                # the library fails to parse the photo attribute
-                # workaround: strip photo data from vcard string and add it back
-                # after editing of vcard file was successful
+                # if creation fails, try to repair some vcard attributes
                 try:
                     self.vcard = vobject.readOne(
-                        self.filter_base64_encoded_attributes(contents))
+                        self.filter_invalid_tags(contents))
                 except Exception:
-                    # if creation still fails, try to repair some vcard
-                    # attributes
-                    try:
-                        self.vcard = vobject.readOne(
-                            self.filter_invalid_tags(contents))
-                    except Exception:
-                        raise
-            # fix organisation values
-            self.get_organisations()
+                    raise
 
     #######################################
     # factory methods to create new contact
@@ -354,22 +342,7 @@ class CarddavObject:
         organisations = []
         for child in self.vcard.getChildren():
             if child.name == "ORG":
-                if not isinstance(child.value, list):
-                    # some newer versions of vobject module don't split the
-                    # organisation attribute properly at the "," character
-                    # so fix that by splitting at ?; manually and return a list
-                    # whereas ? could be any char except the \ (backslash)
-                    org_list = []
-                    start_index = 0
-                    for match in re.finditer("[^\\\\];", child.value):
-                        org_list.append(
-                            child.value[start_index:match.start()+1])
-                        start_index = match.start()+2
-                    child.value = org_list + [child.value[start_index:]]
-                # remove all backslashes except \n
-                organisations.append(
-                    [x.replace("\\n", "bckslshn").replace("\\", "")
-                     .replace("bckslshn", "\n") for x in child.value])
+                organisations.append(child.value)
         return sorted(organisations)
 
     def add_organisation(self, organisation):
@@ -825,32 +798,6 @@ class CarddavObject:
     #######################
     # object helper methods
     #######################
-
-    def filter_base64_encoded_attributes(self, contents):
-        filtered = []
-        append_line = True
-        for line in contents.split("\n"):
-            if not append_line and \
-                    re.search("^\S.*$", line, re.IGNORECASE):
-                # skipped all the indented lines and found the next attribute
-                append_line = True
-            if append_line and ( \
-                    re.search(
-                        "^\S.*;encoding=base64[;:].*$", line, re.IGNORECASE) \
-                    or re.search(
-                        "^\S.*;encoding=b[;:].*$", line, re.IGNORECASE) \
-                    or re.search(
-                        "^\S.*:data.*[;:]base64,.*$", line, re.IGNORECASE)):
-                # found an attribute with base64 encoding
-                # for vcard versions 2.1, 3.0 or 4.0
-                # skip that due to a bug in the vobject library
-                # refers to khard issues #80 and #86
-                append_line = False
-            if append_line:
-                filtered.append(line)
-            else:
-                self.excluded_data.append(line)
-        return '\n'.join(filtered)
 
     def filter_invalid_tags(self, contents):
         contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM',
@@ -1421,15 +1368,8 @@ class CarddavObject:
         if not self.get_uid():
             self.add_uid(helpers.get_random_uid())
         try:
-            vcard_string = self.vcard.serialize()
-            index_of_ent_attribute = vcard_string.find("END:VCARD")
-            if index_of_ent_attribute >= 0 and self.excluded_data:
-                # restore excluded base64 encoded attributes
-                vcard_string = vcard_string[:index_of_ent_attribute] \
-                               + '\r\n'.join(self.excluded_data) + "\r\n" \
-                               + vcard_string[index_of_ent_attribute:]
             with atomic_write(self.filename, overwrite=overwrite) as f:
-                f.write(vcard_string)
+                f.write(self.vcard.serialize())
         except vobject.base.ValidateError as err:
             print("Error: Vcard is not valid.\n%s" % err)
             sys.exit(4)
