@@ -27,7 +27,8 @@ def create_new_contact(address_book):
         "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
         % (address_book.get_name(), config.get_preferred_vcard_version(),
-           helpers.get_new_contact_template()))
+           helpers.get_new_contact_template(
+               config.get_supported_private_objects())))
     tf.write(old_contact_template)
     tf.close()
 
@@ -1680,7 +1681,9 @@ def main():
                 "# Use this yaml formatted template to create a new contact:\n"
                 "#   either with: khard new -a address_book -i template.yaml\n"
                 "#   or with: cat template.yaml | khard new -a address_book\n"
-                "\n%s" % (khard_version, helpers.get_new_contact_template()))
+                "\n%s" % (khard_version,
+                    helpers.get_new_contact_template(
+                        config.get_supported_private_objects())))
     elif args.action in ["details", "modify", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(
                 "Select contact for %s action" % args.action.title(),

@@ -250,7 +250,16 @@ def indent_multiline_string(input, indentation, show_multi_line_character):
     return input.strip()
 
 
-def get_new_contact_template():
+def get_new_contact_template(supported_private_objects=[]):
+    formatted_private_objects = []
+    if supported_private_objects:
+        formatted_private_objects.append("")
+        longest_key = max(supported_private_objects, key=len)
+        for object in supported_private_objects:
+            formatted_private_objects += convert_to_yaml(
+                    object, "", 12, len(longest_key)+1, True)
+
+    # create template
     return dedent("""
         # name components
         # every entry may contain a string or a list of strings
@@ -359,11 +368,14 @@ def get_new_contact_template():
         Webpage : 
 
         # private objects
-        # define your own private objects in the vcard section of your khard.conf file
+        # define your own private objects in the vcard section of your khard config file
+        # example:
+        #   [vcard]
+        #   private_objects = Jabber, Skype, Twitter
         # these objects are stored with a leading "X-" before the object name in the
         # vcard files.
         # every entry may contain a string or a list of strings
-        Private :
+        Private :%s
 
         # notes
         # may contain a string or a list of strings
@@ -371,4 +383,4 @@ def get_new_contact_template():
         #   Note : |
         #       line one
         #       line two
-        Note : """)
+        Note : """ % '\n'.join(formatted_private_objects))
