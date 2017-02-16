@@ -1,1 +1,1 @@
-khard_version = '0.11.3'
+khard_version = '0.11.4'

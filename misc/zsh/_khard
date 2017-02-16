@@ -1,6 +1,6 @@
 #compdef khard
 
-# Zsh completion definition for khard version >= 0.11.0
+# Zsh completion definition for khard version >= 0.11.4
 # Install by copying to a directory where zsh searches for completion
 # functions (the $fpath array).
 #
