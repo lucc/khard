@@ -279,7 +279,7 @@ def get_new_contact_template(supported_private_objects=[]):
         #
         # birthday
         # Formats:
-        #   vcard 3.0 and 4.0: yyy-mm-dd or yyyy-mm-ddTHH:MM:SS
+        #   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
         #   vcard 4.0 only: --mm-dd or text= string value
         Birthday : 
         # nickname

@@ -1065,7 +1065,7 @@ class CarddavObject:
                     except ValueError:
                         raise ValueError(
                             "Error: Wrong birthday format or invalid date\n"
-                            "Use format yyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
+                            "Use format yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
                 if date:
                     self.add_birthday(date)
             else:
