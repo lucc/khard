@@ -45,7 +45,7 @@ def create_new_contact(address_book):
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start vim to edit contact template
-        child = subprocess.Popen([config.get_editor(), temp_file_name])
+        child = subprocess.Popen([config.editor, temp_file_name])
         child.communicate()
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
@@ -98,7 +98,7 @@ def modify_existing_contact(old_contact):
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start editor to edit contact template
-        child = subprocess.Popen([config.get_editor(), temp_file_name])
+        child = subprocess.Popen([config.editor, temp_file_name])
         child.communicate()
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
@@ -175,8 +175,7 @@ def merge_existing_contacts(source_contact, target_contact,
         target_temp_file_name)
     while True:
         # start editor to edit contact template
-        child = subprocess.Popen([config.get_merge_editor(),
-                                  source_temp_file_name,
+        child = subprocess.Popen([config.merge_editor, source_temp_file_name,
                                   target_temp_file_name])
         child.communicate()
         if target_temp_file_creation == helpers.file_modification_date(
@@ -1435,7 +1434,7 @@ def parse_args():
     # command line.
     if not remainder or \
             remainder[0] not in Actions.get_all_actions_and_aliases():
-        remainder.insert(0, config.get_default_action())
+        remainder.insert(0, config.default_action)
         logging.debug("updated remainder={}".format(remainder))
 
     # Parse the remainder of the command line.  All options from the previous
@@ -1663,7 +1662,7 @@ def main():
         elif args.action == "remove":
             remove_subcommand(selected_vcard)
         elif args.action == "source":
-            source_subcommand(selected_vcard, config.get_editor())
+            source_subcommand(selected_vcard, config.editor)
     elif args.action == "merge":
         merge_subcommand(vcard_list, args.target_addressbook,
                          args.target_contact, args.target_uid)
