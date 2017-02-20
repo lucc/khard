@@ -67,11 +67,9 @@ class Actions:
         """Find the names of all defined actions and their aliases.
 
         :returns: the names of all actions and aliases
-        :rtype: list(str)
+        :rtype: generator(str)
 
         """
-        all = []
         for key, value in cls.action_map.items():
-            all.append(key)
-            all.extend(value)
-        return all
+            yield key
+            yield from value
