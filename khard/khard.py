@@ -1290,7 +1290,7 @@ def parse_args():
     subparsers = parser.add_subparsers(dest="action")
     list_parser = subparsers.add_parser(
         "list",
-        aliases=Actions.get_alias_list_for_action("list"),
+        aliases=Actions.get_aliases("list"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="list all (selected) contacts",
@@ -1300,14 +1300,14 @@ def parse_args():
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     subparsers.add_parser(
         "details",
-        aliases=Actions.get_alias_list_for_action("details"),
+        aliases=Actions.get_aliases("details"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="display detailed information about one contact",
         help="display detailed information about one contact")
     export_parser = subparsers.add_parser(
         "export",
-        aliases=Actions.get_alias_list_for_action("export"),
+        aliases=Actions.get_aliases("export"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="export a contact to the custom yaml format that is "
@@ -1323,7 +1323,7 @@ def parse_args():
         help="Specify output template file name or use stdout by default")
     birthdays_parser = subparsers.add_parser(
         "birthdays",
-        aliases=Actions.get_alias_list_for_action("birthdays"),
+        aliases=Actions.get_aliases("birthdays"),
         parents=[default_addressbook_parser, default_search_parser],
         description="list birthdays (sorted by month and day)",
         help="list birthdays (sorted by month and day)")
@@ -1335,7 +1335,7 @@ def parse_args():
         help="Machine readable format: name\\tdate")
     email_parser = subparsers.add_parser(
         "email",
-        aliases=Actions.get_alias_list_for_action("email"),
+        aliases=Actions.get_aliases("email"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="list email addresses",
@@ -1349,7 +1349,7 @@ def parse_args():
         "(that line is required by mutt)")
     phone_parser = subparsers.add_parser(
         "phone",
-        aliases=Actions.get_alias_list_for_action("phone"),
+        aliases=Actions.get_aliases("phone"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="list phone numbers",
@@ -1359,14 +1359,14 @@ def parse_args():
         help="Machine readable format: number\\tname\\ttype")
     subparsers.add_parser(
         "source",
-        aliases=Actions.get_alias_list_for_action("source"),
+        aliases=Actions.get_aliases("source"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="edit the vcard file of a contact directly",
         help="edit the vcard file of a contact directly")
     new_parser = subparsers.add_parser(
         "new",
-        aliases=Actions.get_alias_list_for_action("new"),
+        aliases=Actions.get_aliases("new"),
         parents=[new_addressbook_parser, template_input_file_parser],
         description="create a new contact",
         help="create a new contact")
@@ -1375,7 +1375,7 @@ def parse_args():
         help="Select preferred vcard version for new contact")
     add_email_parser = subparsers.add_parser(
         "add-email",
-        aliases=Actions.get_alias_list_for_action("add-email"),
+        aliases=Actions.get_aliases("add-email"),
         parents=[default_addressbook_parser, email_header_input_file_parser,
                  default_search_parser, sort_parser],
         description="Extract email address from the \"From:\" field of an "
@@ -1387,34 +1387,34 @@ def parse_args():
         help="Select preferred vcard version for new contact")
     subparsers.add_parser(
         "merge",
-        aliases=Actions.get_alias_list_for_action("merge"),
+        aliases=Actions.get_aliases("merge"),
         parents=[merge_addressbook_parser, merge_search_parser, sort_parser],
         description="merge two contacts",
         help="merge two contacts")
     subparsers.add_parser(
         "modify",
-        aliases=Actions.get_alias_list_for_action("modify"),
+        aliases=Actions.get_aliases("modify"),
         parents=[default_addressbook_parser, template_input_file_parser,
                  default_search_parser, sort_parser],
         description="edit the data of a contact",
         help="edit the data of a contact")
     subparsers.add_parser(
         "copy",
-        aliases=Actions.get_alias_list_for_action("copy"),
+        aliases=Actions.get_aliases("copy"),
         parents=[copy_move_addressbook_parser, default_search_parser,
                  sort_parser],
         description="copy a contact to a different addressbook",
         help="copy a contact to a different addressbook")
     subparsers.add_parser(
         "move",
-        aliases=Actions.get_alias_list_for_action("move"),
+        aliases=Actions.get_aliases("move"),
         parents=[copy_move_addressbook_parser, default_search_parser,
                  sort_parser],
         description="move a contact to a different addressbook",
         help="move a contact to a different addressbook")
     remove_parser = subparsers.add_parser(
         "remove",
-        aliases=Actions.get_alias_list_for_action("remove"),
+        aliases=Actions.get_aliases("remove"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="remove a contact",
@@ -1424,7 +1424,7 @@ def parse_args():
         help="Remove contact without confirmation")
     subparsers.add_parser(
         "addressbooks",
-        aliases=Actions.get_alias_list_for_action("addressbooks"),
+        aliases=Actions.get_aliases("addressbooks"),
         description="list addressbooks",
         help="list addressbooks")
 
@@ -1462,8 +1462,7 @@ def parse_args():
 
     # Set the default command from the config file if none was given on the
     # command line.
-    if not remainder or \
-            remainder[0] not in Actions.get_all_actions_and_aliases():
+    if not remainder or remainder[0] not in Actions.get_all():
         remainder.insert(0, config.default_action)
         logging.debug("updated remainder={}".format(remainder))
 
@@ -1478,10 +1477,10 @@ def main():
     args = parse_args()
 
     # if args.action isn't one of the defined actions, it must be an alias
-    if args.action not in Actions.get_list_of_all_actions():
+    if args.action not in Actions.get_actions():
         # convert alias to corresponding action
         # example: "ls" --> "list"
-        args.action = Actions.get_action_for_alias(args.action)
+        args.action = Actions.get_action(args.action)
 
     # display by name: first or last name
     if "display" in args and args.display:
