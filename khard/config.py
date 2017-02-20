@@ -11,6 +11,7 @@ import re
 import sys
 
 import configobj
+from vobject.base import ParseError
 
 from .actions import Actions
 from .address_book import AddressBook
@@ -255,12 +256,12 @@ class Config:
             try:
                 address_book = AddressBook(
                     name, self.config['addressbooks'][name]['path'])
-            except KeyError as e:
+            except KeyError:
                 print("Error in config file\n"
                       "Missing path to the \"%s\" address book." % name)
                 sys.exit(2)
-            except IOError as e:
-                print("Error in config file\n%s" % e)
+            except IOError as err:
+                print("Error in config file\n%s" % err)
                 sys.exit(2)
             else:
                 # add address book to list
