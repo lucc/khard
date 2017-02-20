@@ -161,7 +161,7 @@ class AddressBook:
             if contact.get_uid() == query:
                 contacts.append(contact)
         # If that fails, search for contacts where uid starts with query.
-        if len(contacts) == 0:
+        if not contacts:
             for contact in self.contact_list:
                 if contact.get_uid().startswith(query):
                     contacts.append(contact)
