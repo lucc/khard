@@ -73,35 +73,33 @@ class Config:
         self.debug = self.config["general"]["debug"]
 
         # editor
-        self.config['general']['editor'] = \
-            self.config['general'].get("editor") or os.environ.get("EDITOR")
-        if self.config['general']['editor'] is None:
+        self.editor = self.config["general"].get("editor") \
+            or os.environ.get("EDITOR")
+        if self.editor is None:
             exit("Set path to your preferred text editor in khard's config "
                  "file or the $EDITOR shell variable\n"
                  "Example for khard.conf: editor = vim")
-        self.config['general']['editor'] = find_executable(
-            os.path.expanduser(self.config['general']['editor']))
-        if self.config['general']['editor'] is None:
+        self.editor = find_executable(os.path.expanduser(self.editor))
+        if self.editor is None:
             exit("Invalid editor path or executable not found.")
 
         # merge editor
-        self.config['general']['merge_editor'] = \
-            self.config['general'].get("merge_editor") \
+        self.merge_editor = self.config['general'].get("merge_editor") \
             or os.environ.get("MERGE_EDITOR")
-        if self.config['general']['merge_editor'] is None:
+        if self.merge_editor is None:
             exit("Set path to your preferred text merge editor in khard's "
                  "config file or the $MERGE_EDITOR shell variable\n"
                  "Example for khard.conf: merge_editor = vimdiff")
-        self.config['general']['merge_editor'] = find_executable(
-            os.path.expanduser(self.config['general']['merge_editor']))
-        if self.config['general']['merge_editor'] is None:
+        self.merge_editor = find_executable(os.path.expanduser(
+            self.merge_editor))
+        if self.merge_editor is None:
             exit("Invalid merge editor path or executable not found.")
 
         # default action
-        if "default_action" not in self.config['general']:
+        self.default_action = self.config["general"].get("default_action")
+        if self.default_action is None:
             exit("Missing default action parameter.")
-        elif self.config['general']['default_action'] not in \
-                Actions.get_list_of_all_actions():
+        elif self.default_action not in Actions.get_list_of_all_actions():
             exit("Invalid value for default_action parameter\n"
                  "Possible values: %s" % ', '.join(
                      sorted(Actions.get_list_of_all_actions())))
@@ -340,15 +338,6 @@ class Config:
                 if self.uid_dict.get(uid[:length_of_uid]) is not None:
                     return uid[:length_of_uid]
         return ""
-
-    def get_editor(self):
-        return self.config['general']['editor']
-
-    def get_merge_editor(self):
-        return self.config['general']['merge_editor']
-
-    def get_default_action(self):
-        return self.config['general']['default_action']
 
     def get_supported_private_objects(self):
         return self.config['vcard']['private_objects']
