@@ -414,7 +414,7 @@ class CarddavObject:
         standard_types, custom_types, pref = self.parse_type_value(
             helpers.string_to_list(type, ","), number, self.phone_types_v4 if
             self.get_version() == "4.0" else self.phone_types_v3)
-        if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
+        if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for phone number " + number +
                              " is missing.")
         elif len(custom_types) > 1:
@@ -471,7 +471,7 @@ class CarddavObject:
         standard_types, custom_types, pref = self.parse_type_value(
             helpers.string_to_list(type, ","), address, self.email_types_v4 if
             self.get_version() == "4.0" else self.email_types_v3)
-        if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
+        if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for email address " + address +
                              " is missing.")
         elif len(custom_types) > 1:
@@ -579,7 +579,7 @@ class CarddavObject:
             helpers.string_to_list(type, ","), "%s, %s" % (street, city),
             self.address_types_v4 if self.get_version() == "4.0" else
             self.address_types_v3)
-        if len(standard_types) == 0 and len(custom_types) == 0 and pref == 0:
+        if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for post address " + street +
                              " is missing.")
         elif len(custom_types) > 1:
@@ -1149,7 +1149,7 @@ class CarddavObject:
 
             elif line.lower().startswith("phone"):
                 strings.append("Phone :")
-                if len(self.get_phone_numbers().keys()) == 0:
+                if not self.get_phone_numbers().keys():
                     strings.append("    cell : ")
                     strings.append("    home : ")
                 else:
@@ -1162,7 +1162,7 @@ class CarddavObject:
 
             elif line.lower().startswith("email"):
                 strings.append("Email :")
-                if len(self.get_email_addresses().keys()) == 0:
+                if not self.get_email_addresses().keys():
                     strings.append("    home : ")
                     strings.append("    work : ")
                 else:
@@ -1176,7 +1176,7 @@ class CarddavObject:
 
             elif line.lower().startswith("address"):
                 strings.append("Address :")
-                if len(self.get_post_addresses().keys()) == 0:
+                if not self.get_post_addresses().keys():
                     strings.append("    home :")
                     strings.append("        Box      : ")
                     strings.append("        Extended : ")
@@ -1274,7 +1274,7 @@ class CarddavObject:
                 names += self.get_name_suffixes()
             strings.append("Name: %s" % helpers.list_to_string(names, " "))
         # organisation
-        if len(self.get_organisations()) > 0:
+        if self.get_organisations():
             strings += helpers.convert_to_yaml(
                 "Organisation", self.get_organisations(), 0, -1, False)
         # address book name
@@ -1282,26 +1282,24 @@ class CarddavObject:
             strings.append("Address book: %s" % self.address_book.name)
 
         # person related information
-        if self.get_birthday() is not None \
-                or len(self.get_nicknames()) > 0 \
-                or len(self.get_roles()) > 0 \
-                or len(self.get_titles()) > 0:
+        if self.get_birthday() is not None or self.get_nicknames() \
+                or self.get_roles() or self.get_titles():
             strings.append("General:")
             if self.get_birthday():
                 strings.append("    Birthday: %s"
                                % self.get_formatted_birthday())
-            if len(self.get_nicknames()) > 0:
+            if self.get_nicknames():
                 strings += helpers.convert_to_yaml(
                     "Nickname", self.get_nicknames(), 4, -1, False)
-            if len(self.get_roles()) > 0:
+            if self.get_roles():
                 strings += helpers.convert_to_yaml(
                     "Role", self.get_roles(), 4, -1, False)
-            if len(self.get_titles()) > 0:
+            if self.get_titles():
                 strings += helpers.convert_to_yaml(
                     "Title", self.get_titles(), 4, -1, False)
 
         # phone numbers
-        if len(self.get_phone_numbers().keys()) > 0:
+        if self.get_phone_numbers().keys():
             strings.append("Phone")
             for type, number_list in sorted(
                     self.get_phone_numbers().items(),
@@ -1310,7 +1308,7 @@ class CarddavObject:
                     type, number_list, 4, -1, False)
 
         # email addresses
-        if len(self.get_email_addresses().keys()) > 0:
+        if self.get_email_addresses().keys():
             strings.append("E-Mail")
             for type, email_list in sorted(
                     self.get_email_addresses().items(),
@@ -1319,7 +1317,7 @@ class CarddavObject:
                     type, email_list, 4, -1, False)
 
         # post addresses
-        if len(self.get_post_addresses().keys()) > 0:
+        if self.get_post_addresses().keys():
             strings.append("Address")
             for type, post_adr_list in sorted(
                     self.get_formatted_post_addresses().items(),
@@ -1328,7 +1326,7 @@ class CarddavObject:
                     type, post_adr_list, 4, -1, False)
 
         # private objects
-        if len(self.get_private_objects().keys()) > 0:
+        if self.get_private_objects().keys():
             strings.append("Private:")
             for object in self.supported_private_objects:
                 if self.get_private_objects().get(object):
@@ -1337,20 +1335,18 @@ class CarddavObject:
                         False)
 
         # misc stuff
-        if len(self.get_categories()) > 0 \
-                or (show_uid and self.get_uid() != "") \
-                or len(self.get_webpages()) > 0 \
-                or len(self.get_notes()) > 0:
+        if self.get_categories() or (show_uid and self.get_uid() != "") \
+                or self.get_webpages() or self.get_notes():
             strings.append("Miscellaneous")
             if show_uid and self.get_uid():
                 strings.append("    UID: %s" % self.get_uid())
-            if len(self.get_categories()) > 0:
+            if self.get_categories():
                 strings += helpers.convert_to_yaml(
                     "Categories", self.get_categories(), 4, -1, False)
-            if len(self.get_webpages()) > 0:
+            if self.get_webpages():
                 strings += helpers.convert_to_yaml(
                     "Webpage", self.get_webpages(), 4, -1, False)
-            if len(self.get_notes()) > 0:
+            if self.get_notes():
                 strings += helpers.convert_to_yaml(
                     "Note", self.get_notes(), 4, -1, False)
         return '\n'.join(strings)

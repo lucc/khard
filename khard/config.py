@@ -247,7 +247,7 @@ class Config:
             print('Error in config file\n'
                   'Missing main section "[addressbooks]".')
             sys.exit(2)
-        if len(self.config['addressbooks'].keys()) == 0:
+        if self.config['addressbooks'].keys():
             print("Error in config file\nNo address book entries available.")
             sys.exit(2)
         for name in self.config['addressbooks'].keys():
