@@ -441,7 +441,7 @@ def get_contact_list_by_user_selection(address_books, search, strict_search):
     """
     return get_contacts(
         address_books, search, "name" if strict_search else "all",
-        config.reverse(), config.group_by_addressbook(), config.sort_by_name())
+        config.reverse(), config.group_by_addressbook(), config.sort)
 
 
 def get_contacts(address_books, query, method="all", reverse=False,
@@ -1467,7 +1467,7 @@ def main():
 
     # sort criteria: first or last name
     if "sort" in args and args.sort:
-        config.set_sort_by_name(args.sort)
+        config.sort = args.sort
 
     # preferred vcard version
     if "vcard_version" in args and args.vcard_version:

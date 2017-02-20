@@ -109,10 +109,8 @@ class Config:
             self.config['contact table'] = {}
 
         # sort contact table by first or last name
-        if "sort" not in self.config['contact table']:
-            self.config['contact table']['sort'] = "first_name"
-        elif self.config['contact table']['sort'] not in ["first_name",
-                                                          "last_name"]:
+        self.sort = self.config["contact table"].get("sort", "first_name")
+        if self.sort not in ["first_name", "last_name"]:
             exit("Invalid value for sort parameter\n"
                  "Possible values: first_name, last_name")
 
@@ -365,12 +363,6 @@ class Config:
 
     def set_display_by_name(self, criteria):
         self.config['contact table']['display'] = criteria
-
-    def sort_by_name(self):
-        return self.config['contact table']['sort']
-
-    def set_sort_by_name(self, criteria):
-        self.config['contact table']['sort'] = criteria
 
     def group_by_addressbook(self):
         return self.config['contact table']['group_by_addressbook']
