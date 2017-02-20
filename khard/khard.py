@@ -309,7 +309,7 @@ def list_contacts(vcard_list):
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index+1)
-        if len(vcard.get_nicknames()) > 0 \
+        if vcard.get_nicknames() \
                 and config.show_nicknames():
             if config.display_by_name() == "first_name":
                 row.append("%s (Nickname: %s)" % (
@@ -324,7 +324,7 @@ def list_contacts(vcard_list):
                 row.append(vcard.get_first_name_last_name())
             else:
                 row.append(vcard.get_last_name_first_name())
-        if len(vcard.get_phone_numbers().keys()) > 0:
+        if vcard.get_phone_numbers().keys():
             phone_dict = vcard.get_phone_numbers()
             first_type = sorted(phone_dict.keys(),
                                 key=lambda k: k[0].lower())[0]
@@ -332,7 +332,7 @@ def list_contacts(vcard_list):
                                    sorted(phone_dict.get(first_type))[0]))
         else:
             row.append("")
-        if len(vcard.get_email_addresses().keys()) > 0:
+        if vcard.get_email_addresses().keys():
             email_dict = vcard.get_email_addresses()
             first_type = sorted(email_dict.keys(),
                                 key=lambda k: k[0].lower())[0]
@@ -373,7 +373,7 @@ def list_email_addresses(email_address_list):
 
 
 def choose_address_book_from_list(header_string, address_book_list):
-    if len(address_book_list) == 0:
+    if not address_book_list:
         return None
     elif len(address_book_list) == 1:
         return address_book_list[0]
@@ -699,7 +699,7 @@ def birthdays_subcommand(vcard_list, parsable):
                 birthday_list.append("%s\t%s"
                                      % (vcard.get_last_name_first_name(),
                                         vcard.get_formatted_birthday()))
-    if len(birthday_list) > 0:
+    if birthday_list:
         if parsable:
             print('\n'.join(birthday_list))
         else:
@@ -765,12 +765,12 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                         matching_phone_number_list.append(phone_number_line)
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
-    if len(matching_phone_number_list) > 0:
+    if matching_phone_number_list:
         if parsable:
             print('\n'.join(matching_phone_number_list))
         else:
             list_phone_numbers(matching_phone_number_list)
-    elif len(all_phone_numbers_list) > 0:
+    elif all_phone_numbers_list:
         if parsable:
             print('\n'.join(all_phone_numbers_list))
         else:
@@ -833,7 +833,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
                 all_email_address_list.append(email_address_line)
-    if len(matching_email_address_list) > 0:
+    if matching_email_address_list:
         if parsable:
             if not remove_first_line:
                 # at least mutt requires that line
@@ -841,7 +841,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
             print('\n'.join(matching_email_address_list))
         else:
             list_email_addresses(matching_email_address_list)
-    elif len(all_email_address_list) > 0:
+    elif all_email_address_list:
         if parsable:
             if not remove_first_line:
                 # at least mutt requires that line
@@ -866,7 +866,7 @@ def list_subcommand(vcard_list):
     :rtype: None
 
     """
-    if len(vcard_list) == 0:
+    if not vcard_list:
         print("Found no contacts")
         sys.exit(1)
     list_contacts(vcard_list)
@@ -1001,7 +1001,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
                                      method="uid")
         # We require that the uid given can uniquely identify a contact.
         if len(target_vcards) != 1:
-            if len(target_vcards) == 0:
+            if not target_vcards:
                 print("Found no contact for target uid %s" % target_uid)
             else:
                 print("Found multiple contacts for target uid %s" % target_uid)
@@ -1436,7 +1436,7 @@ def parse_args():
 
     # Set the default command from the config file if none was given on the
     # command line.
-    if len(remainder) == 0 or \
+    if not remainder or \
             remainder[0] not in Actions.get_all_actions_and_aliases():
         remainder.insert(0, config.get_default_action())
         logging.debug("updated remainder={}".format(remainder))
@@ -1566,7 +1566,7 @@ def main():
                                   args.uid, method="uid")
         # We require that the uid given can uniquely identify a contact.
         if len(vcard_list) != 1:
-            if len(vcard_list) == 0:
+            if not vcard_list:
                 print("Found no contact for %suid %s" % (
                     "source " if args.action == "merge" else "", args.uid))
             else:
