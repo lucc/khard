@@ -257,7 +257,7 @@ def get_new_contact_template(supported_private_objects=[]):
         longest_key = max(supported_private_objects, key=len)
         for object in supported_private_objects:
             formatted_private_objects += convert_to_yaml(
-                    object, "", 12, len(longest_key)+1, True)
+                object, "", 12, len(longest_key)+1, True)
 
     # create template
     return dedent("""
