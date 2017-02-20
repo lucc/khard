@@ -1483,6 +1483,16 @@ def main(argv=sys.argv[1:]):
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
+    # Check some of the simpler subcommands first.  These don't have any options
+    # and can directly be run.  That is much faster than checking all options
+    # first and getting default values.
+    if args.action == "addressbooks":
+        print('\n'.join(str(book) for book in config.get_all_address_books()))
+        return
+    elif args.action == "filename":
+        print('\n'.join(contact.filename for contact in vcard_list))
+        return
+
     # display by name: first or last name
     if "display" in args and args.display:
         config.set_display_by_name(args.display)
@@ -1706,7 +1716,3 @@ def main(argv=sys.argv[1:]):
     elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(
             args.action, vcard_list, args.target_addressbook)
-    elif args.action == "addressbooks":
-        print('\n'.join(str(book) for book in config.get_all_address_books()))
-    elif args.action == "filename":
-        print('\n'.join(contact.filename for contact in vcard_list))
