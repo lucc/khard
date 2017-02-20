@@ -191,7 +191,7 @@ class Config:
         else:
             if not isinstance(self.config['vcard']['private_objects'], list):
                 self.config['vcard']['private_objects'] = [
-                        self.config['vcard']['private_objects']]
+                    self.config['vcard']['private_objects']]
             # check if object only contains letters, digits or -
             for object in self.config['vcard']['private_objects']:
                 if object != re.sub("[^a-zA-Z0-9-]", "", object):

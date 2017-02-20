@@ -1013,8 +1013,8 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
         target_vcards = get_contact_list_by_user_selection(
             selected_address_books, search_terms, False)
     # get the source vcard, from which to merge
-    source_vcard = choose_vcard_from_list(
-            "Select contact from which to merge", vcard_list)
+    source_vcard = choose_vcard_from_list("Select contact from which to merge",
+                                          vcard_list)
     if source_vcard is None:
         print("Found no source contact for merging")
         sys.exit(1)
@@ -1023,8 +1023,8 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
               % (source_vcard.get_full_name(),
                  source_vcard.address_book.name))
     # get the target vcard, into which to merge
-    target_vcard = choose_vcard_from_list(
-            "Select contact into which to merge", target_vcards)
+    target_vcard = choose_vcard_from_list("Select contact into which to merge",
+                                          target_vcards)
     if target_vcard is None:
         print("Found no target contact for merging")
         sys.exit(1)
@@ -1054,7 +1054,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     """
     # get the source vcard, which to copy or move
     source_vcard = choose_vcard_from_list(
-            "Select contact to %s" % action.title(), vcard_list)
+        "Select contact to %s" % action.title(), vcard_list)
     if source_vcard is None:
         print("Found no contact")
         sys.exit(1)
@@ -1083,10 +1083,9 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
-            "Select target contact which to overwrite",
-            get_contact_list_by_user_selection(
-                [selected_target_address_book], source_vcard.get_full_name(),
-                True))
+        "Select target contact which to overwrite",
+        get_contact_list_by_user_selection([selected_target_address_book],
+                                           source_vcard.get_full_name(), True))
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
@@ -1150,11 +1149,11 @@ def parse_args():
         formatter_class=argparse.RawTextHelpFormatter, add_help=False)
     base.add_argument("-c", "--config", default="", help="config file to use")
     base.add_argument("--debug", action="store_true",
-                        help="enable debug output")
+                      help="enable debug output")
     base.add_argument("--skip-unparsable", action="store_true",
-                        help="skip unparsable vcard files")
+                      help="skip unparsable vcard files")
     base.add_argument("-v", "--version", action="version",
-                        version="Khard version %s" % khard_version)
+                      version="Khard version %s" % khard_version)
 
     # Create the first argument parser.  Its main job is to set the correct
     # config file.  The config file is needed to get the default command if no
@@ -1638,17 +1637,15 @@ def main():
             and args.empty_contact_template:
         # export empty template must work without selecting a contact first
         args.output_file.write(
-                "# Contact template for khard version %s\n#\n"
-                "# Use this yaml formatted template to create a new contact:\n"
-                "#   either with: khard new -a address_book -i template.yaml\n"
-                "#   or with: cat template.yaml | khard new -a address_book\n"
-                "\n%s" % (khard_version,
-                    helpers.get_new_contact_template(
-                        config.get_supported_private_objects())))
+            "# Contact template for khard version %s\n#\n"
+            "# Use this yaml formatted template to create a new contact:\n"
+            "#   either with: khard new -a address_book -i template.yaml\n"
+            "#   or with: cat template.yaml | khard new -a address_book\n"
+            "\n%s" % (khard_version, helpers.get_new_contact_template(
+                config.get_supported_private_objects())))
     elif args.action in ["details", "modify", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(
-                "Select contact for %s action" % args.action.title(),
-                vcard_list)
+            "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
             print("Found no contact")
             sys.exit(1)
