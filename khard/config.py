@@ -251,12 +251,11 @@ class Config:
                                 "could not be parsed\nUse --debug for more "
                                 "information or --skip-unparsable to proceed",
                                 errors, contacts, name)
+                            sys.exit(2)
                         else:
                             logging.debug(
                                 "\n%d of %d vcard files of address book %s "
                                 "could not be parsed\n", errors, contacts, name)
-                        if not self.skip_unparsable():
-                            sys.exit(2)
 
                     # check uniqueness of vcard uids and create short uid
                     # dictionary that can be disabled with the show_uids
