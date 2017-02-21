@@ -257,9 +257,9 @@ class Config:
                                 "\n%d of %d vcard files of address book %s "
                                 "could not be parsed\n", errors, contacts, name)
 
-                    # check uniqueness of vcard uids and create short uid
-                    # dictionary that can be disabled with the show_uids
-                    # option in the config file, if desired
+                    # Check uniqueness of vcard uids and create short uid
+                    # dictionary that can be disabled with the show_uids option
+                    # in the config file, if desired.
                     if self.config['contact table']['show_uids']:
                         # check, if multiple contacts have the same uid
                         for contact in address_book.contact_list:
@@ -270,15 +270,14 @@ class Config:
                                 if matching_contact is None:
                                     self.original_uid_dict[uid] = contact
                                 else:
-                                    print("The contact %s from address book %s"
-                                          " and the contact %s from address "
-                                          "book %s have the same uid %s" % (
-                                              matching_contact.get_full_name(),
-                                              matching_contact.address_book.name,
-                                              contact.get_full_name(),
-                                              contact.address_book.name,
-                                              contact.get_uid()))
-                                    sys.exit(2)
+                                    exit("The contact %s from address book %s "
+                                         "and the contact %s from address book "
+                                         "%s have the same uid %s" % (
+                                             matching_contact.get_full_name(),
+                                             matching_contact.address_book.name,
+                                             contact.get_full_name(),
+                                             contact.address_book.name,
+                                             contact.get_uid()), prefix="")
                         # rebuild shortened uid dictionary
                         self._create_shortened_uid_dictionary()
                 return address_book
