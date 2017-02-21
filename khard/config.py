@@ -178,7 +178,7 @@ class Config:
         # load address books
         if "addressbooks" not in self.config:
             exit('Missing main section "[addressbooks]".')
-        if self.config['addressbooks'].keys():
+        if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
         for name in self.config['addressbooks'].keys():
             # create address book object
