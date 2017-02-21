@@ -250,12 +250,11 @@ class Config:
                                 "%d of %d vcard files of address book %s "
                                 "could not be parsed\nUse --debug for more "
                                 "information or --skip-unparsable to proceed",
-                                error_counter, number_of_contacts, name)
+                                errors, contacts, name)
                         else:
                             logging.debug(
                                 "\n%d of %d vcard files of address book %s "
-                                "could not be parsed\n", error_counter,
-                                number_of_contacts, name)
+                                "could not be parsed\n", errors, contacts, name)
                         if self.skip_unparsable():
                             logging.debug("")
                         else:
