@@ -1290,7 +1290,7 @@ class CarddavObject:
                     "Nickname", self.get_nicknames(), 4, -1, False)
             if self._get_roles():
                 strings += helpers.convert_to_yaml(
-                    "Role", self.get_roles(), 4, -1, False)
+                    "Role", self._get_roles(), 4, -1, False)
             if self._get_titles():
                 strings += helpers.convert_to_yaml(
                     "Title", self._get_titles(), 4, -1, False)
