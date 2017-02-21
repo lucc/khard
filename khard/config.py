@@ -255,9 +255,7 @@ class Config:
                             logging.debug(
                                 "\n%d of %d vcard files of address book %s "
                                 "could not be parsed\n", errors, contacts, name)
-                        if self.skip_unparsable():
-                            logging.debug("")
-                        else:
+                        if not self.skip_unparsable():
                             sys.exit(2)
 
                     # check uniqueness of vcard uids and create short uid
