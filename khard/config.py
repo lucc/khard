@@ -11,7 +11,6 @@ import re
 import sys
 
 import configobj
-from vobject.base import ParseError
 
 from .actions import Actions
 from .address_book import AddressBook
