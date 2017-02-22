@@ -750,9 +750,10 @@ class CarddavObject:
                 return "--%.2d-%.2d" % (date.month, date.day)
             elif (date.tzname() and date.tzname()[3:]) or \
                     (date.hour != 0 or date.minute != 0 or date.second != 0):
-                return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
+                utc_offset=-time.timezone/60/60
+                return date.strftime("%Y-%m-%dT%H:%M:%S+" + str(int(utc_offset)).zfill(2) + ":00")
             else:
-                return date.strftime(locale.nl_langinfo(locale.D_FMT))
+                return date.strftime("%Y-%m-%d")
         return ""
 
     def add_birthday(self, date):
