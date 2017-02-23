@@ -75,7 +75,7 @@ class CarddavObject:
                 self.vcard = vobject.readOne(contents)
             except Exception:
                 # if creation fails, try to repair some vcard attributes
-                self.vcard = vobject.readOne(self.filter_invalid_tags(contents))
+                self.vcard = vobject.readOne(self._filter_invalid_tags(contents))
 
     #######################################
     # factory methods to create new contact

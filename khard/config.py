@@ -246,7 +246,7 @@ class Config:
                     # check if one or more contacts could not be parsed
                     if errors > 0:
                         if not self.skip_unparsable():
-                            logging.info(
+                            logging.error(
                                 "%d of %d vcard files of address book %s "
                                 "could not be parsed\nUse --debug for more "
                                 "information or --skip-unparsable to proceed",
