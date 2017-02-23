@@ -12,12 +12,6 @@ from khard import khard
 
 class HelpOption(unittest.TestCase):
 
-    def test_khard_runner_script(self):
-        output = subprocess.check_output(['./khard-runner.py', '-h'],
-                                         env={'PYTHONPATH': '.'})
-        line = output.splitlines()[0]
-        self.assertTrue(line.startswith(b'usage: khard-runner.py [-h]'))
-
     def test_global_help(self):
         stdout = io.StringIO()
         with mock.patch("sys.stdout", stdout):
