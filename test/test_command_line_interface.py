@@ -5,43 +5,42 @@ import os
 import subprocess
 import sys
 import unittest
+import unittest.mock as mock
 
 from khard import khard
 
 
 class HelpOption(unittest.TestCase):
 
-    def setUp(self):
-        self.stdout = sys.stdout
-        self.output = io.StringIO()
-        sys.stdout = self.output
-        self.env = dict(os.environ)
-        self.env['PYTHONPATH'] = '.'
-
-    def tearDown(self):
-        self.output.close()
-        sys.stdout = self.stdout
-
     def test_khard_runner_script(self):
         output = subprocess.check_output(['./khard-runner.py', '-h'],
-                                         env=self.env)
+                                         env={'PYTHONPATH': '.'})
         line = output.splitlines()[0]
         self.assertTrue(line.startswith(b'usage: khard-runner.py [-h]'))
 
     def test_global_help(self):
-        self.assertRaises(SystemExit, khard.main, ['-h'])
-        text = self.output.getvalue().splitlines()
+        stdout = io.StringIO()
+        with mock.patch("sys.stdout", stdout):
+            with self.assertRaises(SystemExit):
+                khard.main(['-h'])
+        text = stdout.getvalue().splitlines()
         self.assertRegex(text[0], r'^usage: {} \[-h\]'.format(sys.argv[0]))
 
     def test_subcommand_help(self):
-        self.assertRaises(SystemExit, khard.main, ['list', '-h'])
-        text = self.output.getvalue().splitlines()
+        stdout = io.StringIO()
+        with mock.patch("sys.stdout", stdout):
+            with self.assertRaises(SystemExit):
+                khard.main(['list', '-h'])
+        text = stdout.getvalue().splitlines()
         self.assertRegex(text[0], r'^usage: {} list \[-h\]'.format(
             sys.argv[0]))
 
     def test_global_help_with_subcommand(self):
-        self.assertRaises(SystemExit, khard.main, ['-h', 'list'])
-        text = self.output.getvalue().splitlines()
+        stdout = io.StringIO()
+        with mock.patch("sys.stdout", stdout):
+            with self.assertRaises(SystemExit):
+                khard.main(['-h', 'list'])
+        text = stdout.getvalue().splitlines()
         self.assertRegex(text[0], r'^usage: {} \[-h\]'.format(sys.argv[0]))
 
 
