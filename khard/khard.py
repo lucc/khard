@@ -542,18 +542,17 @@ def load_address_books(names, config, search_queries=None):
 
     """
     result = []
-    if names:
-        # load address books which are defined in the configuration file
-        for name in names:
-            address_book = config.get_address_book(name, search_queries)
-            if address_book is None:
-                sys.exit(
-                    'Error: The entered address book "{}" does not exist.\n'
-                    'Possible values are: {}'.format(name, ', '.join(
-                        str(book) for book in config.get_all_address_books())))
-            else:
-                result.append(address_book)
-    else:
+    # load address books which are defined in the configuration file
+    for name in names:
+        address_book = config.get_address_book(name, search_queries)
+        if address_book is None:
+            sys.exit('Error: The entered address book "{}" does not exist.\n'
+                     'Possible values are: {}'.format(name, ', '.join(
+                         str(book) for book in config.get_all_address_books())))
+        else:
+            result.append(address_book)
+    # In case names were empty and the for loop did not run.
+    if not result and not names:
         # load contacts of all address books
         for address_book in config.get_all_address_books():
             result.append(config.get_address_book(address_book.name,
