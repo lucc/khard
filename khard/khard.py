@@ -571,29 +571,26 @@ def prepare_search_queries(args):
 
     """
     # get all possible search queries for address book parsing
-    search_query_list = []
+    queries = []
     if "source_search_terms" in args and args.source_search_terms:
-        escaped_term = ".*".join(
-            [re.escape(x) for x in args.source_search_terms])
-        search_query_list.append(escaped_term)
+        escaped_term = ".*".join(re.escape(x)
+                                 for x in args.source_search_terms)
+        queries.append(escaped_term)
         args.source_search_terms = ".*%s.*" % escaped_term
     if "search_terms" in args and args.search_terms:
-        escaped_term = ".*".join([re.escape(x) for x in args.search_terms])
-        search_query_list.append(escaped_term)
+        escaped_term = ".*".join(re.escape(x) for x in args.search_terms)
+        queries.append(escaped_term)
         args.search_terms = ".*%s.*" % escaped_term
     if "target_contact" in args and args.target_contact:
         escaped_term = re.escape(args.target_contact)
-        search_query_list.append(escaped_term)
+        queries.append(escaped_term)
         args.target_contact = ".*%s.*" % escaped_term
     if "uid" in args and args.uid:
-        search_query_list.append(args.uid)
+        queries.append(args.uid)
     if "target_uid" in args and args.target_uid:
-        search_query_list.append(args.target_uid)
-    # create regexp
-    search_queries = None
-    if search_query_list:
-        search_queries = "^.*(%s).*$" % ')|('.join(search_query_list)
-    return search_queries
+        queries.append(args.target_uid)
+    # create and return regexp
+    return "^.*(%s).*$" % ')|('.join(queries) if queries else None
 
 
 def new_subcommand(selected_address_books, input_from_stdin_or_file,
