@@ -528,6 +528,41 @@ def merge_args_into_config(args, config):
         config.set_skip_unparsable(True)
 
 
+def load_address_books(names, config, search_queries=None):
+    """Load all address books with the given names from the config.
+
+    :param names: the address books to load
+    :type names: list(str)
+    :param config: the config instance to use when looking up address books
+    :type config: config.Config
+    :param search_queries:
+    :type search_queries: None or str
+    :returns: the loaded address books
+    :rtype: list(addressbook.AddressBook)
+
+    """
+    result = []
+    if names:
+        # load address books which are defined in the configuration file
+        for name in names:
+            address_book = config.get_address_book(name, search_queries)
+            if address_book is None:
+                print("Error: The entered address book \"%s\" does not exist."
+                      "\nPossible values are: %s" % (
+                          name, ', '.join([str(book) for book in
+                                           config.get_all_address_books()])))
+                sys.exit(1)
+            else:
+                result.append(address_book)
+    else:
+        # load contacts of all address books
+        for address_book in config.get_all_address_books():
+            result.append(config.get_address_book(address_book.name,
+                                                  search_queries))
+    logging.debug("addressbooks: %s", result)
+    return result
+
+
 def new_subcommand(selected_address_books, input_from_stdin_or_file,
                    open_editor):
     """Create a new contact.
@@ -1555,44 +1590,12 @@ def main(argv=sys.argv[1:]):
         search_queries = "^.*(%s).*$" % ')|('.join(search_query_list)
 
     # load address books
-    if "addressbook" in args and args.addressbook != []:
-        # load address books which are defined in the configuration file
-        for index, name in enumerate(args.addressbook):
-            address_book = config.get_address_book(name, search_queries)
-            if address_book is None:
-                print("Error: The entered address book \"%s\" does not exist."
-                      "\nPossible values are: %s" % (
-                          name, ', '.join([str(book) for book in
-                                           config.get_all_address_books()])))
-                sys.exit(1)
-            else:
-                args.addressbook[index] = address_book
-    else:
-        # load contacts of all address books
-        args.addressbook = []
-        for address_book in config.get_all_address_books():
-            args.addressbook.append(config.get_address_book(
-                address_book.name, search_queries))
-    logging.debug("addressbooks: {}".format(args.addressbook))
-
-    # load target address books
-    if "target_addressbook" in args and args.target_addressbook != []:
-        for index, name in enumerate(args.target_addressbook):
-            address_book = config.get_address_book(name, search_queries)
-            if address_book is None:
-                print("Error: The entered address book \"%s\" does not exist."
-                      "\nPossible values are: %s" % (
-                          name, ', '.join([str(book) for book in
-                                           config.get_all_address_books()])))
-                sys.exit(1)
-            else:
-                args.target_addressbook[index] = address_book
-    else:
-        args.target_addressbook = []
-        for address_book in config.get_all_address_books():
-            args.target_addressbook.append(config.get_address_book(
-                address_book.name, search_queries))
-    logging.debug("target addressbooks: {}".format(args.target_addressbook))
+    if "addressbook" in args:
+        args.addressbook = load_address_books(args.addressbook, config,
+                                              search_queries)
+    if "target_addressbook" in args:
+        args.target_addressbook = load_address_books(args.target_addressbook,
+                                                     config, search_queries)
 
     # fill contact list
     vcard_list = []
