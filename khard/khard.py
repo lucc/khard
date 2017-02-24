@@ -608,7 +608,7 @@ def generate_contact_list(config, args):
     vcard_list = []
     if "uid" in args and args.uid:
         # If an uid was given we use it to find the contact.
-        logging.debug("args.uid={}".format(args.uid))
+        logging.debug("args.uid=%s", args.uid)
         # We require that no search terms where given.
         if ("search_terms" in args and args.search_terms) or (
                 "source_search_terms" in args and args.source_search_terms):
@@ -618,18 +618,17 @@ def generate_contact_list(config, args):
             # set search terms to the empty query to prevent errors in
             # phone and email actions
             args.search_terms = ".*"
-        vcard_list = get_contacts(config.get_all_address_books(),
-                                  args.uid, method="uid")
+        vcard_list = get_contacts(config.get_all_address_books(), args.uid,
+                                  method="uid")
         # We require that the uid given can uniquely identify a contact.
-        if len(vcard_list) != 1:
-            if not vcard_list:
-                print("Found no contact for %suid %s" % (
-                    "source " if args.action == "merge" else "", args.uid))
-            else:
-                print("Found multiple contacts for %suid %s" % (
-                    "source " if args.action == "merge" else "", args.uid))
-                for vcard in vcard_list:
-                    print("    %s: %s" % (vcard, vcard.get_uid()))
+        if not vcard_list:
+            sys.exit("Found no contact for {}uid {}".format(
+                "source " if args.action == "merge" else "", args.uid))
+        elif len(vcard_list) != 1:
+            print("Found multiple contacts for {}uid {}".format(
+                "source " if args.action == "merge" else "", args.uid))
+            for vcard in vcard_list:
+                print("    {}: {}".format(vcard, vcard.get_uid()))
             sys.exit(1)
     else:
         # No uid was given so we try to use the search terms to select a
@@ -649,7 +648,7 @@ def generate_contact_list(config, args):
             # If no search terms where given on the command line we match
             # everything with the empty search pattern.
             args.search_terms = ".*"
-        logging.debug("args.search_terms={}".format(args.search_terms))
+        logging.debug("args.search_terms=%s", args.search_terms)
         vcard_list = get_contact_list_by_user_selection(
             args.addressbook, args.search_terms,
             args.strict_search if "strict_search" in args else False)
