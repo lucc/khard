@@ -609,15 +609,9 @@ def generate_contact_list(config, args):
     if "uid" in args and args.uid:
         # If an uid was given we use it to find the contact.
         logging.debug("args.uid=%s", args.uid)
-        # We require that no search terms where given.
-        if ("search_terms" in args and args.search_terms) or (
-                "source_search_terms" in args and args.source_search_terms):
-            parser.error("You can not give arbitrary search terms and "
-                         "--uid at the same time.")
-        else:
-            # set search terms to the empty query to prevent errors in
-            # phone and email actions
-            args.search_terms = ".*"
+        # set search terms to the empty query to prevent errors in
+        # phone and email actions
+        args.search_terms = ".*"
         vcard_list = get_contacts(config.get_all_address_books(), args.uid,
                                   method="uid")
         # We require that the uid given can uniquely identify a contact.
@@ -1632,6 +1626,14 @@ def parse_args(argv):
 
     # Finish up with a debug report and return the result.
     logging.debug("second args={}".format(args))
+
+    # An integrity check for some options.
+    if "uid" in args and args.uid and (
+            ("search_terms" in args and args.search_terms) or
+            ("source_search_terms" in args and args.source_search_terms)):
+        # If an uid was given we require that no search terms where given.
+        parser.error("You can not give arbitrary search terms and --uid at the"
+                     " same time.")
     return args
 
 
