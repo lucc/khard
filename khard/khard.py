@@ -494,6 +494,40 @@ def get_contacts(address_books, query, method="all", reverse=False,
                              '{}.'.format(sort))
 
 
+def merge_args_into_config(args, config):
+    """Merge the parsed arguments from argparse into the config object.
+
+    :param args: the parsed command line arguments
+    :type args: argparse.Namespace
+    :param config: the parsed config file
+    :type config: config.Config
+    :returns: the merged config object
+    :rtype: config.Config
+
+    """
+    # display by name: first or last name
+    if "display" in args and args.display:
+        config.set_display_by_name(args.display)
+    # group by address book
+    if "group_by_addressbook" in args and args.group_by_addressbook:
+        config.set_group_by_addressbook(True)
+    # reverse contact list
+    if "reverse" in args and args.reverse:
+        config.set_reverse(True)
+    # sort criteria: first or last name
+    if "sort" in args and args.sort:
+        config.sort = args.sort
+    # preferred vcard version
+    if "vcard_version" in args and args.vcard_version:
+        config.set_preferred_vcard_version(args.vcard_version)
+    # search in source files
+    if "search_in_source_files" in args and args.search_in_source_files:
+        config.set_search_in_source_files(True)
+    # skip unparsable vcards
+    if "skip_unparsable" in args and args.skip_unparsable:
+        config.set_skip_unparsable(True)
+
+
 def new_subcommand(selected_address_books, input_from_stdin_or_file,
                    open_editor):
     """Create a new contact.
@@ -1493,33 +1527,7 @@ def main(argv=sys.argv[1:]):
         print('\n'.join(contact.filename for contact in vcard_list))
         return
 
-    # display by name: first or last name
-    if "display" in args and args.display:
-        config.set_display_by_name(args.display)
-
-    # group by address book
-    if "group_by_addressbook" in args and args.group_by_addressbook:
-        config.set_group_by_addressbook(True)
-
-    # reverse contact list
-    if "reverse" in args and args.reverse:
-        config.set_reverse(True)
-
-    # sort criteria: first or last name
-    if "sort" in args and args.sort:
-        config.sort = args.sort
-
-    # preferred vcard version
-    if "vcard_version" in args and args.vcard_version:
-        config.set_preferred_vcard_version(args.vcard_version)
-
-    # search in source files
-    if "search_in_source_files" in args and args.search_in_source_files:
-        config.set_search_in_source_files(True)
-
-    # skip unparsable vcards
-    if "skip_unparsable" in args and args.skip_unparsable:
-        config.set_skip_unparsable(True)
+    merge_args_into_config(args, config)
 
     # get all possible search queries for address book parsing
     search_query_list = []
