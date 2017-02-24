@@ -1604,14 +1604,14 @@ def parse_args(argv):
     # the config file.
     if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
-    logging.debug("first args={}".format(args))
-    logging.debug("remainder={}".format(remainder))
+    logging.debug("first args=%s", args)
+    logging.debug("remainder=%s", remainder)
 
     # Set the default command from the config file if none was given on the
     # command line.
     if not remainder or remainder[0] not in Actions.get_all():
         remainder.insert(0, config.default_action)
-        logging.debug("updated remainder={}".format(remainder))
+        logging.debug("updated remainder=%s", remainder)
 
     # Save the last option that needs to be carried from the first parser run
     # to the second.
@@ -1623,9 +1623,7 @@ def parse_args(argv):
 
     # Restore settings that are left from the first parser run.
     args.skip_unparsable = skip
-
-    # Finish up with a debug report and return the result.
-    logging.debug("second args={}".format(args))
+    logging.debug("second args=%s", args)
 
     # An integrity check for some options.
     if "uid" in args and args.uid and (
