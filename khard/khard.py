@@ -547,11 +547,10 @@ def load_address_books(names, config, search_queries=None):
         for name in names:
             address_book = config.get_address_book(name, search_queries)
             if address_book is None:
-                print("Error: The entered address book \"%s\" does not exist."
-                      "\nPossible values are: %s" % (
-                          name, ', '.join([str(book) for book in
-                                           config.get_all_address_books()])))
-                sys.exit(1)
+                sys.exit(
+                    'Error: The entered address book "{}" does not exist.\n'
+                    'Possible values are: {}'.format(name, ', '.join(
+                        str(book) for book in config.get_all_address_books())))
             else:
                 result.append(address_book)
     else:
