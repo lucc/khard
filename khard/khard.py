@@ -593,6 +593,69 @@ def prepare_search_queries(args):
     return "^.*(%s).*$" % ')|('.join(queries) if queries else None
 
 
+def generate_contact_list(config, args):
+    """TODO: Docstring for generate_contact_list.
+
+    :param config: the config object to use
+    :type config: config.Config
+    :param args: the command line arguments
+    :type args: argparse.Namespace
+    :returns: the contacts for further processing (TODO)
+    :rtype: list(TODO)
+
+    """
+    # fill contact list
+    vcard_list = []
+    if "uid" in args and args.uid:
+        # If an uid was given we use it to find the contact.
+        logging.debug("args.uid={}".format(args.uid))
+        # We require that no search terms where given.
+        if ("search_terms" in args and args.search_terms) or (
+                "source_search_terms" in args and args.source_search_terms):
+            parser.error("You can not give arbitrary search terms and "
+                         "--uid at the same time.")
+        else:
+            # set search terms to the empty query to prevent errors in
+            # phone and email actions
+            args.search_terms = ".*"
+        vcard_list = get_contacts(config.get_all_address_books(),
+                                  args.uid, method="uid")
+        # We require that the uid given can uniquely identify a contact.
+        if len(vcard_list) != 1:
+            if not vcard_list:
+                print("Found no contact for %suid %s" % (
+                    "source " if args.action == "merge" else "", args.uid))
+            else:
+                print("Found multiple contacts for %suid %s" % (
+                    "source " if args.action == "merge" else "", args.uid))
+                for vcard in vcard_list:
+                    print("    %s: %s" % (vcard, vcard.get_uid()))
+            sys.exit(1)
+    else:
+        # No uid was given so we try to use the search terms to select a
+        # contact.
+        if "source_search_terms" in args:
+            # exception for merge command
+            if args.source_search_terms:
+                args.search_terms = args.source_search_terms
+            else:
+                args.search_terms = ".*"
+        elif "search_terms" in args:
+            if args.search_terms:
+                args.search_terms = args.search_terms
+            else:
+                args.search_terms = ".*"
+        else:
+            # If no search terms where given on the command line we match
+            # everything with the empty search pattern.
+            args.search_terms = ".*"
+        logging.debug("args.search_terms={}".format(args.search_terms))
+        vcard_list = get_contact_list_by_user_selection(
+            args.addressbook, args.search_terms,
+            args.strict_search if "strict_search" in args else False)
+    return vcard_list
+
+
 def new_subcommand(selected_address_books, input_from_stdin_or_file,
                    open_editor):
     """Create a new contact.
@@ -1603,56 +1666,7 @@ def main(argv=sys.argv[1:]):
         args.target_addressbook = load_address_books(args.target_addressbook,
                                                      config, search_queries)
 
-    # fill contact list
-    vcard_list = []
-    if "uid" in args and args.uid:
-        # If an uid was given we use it to find the contact.
-        logging.debug("args.uid={}".format(args.uid))
-        # We require that no search terms where given.
-        if ("search_terms" in args and args.search_terms) \
-                or ("source_search_terms" in args and args.source_search_terms):
-            print("Error: You can not give arbitrary search terms and "
-                  "-uid at the same time.")
-            sys.exit(1)
-        else:
-            # set search terms to the empty query to prevent errors in
-            # phone and email actions
-            args.search_terms = ".*"
-        vcard_list = get_contacts(config.get_all_address_books(),
-                                  args.uid, method="uid")
-        # We require that the uid given can uniquely identify a contact.
-        if len(vcard_list) != 1:
-            if not vcard_list:
-                print("Found no contact for %suid %s" % (
-                    "source " if args.action == "merge" else "", args.uid))
-            else:
-                print("Found multiple contacts for %suid %s" % (
-                    "source " if args.action == "merge" else "", args.uid))
-                for vcard in vcard_list:
-                    print("    %s: %s" % (vcard, vcard.get_uid()))
-            sys.exit(1)
-    else:
-        # No uid was given so we try to use the search terms to select a
-        # contact.
-        if "source_search_terms" in args:
-            # exception for merge command
-            if args.source_search_terms:
-                args.search_terms = args.source_search_terms
-            else:
-                args.search_terms = ".*"
-        elif "search_terms" in args:
-            if args.search_terms:
-                args.search_terms = args.search_terms
-            else:
-                args.search_terms = ".*"
-        else:
-            # If no search terms where given on the command line we match
-            # everything with the empty search pattern.
-            args.search_terms = ".*"
-        logging.debug("args.search_terms={}".format(args.search_terms))
-        vcard_list = get_contact_list_by_user_selection(
-            args.addressbook, args.search_terms,
-            args.strict_search if "strict_search" in args else False)
+    vcard_list = generate_contact_list(config, args)
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
