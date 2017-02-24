@@ -1592,13 +1592,13 @@ def main():
     else:
         # No uid was given so we try to use the search terms to select a
         # contact.
-        if hasattr(args, "source_search_terms"):
+        if "source_search_terms" in args:
             # exception for merge command
             if args.source_search_terms:
                 args.search_terms = args.source_search_terms
             else:
                 args.search_terms = ".*"
-        elif hasattr(args, "search_terms"):
+        elif "search_terms" in args:
             if args.search_terms:
                 args.search_terms = args.search_terms
             else:
@@ -1614,7 +1614,7 @@ def main():
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
-    if hasattr(args, "input_file"):
+    if "input_file" in args:
         if args.input_file != "-":
             # try to read from specified input file
             try:
