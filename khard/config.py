@@ -277,10 +277,9 @@ class Config:
                                     exit("The contact %s from address book %s "
                                          "and the contact %s from address book "
                                          "%s have the same uid %s" % (
-                                             matching_contact.get_full_name(),
-                                             matching_contact.address_book.name,
-                                             contact.get_full_name(),
-                                             contact.address_book.name,
+                                             matching_contact,
+                                             matching_contact.address_book,
+                                             contact, contact.address_book,
                                              contact.get_uid()), prefix="")
                         # rebuild shortened uid dictionary
                         self._create_shortened_uid_dictionary()
