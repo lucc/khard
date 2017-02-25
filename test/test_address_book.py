@@ -87,10 +87,9 @@ class VcardAdressBookLoad(unittest.TestCase):
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
         self.assertEqual(len(abook.contacts), 2)
-        # TODO: There is also a warning about duplicate uids but that might be
-        # a bug.
-        self.assertIn('WARNING:root:The contact minimal contact from address '
-                      'book test has no UID', cm.output)
+        messages = ['WARNING:root:Card minimal contact from address book test '
+                    'has no UID and will not be availbale.']
+        self.assertListEqual(cm.output, messages)
 
     def test_search_in_source_files_only_loads_matching_cards(self):
         abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')

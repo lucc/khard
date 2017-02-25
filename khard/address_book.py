@@ -31,7 +31,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :type name: str
         """
         self.loaded = False
-        self.contacts = []
+        self.contacts = {}
         self._uids = None
         self._short_uids = None
         self.name = name
@@ -75,7 +75,7 @@ class AddressBook(metaclass=abc.ABCMeta):
 
         """
         regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
-        for contact in self.contacts:
+        for contact in self.contacts.values():
             # search in all contact fields
             contact_details = contact.print_vcard()
             if regexp.search(contact_details) is not None:
@@ -98,7 +98,7 @@ class AddressBook(metaclass=abc.ABCMeta):
 
         """
         regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
-        for contact in self.contacts:
+        for contact in self.contacts.values():
             # only search in contact name
             if regexp.search(contact.get_full_name()) is not None:
                 yield contact
@@ -114,13 +114,13 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         found = False
         # Search for contacts with uid == query.
-        for contact in self.contacts:
+        for contact in self.contacts.values():
             if contact.get_uid() == query:
                 found = True
                 yield contact
         # If that fails, search for contacts where uid starts with query.
         if not found:
-            for contact in self.contacts:
+            for contact in self.contacts.values():
                 if contact.get_uid().startswith(query):
                     yield contact
 
@@ -160,7 +160,7 @@ class AddressBook(metaclass=abc.ABCMeta):
             if not self.loaded:
                 self.load()
             self._uids = dict()
-            for contact in self.contacts:
+            for contact in self.contacts.values():
                 uid = contact.get_uid()
                 if uid:
                     if uid in self._uids:
@@ -299,15 +299,23 @@ class VdirAddressBook(AddressBook):
                 else:
                     raise AddressBookParseError(filename)
             else:
-                self.contacts.append(card)
+                uid = card.get_uid()
+                if not uid:
+                    logging.warning("Card %s from address book %s has no UID "
+                                    "and will not be availbale.", card,
+                                    self.name)
+                elif uid in self.contacts:
+                    logging.warning(
+                        "Card %s and %s from address book %s have the same "
+                        "UID. The former will not be availbale.", card,
+                        self.contacts[uid], self.name)
+                else:
+                    self.contacts[uid] = card
         self.loaded = True
-        if skip:
+        if errors:
             logging.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
-        if len(self.contacts) != len(self.get_uids_dict()):
-            logging.warning("There are duplicate UIDs in the address book %s.",
-                            self)
         return len(self.contacts), errors
 
 
@@ -339,8 +347,15 @@ class AddressBookCollection(AddressBook):
             _, err = abook.load(query, private_objects, localize_dates, skip)
             errors += err
         self.loaded = True
-        self.contacts = [contact for contact in abook.contacts
-                         for abook in self._abooks]
+        for abook in self._abooks:
+            for uid in abook.contacts:
+                if uid in self.contacts:
+                    logging.warning(
+                        "Card %s from address book %s will not be availbale "
+                        "because there is already another card with the same "
+                        "UID: %s", abook.contacts[uid], abook, uid)
+                else:
+                    self.contacts[uid] = abook.contacts[uid]
         return len(self.contacts), errors
 
     def get_abook(self, name):
