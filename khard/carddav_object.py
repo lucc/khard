@@ -1561,7 +1561,7 @@ class CarddavObject(YAMLEditable):
 
         # address book name
         if show_address_book:
-            strings.append("Address book: %s" % self.address_book.name)
+            strings.append("Address book: %s" % self.address_book)
 
         # person related information
         if (self.birthday is not None or self.anniversary is not None
