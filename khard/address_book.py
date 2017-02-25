@@ -111,17 +111,16 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: generator(carddav_object.CarddavObject)
 
         """
-        found = False
-        # Search for contacts with uid == query.
-        for contact in self.contacts.values():
-            if contact.get_uid() == query:
-                found = True
-                yield contact
-        # If that fails, search for contacts where uid starts with query.
-        if not found:
-            for contact in self.contacts.values():
-                if contact.get_uid().startswith(query):
-                    yield contact
+        try:
+            # First we treat the argument as a full UID and try to match it
+            # exactly.
+            yield self.contacts[query]
+        except KeyError:
+            # If that failed we look for all contacts whos UID start with the
+            # given query.
+            for uid in self.contacts:
+                if uid.startswith(query):
+                    yield self.contacts[uid]
 
     def search(self, query, method="all"):
         """Search this address book for contacts matching the query.  The
