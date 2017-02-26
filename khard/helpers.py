@@ -92,26 +92,6 @@ def get_random_uid():
                     for _ in range(36)])
 
 
-def compare_uids(uid1, uid2):
-    """Calculate the minimum length of initial substrings of uid1 and uid2 for
-    them to be different.
-
-    :param uid1: first uid to compare
-    :type uid1: str
-    :param uid2: second uid to compare
-    :type uid2: str
-    :returns: the length of the shortes unequal inital substrings
-    :rtype: int
-    """
-    sum = 0
-    for c1, c2 in zip(uid1, uid2):
-        if c1 == c2:
-            sum += 1
-        else:
-            break
-    return sum
-
-
 def file_modification_date(filename):
     t = os.path.getmtime(filename)
     return datetime.fromtimestamp(t)
@@ -251,28 +231,28 @@ def get_new_contact_template(supported_private_objects=[]):
         # every entry may contain a string or a list of strings
         # format:
         #   First name : name1
-        #   Additional : 
+        #   Additional :
         #       - name2
         #       - name3
         #   Last name  : name4
-        Prefix     : 
-        First name : 
-        Additional : 
-        Last name  : 
-        Suffix     : 
+        Prefix     :
+        First name :
+        Additional :
+        Last name  :
+        Suffix     :
 
         # nickname
         # may contain a string or a list of strings
-        Nickname : 
+        Nickname :
 
         # important dates
         # Formats:
         #   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
         #   vcard 4.0 only: --mm-dd or text= string value
         # anniversary
-        Anniversary : 
+        Anniversary :
         # birthday
-        Birthday : 
+        Birthday :
 
         # organisation
         # format:
@@ -286,17 +266,17 @@ def get_new_contact_template(supported_private_objects=[]):
         #       -
         #           - company
         #           - unit
-        Organisation : 
+        Organisation :
 
         # organisation title and role
         # every entry may contain a string or a list of strings
         #
         # title at organisation
         # example usage: research scientist
-        Title : 
+        Title :
         # role at organisation
         # example usage: project leader
-        Role  : 
+        Role  :
 
         # phone numbers
         # format:
@@ -314,8 +294,8 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Alternatively you may use a single custom label (only letters).
         #   But beware, that not all address book clients will support custom labels.
         Phone :
-            cell : 
-            home : 
+            cell :
+            home :
 
         # email addresses
         # format like phone numbers above
@@ -324,8 +304,8 @@ def get_new_contact_template(supported_private_objects=[]):
         #   vcard 4.0: At least one of home, internet, pref, work
         #   Alternatively you may use a single custom label (only letters).
         Email :
-            home : 
-            work : 
+            home :
+            work :
 
         # post addresses
         # allowed types:
@@ -334,13 +314,13 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Alternatively you may use a single custom label (only letters).
         Address :
             home :
-                Box      : 
-                Extended : 
-                Street   : 
-                Code     : 
-                City     : 
-                Region   : 
-                Country  : 
+                Box      :
+                Extended :
+                Street   :
+                Code     :
+                City     :
+                Region   :
+                Country  :
 
         # categories or tags
         # format:
@@ -349,11 +329,11 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Categories :
         #       - category1
         #       - category2
-        Categories : 
+        Categories :
 
         # web pages
         # may contain a string or a list of strings
-        Webpage : 
+        Webpage :
 
         # private objects
         # define your own private objects in the vcard section of your khard config file
@@ -371,6 +351,6 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Note : |
         #       line one
         #       line two
-        Note : 
+        Note :
         """ % '\n'.join(formatted_private_objects))
 

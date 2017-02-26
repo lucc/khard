@@ -10,7 +10,6 @@ import re
 import vobject.base
 
 from .carddav_object import CarddavObject
-from .helpers import compare_uids
 
 
 class AddressBookParseError(Exception):
@@ -46,6 +45,26 @@ class AddressBook(metaclass=abc.ABCMeta):
 
     def __ne__(self, other):
         return not self == other
+
+    @staticmethod
+    def _compare_uids(uid1, uid2):
+        """Calculate the minimum length of initial substrings of uid1 and uid2
+        for them to be different.
+
+        :param uid1: first uid to compare
+        :type uid1: str
+        :param uid2: second uid to compare
+        :type uid2: str
+        :returns: the length of the shortes unequal inital substrings
+        :rtype: int
+        """
+        sum = 0
+        for c1, c2 in zip(uid1, uid2):
+            if c1 == c2:
+                sum += 1
+            else:
+                break
+        return sum
 
     def _search_all(self, query):
         """Search in all fields for contacts matching query.
@@ -151,6 +170,39 @@ class AddressBook(metaclass=abc.ABCMeta):
                     logging.warning("The contact %s from address book %s has no "
                                     "UID", contact, self)
         return self._uids
+
+    def get_short_uid_dict(self):
+        """Create a dictionary of shortend UIDs for all contacts.
+
+        :returns: the contacts mapped by the shortes unique prefix of their UID
+        :rtype: dict(str: CarddavObject)
+
+        """
+        if self._short_uids is None:
+            self.get_uids_dict()
+            if not self._uids:
+                self._short_uids = {}
+            elif len(self._uids) == 1:
+                self._short_uids = {key[:1]: value
+                                    for key, value in self._uids.items()}
+            else:
+                self._short_uids = {}
+                sorted_uids = sorted(self._uids)
+                # Prepare for the loop; the first and last items are handled
+                # seperatly.
+                item0, item1 = sorted_uids[:2]
+                same1 = self._compare_uids(item0, item1)
+                self._short_uids[item0[:same1+1]] = self._uids[item0]
+                for item_new in sorted_uids[2:]:
+                    # shift the items and the common prefix lenght one further
+                    item0, item1 = item1, item_new
+                    same0, same1 = same1, self._compare_uids(item0, item1)
+                    # compute the final prefix length for item1
+                    same = max(same0, same1)
+                    self._short_uids[item0[:same+1]] = self._uids[item0]
+                # Save the last item.
+                self._short_uids[item1[:same1+1]] = self._uids[item1]
+        return self._short_uids
 
     @abc.abstractmethod
     def load(self, query=None, private_objects=tuple(), localize_dates=True):
@@ -312,36 +364,3 @@ class AddressBookCollection(AddressBook):
                     else:
                         self._uids[uid] = uids[uid]
         return self._uids
-
-    def get_short_uid_dict(self):
-        """Create a dictionary of shortend UIDs for all contacts.
-
-        :returns: the contacts mapped by the shortes unique prefix of their UID
-        :rtype: dict(str: CarddavObject)
-
-        """
-        if self._short_uids is None:
-            self.get_uids_dict()
-            if not self._uids:
-                self._short_uids = {}
-            elif len(self._uids) == 1:
-                self._short_uids = {key[:1]: value
-                                    for key, value in self._uids.items()}
-            else:
-                self._short_uids = {}
-                sorted_uids = sorted(self._uids)
-                # Prepare for the loop; the first and last items are handled
-                # seperatly.
-                item0, item1 = sorted_uids[:2]
-                same1 = compare_uids(item0, item1)
-                self._short_uids[item0[:same1+1]] = self._uids[item0]
-                for item_new in sorted_uids[2:]:
-                    # shift the items and the common prefix lenght one further
-                    item0, item1 = item1, item_new
-                    same0, same1 = same1, compare_uids(item0, item1)
-                    # compute the final prefix length for item1
-                    same = max(same0, same1)
-                    self._short_uids[item0[:same+1]] = self._uids[item0]
-                # Save the last item.
-                self._short_uids[item1[:same1+1]] = self._uids[item1]
-        return self._short_uids
