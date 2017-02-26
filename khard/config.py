@@ -13,7 +13,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import AddressBook
+from .address_book import VdirAddressBook
 from . import helpers
 
 
@@ -185,7 +185,7 @@ class Config:
         for name in self.config['addressbooks'].keys():
             # create address book object
             try:
-                address_book = AddressBook(
+                address_book = VdirAddressBook(
                     name, self.config['addressbooks'][name]['path'])
             except KeyError:
                 exit("Missing path to the \"%s\" address book." % name)
@@ -227,7 +227,7 @@ class Config:
         address books already contain their contact objects
         if you must be sure, get every address book individually with the
         get_address_book() function below
-        :rtype: list(AddressBook)
+        :rtype: list(address_book.AddressBook)
         """
         return self.address_book_list
 
@@ -235,7 +235,7 @@ class Config:
         """
         return address book object or None, if the address book with the
         given name does not exist
-        :rtype: AddressBook
+        :rtype: address_book.AddressBook
         """
         if not self.search_in_source_files():
             search_queries = None
@@ -243,9 +243,9 @@ class Config:
             if name == address_book.name:
                 if not address_book.loaded:
                     # load vcard files of address book
-                    contacts, errors = address_book.load_all_vcards(
-                        self.get_supported_private_objects(),
-                        self.localize_dates(), search_queries)
+                    contacts, errors = address_book.load(
+                        search_queries, self.get_supported_private_objects(),
+                        self.localize_dates())
 
                     # check if one or more contacts could not be parsed
                     if errors > 0:
@@ -266,7 +266,7 @@ class Config:
                     # in the config file, if desired.
                     if self.config['contact table']['show_uids']:
                         # check, if multiple contacts have the same uid
-                        for contact in address_book.contact_list:
+                        for contact in address_book.contacts:
                             uid = contact.get_uid()
                             if uid:
                                 if uid not in self.original_uid_dict:

@@ -432,7 +432,7 @@ def choose_vcard_from_list(header_string, vcard_list):
 def get_contact_list_by_user_selection(address_books, search, strict_search):
     """returns a list of CarddavObject objects
     :param address_books: list of selected address books
-    :type address_books: list(AddressBook)
+    :type address_books: list(address_book.AddressBook)
     :param search: filter contact list
     :type search: str
     :param strict_search: if True, search only in full name field
