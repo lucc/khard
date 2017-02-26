@@ -7,7 +7,14 @@ import logging
 import os
 import re
 
+import vobject.base
+
 from .carddav_object import CarddavObject
+
+
+class AddressBookParseError(Exception):
+    """Indicate an error while parsing data from an address book backend."""
+    pass
 
 
 class AddressBook(metaclass=abc.ABCMeta):
@@ -180,7 +187,8 @@ class VdirAddressBook(AddressBook):
                 self._uids.add(uid)
         return duplicates
 
-    def load(self, query=None, private_objects=tuple(), localize_dates=True):
+    def load(self, query=None, private_objects=tuple(), localize_dates=True,
+             skip=False):
         """Load all vcard files in this address book from disk.  If a search
         string is given only files which contents match that will be loaded.
 
@@ -191,6 +199,8 @@ class VdirAddressBook(AddressBook):
         :type private_objects: list(str) or tuple(str)
         :param localize_dates: TODO
         :type localize_dates: bool
+        :param skip: skip unparsable vCard files
+        :type skip: bool
         :returns: the number of successfully loaded cards and the number of
             errors
         :rtype: int, int
@@ -198,30 +208,31 @@ class VdirAddressBook(AddressBook):
         """
         if self.loaded:
             return len(self.contacts), 0
-        contacts = 0
         errors = 0
         for filename in self._find_vcard_files(search=query):
-            contacts += 1
             try:
                 card = CarddavObject.from_file(self, filename, private_objects,
                                                localize_dates)
-            except IOError as err:
-                logging.debug("Error: Could not open file %s\n%s", filename,
-                              err)
-                errors += 1
-            except Exception as err:
-                logging.debug("Error: Could not parse file %s\n%s", filename,
-                              err)
-                errors += 1
+            except (IOError, vobject.base.ParseError) as err:
+                if skip:
+                    verb = "open" if isinstance(err, IOError) else "parse"
+                    logging.debug("Error: Could not %s file %s\n%s", verb,
+                                  filename, err)
+                    errors += 1
+                else:
+                    raise AddressBookParseError()
             else:
                 self.contacts.append(card)
+        if skip:
+            logging.warning(
+                "%d of %d vCard files of address book %s could not be parsed.",
+                errors, len(self.contacts)+errors, name)
         duplicates = self._check_uids()
         if duplicates:
-            logging.warning(
-                "There are duplicate UIDs in the address book %s: %s",
-                self.name, duplicates)
+            logging.warning("There are duplicate UIDs in the address book %s: "
+                            "%s", self.name, duplicates)
         self.loaded = True
-        return contacts, errors
+        return len(self.contacts), errors
 
 
 class AddressBookCollection(AddressBook):

@@ -13,7 +13,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import AddressBookCollection
+from .address_book import AddressBookCollection, AddressBookParseError
 from . import helpers
 
 
@@ -242,23 +242,18 @@ class Config:
             # Return None if no address book did match the given name.
             return None
         if not address_book.loaded:
-            # load vcard files of address book
-            contacts, errors = address_book.load(
-                search_queries, self.get_supported_private_objects(),
-                self.localize_dates())
-
-            # check if one or more contacts could not be parsed
-            if errors > 0:
+            try:
+                # load vcard files of address book
+                contacts, errors = address_book.load(
+                    search_queries, self.get_supported_private_objects(),
+                    self.localize_dates(), self.skip_unparsable())
+            except AddressBookParseError:
                 if not self.skip_unparsable():
                     logging.error(
                         "%d of %d vcard files of address book %s could not be "
                         "parsed\nUse --debug for more information or "
                         "--skip-unparsable to proceed", errors, contacts, name)
                     sys.exit(2)
-                else:
-                    logging.debug(
-                        "\n%d of %d vcard files of address book %s could not "
-                        "be parsed\n", errors, contacts, name)
 
             # Check uniqueness of vcard uids and create short uid dictionary.
             # This can be disabled with the show_uids option in the config file,
