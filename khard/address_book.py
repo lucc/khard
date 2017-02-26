@@ -10,6 +10,7 @@ import re
 import vobject.base
 
 from .carddav_object import CarddavObject
+from .helpers import compare_uids
 
 
 class AddressBookParseError(Exception):
@@ -30,7 +31,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         self.loaded = False
         self.contacts = []
-        self._uids = set()
+        self._uids = None
         self.name = name
         self.path = os.path.expanduser(path)
         if not os.path.isdir(self.path):
@@ -126,6 +127,31 @@ class AddressBook(metaclass=abc.ABCMeta):
                              'are supported.')
         return list(search_function(query))
 
+    def get_uids_dict(self):
+        """Create a dictionary of UIDs for all contacts.
+
+        :returns: all contacts mapped by their UID
+        :rtype: dict(str: CarddavObject)
+
+        """
+        if self._uids is None:
+            if not self.loaded:
+                self.load()
+            self._uids = dict()
+            for contact in self.contacts:
+                uid = contact.get_uid()
+                if uid:
+                    if uid in self._uids:
+                        logging.warning("The contacts %s and %s from address "
+                                        "book %s have the same UID %s", contact,
+                                        self._uids[uid], self, uid)
+                    else:
+                        self._uids[uid] = contact
+                else:
+                    logging.warning("The contact %s from address book %s has no "
+                                    "UID", contact, self)
+        return self._uids
+
     @abc.abstractmethod
     def load(self, query=None, private_objects=tuple(), localize_dates=True):
         """Load the vCards from the backing store.  If a query is given loading
@@ -170,23 +196,6 @@ class VdirAddressBook(AddressBook):
             else:
                 yield filename
 
-    def _check_uids(self):
-        """Check that the uids of all cards are unique across this address
-        book.
-
-        :returns: the set of duplicate uids
-        :rtype: set(str)
-
-        """
-        duplicates = set()
-        for contact in self.contacts:
-            uid = contact.get_uid()
-            if uid in self._uids:
-                duplicates.add(uid)
-            else:
-                self._uids.add(uid)
-        return duplicates
-
     def load(self, query=None, private_objects=tuple(), localize_dates=True,
              skip=False):
         """Load all vcard files in this address book from disk.  If a search
@@ -223,15 +232,14 @@ class VdirAddressBook(AddressBook):
                     raise AddressBookParseError()
             else:
                 self.contacts.append(card)
+        self.loaded = True
         if skip:
             logging.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
-                errors, len(self.contacts)+errors, name)
-        duplicates = self._check_uids()
-        if duplicates:
-            logging.warning("There are duplicate UIDs in the address book %s: "
-                            "%s", self.name, duplicates)
-        self.loaded = True
+                errors, len(self.contacts)+errors, self)
+        if len(self.contacts) != len(self.get_uids_dict()):
+            logging.warning("There are duplicate UIDs in the address book %s.",
+                            self)
         return len(self.contacts), errors
 
 
@@ -251,7 +259,8 @@ class AddressBookCollection(AddressBook):
         """
         self.loaded = False
         self.contacts = []
-        self._uids = set()
+        self._uids = None
+        self._short_uids = None
         self.name = name
         self._abooks = []
         for arguments in args:
@@ -281,3 +290,58 @@ class AddressBookCollection(AddressBook):
         for abook in self._abooks:
             if abook.name == name:
                 return abook
+
+    def get_uids_dict(self):
+        """Create a dictionary of UIDs for all contacts.
+
+        :returns: all contacts mapped by their UID
+        :rtype: dict(str: CarddavObject)
+
+        """
+        if self._uids is None:
+            if not self.loaded:
+                self.load()
+            self._uids = dict()
+            for abook in self._abooks:
+                uids = abook.get_uids_dict()
+                for uid in uids:
+                    if uid in self._uids:
+                        logging.warning("The contacts %s and %s from address "
+                                        "book %s have the same UID %s",
+                                        self._uids[uid], uids[uid], self, uid)
+                    else:
+                        self._uids[uid] = uids[uid]
+        return self._uids
+
+    def get_short_uid_dict(self):
+        """Create a dictionary of shortend UIDs for all contacts.
+
+        :returns: the contacts mapped by the shortes unique prefix of their UID
+        :rtype: dict(str: CarddavObject)
+
+        """
+        if self._short_uids is None:
+            self.get_uids_dict()
+            if not self._uids:
+                self._short_uids = {}
+            elif len(self._uids) == 1:
+                self._short_uids = {key[:1]: value
+                                    for key, value in self._uids.items()}
+            else:
+                self._short_uids = {}
+                sorted_uids = sorted(self._uids)
+                # Prepare for the loop; the first and last items are handled
+                # seperatly.
+                item0, item1 = sorted_uids[:2]
+                same1 = compare_uids(item0, item1)
+                self._short_uids[item0[:same1+1]] = self._uids[item0]
+                for item_new in sorted_uids[2:]:
+                    # shift the items and the common prefix lenght one further
+                    item0, item1 = item1, item_new
+                    same0, same1 = same1, compare_uids(item0, item1)
+                    # compute the final prefix length for item1
+                    same = max(same0, same1)
+                    self._short_uids[item0[:same+1]] = self._uids[item0]
+                # Save the last item.
+                self._short_uids[item1[:same1+1]] = self._uids[item1]
+        return self._short_uids

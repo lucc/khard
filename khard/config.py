@@ -41,7 +41,6 @@ class Config:
     def __init__(self, config_file=""):
         self.config = None
         self.address_book_list = []
-        self.original_uid_dict = {}
         self.uid_dict = {}
 
         # set locale
@@ -259,65 +258,11 @@ class Config:
             # This can be disabled with the show_uids option in the config file,
             # if desired.
             if self.config['contact table']['show_uids']:
-                # check, if multiple contacts have the same uid
-                for contact in address_book.contacts:
-                    uid = contact.get_uid()
-                    if uid:
-                        matching_contact = self.original_uid_dict.get(uid)
-                        if matching_contact is None:
-                            self.original_uid_dict[uid] = contact
-                        else:
-                            exit("The contact %s from address book %s and the "
-                                 "contact %s from address book %s have the "
-                                 "same uid %s" % (
-                                     matching_contact.get_full_name(),
-                                     matching_contact.address_book.name,
-                                     contact.get_full_name(),
-                                     contact.address_book.name,
-                                     contact.get_uid()), prefix="")
-                # rebuild shortened uid dictionary
-                self._create_shortened_uid_dictionary()
+                self.uid_dict = self.abook.get_short_uid_dict()
         return address_book
 
     def has_uids(self):
-        return len(self.uid_dict.keys()) > 0
-
-    def _create_shortened_uid_dictionary(self):
-        # uniqueness of uids is guaranteed but they are much to long for the -u
-        # / --uid command line option
-        #
-        # Therefore clear previously filled uid_dict and recreate with the
-        # shortest possible uids, so they are still unique but much handier
-        #
-        # with around 100 contacts that short id should not be longer then two
-        # or three characters
-        self.uid_dict.clear()
-        flat_contact_list = sorted(self.original_uid_dict.values(),
-                                   key=lambda x: x.get_uid())
-        if len(flat_contact_list) == 1:
-            current = flat_contact_list[0]
-            self.uid_dict[current.get_uid()[:1]] = current
-        elif len(flat_contact_list) > 1:
-            # first list element
-            current = flat_contact_list[0]
-            next = flat_contact_list[1]
-            same = helpers.compare_uids(current.get_uid(), next.get_uid())
-            self.uid_dict[current.get_uid()[:same+1]] = current
-            # list elements 1 to len(flat_contact_list)-1
-            for index in range(1, len(flat_contact_list)-1):
-                prev = flat_contact_list[index-1]
-                current = flat_contact_list[index]
-                next = flat_contact_list[index+1]
-                same = max(helpers.compare_uids(prev.get_uid(),
-                                                current.get_uid()),
-                           helpers.compare_uids(current.get_uid(),
-                                                next.get_uid()))
-                self.uid_dict[current.get_uid()[:same+1]] = current
-            # last list element
-            prev = flat_contact_list[-2]
-            current = flat_contact_list[-1]
-            same = helpers.compare_uids(prev.get_uid(), current.get_uid())
-            self.uid_dict[current.get_uid()[:same+1]] = current
+        return bool(self.uid_dict)
 
     def get_shortened_uid(self, uid):
         if uid:
