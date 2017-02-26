@@ -237,51 +237,52 @@ class Config:
         """
         if not self.search_in_source_files():
             search_queries = None
-        for address_book in self.address_book_list:
-            if name == address_book.name:
-                if not address_book.loaded:
-                    # load vcard files of address book
-                    contacts, errors = address_book.load(
-                        search_queries, self.get_supported_private_objects(),
-                        self.localize_dates())
+        address_book = self.abook.get_abook(name)
+        if not address_book:
+            # Return None if no address book did match the given name.
+            return None
+        if not address_book.loaded:
+            # load vcard files of address book
+            contacts, errors = address_book.load(
+                search_queries, self.get_supported_private_objects(),
+                self.localize_dates())
 
-                    # check if one or more contacts could not be parsed
-                    if errors > 0:
-                        if not self.skip_unparsable():
-                            logging.error(
-                                "%d of %d vcard files of address book %s "
-                                "could not be parsed\nUse --debug for more "
-                                "information or --skip-unparsable to proceed",
-                                errors, contacts+errors, name)
-                            sys.exit(2)
+            # check if one or more contacts could not be parsed
+            if errors > 0:
+                if not self.skip_unparsable():
+                    logging.error(
+                        "%d of %d vcard files of address book %s could not be "
+                        "parsed\nUse --debug for more information or "
+                        "--skip-unparsable to proceed", errors, contacts, name)
+                    sys.exit(2)
+                else:
+                    logging.debug(
+                        "\n%d of %d vcard files of address book %s could not "
+                        "be parsed\n", errors, contacts, name)
+
+            # Check uniqueness of vcard uids and create short uid dictionary.
+            # This can be disabled with the show_uids option in the config file,
+            # if desired.
+            if self.config['contact table']['show_uids']:
+                # check, if multiple contacts have the same uid
+                for contact in address_book.contacts:
+                    uid = contact.get_uid()
+                    if uid:
+                        matching_contact = self.original_uid_dict.get(uid)
+                        if matching_contact is None:
+                            self.original_uid_dict[uid] = contact
                         else:
-                            logging.debug(
-                                "\n%d of %d vcard files of address book %s "
-                                "could not be parsed\n", errors, contacts, name)
-
-                    # Check uniqueness of vcard uids and create short uid
-                    # dictionary that can be disabled with the show_uids option
-                    # in the config file, if desired.
-                    if self.config['contact table']['show_uids']:
-                        # check, if multiple contacts have the same uid
-                        for contact in address_book.contacts:
-                            uid = contact.get_uid()
-                            if uid:
-                                if uid not in self.original_uid_dict:
-                                    self.original_uid_dict[uid] = contact
-                                else:
-                                    other = self.original_uid_dict[uid]
-                                    exit("The contact %s from address book %s "
-                                         "and the contact %s from address book "
-                                         "%s have the same uid %s" % (
-                                             other, other.address_book, contact,
-                                             contact.address_book, uid),
-                                         prefix="")
-                        # rebuild shortened uid dictionary
-                        self._create_shortened_uid_dictionary()
-                return address_book
-        # Return None if no address book did match the given name.
-        return None
+                            exit("The contact %s from address book %s and the "
+                                 "contact %s from address book %s have the "
+                                 "same uid %s" % (
+                                     matching_contact.get_full_name(),
+                                     matching_contact.address_book.name,
+                                     contact.get_full_name(),
+                                     contact.address_book.name,
+                                     contact.get_uid()), prefix="")
+                # rebuild shortened uid dictionary
+                self._create_shortened_uid_dictionary()
+        return address_book
 
     def has_uids(self):
         return len(self.uid_dict.keys()) > 0
