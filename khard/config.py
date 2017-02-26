@@ -13,7 +13,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import VdirAddressBook
+from .address_book import AddressBookCollection
 from . import helpers
 
 
@@ -182,18 +182,16 @@ class Config:
             exit('Missing main section "[addressbooks]".')
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
-        for name in self.config['addressbooks'].keys():
-            # create address book object
-            try:
-                address_book = VdirAddressBook(
-                    name, self.config['addressbooks'][name]['path'])
-            except KeyError:
-                exit("Missing path to the \"%s\" address book." % name)
-            except IOError as err:
-                exit(str(err))
-            else:
-                # add address book to list
-                self.address_book_list.append(address_book)
+        section = self.config['addressbooks']
+        try:
+            self.abook = AddressBookCollection(
+                "tmp", *[(name, section[name]['path']) for name in section])
+        except KeyError as err:
+            exit('Missing path to the "{}" address book.'.format(err.args[0]))
+        except IOError as err:
+            exit(str(err))
+        self.address_book_list = [self.abook.get_abook(name)
+                                  for name in section]
 
     @staticmethod
     def _convert_boolean_config_value(config, name, default=True):

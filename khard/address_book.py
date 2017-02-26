@@ -222,3 +222,51 @@ class VdirAddressBook(AddressBook):
                 self.name, duplicates)
         self.loaded = True
         return contacts, errors
+
+
+class AddressBookCollection(AddressBook):
+
+    """A collection of several address books.  This represents the a temporary
+    merege of the contact collections provided by the underlying adress
+    books."""
+
+    def __init__(self, name, *args):
+        """
+        :param name: the name to identify the address book
+        :type name: str
+        :param *args: two-tuples, each holding the arguments for one AddressBook
+            instance
+        :type *args: tuple(str,str)
+        """
+        self.loaded = False
+        self.contacts = []
+        self._uids = set()
+        self.name = name
+        self._abooks = []
+        for arguments in args:
+            self._abooks.append(VdirAddressBook(*arguments))
+
+    def load(self, query=None, private_objects=tuple()):
+        if self.loaded:
+            return len(self.contacts), 0
+        errors = 0
+        for abook in self._abooks:
+            _, err = abook.load(query, private_objects)
+            errors += err
+        self.loaded = True
+        self.contacts = [contact for contact in abook.contacts
+                         for abook in self._abooks]
+        return len(self.contacts), errors
+
+    def get_abook(self, name):
+        """Get one of the backing abdress books by its name,
+
+        :param name: the name of the address book to get
+        :type name: str
+        :returns: the matching address book or None
+        :rtype: AddressBook or NoneType
+
+        """
+        for abook in self._abooks:
+            if abook.name == name:
+                return abook
