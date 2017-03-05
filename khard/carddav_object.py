@@ -949,12 +949,12 @@ class CarddavObject:
             contact_data.get("Suffix") or "")
         # nickname
         self.delete_vcard_object("NICKNAME")
-        if bool(contact_data.get("Nickname")):
+        if contact_data.get("Nickname"):
             if isinstance(contact_data.get("Nickname"), str):
                 self._add_nickname(contact_data.get("Nickname"))
             elif isinstance(contact_data.get("Nickname"), list):
                 for nickname in contact_data.get("Nickname"):
-                    if bool(nickname):
+                    if nickname:
                         self._add_nickname(nickname)
             else:
                 raise ValueError(
@@ -963,12 +963,12 @@ class CarddavObject:
         # organisation
         self.delete_vcard_object("ORG")
         self.delete_vcard_object("X-ABSHOWAS")
-        if bool(contact_data.get("Organisation")):
+        if contact_data.get("Organisation"):
             if isinstance(contact_data.get("Organisation"), str):
                 self._add_organisation([contact_data.get("Organisation")])
             elif isinstance(contact_data.get("Organisation"), list):
                 for organisation in contact_data.get("Organisation"):
-                    if bool(organisation):
+                    if organisation:
                         if isinstance(organisation, str):
                             self._add_organisation([organisation])
                         else:
@@ -979,12 +979,12 @@ class CarddavObject:
 
         # role
         self.delete_vcard_object("ROLE")
-        if bool(contact_data.get("Role")):
+        if contact_data.get("Role"):
             if isinstance(contact_data.get("Role"), str):
                 self._add_role(contact_data.get("Role"))
             elif isinstance(contact_data.get("Role"), list):
                 for role in contact_data.get("Role"):
-                    if bool(role):
+                    if role:
                         self._add_role(role)
             else:
                 raise ValueError(
@@ -992,12 +992,12 @@ class CarddavObject:
 
         # title
         self.delete_vcard_object("TITLE")
-        if bool(contact_data.get("Title")):
+        if contact_data.get("Title"):
             if isinstance(contact_data.get("Title"), str):
                 self._add_title(contact_data.get("Title"))
             elif isinstance(contact_data.get("Title"), list):
                 for title in contact_data.get("Title"):
-                    if bool(title):
+                    if title:
                         self._add_title(title)
             else:
                 raise ValueError(
@@ -1055,7 +1055,7 @@ class CarddavObject:
                                 for key, value in post_adr.items():
                                     if key in ["Box", "Extended", "Street",
                                                "Code", "City", "Region",
-                                               "Country"] and bool(value):
+                                               "Country"] and value:
                                         address_not_empty = True
                                         break
                                 if address_not_empty:
