@@ -169,8 +169,7 @@ class CarddavObject:
 
     def add_uid(self, uid):
         uid_obj = self.vcard.add('uid')
-        uid_obj.value = helpers.convert_to_vcard(
-            "uid", uid, ObjectType.string)
+        uid_obj.value = helpers.convert_to_vcard("uid", uid, ObjectType.string)
 
     def get_version(self):
         """
@@ -183,8 +182,8 @@ class CarddavObject:
 
     def _add_version(self, vcard_version):
         version_obj = self.vcard.add('version')
-        version_obj.value = helpers.convert_to_vcard(
-            "version", vcard_version, ObjectType.string)
+        version_obj.value = helpers.convert_to_vcard("version", vcard_version,
+                                                     ObjectType.string)
 
     def _get_names_part(self, part):
         """Get some part of the "N" entry in the vCard as a list
@@ -282,8 +281,7 @@ class CarddavObject:
                 "additional name", additional_name,
                 ObjectType.string_or_list_with_strings),
             family=helpers.convert_to_vcard(
-                "last name", last_name,
-                ObjectType.string_or_list_with_strings),
+                "last name", last_name, ObjectType.string_or_list_with_strings),
             suffix=helpers.convert_to_vcard(
                 "name suffix", suffix, ObjectType.string_or_list_with_strings))
         # fn
@@ -317,8 +315,7 @@ class CarddavObject:
         org_obj.value = helpers.convert_to_vcard(
             "organisation", organisation, ObjectType.list_with_strings)
         # check if fn attribute is already present
-        if not self.vcard.getChildValue("fn") \
-                and self._get_organisations():
+        if not self.vcard.getChildValue("fn") and self._get_organisations():
             # if not, set fn to organisation name
             org_value = helpers.list_to_string(self._get_organisations()[0],
                                                ", ")
@@ -450,8 +447,8 @@ class CarddavObject:
                              helpers.list_to_string(custom_types, ", "))
         else:
             email_obj = self.vcard.add('email')
-            email_obj.value = helpers.convert_to_vcard(
-                "email address", address, ObjectType.string)
+            email_obj.value = helpers.convert_to_vcard("email address", address,
+                                                       ObjectType.string)
             if self.get_version() == "4.0":
                 if pref > 0:
                     email_obj.params['PREF'] = str(pref)
@@ -574,8 +571,7 @@ class CarddavObject:
                 region=helpers.convert_to_vcard(
                     "region", region, ObjectType.string_or_list_with_strings),
                 country=helpers.convert_to_vcard(
-                    "country", country,
-                    ObjectType.string_or_list_with_strings))
+                    "country", country, ObjectType.string_or_list_with_strings))
             if self.get_version() == "4.0":
                 if pref > 0:
                     adr_obj.params['PREF'] = str(pref)
@@ -629,8 +625,8 @@ class CarddavObject:
 
     def _add_nickname(self, nickname):
         nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = helpers.convert_to_vcard(
-            "nickname", nickname, ObjectType.string)
+        nickname_obj.value = helpers.convert_to_vcard("nickname", nickname,
+                                                      ObjectType.string)
 
     def _get_notes(self):
         """
@@ -644,8 +640,8 @@ class CarddavObject:
 
     def _add_note(self, note):
         note_obj = self.vcard.add('note')
-        note_obj.value = helpers.convert_to_vcard(
-            "note", note, ObjectType.string)
+        note_obj.value = helpers.convert_to_vcard("note", note,
+                                                  ObjectType.string)
 
     def _get_private_objects(self):
         """
@@ -672,8 +668,8 @@ class CarddavObject:
 
     def _add_private_object(self, key, value):
         private_obj = self.vcard.add('X-' + key.upper())
-        private_obj.value = helpers.convert_to_vcard(
-            key, value, ObjectType.string)
+        private_obj.value = helpers.convert_to_vcard(key, value,
+                                                     ObjectType.string)
 
     def _get_webpages(self):
         """
@@ -687,8 +683,8 @@ class CarddavObject:
 
     def _add_webpage(self, webpage):
         webpage_obj = self.vcard.add('url')
-        webpage_obj.value = helpers.convert_to_vcard(
-            "webpage", webpage, ObjectType.string)
+        webpage_obj.value = helpers.convert_to_vcard("webpage", webpage,
+                                                     ObjectType.string)
 
     def get_anniversary(self):
         """:returns: contacts anniversary or None if not available
@@ -1535,8 +1531,7 @@ class CarddavObject:
                 if type and type.lower() != "pref":
                     if not type.lower().startswith("x-"):
                         type_list.append(type)
-                    elif type[2:].lower() not in \
-                            [x.lower() for x in type_list]:
+                    elif type[2:].lower() not in [x.lower() for x in type_list]:
                         # add x-custom type in case it's not already added by
                         # custom label for loop above but strip x- before
                         type_list.append(type[2:])
