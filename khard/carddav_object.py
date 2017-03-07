@@ -257,7 +257,7 @@ class CarddavObject:
         if self._get_additional_names():
             first_and_additional_names += self._get_additional_names()
         if last_names and first_and_additional_names:
-            return "%s, %s" % (
+            return "{}, {}".format(
                 helpers.list_to_string(last_names, " "),
                 helpers.list_to_string(first_and_additional_names, " "))
         elif last_names:
@@ -508,7 +508,7 @@ class CarddavObject:
                     strings.append(
                         helpers.list_to_string(post_adr.get("street"), "\n"))
                 if "box" in post_adr and "extended" in post_adr:
-                    strings.append("%s %s" % (
+                    strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("box"), " "),
                         helpers.list_to_string(post_adr.get("extended"), " ")))
                 elif "box" in post_adr:
@@ -518,7 +518,7 @@ class CarddavObject:
                     strings.append(
                         helpers.list_to_string(post_adr.get("extended"), " "))
                 if "code" in post_adr and "city" in post_adr:
-                    strings.append("%s %s" % (
+                    strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("code"), " "),
                         helpers.list_to_string(post_adr.get("city"), " ")))
                 elif "code" in post_adr:
@@ -528,7 +528,7 @@ class CarddavObject:
                     strings.append(
                         helpers.list_to_string(post_adr.get("city"), " "))
                 if "region" in post_adr and "country" in post_adr:
-                    strings.append("%s, %s" % (
+                    strings.append("{}, {}".format(
                         helpers.list_to_string(post_adr.get("region"), " "),
                         helpers.list_to_string(post_adr.get("country"), " ")))
                 elif "region" in post_adr:
@@ -543,7 +543,7 @@ class CarddavObject:
     def _add_post_address(self, type, box, extended, street, code, city,
                           region, country):
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), "%s, %s" % (street, city),
+            helpers.string_to_list(type, ","), "{}, {}".format(street, city),
             self.address_types_v4 if self.get_version() == "4.0" else
             self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
@@ -1157,7 +1157,7 @@ class CarddavObject:
 
         # private objects
         for supported in self.supported_private_objects:
-            self.delete_vcard_object("X-%s" % supported.upper())
+            self.delete_vcard_object("X-{}".format(supported.upper()))
         if "Private" in contact_data:
             if isinstance(contact_data.get("Private"), dict):
                 for key, value_list in contact_data.get("Private").items():
@@ -1394,8 +1394,8 @@ class CarddavObject:
                 strings.append("    Anniversary: %s"
                                % self.get_formatted_anniversary())
             if self.get_birthday():
-                strings.append("    Birthday: %s"
-                               % self.get_formatted_birthday())
+                strings.append(
+                    "    Birthday: {}".format(self.get_formatted_birthday()))
             if self.get_nicknames():
                 strings += helpers.convert_to_yaml(
                     "Nickname", self.get_nicknames(), 4, -1, False)
@@ -1447,7 +1447,7 @@ class CarddavObject:
                 or self._get_webpages() or self._get_notes():
             strings.append("Miscellaneous")
             if show_uid and self.get_uid():
-                strings.append("    UID: %s" % self.get_uid())
+                strings.append("    UID: {}".format(self.get_uid()))
             if self._get_categories():
                 strings += helpers.convert_to_yaml(
                     "Categories", self._get_categories(), 4, -1, False)
@@ -1467,14 +1467,14 @@ class CarddavObject:
             with atomic_write(self.filename, overwrite=overwrite) as f:
                 f.write(self.vcard.serialize())
         except vobject.base.ValidateError as err:
-            print("Error: Vcard is not valid.\n%s" % err)
+            print("Error: Vcard is not valid.\n{}".format(err))
             sys.exit(4)
         except IOError as err:
-            print("Error: Can't write\n%s" % err)
+            print("Error: Can't write\n{}".format(err))
             sys.exit(4)
         except OSError as err:
-            print("Error: vcard with the file name %s already exists\n%s"
-                  % (os.path.basename(self.filename), err))
+            print("Error: vcard with the file name {} already exists\n"
+                  "{}".format(os.path.basename(self.filename), err))
             sys.exit(4)
 
     def delete_vcard_object(self, object_name):
@@ -1496,7 +1496,7 @@ class CarddavObject:
         if os.path.exists(self.filename):
             os.remove(self.filename)
         else:
-            print("Error: Vcard file %s does not exist." % self.filename)
+            print("Error: Vcard file {} does not exist.".format(self.filename))
             sys.exit(4)
 
     #######################
@@ -1584,5 +1584,5 @@ class CarddavObject:
                         standard_types.append(type)
                     else:
                         custom_types.append(type)
-                        standard_types.append("X-%s" % type)
+                        standard_types.append("X-{}".format(type))
         return (standard_types, custom_types, pref)
