@@ -144,14 +144,22 @@ class CarddavObject:
     # getters and setters
     #####################
 
-    def _get_rev(self):
-        """
+    def _get_string_field(self, field):
+        """Get a string field from the underlying vCard.
+
+        :param field: the field value to get
+        :type field: str
+        :returns: the field value or the empty string
         :rtype: str
+
         """
         try:
-            return self.vcard.rev.value
+            return getattr(self.vcard, field).value
         except AttributeError:
             return ""
+
+    def _get_rev(self):
+        return self._get_string_field("rev")
 
     def _add_rev(self, dt):
         rev_obj = self.vcard.add('rev')
@@ -159,26 +167,14 @@ class CarddavObject:
             dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def get_uid(self):
-        """
-        :rtype: str
-        """
-        try:
-            return self.vcard.uid.value
-        except AttributeError:
-            return ""
+        return self._get_string_field("uid")
 
     def add_uid(self, uid):
         uid_obj = self.vcard.add('uid')
         uid_obj.value = helpers.convert_to_vcard("uid", uid, ObjectType.string)
 
     def get_version(self):
-        """
-        :rtype: str
-        """
-        try:
-            return self.vcard.version.value
-        except AttributeError:
-            return ""
+        return self._get_string_field("version")
 
     def _add_version(self, vcard_version):
         version_obj = self.vcard.add('version')
@@ -220,13 +216,7 @@ class CarddavObject:
         return self._get_names_part("suffix")
 
     def get_full_name(self):
-        """
-        :rtype: str
-        """
-        try:
-            return self.vcard.fn.value
-        except AttributeError:
-            return ""
+        return self._get_string_field("fn")
 
     def get_first_name_last_name(self):
         """
