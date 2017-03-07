@@ -186,78 +186,39 @@ class CarddavObject:
         version_obj.value = helpers.convert_to_vcard(
             "version", vcard_version, ObjectType.string)
 
-    def _get_name_prefixes(self):
-        """
+    def _get_names_part(self, part):
+        """Get some part of the "N" entry in the vCard as a list
+
+        :param part: the name to get e.g. "prefix" or "given"
+        :type part: str
+        :returns: a list of entries for this name part
         :rtype: list(str)
+
         """
         try:
-            prefix_list = self.vcard.n.value.prefix
+            the_list = getattr(self.vcard.n.value, part)
         except AttributeError:
-            prefix_list = []
+            return []
         else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(prefix_list):
-                prefix_list = []
-        return prefix_list if isinstance(prefix_list, list) else [prefix_list]
+            # check if list only contains empty strings
+            if not ''.join(the_list):
+                return []
+        return the_list if isinstance(the_list, list) else [the_list]
+
+    def _get_name_prefixes(self):
+        return self._get_names_part("prefix")
 
     def _get_first_names(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            first_name_list = self.vcard.n.value.given
-        except AttributeError:
-            first_name_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(first_name_list):
-                first_name_list = []
-        return first_name_list if isinstance(first_name_list, list) \
-            else [first_name_list]
+        return self._get_names_part("given")
 
     def _get_additional_names(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            additional_name_list = self.vcard.n.value.additional
-        except AttributeError:
-            additional_name_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(additional_name_list):
-                additional_name_list = []
-        return additional_name_list if isinstance(additional_name_list, list) \
-            else [additional_name_list]
+        return self._get_names_part("additional")
 
     def _get_last_names(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            last_name_list = self.vcard.n.value.family
-        except AttributeError:
-            last_name_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(last_name_list):
-                last_name_list = []
-        return last_name_list if isinstance(last_name_list, list) \
-            else [last_name_list]
+        return self._get_names_part("family")
 
     def _get_name_suffixes(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            suffix_list = self.vcard.n.value.suffix
-        except AttributeError:
-            suffix_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(suffix_list):
-                suffix_list = []
-        return suffix_list if isinstance(suffix_list, list) else [suffix_list]
+        return self._get_names_part("suffix")
 
     def get_full_name(self):
         """
