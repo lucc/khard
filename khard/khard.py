@@ -35,14 +35,13 @@ def write_temp_file(text=""):
 
 
 def create_new_contact(address_book):
-    old_contact_template = (
+    # create temp file
+    temp_file_name = write_temp_file(
         "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
         % (address_book.name, config.get_preferred_vcard_version(),
            helpers.get_new_contact_template(
                config.get_supported_private_objects())))
-    # create temp file
-
     temp_file_creation = helpers.file_modification_date(temp_file_name)
     while True:
         # start vim to edit contact template
