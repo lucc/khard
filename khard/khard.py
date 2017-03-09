@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
+from unidecode import unidecode
 
 from . import helpers
 from .actions import Actions
@@ -472,22 +473,22 @@ def get_contacts(address_books, query, method="all", reverse=False,
     if group:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
-                x.address_book.name.lower(),
-                x.get_first_name_last_name().lower()))
+                unidecode(x.address_book.name).lower(),
+                unidecode(x.get_first_name_last_name()).lower()))
         elif sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
-                x.address_book.name.lower(),
-                x.get_last_name_first_name().lower()))
+                unidecode(x.address_book.name).lower(),
+                unidecode(x.get_last_name_first_name()).lower()))
         else:
             raise ValueError('sort must be "first_name" or "last_name" not '
                              '{}.'.format(sort))
     else:
         if sort == "first_name":
-            return sorted(contacts, reverse=reverse,
-                          key=lambda x: x.get_first_name_last_name().lower())
+            return sorted(contacts, reverse=reverse, key=lambda x:
+                    unidecode(x.get_first_name_last_name()).lower())
         elif sort == "last_name":
-            return sorted(contacts, reverse=reverse,
-                          key=lambda x: x.get_last_name_first_name().lower())
+            return sorted(contacts, reverse=reverse, key=lambda x:
+                    unidecode(x.get_last_name_first_name()).lower())
         else:
             raise ValueError('sort must be "first_name" or "last_name" not '
                              '{}.'.format(sort))
