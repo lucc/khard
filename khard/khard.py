@@ -36,12 +36,13 @@ def write_temp_file(text=""):
 
 def create_new_contact(address_book):
     # create temp file
-    temp_file_name = write_temp_file(
+    template = (
         "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
         % (address_book, config.get_preferred_vcard_version(),
            helpers.get_new_contact_template(
                config.get_supported_private_objects())))
+    temp_file_name = write_temp_file(template)
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
     # read temp file contents before editing
@@ -60,12 +61,12 @@ def create_new_contact(address_book):
 
         # read temp file contents after editing
         with open(temp_file_name, "r") as tf:
-            new_contact_template = tf.read()
+            new_contact_yaml = tf.read()
 
         # try to create new contact
         try:
             new_contact = CarddavObject.from_user_input(
-                address_book, new_contact_template,
+                address_book, new_contact_yaml,
                 config.get_supported_private_objects(),
                 config.get_preferred_vcard_version(),
                 config.localize_dates())
@@ -85,8 +86,7 @@ def create_new_contact(address_book):
             break
 
     # create carddav object from temp file
-    if new_contact is None \
-            or old_contact_template == new_contact_template:
+    if new_contact is None or template == new_contact_yaml:
         print("Canceled")
     else:
         new_contact.write_to_file()
