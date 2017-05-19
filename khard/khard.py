@@ -83,7 +83,7 @@ def modify_existing_contact(old_contact):
     tf = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
     temp_file_name = tf.name
     tf.write("# Edit contact: %s\n# Address book: %s\n# Vcard version: %s\n"
-             "# if you want to cancel, exit without saving\n\n%s"
+             "# if you want to cancel, exit without saving\n\n%s\n"
              % (old_contact.get_full_name(),
                 old_contact.get_address_book().get_name(),
                 old_contact.get_version(), old_contact.get_template()))
