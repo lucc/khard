@@ -47,7 +47,7 @@ setup(
         "Operating System :: POSIX",
         "Programming Language :: Python :: 3 :: Only",
     ],
-    install_requires = ['atomicwrites', 'configobj', 'pyyaml', 'unidecode', 'vobject'],
+    install_requires = ['atomicwrites', 'configobj', 'ruamel.yaml', 'unidecode', 'vobject'],
     packages = [ 'khard' ],
     entry_points = {
         'console_scripts': [ 'khard = khard.khard:main' ]

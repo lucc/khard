@@ -12,7 +12,9 @@ import sys
 
 from atomicwrites import atomic_write
 import vobject
-import yaml
+
+import ruamel.yaml
+from ruamel.yaml import YAML
 
 from . import helpers
 from .object_type import ObjectType
@@ -819,12 +821,13 @@ class CarddavObject:
         return contents
 
     def _process_user_input(self, input):
+        yaml_parser = YAML(typ='base')
         # parse user input string
         try:
-            contact_data = yaml.load(input, Loader=yaml.BaseLoader)
-        except yaml.parser.ParserError as err:
+            contact_data = yaml_parser.load(input)
+        except ruamel.yaml.parser.ParserError as err:
             raise ValueError(err)
-        except yaml.scanner.ScannerError as err:
+        except ruamel.yaml.scanner.ScannerError as err:
             raise ValueError(err)
         else:
             if contact_data is None:
