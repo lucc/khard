@@ -34,7 +34,7 @@ class CarddavObject:
     address_types_v4 = ("home", "work")
 
     def __init__(self, address_book, filename, supported_private_objects,
-                 vcard_version):
+                 vcard_version, localize_dates):
         """Initialize the vcard object.
 
         :param address_book: a reference to the address book where this vcard
@@ -47,14 +47,18 @@ class CarddavObject:
             that will be loaded from the actual vcard and represented in this
             pobject
         :type supported_private_objects: list(str)
-        :param vcard_version: TODO or None
-        :type vcard_version: TODO
+        :param vcard_version: str or None
+        :type vcard_version: str
+        :param localize_dates: should the formatted output of anniversary and
+            birthday be localized or should the isoformat be used instead
+        :type localize_dates: bool
 
         """
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
         self.supported_private_objects = supported_private_objects
+        self.localize_dates = localize_dates
 
         # load vcard
         if self.filename is None:
@@ -84,34 +88,40 @@ class CarddavObject:
     #######################################
 
     @classmethod
-    def new_contact(cls, address_book, supported_private_objects, version):
+    def new_contact(cls, address_book, supported_private_objects, version,
+            localize_dates):
         """Use this to create a new and empty contact."""
-        return cls(address_book, None, supported_private_objects, version)
+        return cls(address_book, None, supported_private_objects, version,
+                localize_dates)
 
     @classmethod
-    def from_file(cls, address_book, filename, supported_private_objects):
+    def from_file(cls, address_book, filename, supported_private_objects,
+            localize_dates):
         """
         Use this if you want to create a new contact from an existing .vcf
         file.
         """
-        return cls(address_book, filename, supported_private_objects, None)
+        return cls(address_book, filename, supported_private_objects, None,
+                localize_dates)
 
     @classmethod
     def from_user_input(cls, address_book, user_input,
-                        supported_private_objects, version):
+                        supported_private_objects, version, localize_dates):
         """Use this if you want to create a new contact from user input."""
-        contact = cls(address_book, None, supported_private_objects, version)
+        contact = cls(address_book, None, supported_private_objects, version,
+                localize_dates)
         contact._process_user_input(user_input)
         return contact
 
     @classmethod
-    def from_existing_contact_with_new_user_input(cls, contact, user_input):
+    def from_existing_contact_with_new_user_input(cls, contact, user_input,
+            localize_dates):
         """
         Use this if you want to clone an existing contact and  replace its data
         with new user input in one step.
         """
         contact = cls(contact.address_book, contact.filename,
-                      contact.supported_private_objects, None)
+                      contact.supported_private_objects, None, localize_dates)
         contact._process_user_input(user_input)
         return contact
 
@@ -741,7 +751,8 @@ class CarddavObject:
         return None
 
     def get_formatted_anniversary(self):
-        return self._format_date_object(self.get_anniversary())
+        return self._format_date_object(
+                self.get_anniversary(), self.localize_dates)
 
     def _add_anniversary(self, date):
         if isinstance(date, str):
@@ -804,7 +815,8 @@ class CarddavObject:
         return None
 
     def get_formatted_birthday(self):
-        return self._format_date_object(self.get_birthday())
+        return self._format_date_object(
+                self.get_birthday(), self.localize_dates)
 
     def _add_birthday(self, date):
         if isinstance(date, str):
@@ -851,7 +863,7 @@ class CarddavObject:
     #######################
 
     @staticmethod
-    def _format_date_object(date):
+    def _format_date_object(date, localize):
         if date:
             if isinstance(date, str):
                 return date
@@ -861,9 +873,17 @@ class CarddavObject:
                 return "--%.2d-%.2d" % (date.month, date.day)
             elif (date.tzname() and date.tzname()[3:]) or \
                     (date.hour != 0 or date.minute != 0 or date.second != 0):
-                return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
+                if localize:
+                    return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
+                else:
+                    utc_offset=-time.timezone/60/60
+                    return date.strftime(
+                            "%Y-%m-%dT%H:%M:%S+" + str(int(utc_offset)).zfill(2) + ":00")
             else:
-                return date.strftime(locale.nl_langinfo(locale.D_FMT))
+                if localize:
+                    return date.strftime(locale.nl_langinfo(locale.D_FMT))
+                else:
+                    return date.strftime("%Y-%m-%d")
         return ""
 
     @staticmethod

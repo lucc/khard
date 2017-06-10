@@ -70,7 +70,8 @@ class AddressBook:
                 self._uids.add(uid)
         return duplicates
 
-    def load_all_vcards(self, private_objects=tuple(), search=None):
+    def load_all_vcards(self, private_objects=tuple(), localize_dates=True,
+            search=None):
         """Load all vcard files in this address book from disk.  If a search
         string is given only files which contents match that will be loaded.
 
@@ -91,7 +92,8 @@ class AddressBook:
         for filename in self._find_vcard_files(search=search):
             contacts += 1
             try:
-                card = CarddavObject.from_file(self, filename, private_objects)
+                card = CarddavObject.from_file(self, filename,
+                        private_objects, localize_dates)
             except IOError as err:
                 logging.debug("Error: Could not open file %s\n%s", filename,
                               err)

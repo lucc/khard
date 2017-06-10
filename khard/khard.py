@@ -67,7 +67,8 @@ def create_new_contact(address_book):
             new_contact = CarddavObject.from_user_input(
                 address_book, new_contact_template,
                 config.get_supported_private_objects(),
-                config.get_preferred_vcard_version())
+                config.get_preferred_vcard_version(),
+                config.localize_dates())
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -119,7 +120,8 @@ def modify_existing_contact(old_contact):
         try:
             new_contact = \
                     CarddavObject.from_existing_contact_with_new_user_input(
-                        old_contact, new_contact_template)
+                        old_contact, new_contact_template,
+                        config.localize_dates())
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -198,7 +200,8 @@ def merge_existing_contacts(source_contact, target_contact,
         try:
             merged_contact = \
                     CarddavObject.from_existing_contact_with_new_user_input(
-                        target_contact, merged_contact_template)
+                        target_contact, merged_contact_template,
+                        config.localize_dates())
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -528,7 +531,8 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
             new_contact = CarddavObject.from_user_input(
                 selected_address_book, input_from_stdin_or_file,
                 config.get_supported_private_objects(),
-                config.get_preferred_vcard_version())
+                config.get_preferred_vcard_version(),
+                config.localize_dates())
         except ValueError as err:
             print(err)
             sys.exit(1)
@@ -619,7 +623,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
             "First name : %s\nLast name : %s\nOrganisation : %s" % (
                 first_name, last_name, organisation),
             config.get_supported_private_objects(),
-            config.get_preferred_vcard_version())
+            config.get_preferred_vcard_version(),
+            config.localize_dates())
 
     # check if the contact already contains the email address
     for type, email_list in sorted(
@@ -907,7 +912,8 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
         try:
             new_contact = \
                     CarddavObject.from_existing_contact_with_new_user_input(
-                        selected_vcard, input_from_stdin_or_file)
+                        selected_vcard, input_from_stdin_or_file,
+                        config.localize_dates())
         except ValueError as err:
             print(err)
             sys.exit(1)

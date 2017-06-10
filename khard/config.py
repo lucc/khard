@@ -136,6 +136,9 @@ class Config:
         # show uids
         self._convert_boolean_config_value(self.config["contact table"],
                                            "show_uids", True)
+        # localize dates
+        self._convert_boolean_config_value(self.config["contact table"],
+                                           "localize_dates", True)
 
         # vcard settings
         if "vcard" not in self.config:
@@ -241,7 +244,8 @@ class Config:
                 if not address_book.loaded:
                     # load vcard files of address book
                     contacts, errors = address_book.load_all_vcards(
-                        self.get_supported_private_objects(), search_queries)
+                        self.get_supported_private_objects(),
+                        self.localize_dates(), search_queries)
 
                     # check if one or more contacts could not be parsed
                     if errors > 0:
@@ -330,6 +334,9 @@ class Config:
                 if self.uid_dict.get(uid[:length_of_uid]) is not None:
                     return uid[:length_of_uid]
         return ""
+
+    def localize_dates(self):
+        return self.config['contact table']['localize_dates']
 
     def get_supported_private_objects(self):
         return self.config['vcard']['private_objects']

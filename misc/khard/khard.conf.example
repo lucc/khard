@@ -26,6 +26,8 @@ show_nicknames = no
 show_uids = yes
 # sort by first or last name: first_name / last_name
 sort = last_name
+# localize dates: yes / no
+localize_dates = yes
 
 [vcard]
 # extend contacts with your own private objects
