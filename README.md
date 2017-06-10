@@ -78,7 +78,7 @@ If you instead want to run the source code directly, you may install required py
 hand, clone from git and run the khard-runner.py script:
 
 ~~~
-pip install --user atomicwrites, configobj, pyyaml, vobject
+pip install --user atomicwrites configobj ruamel.yaml unidecode vobject
 git clone https://github.com/scheibler/khard.git
 cd khard/
 ./khard-runner.py [action [options]]

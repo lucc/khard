@@ -275,16 +275,18 @@ def get_new_contact_template(supported_private_objects=[]):
         Last name  : 
         Suffix     : 
 
-        # person related information
-        #
-        # birthday
-        # Formats:
-        #   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
-        #   vcard 4.0 only: --mm-dd or text= string value
-        Birthday : 
         # nickname
         # may contain a string or a list of strings
         Nickname : 
+
+        # important dates
+        # Formats:
+        #   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
+        #   vcard 4.0 only: --mm-dd or text= string value
+        # anniversary
+        Anniversary : 
+        # birthday
+        Birthday : 
 
         # organisation
         # format:

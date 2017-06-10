@@ -1,8 +1,9 @@
-# Contact template for khard version 0.11.0
+# Contact template for khard version 0.11.4
 #
 # Use this yaml formatted template to create a new contact:
 #   either with: khard new -a address_book -i template.yaml
 #   or with: cat template.yaml | khard new -a address_book
+
 
 # name components
 # every entry may contain a string or a list of strings
@@ -18,16 +19,18 @@ Additional :
 Last name  : 
 Suffix     : 
 
-# person related information
-#
-# birthday
-# Formats:
-#   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
-#   vcard 4.0 only: --mm-dd or text= string value
-Birthday : 
 # nickname
 # may contain a string or a list of strings
 Nickname : 
+
+# important dates
+# Formats:
+#   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
+#   vcard 4.0 only: --mm-dd or text= string value
+# anniversary
+Anniversary : 
+# birthday
+Birthday : 
 
 # organisation
 # format:
@@ -111,11 +114,17 @@ Categories :
 Webpage : 
 
 # private objects
-# define your own private objects in the vcard section of your khard.conf file
+# define your own private objects in the vcard section of your khard config file
+# example:
+#   [vcard]
+#   private_objects = Jabber, Skype, Twitter
 # these objects are stored with a leading "X-" before the object name in the
 # vcard files.
 # every entry may contain a string or a list of strings
 Private :
+    Jabber  : 
+    Skype   : 
+    Twitter : 
 
 # notes
 # may contain a string or a list of strings

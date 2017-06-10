@@ -43,6 +43,11 @@ def create_new_contact(address_book):
            helpers.get_new_contact_template(
                config.get_supported_private_objects())))
     temp_file_creation = helpers.file_modification_date(temp_file_name)
+
+    # read temp file contents before editing
+    with open(temp_file_name, "r") as tf:
+        old_contact_template = tf.read()
+
     while True:
         # start vim to edit contact template
         child = subprocess.Popen([config.editor, temp_file_name])
@@ -94,8 +99,8 @@ def modify_existing_contact(old_contact):
         "# if you want to cancel, exit without saving\n\n%s"
         % (old_contact.get_full_name(), old_contact.address_book.name,
            old_contact.get_version(), old_contact.get_template()))
-
     temp_file_creation = helpers.file_modification_date(temp_file_name)
+
     while True:
         # start editor to edit contact template
         child = subprocess.Popen([config.editor, temp_file_name])

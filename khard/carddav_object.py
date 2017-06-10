@@ -719,6 +719,73 @@ class CarddavObject:
         webpage_obj.value = helpers.convert_to_vcard(
             "webpage", webpage, ObjectType.string)
 
+    def get_anniversary(self):
+        """:returns: contacts anniversary or None if not available
+            :rtype: datetime.datetime or str
+        """
+        # vcard 4.0 could contain a single text value
+        try:
+            if self.vcard.anniversary.params.get("VALUE")[0] == "text":
+                return self.vcard.anniversary.value
+        except (AttributeError, IndexError, TypeError):
+            pass
+        # else try to convert to a datetime object
+        try:
+            return helpers.string_to_date(self.vcard.anniversary.value)
+        except (AttributeError, ValueError):
+            # vcard 3.0: x-anniversary (private object)
+            try:
+                return helpers.string_to_date(self.vcard.x_anniversary.value)
+            except (AttributeError, ValueError):
+                pass
+        return None
+
+    def get_formatted_anniversary(self):
+        return self._format_date_object(self.get_anniversary())
+
+    def _add_anniversary(self, date):
+        if isinstance(date, str):
+            if self.get_version() == "4.0":
+                anniversary_obj = self.vcard.add('anniversary')
+                anniversary_obj.params['VALUE'] = ["text"]
+                anniversary_obj.value = date.strip()
+        elif date.year == 1900 and date.month != 0 and date.day != 0 \
+                and date.hour == 0 and date.minute == 0 and date.second == 0 \
+                and self.get_version() == "4.0":
+            anniversary_obj = self.vcard.add('anniversary')
+            anniversary_obj.value = "--%.2d%.2d" % (date.month, date.day)
+        elif date.tzname() and date.tzname()[3:]:
+            if self.get_version() == "4.0":
+                anniversary_obj = self.vcard.add('anniversary')
+                anniversary_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second, date.tzname()[3:])
+            else:
+                anniversary_obj = self.vcard.add('x-anniversary')
+                anniversary_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second, date.tzname()[3:])
+        elif date.hour != 0 or date.minute != 0 or date.second != 0:
+            if self.get_version() == "4.0":
+                anniversary_obj = self.vcard.add('anniversary')
+                anniversary_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second)
+            else:
+                anniversary_obj = self.vcard.add('x-anniversary')
+                anniversary_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second)
+        else:
+            if self.get_version() == "4.0":
+                anniversary_obj = self.vcard.add('anniversary')
+                anniversary_obj.value = "%.4d%.2d%.2d" % (date.year, date.month,
+                                                   date.day)
+            else:
+                anniversary_obj = self.vcard.add('x-anniversary')
+                anniversary_obj.value = "%.4d-%.2d-%.2d" % (date.year,
+                        date.month, date.day)
+
     def get_birthday(self):
         """:returns: contacts birthday or None if not available
             :rtype: datetime.datetime or str
@@ -737,20 +804,7 @@ class CarddavObject:
         return None
 
     def get_formatted_birthday(self):
-        date = self.get_birthday()
-        if date:
-            if isinstance(date, str):
-                return date
-            elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                    and date.hour == 0 and date.minute == 0 \
-                    and date.second == 0:
-                return "--%.2d-%.2d" % (date.month, date.day)
-            elif (date.tzname() and date.tzname()[3:]) or \
-                    (date.hour != 0 or date.minute != 0 or date.second != 0):
-                return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
-            else:
-                return date.strftime(locale.nl_langinfo(locale.D_FMT))
-        return ""
+        return self._format_date_object(self.get_birthday())
 
     def _add_birthday(self, date):
         if isinstance(date, str):
@@ -795,6 +849,22 @@ class CarddavObject:
     #######################
     # object helper methods
     #######################
+
+    @staticmethod
+    def _format_date_object(date):
+        if date:
+            if isinstance(date, str):
+                return date
+            elif date.year == 1900 and date.month != 0 and date.day != 0 \
+                    and date.hour == 0 and date.minute == 0 \
+                    and date.second == 0:
+                return "--%.2d-%.2d" % (date.month, date.day)
+            elif (date.tzname() and date.tzname()[3:]) or \
+                    (date.hour != 0 or date.minute != 0 or date.second != 0):
+                return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
+            else:
+                return date.strftime(locale.nl_langinfo(locale.D_FMT))
+        return ""
 
     @staticmethod
     def _filter_invalid_tags(contents):
@@ -1030,6 +1100,47 @@ class CarddavObject:
                 raise ValueError(
                     "Error: webpage must be a string or a list of strings")
 
+        # anniversary
+        self.delete_vcard_object("ANNIVERSARY")
+        self.delete_vcard_object("X-ANNIVERSARY")
+        if contact_data.get("Anniversary"):
+            if isinstance(contact_data.get("Anniversary"), str):
+                if re.match(r"^text[\s]*=.*$", contact_data.get("Anniversary")):
+                    l = [x.strip() for x in
+                         re.split("text[\s]*=", contact_data.get("Anniversary"))
+                         if x.strip()]
+                    if self.get_version() == "4.0":
+                        date = ', '.join(l)
+                    else:
+                        raise ValueError(
+                            "Error: Free text format for anniversary only "
+                            "usable with vcard version 4.0.")
+                elif re.match(r"^--\d{4}$", contact_data.get("Anniversary")) \
+                        and self.get_version() != "4.0":
+                    raise ValueError(
+                        "Error: Anniversary format --mmdd only usable with "
+                        "vcard version 4.0. You may use 1900 as placeholder, "
+                        "if the year of the anniversary is unknown.")
+                elif re.match(
+                        r"^--\d{2}-\d{2}$", contact_data.get("Anniversary")) \
+                        and self.get_version() != "4.0":
+                    raise ValueError(
+                        "Error: Anniversary format --mm-dd only usable with "
+                        "vcard version 4.0. You may use 1900 as placeholder, "
+                        "if the year of the anniversary is unknown.")
+                else:
+                    try:
+                        date = helpers.string_to_date(
+                            contact_data.get("Anniversary"))
+                    except ValueError:
+                        raise ValueError(
+                            "Error: Wrong anniversary format or invalid date\n"
+                            "Use format yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
+                if date:
+                    self._add_anniversary(date)
+            else:
+                raise ValueError("Error: anniversary must be a string object.")
+
         # birthday
         self.delete_vcard_object("BDAY")
         if contact_data.get("Birthday"):
@@ -1226,6 +1337,26 @@ class CarddavObject:
                             object, self._get_private_objects().get(object)
                             or "", 4, len(longest_key)+1, True)
 
+            elif line.lower().startswith("anniversary"):
+                anniversary = self.get_anniversary()
+                if anniversary:
+                    if isinstance(anniversary, str):
+                        strings.append("Anniversary : text= %s" % anniversary)
+                    elif anniversary.year == 1900 and anniversary.month != 0 and \
+                            anniversary.day != 0 and anniversary.hour == 0 and \
+                            anniversary.minute == 0 and anniversary.second == 0 and \
+                            self.get_version() == "4.0":
+                        strings.append("Anniversary : --%.2d-%.2d"
+                                       % (anniversary.month, anniversary.day))
+                    elif (anniversary.tzname() and anniversary.tzname()[3:]) or \
+                            (anniversary.hour != 0 or anniversary.minute != 0
+                             or anniversary.second != 0):
+                        strings.append("Anniversary : %s" % anniversary.isoformat())
+                    else:
+                        strings.append("Anniversary : %.4d-%.2d-%.2d" % (
+                            anniversary.year, anniversary.month, anniversary.day))
+                else:
+                    strings.append("Anniversary : ")
             elif line.lower().startswith("birthday"):
                 birthday = self.get_birthday()
                 if birthday:
@@ -1282,9 +1413,12 @@ class CarddavObject:
             strings.append("Address book: %s" % self.address_book.name)
 
         # person related information
-        if self.get_birthday() is not None or self.get_nicknames() \
-                or self._get_roles() or self._get_titles():
+        if self.get_birthday() is not None or self.get_anniversary() is not None \
+                or self.get_nicknames() or self._get_roles() or self._get_titles():
             strings.append("General:")
+            if self.get_anniversary():
+                strings.append("    Anniversary: %s"
+                               % self.get_formatted_anniversary())
             if self.get_birthday():
                 strings.append("    Birthday: %s"
                                % self.get_formatted_birthday())
