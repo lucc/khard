@@ -385,4 +385,6 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Note : |
         #       line one
         #       line two
-        Note : """ % '\n'.join(formatted_private_objects))
+        Note : 
+        """ % '\n'.join(formatted_private_objects))
+

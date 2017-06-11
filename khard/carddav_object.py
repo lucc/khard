@@ -1406,7 +1406,7 @@ class CarddavObject:
             elif line.lower().startswith("webpage"):
                 strings += helpers.convert_to_yaml(
                     "Webpage", self._get_webpages(), 0, 8, True)
-        return '\n'.join(strings)
+        return '\n'.join(strings) + "\n"   # posix standard: eof char must be \n
 
     def print_vcard(self, show_address_book=True, show_uid=True):
         strings = []
