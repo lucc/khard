@@ -735,41 +735,34 @@ def phone_subcommand(search_terms, vcard_list, parsable):
     """
     all_phone_numbers_list = []
     matching_phone_number_list = []
-    regexp = re.compile(search_terms.replace("*", ".*").replace(" ", ".*"),
-                        re.IGNORECASE)
     for vcard in vcard_list:
         for type, number_list in sorted(vcard.get_phone_numbers().items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
-                # create output line
+                if config.display_by_name() == "first_name":
+                    name = vcard.get_first_name_last_name()
+                else:
+                    name = vcard.get_last_name_first_name()
+                # create output lines
+                line_formatted = "\t".join([name, type, number])
+                line_parsable = "\t".join([number, name, type])
                 if parsable:
                     # parsable option: start with phone number
-                    if config.display_by_name() == "first_name":
-                        phone_number_line = "%s\t%s\t%s" % (
-                            number, vcard.get_first_name_last_name(), type)
-                    else:
-                        phone_number_line = "%s\t%s\t%s" % (
-                            number, vcard.get_last_name_first_name(), type)
+                    phone_number_line = line_parsable
                 else:
                     # else: start with name
-                    if config.display_by_name() == "first_name":
-                        phone_number_line = "%s\t%s\t%s" % (
-                            vcard.get_first_name_last_name(), type, number)
-                    else:
-                        phone_number_line = "%s\t%s\t%s" % (
-                            vcard.get_last_name_first_name(), type, number)
-                if len(re.sub("\D", "", search_terms)) >= 3:
+                    phone_number_line = line_formatted
+                if re.search(search_terms,
+                             "%s\n%s" % (line_formatted, line_parsable),
+                             re.IGNORECASE | re.DOTALL):
+                    matching_phone_number_list.append(phone_number_line)
+                elif len(re.sub("\D", "", search_terms)) >= 3:
                     # The user likely searches for a phone number cause the
                     # search string contains at least three digits.  So we
                     # remove all non-digit chars from the phone number field
                     # and match against that.
-                    if regexp.search(re.sub("\D", "", number)) is not None:
-                        matching_phone_number_list.append(phone_number_line)
-                else:
-                    # The user doesn't search for a phone number so we can
-                    # perform a standard search without removing all non-digit
-                    # chars from the phone number string
-                    if regexp.search(phone_number_line) is not None:
+                    if re.search(re.sub("\D", "", search_terms), \
+                                 re.sub("\D", "", number), re.IGNORECASE):
                         matching_phone_number_list.append(phone_number_line)
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
@@ -814,8 +807,6 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
     """
     matching_email_address_list = []
     all_email_address_list = []
-    regexp = re.compile(search_terms.replace("*", ".*").replace(" ", ".*"),
-                        re.IGNORECASE)
     for vcard in vcard_list:
         for type, email_list in sorted(vcard.get_email_addresses().items(),
                                        key=lambda k: k[0].lower()):
@@ -824,14 +815,18 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
                     name = vcard.get_first_name_last_name()
                 else:
                     name = vcard.get_last_name_first_name()
-                # create output line
+                # create output lines
+                line_formatted = "\t".join([name, type, email])
+                line_parsable = "\t".join([email, name, type])
                 if parsable:
                     # parsable option: start with email address
-                    email_address_line = "\t".join([email, name, type])
+                    email_address_line = line_parsable
                 else:
                     # else: start with name
-                    email_address_line = "\t".join([name, type, email])
-                if regexp.search(email_address_line) is not None:
+                    email_address_line = line_formatted
+                if re.search(search_terms,
+                             "%s\n%s" % (line_formatted, line_parsable),
+                             re.IGNORECASE | re.DOTALL):
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
                 all_email_address_list.append(email_address_line)
@@ -1489,20 +1484,23 @@ def main():
     # get all possible search queries for address book parsing
     search_query_list = []
     if "source_search_terms" in args and args.source_search_terms:
-        search_query_list.append(".*".join(
-            [x.replace("*", ".*") for x in args.source_search_terms]))
+        escaped_term = ".*".join(
+                [re.escape(x) for x in args.source_search_terms])
+        search_query_list.append(escaped_term)
+        args.source_search_terms = ".*%s.*" % escaped_term
     if "search_terms" in args and args.search_terms:
-        search_query_list.append(".*".join(
-            [x.replace("*", ".*") for x in args.search_terms]))
+        escaped_term = ".*".join(
+                [re.escape(x) for x in args.search_terms])
+        search_query_list.append(escaped_term)
+        args.search_terms = ".*%s.*" % escaped_term
     if "target_contact" in args and args.target_contact:
-        search_query_list.append(
-            args.target_contact.replace("*", ".*").replace(" ", ".*"))
+        escaped_term = re.escape(args.target_contact)
+        search_query_list.append(escaped_term)
+        args.target_contact = ".*%s.*" % escaped_term
     if "uid" in args and args.uid:
-        search_query_list.append(
-            args.uid.replace("*", ".*").replace(" ", ".*"))
+        search_query_list.append(args.uid)
     if "target_uid" in args and args.target_uid:
-        search_query_list.append(
-            args.target_uid.replace("*", ".*").replace(" ", ".*"))
+        search_query_list.append(args.target_uid)
     # create regexp
     search_queries = None
     if search_query_list:
@@ -1550,19 +1548,19 @@ def main():
 
     # fill contact list
     vcard_list = []
-    if "uid" in args and args.uid != "":
+    if "uid" in args and args.uid:
         # If an uid was given we use it to find the contact.
         logging.debug("args.uid={}".format(args.uid))
         # We require that no search terms where given.
-        if ("search_terms" in args and args.search_terms != []) or (
-                "source_search_terms" in args and
-                args.source_search_terms != []):
-            parser.error("You can not give arbitrary search terms and "
-                         "--uid at the same time.")
+        if ("search_terms" in args and args.search_terms) \
+                or ("source_search_terms" in args and args.source_search_terms):
+            print("Error: You can not give arbitrary search terms and "
+                  "-uid at the same time.")
+            sys.exit(1)
         else:
-            # set search terms to the empty string to prevent errors in
+            # set search terms to the empty query to prevent errors in
             # phone and email actions
-            args.search_terms = ""
+            args.search_terms = ".*"
         vcard_list = get_contacts(config.get_all_address_books(),
                                   args.uid, method="uid")
         # We require that the uid given can uniquely identify a contact.
@@ -1582,13 +1580,19 @@ def main():
         # contact.
         if hasattr(args, "source_search_terms"):
             # exception for merge command
-            args.search_terms = " ".join(args.source_search_terms)
+            if args.source_search_terms:
+                args.search_terms = args.source_search_terms
+            else:
+                args.search_terms = ".*"
         elif hasattr(args, "search_terms"):
-            args.search_terms = " ".join(args.search_terms)
+            if args.search_terms:
+                args.search_terms = args.search_terms
+            else:
+                args.search_terms = ".*"
         else:
             # If no search terms where given on the command line we match
             # everything with the empty search pattern.
-            args.search_terms = ""
+            args.search_terms = ".*"
         logging.debug("args.search_terms={}".format(args.search_terms))
         vcard_list = get_contact_list_by_user_selection(
             args.addressbook, args.search_terms,

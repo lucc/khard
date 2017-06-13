@@ -121,11 +121,11 @@ class AddressBook:
         :rtype: generator(carddav_object.CarddavObject)
 
         """
-        regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
-                            re.IGNORECASE | re.DOTALL)
+        regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contact_list:
             # search in all contact fields
             contact_details = contact.print_vcard()
+            # find phone numbers with special chars like /
             contact_details_without_special_chars = re.sub("[^a-zA-Z0-9\n]",
                                                            "", contact_details)
             if regexp.search(contact_details) is not None or regexp.search(
@@ -141,8 +141,7 @@ class AddressBook:
         :rtype: generator(carddav_object.CarddavObject)
 
         """
-        regexp = re.compile(query.replace("*", ".*").replace(" ", ".*"),
-                            re.IGNORECASE | re.DOTALL)
+        regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contact_list:
             # only search in contact name
             if regexp.search(contact.get_full_name()) is not None:
@@ -161,13 +160,12 @@ class AddressBook:
         # Search for contacts with uid == query.
         for contact in self.contact_list:
             if contact.get_uid() == query:
-                contacts.append(contact)
+                yield contact
         # If that fails, search for contacts where uid starts with query.
         if not contacts:
             for contact in self.contact_list:
                 if contact.get_uid().startswith(query):
-                    contacts.append(contact)
-        return contacts
+                    yield contact
 
     def search(self, query, method="all"):
         """Search this address book for contacts matching the query.  The
@@ -181,13 +179,18 @@ class AddressBook:
         :rtype: list(carddav_object.CarddavObject)
 
         """
-        if method == "all":
-            search_function = self._search_all
-        elif method == "name":
-            search_function = self._search_names
+        if method == "all" or method == "name":
+            if method == "all":
+                search_function = self._search_all
+            else:
+                search_function = self._search_names
+            # check if query is already an regexp, else escape it
+            if not (query.startswith(".*") and query.endswith(".*")):
+                query = re.escape(query)
+            return list(search_function(query))
         elif method == "uid":
-            search_function = self._search_names
+            # always escape uids
+            return list(self._search_uid(re.escape(query)))
         else:
             raise ValueError('Only the search methods "all", "name" and "uid" '
                              'are supported.')
-        return list(search_function(query))
