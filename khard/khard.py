@@ -953,27 +953,30 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
         modify_existing_contact(selected_vcard)
 
 
-def remove_subcommand(selected_vcard):
+def remove_subcommand(selected_vcard, force):
     """Remove a contact from the addressbook.
 
     :param selected_vcard: the contact to delete
     :type selected_vcard: carddav_object.CarddavObject
+    :param force: delete without confirmation
+    :type force: bool
     :returns: None
     :rtype: None
 
     """
-    while True:
-        input_string = input(
-            "Deleting contact %s from address book %s. Are you sure? (y/n): "
-            % (selected_vcard.get_full_name(),
-               selected_vcard.address_book.name))
-        if input_string.lower() in ["", "n", "q"]:
-            print("Canceled")
-            sys.exit(0)
-        if input_string.lower() == "y":
-            break
+    if not force:
+        while True:
+            input_string = input(
+                "Deleting contact %s from address book %s. Are you sure? (y/n): "
+                % (selected_vcard.get_full_name(),
+                   selected_vcard.address_book.name))
+            if input_string.lower() in ["", "n", "q"]:
+                print("Canceled")
+                sys.exit(0)
+            if input_string.lower() == "y":
+                break
     selected_vcard.delete_vcard_file()
-    print("Contact deleted successfully")
+    print("Contact %s deleted successfully" % selected_vcard.get_full_name())
 
 
 def source_subcommand(selected_vcard, editor):
@@ -1409,13 +1412,16 @@ def parse_args():
                  sort_parser],
         description="move a contact to a different addressbook",
         help="move a contact to a different addressbook")
-    subparsers.add_parser(
+    remove_parser = subparsers.add_parser(
         "remove",
         aliases=Actions.get_alias_list_for_action("remove"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="remove a contact",
         help="remove a contact")
+    remove_parser.add_argument(
+        "--force", action="store_true",
+        help="Remove contact without confirmation")
     subparsers.add_parser(
         "addressbooks",
         aliases=Actions.get_alias_list_for_action("addressbooks"),
@@ -1693,7 +1699,7 @@ def main():
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
                               args.open_editor)
         elif args.action == "remove":
-            remove_subcommand(selected_vcard)
+            remove_subcommand(selected_vcard, args.force)
         elif args.action == "source":
             source_subcommand(selected_vcard, config.editor)
     elif args.action == "merge":

@@ -126,7 +126,7 @@ case $state in
     case $words[1] in
       addressbooks|abooks)
         options+=();;
-      details|show|source|src|remove|delete|del|rm)
+      details|show|source|src)
         options+=(
           $default_addressbook_options $default_search_options $sort_options
         );;
@@ -179,6 +179,11 @@ case $state in
       merge)
         options+=(
           $merge_addressbook_options $merge_search_options $sort_options
+        );;
+      remove|delete|del|rm)
+        options+=(
+          $default_addressbook_options $default_search_options $sort_options
+          '--force[Remove contact without confirmation]'
         );;
     esac
     # Complete the subcommand options.
