@@ -26,7 +26,7 @@ class Actions:
 
     @classmethod
     def get_action_for_alias(cls, alias):
-        """Find the name of the action for the supplied alias.  If no action s
+        """Find the name of the action for the supplied alias.  If no action is
         asociated with the given alias, None is returned.
 
         :param alias: the alias to look up

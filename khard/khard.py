@@ -854,19 +854,40 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
         sys.exit(1)
 
 
-def list_subcommand(vcard_list):
+def list_subcommand(vcard_list, parsable):
     """Print a user friendly contacts table.
 
     :param vcard_list: the vcards to print
     :type vcard_list: list of carddav_object.CarddavObject
+    :param parsable: machine readable output: columns devided by tabulator (\t)
+    :type parsable: bool
     :returns: None
     :rtype: None
 
     """
     if not vcard_list:
-        print("Found no contacts")
+        if not parsable:
+            print("Found no contacts")
         sys.exit(1)
-    list_contacts(vcard_list)
+    elif parsable:
+        contact_line_list = []
+        for vcard in vcard_list:
+            if config.display_by_name() == "first_name":
+                name = vcard.get_first_name_last_name()
+            else:
+                name = vcard.get_last_name_first_name()
+            contact_line_list.append(
+                    '\t'.join(
+                        [
+                            config.get_shortened_uid(vcard.get_uid()),
+                            name,
+                            vcard.address_book.name
+                            ]
+                        )
+                    )
+        print('\n'.join(contact_line_list))
+    else:
+        list_contacts(vcard_list)
 
 
 def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
@@ -1264,13 +1285,16 @@ def parse_args():
 
     # create subparsers for actions
     subparsers = parser.add_subparsers(dest="action")
-    subparsers.add_parser(
+    list_parser = subparsers.add_parser(
         "list",
         aliases=Actions.get_alias_list_for_action("list"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="list all (selected) contacts",
         help="list all (selected) contacts")
+    list_parser.add_argument(
+        "-p", "--parsable", action="store_true",
+        help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     subparsers.add_parser(
         "details",
         aliases=Actions.get_alias_list_for_action("details"),
@@ -1638,7 +1662,7 @@ def main():
         email_subcommand(args.search_terms, vcard_list,
                          args.parsable, args.remove_first_line)
     elif args.action == "list":
-        list_subcommand(vcard_list)
+        list_subcommand(vcard_list, args.parsable)
     elif args.action == "export" \
             and "empty_contact_template" in args \
             and args.empty_contact_template:

@@ -126,9 +126,14 @@ case $state in
     case $words[1] in
       addressbooks|abooks)
         options+=();;
-      list|ls|details|show|source|src|remove|delete|del|rm)
+      details|show|source|src|remove|delete|del|rm)
         options+=(
           $default_addressbook_options $default_search_options $sort_options
+        );;
+      list|ls)
+        options+=(
+          $default_addressbook_options $default_search_options $sort_options
+          '(-p)'{-p,--parsable}'[machine readable contact table]'
         );;
       birthdays|bdays)
         options+=(

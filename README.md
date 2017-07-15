@@ -334,7 +334,7 @@ address books contain hundreds or even thousands of contacts and the query proce
 may try the --search-in-source-files option to speed up the search:
 
 ```
-set query_command= "khard email --parsable --search-in-source-files %s"
+set query_command= "khard email --parsable --search-in-source-files '%s'"
 ```
 
 To add email addresses to khard's address book, you may also add the following lines to your muttrc file:
