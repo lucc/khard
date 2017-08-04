@@ -1,0 +1,13 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "nightly" # currently points to 3.7-dev
+install: python setup.py install
+before_script:
+  - mkdir -p ~/.config/khard
+  - cp misc/khard/khard.conf.example ~/.config/khard/khard.conf
+  - mkdir -p ~/.contacts/family
+  - mkdir -p ~/.contacts/friends
+script: python -m unittest discover
