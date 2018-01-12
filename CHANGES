@@ -149,3 +149,14 @@ v0.11.4: 2017.02.16
 - Changed short option of --search-in-source-files from -c to -f to avoid confusion with the new -c / --config option
 - Minor bug fixes
 
+v0.12.0: 2018.01.12
+- Vcard: Support for anniversary attribute (#138)
+- Config: New config parameter: localize_dates (#118)
+- Action list: -p / --parsable prints a tab separated contact list (#141)
+- Action remove: --force: Remove contact without confirmation (#140)
+- Mutt: You have to update the query command in mutt's config file: set query_command= "khard email --parsable '%s'"
+- Minor changes in khard example config, zsh completion function and twinkle scripts
+- Fix: Results of phone number search improved
+- Fix: Yaml parser switched from pyyaml to ruamel.yaml to allow special unicode characters in the contact template (#133)
+- Fix: Accentuated characters sorted wrong in contact list (#127)
+
