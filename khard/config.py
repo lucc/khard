@@ -98,10 +98,10 @@ class Config:
         self.default_action = self.config["general"].get("default_action")
         if self.default_action is None:
             exit("Missing default action parameter.")
-        elif self.default_action not in Actions.get_list_of_all_actions():
+        elif self.default_action not in Actions.get_actions():
             exit("Invalid value for default_action parameter\n"
                  "Possible values: %s" % ', '.join(
-                     sorted(Actions.get_list_of_all_actions())))
+                     sorted(Actions.get_actions())))
 
         # contact table settings
         if "contact table" not in self.config:

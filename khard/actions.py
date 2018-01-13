@@ -25,7 +25,7 @@ class Actions:
     }
 
     @classmethod
-    def get_action_for_alias(cls, alias):
+    def get_action(cls, alias):
         """Find the name of the action for the supplied alias.  If no action is
         asociated with the given alias, None is returned.
 
@@ -41,7 +41,7 @@ class Actions:
         return None
 
     @classmethod
-    def get_alias_list_for_action(cls, action):
+    def get_aliases(cls, action):
         """Find all aliases for the given action.  If there is no such action,
         None is returned.
 
@@ -54,7 +54,7 @@ class Actions:
         return cls.action_map.get(action)
 
     @classmethod
-    def get_list_of_all_actions(cls):
+    def get_actions(cls):
         """Find the names of all defined actions.
 
         :returns: all action names
@@ -63,15 +63,13 @@ class Actions:
         return cls.action_map.keys()
 
     @classmethod
-    def get_all_actions_and_aliases(cls):
+    def get_all(cls):
         """Find the names of all defined actions and their aliases.
 
         :returns: the names of all actions and aliases
-        :rtype: list(str)
+        :rtype: generator(str)
 
         """
-        all = []
         for key, value in cls.action_map.items():
-            all.append(key)
-            all.extend(value)
-        return all
+            yield key
+            yield from value
