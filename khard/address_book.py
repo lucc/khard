@@ -163,13 +163,13 @@ class AddressBook(metaclass=abc.ABCMeta):
                 if uid:
                     if uid in self._uids:
                         logging.warning("The contacts %s and %s from address "
-                                        "book %s have the same UID %s", contact,
-                                        self._uids[uid], self, uid)
+                                        "book %s have the same UID %s",
+                                        contact, self._uids[uid], self, uid)
                     else:
                         self._uids[uid] = contact
                 else:
-                    logging.warning("The contact %s from address book %s has no "
-                                    "UID", contact, self)
+                    logging.warning("The contact %s from address book %s has "
+                                    "no UID", contact, self)
         return self._uids
 
     def get_short_uid_dict(self):
@@ -193,16 +193,16 @@ class AddressBook(metaclass=abc.ABCMeta):
                 # seperatly.
                 item0, item1 = sorted_uids[:2]
                 same1 = self._compare_uids(item0, item1)
-                self._short_uids[item0[:same1+1]] = self._uids[item0]
+                self._short_uids[item0[:same1 + 1]] = self._uids[item0]
                 for item_new in sorted_uids[2:]:
                     # shift the items and the common prefix lenght one further
                     item0, item1 = item1, item_new
                     same0, same1 = same1, self._compare_uids(item0, item1)
                     # compute the final prefix length for item1
                     same = max(same0, same1)
-                    self._short_uids[item0[:same+1]] = self._uids[item0]
+                    self._short_uids[item0[:same + 1]] = self._uids[item0]
                 # Save the last item.
-                self._short_uids[item1[:same1+1]] = self._uids[item1]
+                self._short_uids[item1[:same1 + 1]] = self._uids[item1]
         return self._short_uids
 
     @abc.abstractmethod
@@ -289,7 +289,7 @@ class VdirAddressBook(AddressBook):
         if skip:
             logging.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
-                errors, len(self.contacts)+errors, self)
+                errors, len(self.contacts) + errors, self)
         if len(self.contacts) != len(self.get_uids_dict()):
             logging.warning("There are duplicate UIDs in the address book %s.",
                             self)
@@ -306,8 +306,8 @@ class AddressBookCollection(AddressBook):
         """
         :param name: the name to identify the address book
         :type name: str
-        :param *args: two-tuples, each holding the arguments for one AddressBook
-            instance
+        :param *args: two-tuples, each holding the arguments for one
+            AddressBook instance
         :type *args: tuple(str,str)
         """
         self.loaded = False
