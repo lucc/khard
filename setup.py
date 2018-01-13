@@ -52,4 +52,5 @@ setup(
     entry_points = {
         'console_scripts': [ 'khard = khard.khard:main' ]
     },
+    test_suite = "test",
 )
