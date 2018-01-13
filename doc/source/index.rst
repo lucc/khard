@@ -12,6 +12,7 @@ Welcome to khard's documentation!
    index
    commandline
    davcontroller
+   contributing
    man
    API documentation for developers <api/modules.rst>
    indices
@@ -38,7 +39,7 @@ manually you can use the release from `PyPi`_:
   pip3 install khard
 
 If you want to help the development or need more advanced installation
-instructions see the :ref:`development` section below.
+instructions see :doc:`contributing`.
 
 Configuration
 =============
@@ -197,34 +198,4 @@ as your merge editor in khard's config file:
 
   merge_editor = /path/to/sdiff_khard_wrapper.sh
 
-.. _development:
-
-Development
-===========
-
-Khard is developed on `Github`_ where you are welcome to post `bug reports`_,
-`feature requests`_ or join the discussion in general.
-
-In order to start coding you need to fetch the develop branch:
-
-.. code-block:: shell
-
-  git clone https://github.com/scheibler/khard
-  cd khard
-  git fetch --all
-  git checkout develop
-  pip3 install --editable .
-  ./khard-runner.py --help
-
-Alternatively you can use the ``setup.py`` script directly.  If you want to
-isolate khard from your system Python environment you can use a `virtualenv`_
-to do so.
-
-.. include:: contributing.rst
-
 .. _PyPi: https://pypi.python.org/pypi/khard/
-.. _Github: https://github.com/scheibler/khard
-.. _virtualenv: https://virtualenv.pypa.io/en/stable/
-.. _bug reports: https://github.com/scheibler/khard/issues
-.. _feature requests: https://github.com/scheibler/khard/pulls
-
