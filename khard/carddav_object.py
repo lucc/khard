@@ -915,9 +915,8 @@ class CarddavObject:
         # parse user input string
         try:
             contact_data = yaml_parser.load(input)
-        except ruamel.yaml.parser.ParserError as err:
-            raise ValueError(err)
-        except ruamel.yaml.scanner.ScannerError as err:
+        except (ruamel.yaml.parser.ParserError,
+                ruamel.yaml.scanner.ScannerError) as err:
             raise ValueError(err)
         else:
             if contact_data is None:

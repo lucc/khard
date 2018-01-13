@@ -39,7 +39,7 @@ def create_new_contact(address_book):
     temp_file_name = write_temp_file(
         "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (address_book.name, config.get_preferred_vcard_version(),
+        % (address_book, config.get_preferred_vcard_version(),
            helpers.get_new_contact_template(
                config.get_supported_private_objects())))
     temp_file_creation = helpers.file_modification_date(temp_file_name)
@@ -98,8 +98,9 @@ def modify_existing_contact(old_contact):
     temp_file_name = write_temp_file(
         "# Edit contact: %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (old_contact.get_full_name(), old_contact.address_book.name,
-           old_contact.get_version(), old_contact.get_template()))
+        % (old_contact, old_contact.address_book, old_contact.get_version(),
+           old_contact.get_template()))
+
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
     while True:
@@ -169,13 +170,13 @@ def merge_existing_contacts(source_contact, target_contact,
     source_temp_file_name = write_temp_file(
         "# merge from %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (source_contact.get_full_name(), source_contact.address_book.name,
+        % (source_contact, source_contact.address_book,
            source_contact.get_version(), source_contact.get_template()))
     # target vcard
     target_temp_file_name = write_temp_file(
         "# merge into %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (target_contact.get_full_name(), target_contact.address_book.name,
+        % (target_contact, target_contact.address_book,
            target_contact.get_version(), target_contact.get_template()))
 
     target_temp_file_creation = helpers.file_modification_date(
@@ -230,22 +231,16 @@ def merge_existing_contacts(source_contact, target_contact,
                 "Merge contact %s from address book %s into contact %s from "
                 "address book %s\n\nTo be removed\n\n%s\n\nMerged\n\n%s\n\n"
                 "Are you sure? (y/n): " % (
-                    source_contact.get_full_name(),
-                    source_contact.address_book.name,
-                    merged_contact.get_full_name(),
-                    merged_contact.address_book.name,
-                    source_contact.print_vcard(),
+                    source_contact, source_contact.address_book, merged_contact,
+                    merged_contact.address_book, source_contact.print_vcard(),
                     merged_contact.print_vcard()))
         else:
             input_string = input(
                 "Merge contact %s from address book %s into contact %s from "
                 "address book %s\n\nKeep unchanged\n\n%s\n\nMerged:\n\n%s\n\n"
                 "Are you sure? (y/n): " % (
-                    source_contact.get_full_name(),
-                    source_contact.address_book.name,
-                    merged_contact.get_full_name(),
-                    merged_contact.address_book.name,
-                    source_contact.print_vcard(),
+                    source_contact, source_contact.address_book, merged_contact,
+                    merged_contact.address_book, source_contact.print_vcard(),
                     merged_contact.print_vcard()))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
@@ -281,10 +276,8 @@ def copy_contact(contact, target_address_book, delete_source_contact):
     if os.path.isfile(source_contact_filename):
         os.remove(source_contact_filename)
     print("%s contact %s from address book %s to %s" % (
-        "Moved" if delete_source_contact else "Copied",
-        contact.get_full_name(),
-        contact.address_book.name,
-        target_address_book.name))
+        "Moved" if delete_source_contact else "Copied", contact,
+        contact.address_book, target_address_book))
 
 
 def list_address_books(address_book_list):
@@ -640,7 +633,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     while True:
         input_string = input(
             "Do you want to add the email address %s to the contact %s (y/n)? "
-            % (email_address, selected_vcard.get_full_name()))
+            % (email_address, selected_vcard))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
             sys.exit(0)
@@ -968,8 +961,7 @@ def remove_subcommand(selected_vcard, force):
         while True:
             input_string = input(
                 "Deleting contact %s from address book %s. Are you sure? (y/n): "
-                % (selected_vcard.get_full_name(),
-                   selected_vcard.address_book.name))
+                % (selected_vcard, selected_vcard.address_book))
             if input_string.lower() in ["", "n", "q"]:
                 print("Canceled")
                 sys.exit(0)
@@ -1027,8 +1019,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
             else:
                 print("Found multiple contacts for target uid %s" % target_uid)
                 for vcard in target_vcards:
-                    print("    %s: %s" % (vcard.get_full_name(),
-                                          vcard.get_uid()))
+                    print("    %s: %s" % (vcard, vcard.get_uid()))
             sys.exit(1)
     else:
         target_vcards = get_contact_list_by_user_selection(
@@ -1041,8 +1032,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
         sys.exit(1)
     else:
         print("Merge from %s from address book %s\n\n"
-              % (source_vcard.get_full_name(),
-                 source_vcard.address_book.name))
+              % (source_vcard, source_vcard.address_book))
     # get the target vcard, into which to merge
     target_vcard = choose_vcard_from_list("Select contact into which to merge",
                                           target_vcards)
@@ -1051,8 +1041,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
         sys.exit(1)
     else:
         print("Merge into %s from address book %s\n\n"
-              % (target_vcard.get_full_name(),
-                 target_vcard.address_book.name))
+              % (target_vcard, target_vcard.address_book))
     # merging
     if source_vcard == target_vcard:
         print("The selected contacts are already identical")
@@ -1081,15 +1070,13 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
         sys.exit(1)
     else:
         print("%s contact %s from address book %s"
-              % (action.title(), source_vcard.get_full_name(),
-                 source_vcard.address_book.name))
+              % (action.title(), source_vcard, source_vcard.address_book))
 
     # get target address book
     if len(target_address_book_list) == 1 \
             and target_address_book_list[0] == source_vcard.address_book:
         print("The address book %s already contains the contact %s"
-              % (source_vcard.get_full_name(),
-                 target_address_book_list[0].name))
+              % (source_vcard, target_address_book_list[0]))
         sys.exit(1)
     else:
         available_address_books = []
@@ -1129,11 +1116,9 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
                   "  a: %s anyway\n"
                   "  m: Merge from source into target contact\n"
                   "  o: Overwrite target contact\n"
-                  "  q: Quit"
-                  % (
-                      target_vcard.address_book.name,
-                      source_vcard.get_full_name(), source_vcard.print_vcard(),
-                      target_vcard.print_vcard(),
+                  "  q: Quit" % (
+                      target_vcard.address_book, source_vcard,
+                      source_vcard.print_vcard(), target_vcard.print_vcard(),
                       "Move" if action == "move" else "Copy"))
             while True:
                 input_string = input("Your choice: ")
@@ -1602,19 +1587,18 @@ def main(argv=sys.argv[1:]):
                 print("Found multiple contacts for %suid %s" % (
                     "source " if args.action == "merge" else "", args.uid))
                 for vcard in vcard_list:
-                    print("    %s: %s" % (vcard.get_full_name(),
-                                          vcard.get_uid()))
+                    print("    %s: %s" % (vcard, vcard.get_uid()))
             sys.exit(1)
     else:
         # No uid was given so we try to use the search terms to select a
         # contact.
-        if hasattr(args, "source_search_terms"):
+        if "source_search_terms" in args:
             # exception for merge command
             if args.source_search_terms:
                 args.search_terms = args.source_search_terms
             else:
                 args.search_terms = ".*"
-        elif hasattr(args, "search_terms"):
+        elif "search_terms" in args:
             if args.search_terms:
                 args.search_terms = args.search_terms
             else:
@@ -1630,7 +1614,7 @@ def main(argv=sys.argv[1:]):
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
-    if hasattr(args, "input_file"):
+    if "input_file" in args:
         if args.input_file != "-":
             # try to read from specified input file
             try:
@@ -1692,8 +1676,7 @@ def main(argv=sys.argv[1:]):
             args.output_file.write(
                 "# Contact template for khard version %s\n"
                 "# Name: %s\n# Vcard version: %s\n\n%s"
-                % (khard_version, selected_vcard.get_full_name(),
-                   selected_vcard.get_version(),
+                % (khard_version, selected_vcard, selected_vcard.get_version(),
                    selected_vcard.get_template()))
         elif args.action == "modify":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,

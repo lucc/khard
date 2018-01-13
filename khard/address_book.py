@@ -23,7 +23,7 @@ class AddressBook:
         if not os.path.isdir(self.path):
             raise FileNotFoundError(
                 "[Errno 2] The path %s to the address book %s does not exist."
-                % (self.path, self.name))
+                % (self.path, self))
 
     def __str__(self):
         return self.name
@@ -105,8 +105,8 @@ class AddressBook:
         duplicates = self._check_uids()
         if duplicates:
             logging.warning(
-                "There are duplicate UIDs in the address book %s: %s",
-                self.name, duplicates)
+                "There are duplicate UIDs in the address book %s: %s", self,
+                duplicates)
         self.loaded = True
         return len(self.contact_list), errors
 

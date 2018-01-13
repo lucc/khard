@@ -269,19 +269,16 @@ class Config:
                         for contact in address_book.contact_list:
                             uid = contact.get_uid()
                             if uid:
-                                matching_contact = self.original_uid_dict.get(
-                                    uid)
-                                if matching_contact is None:
+                                if uid not in self.original_uid_dict:
                                     self.original_uid_dict[uid] = contact
                                 else:
+                                    other = self.original_uid_dict[uid]
                                     exit("The contact %s from address book %s "
                                          "and the contact %s from address book "
                                          "%s have the same uid %s" % (
-                                             matching_contact.get_full_name(),
-                                             matching_contact.address_book.name,
-                                             contact.get_full_name(),
-                                             contact.address_book.name,
-                                             contact.get_uid()), prefix="")
+                                             other, other.address_book, contact,
+                                             contact.address_book, uid),
+                                         prefix="")
                         # rebuild shortened uid dictionary
                         self._create_shortened_uid_dictionary()
                 return address_book

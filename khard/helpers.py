@@ -41,10 +41,7 @@ def list_to_string(input, delimiter):
     converts list to string recursively so that nested lists are supported
     """
     if isinstance(input, list):
-        flat_list = []
-        for item in input:
-            flat_list.append(list_to_string(item, delimiter))
-        return delimiter.join(flat_list)
+        return delimiter.join(list_to_string(item) for item in input)
     return input
 
 
