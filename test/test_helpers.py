@@ -28,5 +28,36 @@ class CompareUids(unittest.TestCase):
         self.assertEqual(actual, expected)
 
 
+class ListToString(unittest.TestCase):
+
+    def test_empty_list_returns_empty_string(self):
+        the_list = []
+        delimiter = ' '
+        expected = ''
+        actual = helpers.list_to_string(the_list, delimiter)
+        self.assertEqual(actual, expected)
+
+    def test_simple_list(self):
+        the_list = ['a', 'bc', 'def']
+        delimiter = ' '
+        expected = 'a bc def'
+        actual = helpers.list_to_string(the_list, delimiter)
+        self.assertEqual(actual, expected)
+
+    def test_simple_nested_list(self):
+        the_list = ['a', 'bc', ['x', 'y', 'z'], 'def']
+        delimiter = ' '
+        expected = 'a bc x y z def'
+        actual = helpers.list_to_string(the_list, delimiter)
+        self.assertEqual(actual, expected)
+
+    def test_multi_level_nested_list(self):
+        the_list = ['a', ['b', ['c', [[['x', 'y']]]]], 'z']
+        delimiter = ' '
+        expected = 'a b c x y z'
+        actual = helpers.list_to_string(the_list, delimiter)
+        self.assertEqual(actual, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

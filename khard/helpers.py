@@ -37,8 +37,14 @@ def pretty_print(table, justify="L"):
 
 
 def list_to_string(input, delimiter):
-    """
-    converts list to string recursively so that nested lists are supported
+    """converts list to string recursively so that nested lists are supported
+
+    :param input: a list of strings and lists of strings (and so on recursive)
+    :type input: list
+    :param delimiter: the deimiter to use when joining the items
+    :type delimiter: str
+    :returns: the recursively joined list
+    :rtype: str
     """
     if isinstance(input, list):
         return delimiter.join(
