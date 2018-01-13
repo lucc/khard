@@ -254,7 +254,7 @@ class Config:
                                 "%d of %d vcard files of address book %s "
                                 "could not be parsed\nUse --debug for more "
                                 "information or --skip-unparsable to proceed",
-                                errors, contacts, name)
+                                errors, contacts+errors, name)
                             sys.exit(2)
                         else:
                             logging.debug(

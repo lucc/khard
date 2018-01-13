@@ -87,10 +87,8 @@ class AddressBook:
         """
         if self.loaded:
             return len(self.contact_list), 0
-        contacts = 0
         errors = 0
         for filename in self._find_vcard_files(search=search):
-            contacts += 1
             try:
                 card = CarddavObject.from_file(self, filename,
                         private_objects, localize_dates)
@@ -110,7 +108,7 @@ class AddressBook:
                 "There are duplicate UIDs in the address book %s: %s",
                 self.name, duplicates)
         self.loaded = True
-        return contacts, errors
+        return len(self.contact_list), errors
 
     def _search_all(self, query):
         """Search in all fields for contacts matching query.
