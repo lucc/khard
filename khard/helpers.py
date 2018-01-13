@@ -115,6 +115,16 @@ def get_random_uid():
 
 
 def compare_uids(uid1, uid2):
+    """Calculate the minimum length of initial substrings of uid1 and uid2 for
+    them to be different.
+
+    :param uid1: first uid to compare
+    :type uid1: str
+    :param uid2: second uid to compare
+    :type uid2: str
+    :returns: the length of the shortes unequal inital substrings
+    :rtype: int
+    """
     sum = 0
     for c1, c2 in zip(uid1, uid2):
         if c1 == c2:
