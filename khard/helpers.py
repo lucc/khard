@@ -37,8 +37,14 @@ def pretty_print(table, justify="L"):
 
 
 def list_to_string(input, delimiter):
-    """
-    converts list to string recursively so that nested lists are supported
+    """converts list to string recursively so that nested lists are supported
+
+    :param input: a list of strings and lists of strings (and so on recursive)
+    :type input: list
+    :param delimiter: the deimiter to use when joining the items
+    :type delimiter: str
+    :returns: the recursively joined list
+    :rtype: str
     """
     if isinstance(input, list):
         return delimiter.join(
@@ -53,59 +59,31 @@ def string_to_list(input, delimiter):
 
 
 def string_to_date(input):
-    """convert string to date object"""
-    # try date format --mmdd
-    try:
-        return datetime.strptime(input, "--%m%d")
-    except ValueError:
-        pass
-    # try date format --mm-dd
-    try:
-        return datetime.strptime(input, "--%m-%d")
-    except ValueError:
-        pass
-    # try date format yyyymmdd
-    try:
-        return datetime.strptime(input, "%Y%m%d")
-    except ValueError:
-        pass
-    # try date format yyyy-mm-dd
-    try:
-        return datetime.strptime(input, "%Y-%m-%d")
-    except ValueError:
-        pass
-    # try datetime format yyyymmddThhmmss
-    try:
-        return datetime.strptime(input, "%Y%m%dT%H%M%S")
-    except ValueError:
-        pass
-    # try datetime format yyyy-mm-ddThh:mm:ss
-    try:
-        return datetime.strptime(input, "%Y-%m-%dT%H:%M:%S")
-    except ValueError:
-        pass
-    # try datetime format yyyymmddThhmmssZ
-    try:
-        return datetime.strptime(input, "%Y%m%dT%H%M%SZ")
-    except ValueError:
-        pass
-    # try datetime format yyyy-mm-ddThh:mm:ssZ
-    try:
-        return datetime.strptime(input, "%Y-%m-%dT%H:%M:%SZ")
-    except ValueError:
-        pass
-    # try datetime format yyyymmddThhmmsstz where tz may look like -06:00
-    try:
-        return datetime.strptime(''.join(input.rsplit(":", 1)),
-                                 "%Y%m%dT%H%M%S%z")
-    except ValueError:
-        pass
-    # try datetime format yyyy-mm-ddThh:mm:sstz where tz may look like -06:00
-    try:
-        return datetime.strptime(''.join(input.rsplit(":", 1)),
-                                 "%Y-%m-%dT%H:%M:%S%z")
-    except ValueError:
-        pass
+    """Convert string to date object.
+
+    :param input: the date string to parse
+    :type input: str
+    :returns: the parsed datetime object
+    :rtype: datetime.datetime
+    """
+    # try date formats --mmdd, --mm-dd, yyyymmdd, yyyy-mm-dd and datetime
+    # formats yyyymmddThhmmss, yyyy-mm-ddThh:mm:ss, yyyymmddThhmmssZ,
+    # yyyy-mm-ddThh:mm:ssZ.
+    for format_string in ("--%m%d", "--%m-%d", "%Y%m%d", "%Y-%m-%d",
+                          "%Y%m%dT%H%M%S", "%Y-%m-%dT%H:%M:%S",
+                          "%Y%m%dT%H%M%SZ", "%Y-%m-%dT%H:%M:%SZ"):
+        try:
+            return datetime.strptime(input, format_string)
+        except ValueError:
+            pass
+    # try datetime formats yyyymmddThhmmsstz and yyyy-mm-ddThh:mm:sstz where tz
+    # may look like -06:00.
+    for format_string in ("%Y%m%dT%H%M%S%z", "%Y-%m-%dT%H:%M:%S%z"):
+        try:
+            return datetime.strptime(''.join(input.rsplit(":", 1)),
+                                     format_string)
+        except ValueError:
+            pass
     raise ValueError
 
 
@@ -115,6 +93,16 @@ def get_random_uid():
 
 
 def compare_uids(uid1, uid2):
+    """Calculate the minimum length of initial substrings of uid1 and uid2 for
+    them to be different.
+
+    :param uid1: first uid to compare
+    :type uid1: str
+    :param uid2: second uid to compare
+    :type uid2: str
+    :returns: the length of the shortes unequal inital substrings
+    :rtype: int
+    """
     sum = 0
     for c1, c2 in zip(uid1, uid2):
         if c1 == c2:
