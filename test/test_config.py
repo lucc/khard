@@ -44,7 +44,6 @@ class LoadingConfigFile(unittest.TestCase):
 
 class TestConvertBooleanConfigValue(unittest.TestCase):
 
-    SUT = config.Config._convert_boolean_config_value
     config = {'some key': 'some value',
               'trueish': 'yes',
               'falseish': 'no',
@@ -71,11 +70,15 @@ class TestConvertBooleanConfigValue(unittest.TestCase):
 
     def test_other_values_raise_value_error(self):
         with self.assertRaises(ValueError):
-            config.Config._convert_boolean_config_value(self.config, 'some key')
+            config.Config._convert_boolean_config_value(self.config,
+                                                        'some key')
         with self.assertRaises(ValueError):
-            config.Config._convert_boolean_config_value(self.config, 'realtrue')
+            config.Config._convert_boolean_config_value(self.config,
+                                                        'realtrue')
         with self.assertRaises(ValueError):
-            config.Config._convert_boolean_config_value(self.config, 'realfalse')
+            config.Config._convert_boolean_config_value(self.config,
+                                                        'realfalse')
+
 
 if __name__ == "__main__":
     unittest.main()
