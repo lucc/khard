@@ -55,6 +55,7 @@ case $state in
       {details,show}:'show details for a contact'
       email:'list email addresses'
       export:'export a contact'
+      {filename,file}':list internal file names'
       {list,ls}:'list all (selected) contacts'
       merge:'merge two contacts'
       {modify,edit,ed}:'edit a contact'
@@ -126,7 +127,7 @@ case $state in
     case $words[1] in
       addressbooks|abooks)
         options+=();;
-      details|show|source|src)
+      list|ls|details|show|source|src|remove|delete|del|rm|filename|file)
         options+=(
           $default_addressbook_options $default_search_options $sort_options
         );;
