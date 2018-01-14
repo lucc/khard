@@ -52,6 +52,16 @@ isolate the khard installation from other software on your system.
 .. _develop: https://github.com/scheibler/khard/tree/develop
 .. _virtualenv: https://virtualenv.pypa.io/en/stable/
 
+Configuration
+=============
+
+A minimal configuration is provided in the source tree.  It looks like this:
+
+.. literalinclude :: ../../misc/khard/khard.conf.example
+   :language: ini
+
+
+
 Indices and tables
 ==================
 
