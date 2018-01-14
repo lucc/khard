@@ -13,7 +13,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import AddressBook
+from .address_book import AddressBookCollection, AddressBookParseError
 from . import helpers
 
 
@@ -41,7 +41,6 @@ class Config:
     def __init__(self, config_file=""):
         self.config = None
         self.address_book_list = []
-        self.original_uid_dict = {}
         self.uid_dict = {}
 
         # set locale
@@ -182,18 +181,16 @@ class Config:
             exit('Missing main section "[addressbooks]".')
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
-        for name in self.config['addressbooks'].keys():
-            # create address book object
-            try:
-                address_book = AddressBook(
-                    name, self.config['addressbooks'][name]['path'])
-            except KeyError:
-                exit("Missing path to the \"%s\" address book." % name)
-            except IOError as err:
-                exit(str(err))
-            else:
-                # add address book to list
-                self.address_book_list.append(address_book)
+        section = self.config['addressbooks']
+        try:
+            self.abook = AddressBookCollection(
+                "tmp", *[(name, section[name]['path']) for name in section])
+        except KeyError as err:
+            exit('Missing path to the "{}" address book.'.format(err.args[0]))
+        except IOError as err:
+            exit(str(err))
+        self.address_book_list = [self.abook.get_abook(name)
+                                  for name in section]
 
     @staticmethod
     def _convert_boolean_config_value(config, name, default=True):
@@ -227,7 +224,7 @@ class Config:
         address books already contain their contact objects
         if you must be sure, get every address book individually with the
         get_address_book() function below
-        :rtype: list(AddressBook)
+        :rtype: list(address_book.AddressBook)
         """
         return self.address_book_list
 
@@ -235,95 +232,36 @@ class Config:
         """
         return address book object or None, if the address book with the
         given name does not exist
-        :rtype: AddressBook
+        :rtype: address_book.AddressBook
         """
         if not self.search_in_source_files():
             search_queries = None
-        for address_book in self.address_book_list:
-            if name == address_book.name:
-                if not address_book.loaded:
-                    # load vcard files of address book
-                    contacts, errors = address_book.load_all_vcards(
-                        self.get_supported_private_objects(),
-                        self.localize_dates(), search_queries)
-
-                    # check if one or more contacts could not be parsed
-                    if errors > 0:
-                        if not self.skip_unparsable():
-                            logging.error(
-                                "%d of %d vcard files of address book %s "
-                                "could not be parsed\nUse --debug for more "
-                                "information or --skip-unparsable to proceed",
-                                errors, contacts+errors, name)
-                            sys.exit(2)
-                        else:
-                            logging.debug(
-                                "\n%d of %d vcard files of address book %s "
-                                "could not be parsed\n", errors, contacts, name)
-
-                    # Check uniqueness of vcard uids and create short uid
-                    # dictionary that can be disabled with the show_uids option
-                    # in the config file, if desired.
-                    if self.config['contact table']['show_uids']:
-                        # check, if multiple contacts have the same uid
-                        for contact in address_book.contact_list:
-                            uid = contact.get_uid()
-                            if uid:
-                                if uid not in self.original_uid_dict:
-                                    self.original_uid_dict[uid] = contact
-                                else:
-                                    other = self.original_uid_dict[uid]
-                                    exit("The contact %s from address book %s "
-                                         "and the contact %s from address book "
-                                         "%s have the same uid %s" % (
-                                             other, other.address_book, contact,
-                                             contact.address_book, uid),
-                                         prefix="")
-                        # rebuild shortened uid dictionary
-                        self._create_shortened_uid_dictionary()
-                return address_book
-        # Return None if no address book did match the given name.
-        return None
+        address_book = self.abook.get_abook(name)
+        if not address_book:
+            # Return None if no address book did match the given name.
+            return None
+        if not address_book.loaded:
+            try:
+                # Load vcard files of the address book.
+                contacts, errors = address_book.load(
+                    search_queries, self.get_supported_private_objects(),
+                    self.localize_dates(), self.skip_unparsable())
+                # Check uniqueness of vcard uids and create short uid
+                # dictionary. This can be disabled with the show_uids option in
+                # the config file, if desired.
+                if self.config['contact table']['show_uids']:
+                    self.uid_dict = self.abook.get_short_uid_dict()
+            except AddressBookParseError as err:
+                if not self.skip_unparsable():
+                    logging.error(
+                        "The vcard file %s of address book %s could not be "
+                        "parsed\nUse --debug for more information or "
+                        "--skip-unparsable to proceed", err.filename, name)
+                    sys.exit(2)
+        return address_book
 
     def has_uids(self):
-        return len(self.uid_dict.keys()) > 0
-
-    def _create_shortened_uid_dictionary(self):
-        # uniqueness of uids is guaranteed but they are much to long for the -u
-        # / --uid command line option
-        #
-        # Therefore clear previously filled uid_dict and recreate with the
-        # shortest possible uids, so they are still unique but much handier
-        #
-        # with around 100 contacts that short id should not be longer then two
-        # or three characters
-        self.uid_dict.clear()
-        flat_contact_list = sorted(self.original_uid_dict.values(),
-                                   key=lambda x: x.get_uid())
-        if len(flat_contact_list) == 1:
-            current = flat_contact_list[0]
-            self.uid_dict[current.get_uid()[:1]] = current
-        elif len(flat_contact_list) > 1:
-            # first list element
-            current = flat_contact_list[0]
-            next = flat_contact_list[1]
-            same = helpers.compare_uids(current.get_uid(), next.get_uid())
-            self.uid_dict[current.get_uid()[:same+1]] = current
-            # list elements 1 to len(flat_contact_list)-1
-            for index in range(1, len(flat_contact_list)-1):
-                prev = flat_contact_list[index-1]
-                current = flat_contact_list[index]
-                next = flat_contact_list[index+1]
-                same = max(helpers.compare_uids(prev.get_uid(),
-                                                current.get_uid()),
-                           helpers.compare_uids(current.get_uid(),
-                                                next.get_uid()))
-                self.uid_dict[current.get_uid()[:same+1]] = current
-            # last list element
-            prev = flat_contact_list[-2]
-            current = flat_contact_list[-1]
-            same = helpers.compare_uids(prev.get_uid(), current.get_uid())
-            self.uid_dict[current.get_uid()[:same+1]] = current
+        return bool(self.uid_dict)
 
     def get_shortened_uid(self, uid):
         if uid:
