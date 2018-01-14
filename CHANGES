@@ -160,3 +160,5 @@ v0.12.0: 2018.01.12
 - Fix: Yaml parser switched from pyyaml to ruamel.yaml to allow special unicode characters in the contact template (#133)
 - Fix: Accentuated characters sorted wrong in contact list (#127)
 
+v0.12.1: 2018.01.14
+- Fix for issue #148: Config variable "sort" not longer mandatory in config file
