@@ -32,7 +32,6 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         self.loaded = False
         self.contacts = {}
-        self._uids = None
         self._short_uids = None
         self.name = name
 
@@ -149,31 +148,6 @@ class AddressBook(metaclass=abc.ABCMeta):
                              'are supported.')
         return list(search_function(query))
 
-    def get_uids_dict(self):
-        """Create a dictionary of UIDs for all contacts.
-
-        :returns: all contacts mapped by their UID
-        :rtype: dict(str: CarddavObject)
-
-        """
-        if self._uids is None:
-            if not self.loaded:
-                self.load()
-            self._uids = dict()
-            for contact in self.contacts.values():
-                uid = contact.get_uid()
-                if uid:
-                    if uid in self._uids:
-                        logging.warning("The contacts %s and %s from address "
-                                        "book %s have the same UID %s",
-                                        contact, self._uids[uid], self, uid)
-                    else:
-                        self._uids[uid] = contact
-                else:
-                    logging.warning("The contact %s from address book %s has "
-                                    "no UID", contact, self)
-        return self._uids
-
     def get_short_uid_dict(self):
         """Create a dictionary of shortend UIDs for all contacts.
 
@@ -182,29 +156,27 @@ class AddressBook(metaclass=abc.ABCMeta):
 
         """
         if self._short_uids is None:
-            self.get_uids_dict()
-            if not self._uids:
-                self._short_uids = {}
-            elif len(self._uids) == 1:
-                self._short_uids = {key[:1]: value
-                                    for key, value in self._uids.items()}
+            if not self.loaded:
+                self.load()
+            if not self.contacts or len(self.contacts) == 1:
+                self._short_uids = self.contacts
             else:
                 self._short_uids = {}
-                sorted_uids = sorted(self._uids)
+                sorted_uids = sorted(self.contacts)
                 # Prepare for the loop; the first and last items are handled
                 # seperatly.
                 item0, item1 = sorted_uids[:2]
                 same1 = self._compare_uids(item0, item1)
-                self._short_uids[item0[:same1 + 1]] = self._uids[item0]
+                self._short_uids[item0[:same1 + 1]] = self.contacts[item0]
                 for item_new in sorted_uids[2:]:
                     # shift the items and the common prefix lenght one further
                     item0, item1 = item1, item_new
                     same0, same1 = same1, self._compare_uids(item0, item1)
                     # compute the final prefix length for item1
                     same = max(same0, same1)
-                    self._short_uids[item0[:same + 1]] = self._uids[item0]
+                    self._short_uids[item0[:same + 1]] = self.contacts[item0]
                 # Save the last item.
-                self._short_uids[item1[:same1 + 1]] = self._uids[item1]
+                self._short_uids[item1[:same1 + 1]] = self.contacts[item1]
         return self._short_uids
 
     @abc.abstractmethod
@@ -370,25 +342,3 @@ class AddressBookCollection(AddressBook):
         for abook in self._abooks:
             if abook.name == name:
                 return abook
-
-    def get_uids_dict(self):
-        """Create a dictionary of UIDs for all contacts.
-
-        :returns: all contacts mapped by their UID
-        :rtype: dict(str: CarddavObject)
-
-        """
-        if self._uids is None:
-            if not self.loaded:
-                self.load()
-            self._uids = dict()
-            for abook in self._abooks:
-                uids = abook.get_uids_dict()
-                for uid in uids:
-                    if uid in self._uids:
-                        logging.warning("The contacts %s and %s from address "
-                                        "book %s have the same UID %s",
-                                        self._uids[uid], uids[uid], self, uid)
-                    else:
-                        self._uids[uid] = uids[uid]
-        return self._uids
