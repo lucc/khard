@@ -31,6 +31,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         self.loaded = False
         self.contacts = []
         self._uids = None
+        self._short_uids = None
         self.name = name
         self.path = os.path.expanduser(path)
         if not os.path.isdir(self.path):
