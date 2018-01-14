@@ -1451,9 +1451,18 @@ def parse_args(argv):
         remainder.insert(0, config.default_action)
         logging.debug("updated remainder={}".format(remainder))
 
+    # Save the last option that needs to be carried from the first parser run
+    # to the second.
+    skip = args.skip_unparsable
+
     # Parse the remainder of the command line.  All options from the previous
     # run have already been processed and are not needed any more.
     args = parser.parse_args(remainder)
+
+    # Restore settings that are left from the first parser run.
+    args.skip_unparsable = skip
+
+    # Finish up with a debug report and return the result.
     logging.debug("second args={}".format(args))
     return args
 
