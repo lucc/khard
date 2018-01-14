@@ -318,11 +318,7 @@ class AddressBookCollection(AddressBook):
             AddressBook instance
         :type *args: tuple(str,str)
         """
-        self.loaded = False
-        self.contacts = []
-        self._uids = None
-        self._short_uids = None
-        self.name = name
+        super().__init__(name)
         self._abooks = []
         for arguments in args:
             self._abooks.append(VdirAddressBook(*arguments))
