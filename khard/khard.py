@@ -1644,14 +1644,11 @@ def main(argv=sys.argv[1:]):
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
-    # Check some of the simpler subcommands first.  These don't have any options
-    # and can directly be run.  That is much faster than checking all options
-    # first and getting default values.
+    # Check some of the simpler subcommands first.  These don't have any
+    # options and can directly be run.  That is much faster than checking all
+    # options first and getting default values.
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.get_all_address_books()))
-        return
-    elif args.action == "filename":
-        print('\n'.join(contact.filename for contact in vcard_list))
         return
 
     merge_args_into_config(args, config)
@@ -1666,6 +1663,10 @@ def main(argv=sys.argv[1:]):
                                                      config, search_queries)
 
     vcard_list = generate_contact_list(config, args)
+
+    if args.action == "filename":
+        print('\n'.join(contact.filename for contact in vcard_list))
+        return
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
