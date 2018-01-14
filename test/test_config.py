@@ -10,12 +10,22 @@ from khard import config
 
 class LoadingConfigFile(unittest.TestCase):
 
+    _patch1 = None
+    _patch2 = None
+
     @classmethod
     def setUpClass(cls):
-        # Clear the environment.
-        for varname in ["EDITOR", "MERGE_EDITOR", "XDG_CONFIG_HOME"]:
-            if varname in os.environ:
-                del os.environ[varname]
+        # Mock the environment.
+        cls._patch1 = mock.patch('os.environ', {})
+        # Use a mock to "find" executables in the mocked environment.
+        cls._patch2 = mock.patch('khard.config.find_executable', lambda x: x)
+        cls._patch1.start()
+        cls._patch2.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._patch1.stop()
+        cls._patch2.stop()
 
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
