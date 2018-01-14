@@ -53,7 +53,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :type uid1: str
         :param uid2: second uid to compare
         :type uid2: str
-        :returns: the length of the shortes unequal inital substrings
+        :returns: the length of the shortes unequal initial substrings
         :rtype: int
         """
         sum = 0
@@ -147,16 +147,29 @@ class AddressBook(metaclass=abc.ABCMeta):
                              'are supported.')
         return list(search_function(query))
 
-    def get_short_uid_dict(self):
+    def get_short_uid_dict(self, query=None, private_objects=tuple(),
+                           localize_dates=True, skip=False):
         """Create a dictionary of shortend UIDs for all contacts.
 
+        All arguments are only used if the address book is not yet initialized
+        and will just be handed to self.load().
+
+        :param query: see self.load()
+        :type query: str
+        :param private_objects: see self.load()
+            load
+        :type private_objects: iterable(str)
+        :param localize_dates: see self.load()
+        :type localize_dates: bool
+        :param skip: see self.load()
+        :type skip: bool
         :returns: the contacts mapped by the shortes unique prefix of their UID
         :rtype: dict(str: CarddavObject)
 
         """
         if self._short_uids is None:
             if not self.loaded:
-                self.load()
+                self.load(query, private_objects, localize_dates, skip)
             if not self.contacts or len(self.contacts) == 1:
                 self._short_uids = self.contacts
             else:
@@ -179,7 +192,8 @@ class AddressBook(metaclass=abc.ABCMeta):
         return self._short_uids
 
     @abc.abstractmethod
-    def load(self, query=None, private_objects=tuple(), localize_dates=True):
+    def load(self, query=None, private_objects=tuple(), localize_dates=True,
+             skip=False):
         """Load the vCards from the backing store.  If a query is given loading
         is limited to entries which match the query.  If the query is None all
         entries will be loaded.
@@ -191,6 +205,8 @@ class AddressBook(metaclass=abc.ABCMeta):
         :type private_objects: iterable(str)
         :param localize_dates: TODO
         :type localize_dates: bool
+        :param skip: skip unparsable vCard files
+        :type skip: bool
         :returns: the number of loaded contacts and the number of errors
         :rtype: (int, int)
 

@@ -248,7 +248,9 @@ class Config:
                 # dictionary. This can be disabled with the show_uids option in
                 # the config file, if desired.
                 if self.config['contact table']['show_uids']:
-                    self.uid_dict = self.abook.get_short_uid_dict()
+                    self.uid_dict = self.abook.get_short_uid_dict(
+                        search_queries, self.get_supported_private_objects(),
+                        self.localize_dates(), self.skip_unparsable())
             except AddressBookParseError as err:
                 if not self.skip_unparsable():
                     logging.error(
