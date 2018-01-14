@@ -242,10 +242,15 @@ class Config:
             return None
         if not address_book.loaded:
             try:
-                # load vcard files of address book
+                # Load vcard files of the address book.
                 contacts, errors = address_book.load(
                     search_queries, self.get_supported_private_objects(),
                     self.localize_dates(), self.skip_unparsable())
+                # Check uniqueness of vcard uids and create short uid
+                # dictionary. This can be disabled with the show_uids option in
+                # the config file, if desired.
+                if self.config['contact table']['show_uids']:
+                    self.uid_dict = self.abook.get_short_uid_dict()
             except AddressBookParseError as err:
                 if not self.skip_unparsable():
                     logging.error(
@@ -253,12 +258,6 @@ class Config:
                         "parsed\nUse --debug for more information or "
                         "--skip-unparsable to proceed", err.filename, name)
                     sys.exit(2)
-
-            # Check uniqueness of vcard uids and create short uid dictionary.
-            # This can be disabled with the show_uids option in the config
-            # file, if desired.
-            if self.config['contact table']['show_uids']:
-                self.uid_dict = self.abook.get_short_uid_dict()
         return address_book
 
     def has_uids(self):

@@ -278,7 +278,7 @@ class VdirAddressBook(AddressBook):
         :returns: the number of successfully loaded cards and the number of
             errors
         :rtype: int, int
-
+        :throws: AddressBookParseError
         """
         if self.loaded:
             return len(self.contacts), 0
