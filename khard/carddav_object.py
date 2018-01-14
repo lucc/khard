@@ -144,14 +144,22 @@ class CarddavObject:
     # getters and setters
     #####################
 
-    def _get_rev(self):
-        """
+    def _get_string_field(self, field):
+        """Get a string field from the underlying vCard.
+
+        :param field: the field value to get
+        :type field: str
+        :returns: the field value or the empty string
         :rtype: str
+
         """
         try:
-            return self.vcard.rev.value
+            return getattr(self.vcard, field).value
         except AttributeError:
             return ""
+
+    def _get_rev(self):
+        return self._get_string_field("rev")
 
     def _add_rev(self, dt):
         rev_obj = self.vcard.add('rev')
@@ -159,114 +167,56 @@ class CarddavObject:
             dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def get_uid(self):
-        """
-        :rtype: str
-        """
-        try:
-            return self.vcard.uid.value
-        except AttributeError:
-            return ""
+        return self._get_string_field("uid")
 
     def add_uid(self, uid):
         uid_obj = self.vcard.add('uid')
-        uid_obj.value = helpers.convert_to_vcard(
-            "uid", uid, ObjectType.string)
+        uid_obj.value = helpers.convert_to_vcard("uid", uid, ObjectType.string)
 
     def get_version(self):
-        """
-        :rtype: str
-        """
-        try:
-            return self.vcard.version.value
-        except AttributeError:
-            return ""
+        return self._get_string_field("version")
 
     def _add_version(self, vcard_version):
         version_obj = self.vcard.add('version')
-        version_obj.value = helpers.convert_to_vcard(
-            "version", vcard_version, ObjectType.string)
+        version_obj.value = helpers.convert_to_vcard("version", vcard_version,
+                                                     ObjectType.string)
+
+    def _get_names_part(self, part):
+        """Get some part of the "N" entry in the vCard as a list
+
+        :param part: the name to get e.g. "prefix" or "given"
+        :type part: str
+        :returns: a list of entries for this name part
+        :rtype: list(str)
+
+        """
+        try:
+            the_list = getattr(self.vcard.n.value, part)
+        except AttributeError:
+            return []
+        else:
+            # check if list only contains empty strings
+            if not ''.join(the_list):
+                return []
+        return the_list if isinstance(the_list, list) else [the_list]
 
     def _get_name_prefixes(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            prefix_list = self.vcard.n.value.prefix
-        except AttributeError:
-            prefix_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(prefix_list):
-                prefix_list = []
-        return prefix_list if isinstance(prefix_list, list) else [prefix_list]
+        return self._get_names_part("prefix")
 
     def _get_first_names(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            first_name_list = self.vcard.n.value.given
-        except AttributeError:
-            first_name_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(first_name_list):
-                first_name_list = []
-        return first_name_list if isinstance(first_name_list, list) \
-            else [first_name_list]
+        return self._get_names_part("given")
 
     def _get_additional_names(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            additional_name_list = self.vcard.n.value.additional
-        except AttributeError:
-            additional_name_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(additional_name_list):
-                additional_name_list = []
-        return additional_name_list if isinstance(additional_name_list, list) \
-            else [additional_name_list]
+        return self._get_names_part("additional")
 
     def _get_last_names(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            last_name_list = self.vcard.n.value.family
-        except AttributeError:
-            last_name_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(last_name_list):
-                last_name_list = []
-        return last_name_list if isinstance(last_name_list, list) \
-            else [last_name_list]
+        return self._get_names_part("family")
 
     def _get_name_suffixes(self):
-        """
-        :rtype: list(str)
-        """
-        try:
-            suffix_list = self.vcard.n.value.suffix
-        except AttributeError:
-            suffix_list = []
-        else:
-            # check if list only contains an empty string ([""])
-            if not ''.join(suffix_list):
-                suffix_list = []
-        return suffix_list if isinstance(suffix_list, list) else [suffix_list]
+        return self._get_names_part("suffix")
 
     def get_full_name(self):
-        """
-        :rtype: str
-        """
-        try:
-            return self.vcard.fn.value
-        except AttributeError:
-            return ""
+        return self._get_string_field("fn")
 
     def get_first_name_last_name(self):
         """
@@ -297,7 +247,7 @@ class CarddavObject:
         if self._get_additional_names():
             first_and_additional_names += self._get_additional_names()
         if last_names and first_and_additional_names:
-            return "%s, %s" % (
+            return "{}, {}".format(
                 helpers.list_to_string(last_names, " "),
                 helpers.list_to_string(first_and_additional_names, " "))
         elif last_names:
@@ -321,8 +271,7 @@ class CarddavObject:
                 "additional name", additional_name,
                 ObjectType.string_or_list_with_strings),
             family=helpers.convert_to_vcard(
-                "last name", last_name,
-                ObjectType.string_or_list_with_strings),
+                "last name", last_name, ObjectType.string_or_list_with_strings),
             suffix=helpers.convert_to_vcard(
                 "name suffix", suffix, ObjectType.string_or_list_with_strings))
         # fn
@@ -356,8 +305,7 @@ class CarddavObject:
         org_obj.value = helpers.convert_to_vcard(
             "organisation", organisation, ObjectType.list_with_strings)
         # check if fn attribute is already present
-        if not self.vcard.getChildValue("fn") \
-                and self._get_organisations():
+        if not self.vcard.getChildValue("fn") and self._get_organisations():
             # if not, set fn to organisation name
             org_value = helpers.list_to_string(self._get_organisations()[0],
                                                ", ")
@@ -406,7 +354,7 @@ class CarddavObject:
             if child.name == "TEL":
                 type = helpers.list_to_string(
                     self._get_types_for_vcard_object(child, "voice"), ", ")
-                if phone_dict.get(type) is None:
+                if type not in phone_dict:
                     phone_dict[type] = []
                 try:
                     # detect uri
@@ -468,7 +416,7 @@ class CarddavObject:
             if child.name == "EMAIL":
                 type = helpers.list_to_string(
                     self._get_types_for_vcard_object(child, "internet"), ", ")
-                if email_dict.get(type) is None:
+                if type not in email_dict:
                     email_dict[type] = []
                 email_dict[type].append(child.value)
         # sort email address lists
@@ -489,8 +437,8 @@ class CarddavObject:
                              helpers.list_to_string(custom_types, ", "))
         else:
             email_obj = self.vcard.add('email')
-            email_obj.value = helpers.convert_to_vcard(
-                "email address", address, ObjectType.string)
+            email_obj.value = helpers.convert_to_vcard("email address", address,
+                                                       ObjectType.string)
             if self.get_version() == "4.0":
                 if pref > 0:
                     email_obj.params['PREF'] = str(pref)
@@ -521,7 +469,7 @@ class CarddavObject:
             if child.name == "ADR":
                 type = helpers.list_to_string(
                     self._get_types_for_vcard_object(child, "home"), ", ")
-                if post_adr_dict.get(type) is None:
+                if type not in post_adr_dict:
                     post_adr_dict[type] = []
                 post_adr_dict[type].append(
                     {
@@ -546,37 +494,37 @@ class CarddavObject:
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
                 strings = []
-                if post_adr.get("street"):
+                if "street" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("street"), "\n"))
-                if post_adr.get("box") and post_adr.get("extended"):
-                    strings.append("%s %s" % (
+                if "box" in post_adr and "extended" in post_adr:
+                    strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("box"), " "),
                         helpers.list_to_string(post_adr.get("extended"), " ")))
-                elif post_adr.get("box"):
+                elif "box" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("box"), " "))
-                elif post_adr.get("extended"):
+                elif "extended" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("extended"), " "))
-                if post_adr.get("code") and post_adr.get("city"):
-                    strings.append("%s %s" % (
+                if "code" in post_adr and "city" in post_adr:
+                    strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("code"), " "),
                         helpers.list_to_string(post_adr.get("city"), " ")))
-                elif post_adr.get("code"):
+                elif "code" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("code"), " "))
-                elif post_adr.get("city"):
+                elif "city" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("city"), " "))
-                if post_adr.get("region") and post_adr.get("country"):
-                    strings.append("%s, %s" % (
+                if "region" in post_adr and "country" in post_adr:
+                    strings.append("{}, {}".format(
                         helpers.list_to_string(post_adr.get("region"), " "),
                         helpers.list_to_string(post_adr.get("country"), " ")))
-                elif post_adr.get("region"):
+                elif "region" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("region"), " "))
-                elif post_adr.get("country"):
+                elif "country" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("country"), " "))
                 formatted_post_adr_dict[type].append('\n'.join(strings))
@@ -585,7 +533,7 @@ class CarddavObject:
     def _add_post_address(self, type, box, extended, street, code, city,
                           region, country):
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), "%s, %s" % (street, city),
+            helpers.string_to_list(type, ","), "{}, {}".format(street, city),
             self.address_types_v4 if self.get_version() == "4.0" else
             self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
@@ -613,8 +561,7 @@ class CarddavObject:
                 region=helpers.convert_to_vcard(
                     "region", region, ObjectType.string_or_list_with_strings),
                 country=helpers.convert_to_vcard(
-                    "country", country,
-                    ObjectType.string_or_list_with_strings))
+                    "country", country, ObjectType.string_or_list_with_strings))
             if self.get_version() == "4.0":
                 if pref > 0:
                     adr_obj.params['PREF'] = str(pref)
@@ -668,8 +615,8 @@ class CarddavObject:
 
     def _add_nickname(self, nickname):
         nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = helpers.convert_to_vcard(
-            "nickname", nickname, ObjectType.string)
+        nickname_obj.value = helpers.convert_to_vcard("nickname", nickname,
+                                                      ObjectType.string)
 
     def _get_notes(self):
         """
@@ -683,8 +630,8 @@ class CarddavObject:
 
     def _add_note(self, note):
         note_obj = self.vcard.add('note')
-        note_obj.value = helpers.convert_to_vcard(
-            "note", note, ObjectType.string)
+        note_obj.value = helpers.convert_to_vcard("note", note,
+                                                  ObjectType.string)
 
     def _get_private_objects(self):
         """
@@ -701,7 +648,7 @@ class CarddavObject:
                     pass
                 else:
                     key = self.supported_private_objects[key_index]
-                    if private_objects.get(key) is None:
+                    if key not in private_objects:
                         private_objects[key] = []
                     private_objects[key].append(child.value)
         # sort private object lists
@@ -711,8 +658,8 @@ class CarddavObject:
 
     def _add_private_object(self, key, value):
         private_obj = self.vcard.add('X-' + key.upper())
-        private_obj.value = helpers.convert_to_vcard(
-            key, value, ObjectType.string)
+        private_obj.value = helpers.convert_to_vcard(key, value,
+                                                     ObjectType.string)
 
     def _get_webpages(self):
         """
@@ -726,8 +673,8 @@ class CarddavObject:
 
     def _add_webpage(self, webpage):
         webpage_obj = self.vcard.add('url')
-        webpage_obj.value = helpers.convert_to_vcard(
-            "webpage", webpage, ObjectType.string)
+        webpage_obj.value = helpers.convert_to_vcard("webpage", webpage,
+                                                     ObjectType.string)
 
     def get_anniversary(self):
         """:returns: contacts anniversary or None if not available
@@ -924,9 +871,9 @@ class CarddavObject:
 
         # check for available data
         # at least enter name or organisation
-        if not bool(contact_data.get("First name")) \
-                and not bool(contact_data.get("Last name")) \
-                and not bool(contact_data.get("Organisation")):
+        if "First name" not in contact_data \
+                and "Last name" not in contact_data \
+                and "Organisation" not in contact_data:
             raise ValueError(
                 "Error: You must either enter a name or an organisation")
 
@@ -942,19 +889,17 @@ class CarddavObject:
         # the vobject library throws an exception, if it doesn't exist
         # so add the name regardless if it's empty or not
         self._add_name(
-            contact_data.get("Prefix") or "",
-            contact_data.get("First name") or "",
-            contact_data.get("Additional") or "",
-            contact_data.get("Last name") or "",
-            contact_data.get("Suffix") or "")
+            contact_data.get("Prefix", ""), contact_data.get("First name", ""),
+            contact_data.get("Additional", ""),
+            contact_data.get("Last name", ""), contact_data.get("Suffix", ""))
         # nickname
         self.delete_vcard_object("NICKNAME")
-        if bool(contact_data.get("Nickname")):
+        if "Nickname" in contact_data:
             if isinstance(contact_data.get("Nickname"), str):
                 self._add_nickname(contact_data.get("Nickname"))
             elif isinstance(contact_data.get("Nickname"), list):
                 for nickname in contact_data.get("Nickname"):
-                    if bool(nickname):
+                    if nickname:
                         self._add_nickname(nickname)
             else:
                 raise ValueError(
@@ -963,12 +908,12 @@ class CarddavObject:
         # organisation
         self.delete_vcard_object("ORG")
         self.delete_vcard_object("X-ABSHOWAS")
-        if bool(contact_data.get("Organisation")):
+        if "Organisation" in contact_data:
             if isinstance(contact_data.get("Organisation"), str):
                 self._add_organisation([contact_data.get("Organisation")])
             elif isinstance(contact_data.get("Organisation"), list):
                 for organisation in contact_data.get("Organisation"):
-                    if bool(organisation):
+                    if organisation:
                         if isinstance(organisation, str):
                             self._add_organisation([organisation])
                         else:
@@ -979,12 +924,12 @@ class CarddavObject:
 
         # role
         self.delete_vcard_object("ROLE")
-        if bool(contact_data.get("Role")):
+        if "Role" in contact_data:
             if isinstance(contact_data.get("Role"), str):
                 self._add_role(contact_data.get("Role"))
             elif isinstance(contact_data.get("Role"), list):
                 for role in contact_data.get("Role"):
-                    if bool(role):
+                    if role:
                         self._add_role(role)
             else:
                 raise ValueError(
@@ -992,12 +937,12 @@ class CarddavObject:
 
         # title
         self.delete_vcard_object("TITLE")
-        if bool(contact_data.get("Title")):
+        if "Title" in contact_data:
             if isinstance(contact_data.get("Title"), str):
                 self._add_title(contact_data.get("Title"))
             elif isinstance(contact_data.get("Title"), list):
                 for title in contact_data.get("Title"):
-                    if bool(title):
+                    if title:
                         self._add_title(title)
             else:
                 raise ValueError(
@@ -1005,7 +950,7 @@ class CarddavObject:
 
         # phone
         self.delete_vcard_object("TEL")
-        if contact_data.get("Phone"):
+        if "Phone" in contact_data:
             if isinstance(contact_data.get("Phone"), dict):
                 for type, number_list in contact_data.get("Phone").items():
                     if isinstance(number_list, str):
@@ -1024,7 +969,7 @@ class CarddavObject:
 
         # email
         self.delete_vcard_object("EMAIL")
-        if contact_data.get("Email"):
+        if "Email" in contact_data:
             if isinstance(contact_data.get("Email"), dict):
                 for type, email_list in contact_data.get("Email").items():
                     if isinstance(email_list, str):
@@ -1043,7 +988,7 @@ class CarddavObject:
 
         # post addresses
         self.delete_vcard_object("ADR")
-        if contact_data.get("Address"):
+        if "Address" in contact_data:
             if isinstance(contact_data.get("Address"), dict):
                 for type, post_adr_list in contact_data.get("Address").items():
                     if isinstance(post_adr_list, dict):
@@ -1055,18 +1000,18 @@ class CarddavObject:
                                 for key, value in post_adr.items():
                                     if key in ["Box", "Extended", "Street",
                                                "Code", "City", "Region",
-                                               "Country"] and bool(value):
+                                               "Country"] and value:
                                         address_not_empty = True
                                         break
                                 if address_not_empty:
                                     self._add_post_address(
-                                        type, post_adr.get("Box") or "",
-                                        post_adr.get("Extended") or "",
-                                        post_adr.get("Street") or "",
-                                        post_adr.get("Code") or "",
-                                        post_adr.get("City") or "",
-                                        post_adr.get("Region") or "",
-                                        post_adr.get("Country") or "")
+                                        type, post_adr.get("Box", ""),
+                                        post_adr.get("Extended", ""),
+                                        post_adr.get("Street", ""),
+                                        post_adr.get("Code", ""),
+                                        post_adr.get("City", ""),
+                                        post_adr.get("Region", ""),
+                                        post_adr.get("Country", ""))
                             else:
                                 raise ValueError(
                                     "Error: one of the " + type + " type "
@@ -1082,7 +1027,7 @@ class CarddavObject:
 
         # categories
         self.delete_vcard_object("CATEGORIES")
-        if contact_data.get("Categories"):
+        if "Categories" in contact_data:
             if isinstance(contact_data.get("Categories"), str):
                 self._add_category([contact_data.get("Categories")])
             elif isinstance(contact_data.get("Categories"), list):
@@ -1108,7 +1053,7 @@ class CarddavObject:
 
         # urls
         self.delete_vcard_object("URL")
-        if contact_data.get("Webpage"):
+        if "Webpage" in contact_data:
             if isinstance(contact_data.get("Webpage"), str):
                 self._add_webpage(contact_data.get("Webpage"))
             elif isinstance(contact_data.get("Webpage"), list):
@@ -1162,7 +1107,7 @@ class CarddavObject:
 
         # birthday
         self.delete_vcard_object("BDAY")
-        if contact_data.get("Birthday"):
+        if "Birthday" in contact_data:
             if isinstance(contact_data.get("Birthday"), str):
                 if re.match(r"^text[\s]*=.*$", contact_data.get("Birthday")):
                     l = [x.strip() for x in
@@ -1202,8 +1147,8 @@ class CarddavObject:
 
         # private objects
         for supported in self.supported_private_objects:
-            self.delete_vcard_object("X-%s" % supported.upper())
-        if contact_data.get("Private"):
+            self.delete_vcard_object("X-{}".format(supported.upper()))
+        if "Private" in contact_data:
             if isinstance(contact_data.get("Private"), dict):
                 for key, value_list in contact_data.get("Private").items():
                     if key in self.supported_private_objects:
@@ -1228,7 +1173,7 @@ class CarddavObject:
 
         # notes
         self.delete_vcard_object("NOTE")
-        if contact_data.get("Note"):
+        if "Note" in contact_data:
             if isinstance(contact_data.get("Note"), str):
                 self._add_note(contact_data.get("Note"))
             elif isinstance(contact_data.get("Note"), list):
@@ -1353,8 +1298,8 @@ class CarddavObject:
                     longest_key = max(self.supported_private_objects, key=len)
                     for object in self.supported_private_objects:
                         strings += helpers.convert_to_yaml(
-                            object, self._get_private_objects().get(object)
-                            or "", 4, len(longest_key)+1, True)
+                            object, self._get_private_objects().get(object, ""),
+                            4, len(longest_key)+1, True)
 
             elif line.lower().startswith("anniversary"):
                 anniversary = self.get_anniversary()
@@ -1439,8 +1384,8 @@ class CarddavObject:
                 strings.append("    Anniversary: %s"
                                % self.get_formatted_anniversary())
             if self.get_birthday():
-                strings.append("    Birthday: %s"
-                               % self.get_formatted_birthday())
+                strings.append(
+                    "    Birthday: {}".format(self.get_formatted_birthday()))
             if self.get_nicknames():
                 strings += helpers.convert_to_yaml(
                     "Nickname", self.get_nicknames(), 4, -1, False)
@@ -1482,7 +1427,7 @@ class CarddavObject:
         if self._get_private_objects().keys():
             strings.append("Private:")
             for object in self.supported_private_objects:
-                if self._get_private_objects().get(object):
+                if object in self._get_private_objects():
                     strings += helpers.convert_to_yaml(
                         object, self._get_private_objects().get(object), 4, -1,
                         False)
@@ -1492,7 +1437,7 @@ class CarddavObject:
                 or self._get_webpages() or self._get_notes():
             strings.append("Miscellaneous")
             if show_uid and self.get_uid():
-                strings.append("    UID: %s" % self.get_uid())
+                strings.append("    UID: {}".format(self.get_uid()))
             if self._get_categories():
                 strings += helpers.convert_to_yaml(
                     "Categories", self._get_categories(), 4, -1, False)
@@ -1512,14 +1457,14 @@ class CarddavObject:
             with atomic_write(self.filename, overwrite=overwrite) as f:
                 f.write(self.vcard.serialize())
         except vobject.base.ValidateError as err:
-            print("Error: Vcard is not valid.\n%s" % err)
+            print("Error: Vcard is not valid.\n{}".format(err))
             sys.exit(4)
         except IOError as err:
-            print("Error: Can't write\n%s" % err)
+            print("Error: Can't write\n{}".format(err))
             sys.exit(4)
         except OSError as err:
-            print("Error: vcard with the file name %s already exists\n%s"
-                  % (os.path.basename(self.filename), err))
+            print("Error: vcard with the file name {} already exists\n"
+                  "{}".format(os.path.basename(self.filename), err))
             sys.exit(4)
 
     def delete_vcard_object(self, object_name):
@@ -1541,7 +1486,7 @@ class CarddavObject:
         if os.path.exists(self.filename):
             os.remove(self.filename)
         else:
-            print("Error: Vcard file %s does not exist." % self.filename)
+            print("Error: Vcard file {} does not exist.".format(self.filename))
             sys.exit(4)
 
     #######################
@@ -1576,8 +1521,7 @@ class CarddavObject:
                 if type and type.lower() != "pref":
                     if not type.lower().startswith("x-"):
                         type_list.append(type)
-                    elif type[2:].lower() not in \
-                            [x.lower() for x in type_list]:
+                    elif type[2:].lower() not in [x.lower() for x in type_list]:
                         # add x-custom type in case it's not already added by
                         # custom label for loop above but strip x- before
                         type_list.append(type[2:])
@@ -1630,5 +1574,5 @@ class CarddavObject:
                         standard_types.append(type)
                     else:
                         custom_types.append(type)
-                        standard_types.append("X-%s" % type)
+                        standard_types.append("X-{}".format(type))
         return (standard_types, custom_types, pref)
