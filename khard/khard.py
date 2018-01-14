@@ -494,6 +494,161 @@ def get_contacts(address_books, query, method="all", reverse=False,
                              '{}.'.format(sort))
 
 
+def merge_args_into_config(args, config):
+    """Merge the parsed arguments from argparse into the config object.
+
+    :param args: the parsed command line arguments
+    :type args: argparse.Namespace
+    :param config: the parsed config file
+    :type config: config.Config
+    :returns: the merged config object
+    :rtype: config.Config
+
+    """
+    # display by name: first or last name
+    if "display" in args and args.display:
+        config.set_display_by_name(args.display)
+    # group by address book
+    if "group_by_addressbook" in args and args.group_by_addressbook:
+        config.set_group_by_addressbook(True)
+    # reverse contact list
+    if "reverse" in args and args.reverse:
+        config.set_reverse(True)
+    # sort criteria: first or last name
+    if "sort" in args and args.sort:
+        config.sort = args.sort
+    # preferred vcard version
+    if "vcard_version" in args and args.vcard_version:
+        config.set_preferred_vcard_version(args.vcard_version)
+    # search in source files
+    if "search_in_source_files" in args and args.search_in_source_files:
+        config.set_search_in_source_files(True)
+    # skip unparsable vcards
+    if "skip_unparsable" in args and args.skip_unparsable:
+        config.set_skip_unparsable(True)
+
+
+def load_address_books(names, config, search_queries=None):
+    """Load all address books with the given names from the config.
+
+    :param names: the address books to load
+    :type names: list(str)
+    :param config: the config instance to use when looking up address books
+    :type config: config.Config
+    :param search_queries:
+    :type search_queries: None or str
+    :returns: the loaded address books
+    :rtype: list(addressbook.AddressBook)
+
+    """
+    result = []
+    # load address books which are defined in the configuration file
+    for name in names:
+        address_book = config.get_address_book(name, search_queries)
+        if address_book is None:
+            sys.exit('Error: The entered address book "{}" does not exist.\n'
+                     'Possible values are: {}'.format(name, ', '.join(
+                         str(book) for book in config.get_all_address_books())))
+        else:
+            result.append(address_book)
+    # In case names were empty and the for loop did not run.
+    if not result and not names:
+        # load contacts of all address books
+        for address_book in config.get_all_address_books():
+            result.append(config.get_address_book(address_book.name,
+                                                  search_queries))
+    logging.debug("addressbooks: %s", result)
+    return result
+
+
+def prepare_search_queries(args):
+    """Prepare the search query string from the given command line args.
+
+    :param args: the parsed command line
+    :type args: argparse.Namespace
+    :returns: the query string to find matching contacts
+    :rtype: str or None
+
+    """
+    # get all possible search queries for address book parsing
+    queries = []
+    if "source_search_terms" in args and args.source_search_terms:
+        escaped_term = ".*".join(re.escape(x)
+                                 for x in args.source_search_terms)
+        queries.append(escaped_term)
+        args.source_search_terms = ".*%s.*" % escaped_term
+    if "search_terms" in args and args.search_terms:
+        escaped_term = ".*".join(re.escape(x) for x in args.search_terms)
+        queries.append(escaped_term)
+        args.search_terms = ".*%s.*" % escaped_term
+    if "target_contact" in args and args.target_contact:
+        escaped_term = re.escape(args.target_contact)
+        queries.append(escaped_term)
+        args.target_contact = ".*%s.*" % escaped_term
+    if "uid" in args and args.uid:
+        queries.append(args.uid)
+    if "target_uid" in args and args.target_uid:
+        queries.append(args.target_uid)
+    # create and return regexp
+    return "^.*(%s).*$" % ')|('.join(queries) if queries else None
+
+
+def generate_contact_list(config, args):
+    """TODO: Docstring for generate_contact_list.
+
+    :param config: the config object to use
+    :type config: config.Config
+    :param args: the command line arguments
+    :type args: argparse.Namespace
+    :returns: the contacts for further processing (TODO)
+    :rtype: list(TODO)
+
+    """
+    # fill contact list
+    vcard_list = []
+    if "uid" in args and args.uid:
+        # If an uid was given we use it to find the contact.
+        logging.debug("args.uid=%s", args.uid)
+        # set search terms to the empty query to prevent errors in
+        # phone and email actions
+        args.search_terms = ".*"
+        vcard_list = get_contacts(config.get_all_address_books(), args.uid,
+                                  method="uid")
+        # We require that the uid given can uniquely identify a contact.
+        if not vcard_list:
+            sys.exit("Found no contact for {}uid {}".format(
+                "source " if args.action == "merge" else "", args.uid))
+        elif len(vcard_list) != 1:
+            print("Found multiple contacts for {}uid {}".format(
+                "source " if args.action == "merge" else "", args.uid))
+            for vcard in vcard_list:
+                print("    {}: {}".format(vcard, vcard.get_uid()))
+            sys.exit(1)
+    else:
+        # No uid was given so we try to use the search terms to select a
+        # contact.
+        if "source_search_terms" in args:
+            # exception for merge command
+            if args.source_search_terms:
+                args.search_terms = args.source_search_terms
+            else:
+                args.search_terms = ".*"
+        elif "search_terms" in args:
+            if args.search_terms:
+                args.search_terms = args.search_terms
+            else:
+                args.search_terms = ".*"
+        else:
+            # If no search terms where given on the command line we match
+            # everything with the empty search pattern.
+            args.search_terms = ".*"
+        logging.debug("args.search_terms=%s", args.search_terms)
+        vcard_list = get_contact_list_by_user_selection(
+            args.addressbook, args.search_terms,
+            args.strict_search if "strict_search" in args else False)
+    return vcard_list
+
+
 def new_subcommand(selected_address_books, input_from_stdin_or_file,
                    open_editor):
     """Create a new contact.
@@ -1449,14 +1604,14 @@ def parse_args(argv):
     # the config file.
     if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
-    logging.debug("first args={}".format(args))
-    logging.debug("remainder={}".format(remainder))
+    logging.debug("first args=%s", args)
+    logging.debug("remainder=%s", remainder)
 
     # Set the default command from the config file if none was given on the
     # command line.
     if not remainder or remainder[0] not in Actions.get_all():
         remainder.insert(0, config.default_action)
-        logging.debug("updated remainder={}".format(remainder))
+        logging.debug("updated remainder=%s", remainder)
 
     # Save the last option that needs to be carried from the first parser run
     # to the second.
@@ -1468,9 +1623,15 @@ def parse_args(argv):
 
     # Restore settings that are left from the first parser run.
     args.skip_unparsable = skip
+    logging.debug("second args=%s", args)
 
-    # Finish up with a debug report and return the result.
-    logging.debug("second args={}".format(args))
+    # An integrity check for some options.
+    if "uid" in args and args.uid and (
+            ("search_terms" in args and args.search_terms) or
+            ("source_search_terms" in args and args.source_search_terms)):
+        # If an uid was given we require that no search terms where given.
+        parser.error("You can not give arbitrary search terms and --uid at the"
+                     " same time.")
     return args
 
 
@@ -1483,149 +1644,28 @@ def main(argv=sys.argv[1:]):
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
-    # display by name: first or last name
-    if "display" in args and args.display:
-        config.set_display_by_name(args.display)
+    # Check some of the simpler subcommands first.  These don't have any options
+    # and can directly be run.  That is much faster than checking all options
+    # first and getting default values.
+    if args.action == "addressbooks":
+        print('\n'.join(str(book) for book in config.get_all_address_books()))
+        return
+    elif args.action == "filename":
+        print('\n'.join(contact.filename for contact in vcard_list))
+        return
 
-    # group by address book
-    if "group_by_addressbook" in args and args.group_by_addressbook:
-        config.set_group_by_addressbook(True)
-
-    # reverse contact list
-    if "reverse" in args and args.reverse:
-        config.set_reverse(True)
-
-    # sort criteria: first or last name
-    if "sort" in args and args.sort:
-        config.sort = args.sort
-
-    # preferred vcard version
-    if "vcard_version" in args and args.vcard_version:
-        config.set_preferred_vcard_version(args.vcard_version)
-
-    # search in source files
-    if "search_in_source_files" in args and args.search_in_source_files:
-        config.set_search_in_source_files(True)
-
-    # skip unparsable vcards
-    if "skip_unparsable" in args and args.skip_unparsable:
-        config.set_skip_unparsable(True)
-
-    # get all possible search queries for address book parsing
-    search_query_list = []
-    if "source_search_terms" in args and args.source_search_terms:
-        escaped_term = ".*".join(
-                [re.escape(x) for x in args.source_search_terms])
-        search_query_list.append(escaped_term)
-        args.source_search_terms = ".*%s.*" % escaped_term
-    if "search_terms" in args and args.search_terms:
-        escaped_term = ".*".join(
-                [re.escape(x) for x in args.search_terms])
-        search_query_list.append(escaped_term)
-        args.search_terms = ".*%s.*" % escaped_term
-    if "target_contact" in args and args.target_contact:
-        escaped_term = re.escape(args.target_contact)
-        search_query_list.append(escaped_term)
-        args.target_contact = ".*%s.*" % escaped_term
-    if "uid" in args and args.uid:
-        search_query_list.append(args.uid)
-    if "target_uid" in args and args.target_uid:
-        search_query_list.append(args.target_uid)
-    # create regexp
-    search_queries = None
-    if search_query_list:
-        search_queries = "^.*(%s).*$" % ')|('.join(search_query_list)
+    merge_args_into_config(args, config)
+    search_queries = prepare_search_queries(args)
 
     # load address books
-    if "addressbook" in args and args.addressbook != []:
-        # load address books which are defined in the configuration file
-        for index, name in enumerate(args.addressbook):
-            address_book = config.get_address_book(name, search_queries)
-            if address_book is None:
-                print("Error: The entered address book \"%s\" does not exist."
-                      "\nPossible values are: %s" % (
-                          name, ', '.join([str(book) for book in
-                                           config.get_all_address_books()])))
-                sys.exit(1)
-            else:
-                args.addressbook[index] = address_book
-    else:
-        # load contacts of all address books
-        args.addressbook = []
-        for address_book in config.get_all_address_books():
-            args.addressbook.append(config.get_address_book(
-                address_book.name, search_queries))
-    logging.debug("addressbooks: {}".format(args.addressbook))
+    if "addressbook" in args:
+        args.addressbook = load_address_books(args.addressbook, config,
+                                              search_queries)
+    if "target_addressbook" in args:
+        args.target_addressbook = load_address_books(args.target_addressbook,
+                                                     config, search_queries)
 
-    # load target address books
-    if "target_addressbook" in args and args.target_addressbook != []:
-        for index, name in enumerate(args.target_addressbook):
-            address_book = config.get_address_book(name, search_queries)
-            if address_book is None:
-                print("Error: The entered address book \"%s\" does not exist."
-                      "\nPossible values are: %s" % (
-                          name, ', '.join([str(book) for book in
-                                           config.get_all_address_books()])))
-                sys.exit(1)
-            else:
-                args.target_addressbook[index] = address_book
-    else:
-        args.target_addressbook = []
-        for address_book in config.get_all_address_books():
-            args.target_addressbook.append(config.get_address_book(
-                address_book.name, search_queries))
-    logging.debug("target addressbooks: {}".format(args.target_addressbook))
-
-    # fill contact list
-    vcard_list = []
-    if "uid" in args and args.uid:
-        # If an uid was given we use it to find the contact.
-        logging.debug("args.uid={}".format(args.uid))
-        # We require that no search terms where given.
-        if ("search_terms" in args and args.search_terms) \
-                or ("source_search_terms" in args and args.source_search_terms):
-            print("Error: You can not give arbitrary search terms and "
-                  "-uid at the same time.")
-            sys.exit(1)
-        else:
-            # set search terms to the empty query to prevent errors in
-            # phone and email actions
-            args.search_terms = ".*"
-        vcard_list = get_contacts(config.get_all_address_books(),
-                                  args.uid, method="uid")
-        # We require that the uid given can uniquely identify a contact.
-        if len(vcard_list) != 1:
-            if not vcard_list:
-                print("Found no contact for %suid %s" % (
-                    "source " if args.action == "merge" else "", args.uid))
-            else:
-                print("Found multiple contacts for %suid %s" % (
-                    "source " if args.action == "merge" else "", args.uid))
-                for vcard in vcard_list:
-                    print("    %s: %s" % (vcard, vcard.get_uid()))
-            sys.exit(1)
-    else:
-        # No uid was given so we try to use the search terms to select a
-        # contact.
-        if "source_search_terms" in args:
-            # exception for merge command
-            if args.source_search_terms:
-                args.search_terms = args.source_search_terms
-            else:
-                args.search_terms = ".*"
-        elif "search_terms" in args:
-            if args.search_terms:
-                args.search_terms = args.search_terms
-            else:
-                args.search_terms = ".*"
-        else:
-            # If no search terms where given on the command line we match
-            # everything with the empty search pattern.
-            args.search_terms = ".*"
-        logging.debug("args.search_terms={}".format(args.search_terms))
-        vcard_list = get_contact_list_by_user_selection(
-            args.addressbook, args.search_terms,
-            args.strict_search if "strict_search" in args else False)
+    vcard_list = generate_contact_list(config, args)
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
@@ -1706,7 +1746,3 @@ def main(argv=sys.argv[1:]):
     elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(
             args.action, vcard_list, args.target_addressbook)
-    elif args.action == "addressbooks":
-        print('\n'.join(str(book) for book in config.get_all_address_books()))
-    elif args.action == "filename":
-        print('\n'.join(contact.filename for contact in vcard_list))
