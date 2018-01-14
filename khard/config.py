@@ -64,7 +64,7 @@ class Config:
 
         # general settings
         if "general" not in self.config:
-            exit('Missing main section "[general]".')
+            self.config['general'] = {}
 
         # debug
         self._convert_boolean_config_value(self.config["general"],
@@ -95,7 +95,7 @@ class Config:
             exit("Invalid merge editor path or executable not found.")
 
         # default action
-        self.default_action = self.config["general"].get("default_action")
+        self.default_action = self.config["general"].get("default_action", "list")
         if self.default_action is None:
             exit("Missing default action parameter.")
         elif self.default_action not in Actions.get_list_of_all_actions():
@@ -117,8 +117,7 @@ class Config:
         if "display" not in self.config['contact table']:
             # if display by name attribute is not present in the config file
             # use the sort attribute value for backwards compatibility
-            self.config['contact table']['display'] = \
-                    self.config['contact table']['sort']
+            self.config['contact table']['display'] = self.sort
         elif self.config['contact table']['display'] not in ["first_name",
                                                              "last_name"]:
             exit("Invalid value for display parameter\n"
