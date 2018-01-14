@@ -16,10 +16,9 @@ class AbstractAddressBookSearch(unittest.TestCase):
     """Tests for khard.address_book.AddressBook.search()"""
 
     def test_invalide_method_failes(self):
-        with mock.patch('os.path.isdir', lambda _: True):
-            with self.assertRaises(ValueError):
-                abook = _AddressBook('test', "/this-doesn't-exist")
-                abook.search('query', method='invalid_method')
+        with self.assertRaises(ValueError):
+            abook = _AddressBook('test')
+            abook.search('query', method='invalid_method')
 
 
 class AddressBookCompareUids(unittest.TestCase):

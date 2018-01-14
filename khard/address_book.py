@@ -21,22 +21,16 @@ class AddressBook(metaclass=abc.ABCMeta):
 
     """The base class of all address book implementations."""
 
-    def __init__(self, name, path):
+    def __init__(self, name):
         """
         :param name: the name to identify the address book
         :type name: str
-        :param path: the path to the backing structure on disk
-        :type path: str
         """
         self.loaded = False
         self.contacts = []
         self._uids = None
         self._short_uids = None
         self.name = name
-        self.path = os.path.expanduser(path)
-        if not os.path.isdir(self.path):
-            raise FileNotFoundError("[Errno 2] The path {} to the address book"
-                                    " {} does not exist.".format(path, name))
 
     def __str__(self):
         return self.name
@@ -230,6 +224,19 @@ class VdirAddressBook(AddressBook):
 
     """Holds the contacts inside one address book folder.  On disk they are
     stored in vcard files."""
+
+    def __init__(self, name, path):
+        """
+        :param name: the name to identify the address book
+        :type name: str
+        :param path: the path to the backing structure on disk
+        :type path: str
+        """
+        self.path = os.path.expanduser(path)
+        if not os.path.isdir(self.path):
+            raise FileNotFoundError("[Errno 2] The path {} to the address book"
+                                    " {} does not exist.".format(path, name))
+        super().__init__(name)
 
     def _find_vcard_files(self, search=None):
         """Find all vcard files inside this address book.  If a search string
