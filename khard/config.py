@@ -246,17 +246,17 @@ class Config:
                 contacts, errors = address_book.load(
                     search_queries, self.get_supported_private_objects(),
                     self.localize_dates(), self.skip_unparsable())
-            except AddressBookParseError:
+            except AddressBookParseError as err:
                 if not self.skip_unparsable():
                     logging.error(
-                        "%d of %d vcard files of address book %s could not be "
+                        "The vcard file %s of address book %s could not be "
                         "parsed\nUse --debug for more information or "
-                        "--skip-unparsable to proceed", errors, contacts, name)
+                        "--skip-unparsable to proceed", err.filename, name)
                     sys.exit(2)
 
             # Check uniqueness of vcard uids and create short uid dictionary.
-            # This can be disabled with the show_uids option in the config file,
-            # if desired.
+            # This can be disabled with the show_uids option in the config
+            # file, if desired.
             if self.config['contact table']['show_uids']:
                 self.uid_dict = self.abook.get_short_uid_dict()
         return address_book

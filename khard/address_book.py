@@ -14,7 +14,11 @@ from .carddav_object import CarddavObject
 
 class AddressBookParseError(Exception):
     """Indicate an error while parsing data from an address book backend."""
-    pass
+
+    def __init__(self, filename, *args, **kwargs):
+        """Store the filename that caused the error."""
+        super().__init__(*args, **kwargs)
+        self.filename = filename
 
 
 class AddressBook(metaclass=abc.ABCMeta):
@@ -284,13 +288,13 @@ class VdirAddressBook(AddressBook):
                 card = CarddavObject.from_file(self, filename, private_objects,
                                                localize_dates)
             except (IOError, vobject.base.ParseError) as err:
+                verb = "open" if isinstance(err, IOError) else "parse"
+                logging.debug("Error: Could not %s file %s\n%s", verb,
+                              filename, err)
                 if skip:
-                    verb = "open" if isinstance(err, IOError) else "parse"
-                    logging.debug("Error: Could not %s file %s\n%s", verb,
-                                  filename, err)
                     errors += 1
                 else:
-                    raise AddressBookParseError()
+                    raise AddressBookParseError(filename)
             else:
                 self.contacts.append(card)
         self.loaded = True
