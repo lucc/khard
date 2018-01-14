@@ -41,9 +41,7 @@ class LoadingConfigFile(unittest.TestCase):
         with mock.patch("sys.stdout", stdout):
             with self.assertRaises(SystemExit):
                 config.Config("/dev/null")
-        self.assertEqual(
-            stdout.getvalue(),
-            'Error in config file\nMissing main section "[general]".\n')
+        self.assertTrue(stdout.getvalue().startswith('Error in config file\n'))
 
     def test_load_minimal_file_by_name(self):
         cfg = config.Config("test/templates/minimal.conf")
