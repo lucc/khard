@@ -317,8 +317,6 @@ class AddressBookCollection(AddressBook):
         for abook in self._abooks:
             _, err = abook.load(query, private_objects, localize_dates, skip)
             errors += err
-        self.loaded = True
-        for abook in self._abooks:
             for uid in abook.contacts:
                 if uid in self.contacts:
                     logging.warning(
@@ -327,6 +325,7 @@ class AddressBookCollection(AddressBook):
                         "UID: %s", abook.contacts[uid], abook, uid)
                 else:
                     self.contacts[uid] = abook.contacts[uid]
+        self.loaded = True
         return len(self.contacts), errors
 
     def get_abook(self, name):
