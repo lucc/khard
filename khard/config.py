@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# singleton code comes from:
-# http://code.activestate.com/recipes/52558/#as_content
-
 from distutils.spawn import find_executable
 import locale
 import logging
@@ -14,7 +11,6 @@ import configobj
 
 from .actions import Actions
 from .address_book import AddressBookCollection, AddressBookParseError
-from . import helpers
 
 
 def exit(message, prefix="Error in config file\n"):
@@ -30,7 +26,7 @@ def exit(message, prefix="Error in config file\n"):
     :returns: does not return
 
     """
-    print(prefix+message)
+    print(prefix + message)
     sys.exit(3)
 
 
@@ -193,8 +189,11 @@ class Config:
 
     @staticmethod
     def _convert_boolean_config_value(config, name, default=True):
-        """Convert the named field to a bool represented by its previous string
-        value.  If no such field was present use the default.
+        """Convert the named field to bool.
+
+        The current value should be one of the strings "yes" or "no".  It will
+        be replaced with its boolean counterpart.  If the field is not present
+        in the config object, the default value is used.
 
         :param config: the config section where to set the option
         :type config: configobj.ConfigObj
