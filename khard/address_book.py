@@ -323,12 +323,13 @@ class AddressBookCollection(AddressBook):
         for arguments in args:
             self._abooks.append(VdirAddressBook(*arguments))
 
-    def load(self, query=None, private_objects=tuple()):
+    def load(self, query=None, private_objects=tuple(), localize_dates=True,
+             skip=False):
         if self.loaded:
             return len(self.contacts), 0
         errors = 0
         for abook in self._abooks:
-            _, err = abook.load(query, private_objects)
+            _, err = abook.load(query, private_objects, localize_dates, skip)
             errors += err
         self.loaded = True
         self.contacts = [contact for contact in abook.contacts
