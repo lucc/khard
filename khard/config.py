@@ -35,7 +35,7 @@ class Config:
 
     def __init__(self, config_file=""):
         self.config = None
-        self.address_book_list = []
+        self.abooks = []
         self.uid_dict = {}
 
         # set locale
@@ -186,8 +186,7 @@ class Config:
             exit('Missing path to the "{}" address book.'.format(err.args[0]))
         except IOError as err:
             exit(str(err))
-        self.address_book_list = [self.abook.get_abook(name)
-                                  for name in section]
+        self.abooks = [self.abook.get_abook(name) for name in section]
 
     @staticmethod
     def _convert_boolean_config_value(config, name, default=True):
@@ -216,17 +215,6 @@ class Config:
         else:
             raise ValueError("Error in config file\nInvalid value for %s "
                              "parameter\nPossible values: yes, no" % name)
-
-    def get_all_address_books(self):
-        """
-        return a list of all address books from config file
-        But due to performance optimizations its not guaranteed, that the
-        address books already contain their contact objects
-        if you must be sure, get every address book individually with the
-        get_address_book() function below
-        :rtype: list(address_book.AddressBook)
-        """
-        return self.address_book_list
 
     def get_address_book(self, name, search_queries=None):
         """
