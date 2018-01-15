@@ -16,7 +16,7 @@ def expectedFailureForVersion(major, minor):
 
 class _AddressBook(address_book.AddressBook):
     """Class for testing the abstract AddressBook base class."""
-    def load(self, query=None, private_objects=tuple(), localize_dates=True):
+    def load(self, query=None):
         pass
 
 
@@ -103,9 +103,9 @@ class VcardAdressBookLoad(unittest.TestCase):
             abook.load()
 
     def test_unparsable_files_can_be_skipped(self):
-        abook = address_book.VdirAddressBook('test',
-                                             'test/fixture/broken.abook')
+        abook = address_book.VdirAddressBook(
+            'test', 'test/fixture/broken.abook', skip=True)
         with self.assertLogs(level='WARNING') as cm:
-            abook.load(skip=True)
+            abook.load()
         self.assertEqual(cm.output, ['WARNING:root:1 of 1 vCard files of '
                                      'address book test could not be parsed.'])

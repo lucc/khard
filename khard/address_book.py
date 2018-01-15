@@ -25,15 +25,26 @@ class AddressBook(metaclass=abc.ABCMeta):
 
     """The base class of all address book implementations."""
 
-    def __init__(self, name):
+    def __init__(self, name, private_objects=tuple(), localize_dates=True,
+                 skip=False):
         """
         :param name: the name to identify the address book
         :type name: str
+        :param private_objects: the names of private vCard extension fields to
+            load
+        :type private_objects: iterable(str)
+        :param localize_dates: wheater to display dates in the local format
+        :type localize_dates: bool
+        :param skip: skip unparsable vCard files
+        :type skip: bool
         """
         self.loaded = False
         self.contacts = {}
         self._short_uids = None
         self.name = name
+        self._private_objects = private_objects
+        self._localize_dates = localize_dates
+        self._skip = skip
 
     def __str__(self):
         return self.name
@@ -147,8 +158,7 @@ class AddressBook(metaclass=abc.ABCMeta):
                              'are supported.')
         return list(search_function(query))
 
-    def get_short_uid_dict(self, query=None, private_objects=tuple(),
-                           localize_dates=True, skip=False):
+    def get_short_uid_dict(self, query=None):
         """Create a dictionary of shortend UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
@@ -156,20 +166,13 @@ class AddressBook(metaclass=abc.ABCMeta):
 
         :param query: see self.load()
         :type query: str
-        :param private_objects: see self.load()
-            load
-        :type private_objects: iterable(str)
-        :param localize_dates: see self.load()
-        :type localize_dates: bool
-        :param skip: see self.load()
-        :type skip: bool
         :returns: the contacts mapped by the shortes unique prefix of their UID
         :rtype: dict(str: CarddavObject)
 
         """
         if self._short_uids is None:
             if not self.loaded:
-                self.load(query, private_objects, localize_dates, skip)
+                self.load(query)
             if not self.contacts or len(self.contacts) == 1:
                 self._short_uids = self.contacts
             else:
@@ -192,21 +195,13 @@ class AddressBook(metaclass=abc.ABCMeta):
         return self._short_uids
 
     @abc.abstractmethod
-    def load(self, query=None, private_objects=tuple(), localize_dates=True,
-             skip=False):
+    def load(self, query=None):
         """Load the vCards from the backing store.  If a query is given loading
         is limited to entries which match the query.  If the query is None all
         entries will be loaded.
 
         :param query: the query to limit loading to matching entries
         :type query: str
-        :param private_objects: the names of private vCard extension fields to
-            load
-        :type private_objects: iterable(str)
-        :param localize_dates: TODO
-        :type localize_dates: bool
-        :param skip: skip unparsable vCard files
-        :type skip: bool
         :returns: the number of loaded contacts and the number of errors
         :rtype: (int, int)
 
@@ -219,18 +214,19 @@ class VdirAddressBook(AddressBook):
     """Holds the contacts inside one address book folder.  On disk they are
     stored in vcard files."""
 
-    def __init__(self, name, path):
+    def __init__(self, name, path, **kwargs):
         """
         :param name: the name to identify the address book
         :type name: str
         :param path: the path to the backing structure on disk
         :type path: str
+        :param **kwargs: further arguments for the parent constructor
         """
         self.path = os.path.expanduser(path)
         if not os.path.isdir(self.path):
             raise FileNotFoundError("[Errno 2] The path {} to the address book"
                                     " {} does not exist.".format(path, name))
-        super().__init__(name)
+        super().__init__(name, **kwargs)
 
     def _find_vcard_files(self, search=None):
         """Find all vcard files inside this address book.  If a search string
@@ -251,20 +247,12 @@ class VdirAddressBook(AddressBook):
             else:
                 yield filename
 
-    def load(self, query=None, private_objects=tuple(), localize_dates=True,
-             skip=False):
+    def load(self, query=None):
         """Load all vcard files in this address book from disk.  If a search
         string is given only files which contents match that will be loaded.
 
         :param query: a regular expression to limit the results
         :type query: str
-        :param private_objects: the names of private vcard extension fields to
-            load
-        :type private_objects: list(str) or tuple(str)
-        :param localize_dates: TODO
-        :type localize_dates: bool
-        :param skip: skip unparsable vCard files
-        :type skip: bool
         :returns: the number of successfully loaded cards and the number of
             errors
         :rtype: int, int
@@ -275,13 +263,14 @@ class VdirAddressBook(AddressBook):
         errors = 0
         for filename in self._find_vcard_files(search=query):
             try:
-                card = CarddavObject.from_file(self, filename, private_objects,
-                                               localize_dates)
+                card = CarddavObject.from_file(self, filename,
+                                               self._private_objects,
+                                               self._localize_dates)
             except (IOError, vobject.base.ParseError) as err:
                 verb = "open" if isinstance(err, IOError) else "parse"
                 logging.debug("Error: Could not %s file %s\n%s", verb,
                               filename, err)
-                if skip:
+                if self._skip:
                     errors += 1
                 else:
                     raise AddressBookParseError(filename)
@@ -312,26 +301,27 @@ class AddressBookCollection(AddressBook):
     merege of the contact collections provided by the underlying adress
     books."""
 
-    def __init__(self, name, *args):
+    def __init__(self, name, *args, **kwargs):
         """
         :param name: the name to identify the address book
         :type name: str
-        :param *args: two-tuples, each holding the arguments for one
-            AddressBook instance
+        :param *args: two-tuples, each holding the name and path arguments for
+            one VdirAddressBook instance
         :type *args: tuple(str,str)
+        :param **kwargs: further arguments for the parent constructor
+            (AddressBook) and all sub address books
         """
-        super().__init__(name)
+        super().__init__(name, **kwargs)
         self._abooks = []
-        for arguments in args:
-            self._abooks.append(VdirAddressBook(*arguments))
+        for name, path in args:
+            self._abooks.append(VdirAddressBook(name, path, **kwargs))
 
-    def load(self, query=None, private_objects=tuple(), localize_dates=True,
-             skip=False):
+    def load(self, query=None):
         if self.loaded:
             return len(self.contacts), 0
         errors = 0
         for abook in self._abooks:
-            _, err = abook.load(query, private_objects, localize_dates, skip)
+            _, err = abook.load(query)
             errors += err
             for uid in abook.contacts:
                 if uid in self.contacts:

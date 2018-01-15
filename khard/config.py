@@ -179,7 +179,10 @@ class Config:
         section = self.config['addressbooks']
         try:
             self.abook = AddressBookCollection(
-                "tmp", *[(name, section[name]['path']) for name in section])
+                "tmp", *[(name, section[name]['path']) for name in section],
+                private_objects=self.get_supported_private_objects(),
+                localize_dates=self.localize_dates(),
+                skip=self.skip_unparsable())
         except KeyError as err:
             exit('Missing path to the "{}" address book.'.format(err.args[0]))
         except IOError as err:
@@ -241,16 +244,13 @@ class Config:
         if not address_book.loaded:
             try:
                 # Load vcard files of the address book.
-                contacts, errors = address_book.load(
-                    search_queries, self.get_supported_private_objects(),
-                    self.localize_dates(), self.skip_unparsable())
+                contacts, errors = address_book.load(search_queries)
                 # Check uniqueness of vcard uids and create short uid
                 # dictionary. This can be disabled with the show_uids option in
                 # the config file, if desired.
                 if self.config['contact table']['show_uids']:
                     self.uid_dict = self.abook.get_short_uid_dict(
-                        search_queries, self.get_supported_private_objects(),
-                        self.localize_dates(), self.skip_unparsable())
+                        search_queries)
             except AddressBookParseError as err:
                 if not self.skip_unparsable():
                     logging.error(
