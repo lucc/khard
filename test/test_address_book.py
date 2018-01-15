@@ -42,7 +42,7 @@ class AbstractAddressBookSearch(unittest.TestCase):
         abook = _AddressBook('test')
         load_mock = mock.Mock()
         abook.load = load_mock
-        abook.loaded = True
+        abook._loaded = True
         abook.search('foo')
         load_mock.assert_not_called()
 
@@ -99,7 +99,7 @@ class VcardAdressBookLoad(unittest.TestCase):
     def test_loading_unparsable_vcard_fails(self):
         abook = address_book.VdirAddressBook('test',
                                              'test/fixture/broken.abook')
-        with self.assertRaises(address_book.AddressBookParseError):
+        with self.assertRaises(SystemExit):
             abook.load()
 
     def test_unparsable_files_can_be_skipped(self):

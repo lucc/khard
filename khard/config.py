@@ -2,7 +2,6 @@
 
 from distutils.spawn import find_executable
 import locale
-import logging
 import os
 import re
 import sys
@@ -10,7 +9,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import AddressBookCollection, AddressBookParseError
+from .address_book import AddressBookCollection
 
 
 def exit(message, prefix="Error in config file\n"):
@@ -241,23 +240,11 @@ class Config:
         if not address_book:
             # Return None if no address book did match the given name.
             return None
-        if not address_book.loaded:
-            try:
-                # Load vcard files of the address book.
-                contacts, errors = address_book.load(search_queries)
-                # Check uniqueness of vcard uids and create short uid
-                # dictionary. This can be disabled with the show_uids option in
-                # the config file, if desired.
-                if self.config['contact table']['show_uids']:
-                    self.uid_dict = self.abook.get_short_uid_dict(
-                        search_queries)
-            except AddressBookParseError as err:
-                if not self.skip_unparsable():
-                    logging.error(
-                        "The vcard file %s of address book %s could not be "
-                        "parsed\nUse --debug for more information or "
-                        "--skip-unparsable to proceed", err.filename, name)
-                    sys.exit(2)
+        # Check uniqueness of vcard uids and create short uid
+        # dictionary. This can be disabled with the show_uids option in
+        # the config file, if desired.
+        if self.config['contact table']['show_uids']:
+            self.uid_dict = self.abook.get_short_uid_dict(search_queries)
         return address_book
 
     def has_uids(self):

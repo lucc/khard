@@ -6,6 +6,7 @@ import glob
 import logging
 import os
 import re
+import sys
 
 import vobject.base
 
@@ -38,7 +39,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :param skip: skip unparsable vCard files
         :type skip: bool
         """
-        self.loaded = False
+        self._loaded = False
         self.contacts = {}
         self._short_uids = None
         self.name = name
@@ -145,7 +146,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: list(carddav_object.CarddavObject)
 
         """
-        if not self.loaded:
+        if not self._loaded:
             self.load(query)
         if method == "all":
             search_function = self._search_all
@@ -171,7 +172,7 @@ class AddressBook(metaclass=abc.ABCMeta):
 
         """
         if self._short_uids is None:
-            if not self.loaded:
+            if not self._loaded:
                 self.load(query)
             if not self.contacts or len(self.contacts) == 1:
                 self._short_uids = self.contacts
@@ -258,8 +259,8 @@ class VdirAddressBook(AddressBook):
         :rtype: int, int
         :throws: AddressBookParseError
         """
-        if self.loaded:
-            return len(self.contacts), 0
+        if self._loaded:
+            return
         errors = 0
         for filename in self._find_vcard_files(search=query):
             try:
@@ -273,7 +274,14 @@ class VdirAddressBook(AddressBook):
                 if self._skip:
                     errors += 1
                 else:
-                    raise AddressBookParseError(filename)
+                    # FIXME: This should throw an apropriate exception and the
+                    # sys.exit should be called somewhere closer to the command
+                    # line parsing.
+                    logging.error(
+                        "The vcard file %s of address book %s could not be "
+                        "parsed\nUse --debug for more information or "
+                        "--skip-unparsable to proceed", filename, self.name)
+                    sys.exit(2)
             else:
                 uid = card.get_uid()
                 if not uid:
@@ -287,12 +295,11 @@ class VdirAddressBook(AddressBook):
                         self.contacts[uid], self.name)
                 else:
                     self.contacts[uid] = card
-        self.loaded = True
+        self._loaded = True
         if errors:
             logging.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
-        return len(self.contacts), errors
 
 
 class AddressBookCollection(AddressBook):
@@ -317,12 +324,10 @@ class AddressBookCollection(AddressBook):
             self._abooks.append(VdirAddressBook(name, path, **kwargs))
 
     def load(self, query=None):
-        if self.loaded:
-            return len(self.contacts), 0
-        errors = 0
+        if self._loaded:
+            return
         for abook in self._abooks:
-            _, err = abook.load(query)
-            errors += err
+            abook.load(query)
             for uid in abook.contacts:
                 if uid in self.contacts:
                     logging.warning(
@@ -331,8 +336,7 @@ class AddressBookCollection(AddressBook):
                         "UID: %s", abook.contacts[uid], abook, uid)
                 else:
                     self.contacts[uid] = abook.contacts[uid]
-        self.loaded = True
-        return len(self.contacts), errors
+        self._loaded = True
 
     def get_abook(self, name):
         """Get one of the backing abdress books by its name,
