@@ -23,7 +23,6 @@ class AddressBookParseError(Exception):
 
 
 class AddressBook(metaclass=abc.ABCMeta):
-
     """The base class of all address book implementations."""
 
     def __init__(self, name, private_objects=tuple(), localize_dates=True,
@@ -69,8 +68,8 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: int
         """
         sum = 0
-        for c1, c2 in zip(uid1, uid2):
-            if c1 == c2:
+        for char1, char2 in zip(uid1, uid2):
+            if char1 == char2:
                 sum += 1
             else:
                 break
@@ -135,8 +134,10 @@ class AddressBook(metaclass=abc.ABCMeta):
                     yield self.contacts[uid]
 
     def search(self, query, method="all"):
-        """Search this address book for contacts matching the query.  The
-        method can be one of "all", "name" and "uid".
+        """Search this address book for contacts matching the query.
+
+        The method can be one of "all", "name" and "uid".  The backend for this
+        address book migth be load()ed if needed.
 
         :param query: the query to search for
         :type query: str
@@ -197,9 +198,10 @@ class AddressBook(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def load(self, query=None):
-        """Load the vCards from the backing store.  If a query is given loading
-        is limited to entries which match the query.  If the query is None all
-        entries will be loaded.
+        """Load the vCards from the backing store.
+
+        If a query is given loading is limited to entries which match the
+        query.  If the query is None all entries will be loaded.
 
         :param query: the query to limit loading to matching entries
         :type query: str
@@ -211,9 +213,11 @@ class AddressBook(metaclass=abc.ABCMeta):
 
 
 class VdirAddressBook(AddressBook):
+    """An AddressBook implementation based on a vdir.
 
-    """Holds the contacts inside one address book folder.  On disk they are
-    stored in vcard files."""
+    This address book can load contacts from vcard files that reside in one
+    direcotry on disk.
+    """
 
     def __init__(self, name, path, **kwargs):
         """
@@ -230,8 +234,10 @@ class VdirAddressBook(AddressBook):
         super().__init__(name, **kwargs)
 
     def _find_vcard_files(self, search=None):
-        """Find all vcard files inside this address book.  If a search string
-        is given only files which contents match that will be returned.
+        """Find all vcard files inside this address book.
+
+        If a search string is given only files which contents match that will
+        be returned.
 
         :param search: a regular expression to limit the results
         :type search: str
@@ -250,8 +256,10 @@ class VdirAddressBook(AddressBook):
             yield from files
 
     def load(self, query=None):
-        """Load all vcard files in this address book from disk.  If a search
-        string is given only files which contents match that will be loaded.
+        """Load all vcard files in this address book from disk.
+
+        If a search string is given only files which contents match that will
+        be loaded.
 
         :param query: a regular expression to limit the results
         :type query: str
@@ -304,10 +312,13 @@ class VdirAddressBook(AddressBook):
 
 
 class AddressBookCollection(AddressBook):
+    """A collection of several address books.
 
-    """A collection of several address books.  This represents the a temporary
-    merege of the contact collections provided by the underlying adress
-    books."""
+    This represents a temporary merege of the contact collections provided by
+    the underlying adress books.  On load all contacts from all subadressbooks
+    are copied into a dict in this address book.  This allow this class to use
+    all other methods from the parent AddressBook class.
+    """
 
     def __init__(self, name, *args, **kwargs):
         """
