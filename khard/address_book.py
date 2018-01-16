@@ -239,14 +239,15 @@ class VdirAddressBook(AddressBook):
         :rtype: generator
 
         """
-        for filename in glob.glob(os.path.join(self.path, "*.vcf")):
-            if search:
+        files = glob.glob(os.path.join(self.path, "*.vcf"))
+        if search:
+            for filename in files:
                 with open(filename, "r") as filehandle:
                     if re.search(search, filehandle.read(),
                                  re.IGNORECASE | re.DOTALL):
                         yield filename
-            else:
-                yield filename
+        else:
+            yield from files
 
     def load(self, query=None):
         """Load all vcard files in this address book from disk.  If a search
