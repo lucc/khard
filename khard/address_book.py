@@ -156,13 +156,14 @@ class AddressBook:
         :rtype: generator(carddav_object.CarddavObject)
 
         """
-        contacts = []
+        found = False
         # Search for contacts with uid == query.
         for contact in self.contact_list:
             if contact.get_uid() == query:
+                found = True
                 yield contact
         # If that fails, search for contacts where uid starts with query.
-        if not contacts:
+        if not found:
             for contact in self.contact_list:
                 if contact.get_uid().startswith(query):
                     yield contact
