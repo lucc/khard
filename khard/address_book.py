@@ -125,12 +125,15 @@ class AddressBook:
         for contact in self.contact_list:
             # search in all contact fields
             contact_details = contact.print_vcard()
-            # find phone numbers with special chars like /
-            contact_details_without_special_chars = re.sub("[^a-zA-Z0-9\n]",
-                                                           "", contact_details)
-            if regexp.search(contact_details) is not None or regexp.search(
-                    contact_details_without_special_chars) is not None:
+            if regexp.search(contact_details) is not None:
                 yield contact
+            else:
+                # find phone numbers with special chars like /
+                contact_details_without_special_chars = re.sub("[^a-zA-Z0-9\n]",
+                                                               "", contact_details)
+                if regexp.search(contact_details_without_special_chars) is not None \
+                        and len(re.sub("\D", "", query)) >= 3:
+                    yield contact
 
     def _search_names(self, query):
         """Search in the name filed for contacts matching query.
