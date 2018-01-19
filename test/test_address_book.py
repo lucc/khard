@@ -1,9 +1,17 @@
 """Tests for the address book classes."""
 
+import sys
 import unittest
 from unittest import mock
 
 from khard import address_book
+
+
+def expectedFailureForVersion(major, minor):
+    if sys.version_info.major == major and sys.version_info.minor == minor:
+        return unittest.expectedFailure
+    else:
+        return lambda x: x
 
 
 class _AddressBook(address_book.AddressBook):
@@ -22,7 +30,7 @@ class AbstractAddressBookSearch(unittest.TestCase):
 
     # FIXME This breaks on travis *only* for python 3.5, assert_called_once
     # only exists in 3.6 and not in 3.4 but oddly it passes there.
-    @unittest.expectedFailure
+    @expectedFailureForVersion(3, 5)
     def test_search_will_trigger_load_if_not_loaded(self):
         abook = _AddressBook('test')
         load_mock = mock.Mock()
