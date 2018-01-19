@@ -26,27 +26,23 @@ def mock_stdout():
 @mock.patch('sys.argv', ['TESTSUITE'])
 class HelpOption(unittest.TestCase):
 
-    def test_global_help(self):
+    def _test(self, args, expect):
+        """Test the command line args and compare the prefix of the output."""
         with self.assertRaises(SystemExit):
             with mock_stdout() as stdout:
-                khard.main(['-h'])
-        text = stdout.getvalue().splitlines()
-        self.assertTrue(text[0].startswith('usage: TESTSUITE [-h]'))
+                khard.main(args)
+        text = stdout.getvalue()
+        self.assertTrue(text.startswith(expect))
+
+    def test_global_help(self):
+        self._test(['-h'], 'usage: TESTSUITE [-h]')
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_subcommand_help(self):
-        with self.assertRaises(SystemExit):
-            with mock_stdout() as stdout:
-                khard.main(['list', '-h'])
-        text = stdout.getvalue().splitlines()
-        self.assertTrue(text[0].startswith('usage: TESTSUITE list [-h]'))
+        self._test(['list', '-h'], 'usage: TESTSUITE list [-h]')
 
     def test_global_help_with_subcommand(self):
-        with self.assertRaises(SystemExit):
-            with mock_stdout() as stdout:
-                khard.main(['-h', 'list'])
-        text = stdout.getvalue().splitlines()
-        self.assertTrue(text[0].startswith('usage: TESTSUITE [-h]'))
+        self._test(['-h', 'list'], 'usage: TESTSUITE [-h]')
 
 
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
