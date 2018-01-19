@@ -43,3 +43,34 @@ class AddressBookCompareUids(unittest.TestCase):
         actual = address_book.AddressBook._compare_uids(uid, uid)
         self.assertEqual(actual, expected)
 
+
+class VcardAdressBookLoad(unittest.TestCase):
+
+    def test_loading_vcards_from_disk(self):
+        abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
+        # At this point we do not really care about the type of abook.contacts,
+        # it could be a list or dict or set or whatever.
+        self.assertEqual(len(abook.contacts), 0)
+        abook.load()
+        self.assertEqual(len(abook.contacts), 2)
+
+    def test_search_in_source_files_only_loads_matching_cards(self):
+        abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
+        abook.load(query='second')
+        self.assertEqual(len(abook.contacts), 1)
+
+    def test_loading_unparsable_vcard_fails(self):
+        abook = address_book.VdirAddressBook('test',
+                                             'test/fixture/broken.abook')
+        with self.assertRaises(address_book.AddressBookParseError):
+            abook.load()
+
+    def test_unparsable_files_can_be_skipped(self):
+        abook = address_book.VdirAddressBook('test',
+                                             'test/fixture/broken.abook')
+        abook.load(skip=True)
+        # We actually want to test that the above line did not throw an
+        # exception so it is not very important what we assert.  But we assert
+        # something about the address book anyways.
+        self.assertEqual(len(abook.contacts), 0)
+
