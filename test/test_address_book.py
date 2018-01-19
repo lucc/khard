@@ -123,3 +123,12 @@ class AddressBookGetShortUidDict(unittest.TestCase):
         self.assertEqual(len(short_uids), 1)
         short_uid, contact = short_uids.popitem()
         self.assertEqual(short_uid, 'u')
+
+
+class ReportedBugs(unittest.TestCase):
+
+    def test_issue_159_uid_search_doesnt_return_items_twice(self):
+        # This was the first half of bug report #159.
+        abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
+        c = abook.search('testuid1', method='uid')
+        self.assertEqual(len(c), 1)
