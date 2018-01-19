@@ -1,4 +1,5 @@
 BEGIN:VCARD
 VERSION:4.0
-FN:second contact with minimal Vcard
+FN:second contact with a simple Vcard
+UID:1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ
 END:VCARD
