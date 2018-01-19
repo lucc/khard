@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import datetime
 from email.header import decode_header
 import logging
 import os
@@ -829,8 +830,12 @@ def birthdays_subcommand(vcard_list, parsable):
     vcard_list = [
         vcard for vcard in vcard_list if vcard.get_birthday() is not None]
     # sort by date (month and day)
+    # The sort function should work for strings and datetime objects.  All
+    # strings will besorted before any datetime objects.
     vcard_list.sort(
-        key=lambda x: (x.get_birthday().month, x.get_birthday().day))
+        key=lambda x: (x.get_birthday().month, x.get_birthday().day)
+        if isinstance(x.get_birthday(), datetime.datetime)
+        else (0, 0, x.get_birthday()))
     # add to string list
     birthday_list = []
     for vcard in vcard_list:

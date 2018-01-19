@@ -72,7 +72,6 @@ class ListingCommands(unittest.TestCase):
             "                          testuid2"]
         self.assertListEqual(text, expected)
 
-    @unittest.expectedFailure
     def test_simple_bdays_without_options(self):
         with mock_stdout() as stdout:
             khard.main(['birthdays'])
