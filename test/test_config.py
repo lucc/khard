@@ -44,7 +44,7 @@ class LoadingConfigFile(unittest.TestCase):
         self.assertTrue(stdout.getvalue().startswith('Error in config file\n'))
 
     def test_load_minimal_file_by_name(self):
-        cfg = config.Config("test/templates/minimal.conf")
+        cfg = config.Config("test/fixture/minimal.conf")
         self.assertEqual(cfg.editor, "/bin/sh")
         self.assertEqual(cfg.merge_editor, "/bin/sh")
         self.assertEqual(cfg.default_action, "list")
@@ -91,11 +91,11 @@ class TestConvertBooleanConfigValue(unittest.TestCase):
 class ConfigPreferredVcardVersion(unittest.TestCase):
 
     def test_default_value_is_3(self):
-        c = config.Config("test/templates/minimal.conf")
+        c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.get_preferred_vcard_version(), "3.0")
 
     def test_set_preferred_version(self):
-        c = config.Config("test/templates/minimal.conf")
+        c = config.Config("test/fixture/minimal.conf")
         c.set_preferred_vcard_version("11")
         self.assertEqual(c.get_preferred_vcard_version(), "11")
 
