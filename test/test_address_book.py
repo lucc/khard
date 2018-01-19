@@ -16,9 +16,34 @@ class AbstractAddressBookSearch(unittest.TestCase):
     """Tests for khard.address_book.AddressBook.search()"""
 
     def test_invalide_method_failes(self):
+        abook = _AddressBook('test')
         with self.assertRaises(ValueError):
-            abook = _AddressBook('test')
             abook.search('query', method='invalid_method')
+
+    # FIXME This breaks on travis *only* for python 3.5, assert_called_once
+    # only exists in 3.6 and not in 3.4 but oddly it passes there.
+    @unittest.expectedFailure
+    def test_search_will_trigger_load_if_not_loaded(self):
+        abook = _AddressBook('test')
+        load_mock = mock.Mock()
+        abook.load = load_mock
+        abook.search('foo')
+        load_mock.assert_called_once()
+
+    def test_search_will_not_trigger_load_if_loaded(self):
+        abook = _AddressBook('test')
+        load_mock = mock.Mock()
+        abook.load = load_mock
+        abook.loaded = True
+        abook.search('foo')
+        load_mock.assert_not_called()
+
+    def test_search_passes_query_to_load(self):
+        abook = _AddressBook('test')
+        load_mock = mock.Mock()
+        abook.load = load_mock
+        abook.search('foo')
+        load_mock.assert_called_once_with('foo')
 
 
 class AddressBookCompareUids(unittest.TestCase):
