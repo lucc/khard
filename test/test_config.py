@@ -47,7 +47,6 @@ class LoadingConfigFile(unittest.TestCase):
         cfg = config.Config("test/fixture/minimal.conf")
         self.assertEqual(cfg.editor, "/bin/sh")
         self.assertEqual(cfg.merge_editor, "/bin/sh")
-        self.assertEqual(cfg.default_action, "list")
 
 
 class TestConvertBooleanConfigValue(unittest.TestCase):
