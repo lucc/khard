@@ -68,9 +68,7 @@ class VcardAdressBookLoad(unittest.TestCase):
     def test_unparsable_files_can_be_skipped(self):
         abook = address_book.VdirAddressBook('test',
                                              'test/fixture/broken.abook')
-        abook.load(skip=True)
-        # We actually want to test that the above line did not throw an
-        # exception so it is not very important what we assert.  But we assert
-        # something about the address book anyways.
-        self.assertEqual(len(abook.contacts), 0)
-
+        with self.assertLogs(level='WARNING') as cm:
+            abook.load(skip=True)
+        self.assertEqual(cm.output, ['WARNING:root:1 of 1 vCard files of '
+                                     'address book test could not be parsed.'])
