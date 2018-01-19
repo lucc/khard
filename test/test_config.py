@@ -1,31 +1,15 @@
 """Tests for the config module."""
 
 import io
-import os
 import unittest
 import unittest.mock as mock
 
 from khard import config
 
 
+# Find executables without looking at the users $PATH.
+@mock.patch('khard.config.find_executable', lambda x: x)
 class LoadingConfigFile(unittest.TestCase):
-
-    _patch1 = None
-    _patch2 = None
-
-    @classmethod
-    def setUpClass(cls):
-        # Mock the environment.
-        cls._patch1 = mock.patch('os.environ', {})
-        # Use a mock to "find" executables in the mocked environment.
-        cls._patch2 = mock.patch('khard.config.find_executable', lambda x: x)
-        cls._patch1.start()
-        cls._patch2.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._patch1.stop()
-        cls._patch2.stop()
 
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
@@ -44,10 +28,9 @@ class LoadingConfigFile(unittest.TestCase):
         self.assertTrue(stdout.getvalue().startswith('Error in config file\n'))
 
     def test_load_minimal_file_by_name(self):
-        cfg = config.Config("test/templates/minimal.conf")
+        cfg = config.Config("test/fixture/minimal.conf")
         self.assertEqual(cfg.editor, "/bin/sh")
         self.assertEqual(cfg.merge_editor, "/bin/sh")
-        self.assertEqual(cfg.default_action, "list")
 
 
 class TestConvertBooleanConfigValue(unittest.TestCase):
@@ -91,11 +74,11 @@ class TestConvertBooleanConfigValue(unittest.TestCase):
 class ConfigPreferredVcardVersion(unittest.TestCase):
 
     def test_default_value_is_3(self):
-        c = config.Config("test/templates/minimal.conf")
+        c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.get_preferred_vcard_version(), "3.0")
 
     def test_set_preferred_version(self):
-        c = config.Config("test/templates/minimal.conf")
+        c = config.Config("test/fixture/minimal.conf")
         c.set_preferred_vcard_version("11")
         self.assertEqual(c.get_preferred_vcard_version(), "11")
 
