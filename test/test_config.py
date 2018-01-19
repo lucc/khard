@@ -1,31 +1,15 @@
 """Tests for the config module."""
 
 import io
-import os
 import unittest
 import unittest.mock as mock
 
 from khard import config
 
 
+# Find executables without looking at the users $PATH.
+@mock.patch('khard.config.find_executable', lambda x: x)
 class LoadingConfigFile(unittest.TestCase):
-
-    _patch1 = None
-    _patch2 = None
-
-    @classmethod
-    def setUpClass(cls):
-        # Mock the environment.
-        cls._patch1 = mock.patch('os.environ', {})
-        # Use a mock to "find" executables in the mocked environment.
-        cls._patch2 = mock.patch('khard.config.find_executable', lambda x: x)
-        cls._patch1.start()
-        cls._patch2.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._patch1.stop()
-        cls._patch2.stop()
 
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
