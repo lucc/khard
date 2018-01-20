@@ -83,6 +83,14 @@ class ListingCommands(unittest.TestCase):
                   "second contact    voice    0123456789"]
         self.assertListEqual(text, expect)
 
+    def test_simple_file_without_options(self):
+        with mock_stdout() as stdout:
+            khard.main(['filename'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["test/fixture/foo.abook/minimal.vcf",
+                  "test/fixture/foo.abook/minimal2.vcf"]
+        self.assertListEqual(text, expect)
+
 
 if __name__ == "__main__":
     unittest.main()
