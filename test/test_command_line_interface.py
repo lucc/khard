@@ -59,6 +59,14 @@ class ListingCommands(unittest.TestCase):
             "2        second contact with a simple Vcard                       1"]
         self.assertListEqual(text, expected)
 
+    def test_simple_bdays_without_options(self):
+        with mock_stdout() as stdout:
+            khard.main(['birthdays'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["Name                                  Birthday",
+                  "second contact with a simple Vcard    01/20/2018"]
+        self.assertListEqual(text, expect)
+
 
 if __name__ == "__main__":
     unittest.main()
