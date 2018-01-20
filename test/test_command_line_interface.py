@@ -108,17 +108,17 @@ class FileSystemCommands(unittest.TestCase):
 
     def setUp(self):
         "Create a temporary directory with two address books and a configfile."
-        self.tmp = tempfile.TemporaryDirectory()
-        path = pathlib.Path(self.tmp.name)
-        abook1 = path / 'abook1'
-        abook2 = path / 'abook2'
-        abook1.mkdir()
-        abook2.mkdir()
-        shutil.copy('test/fixture/foo.abook/minimal2.vcf',
-                    abook1 / 'contact.vcf')
-        configfile = path / 'conf'
-        config = """\
-            [general]
+        self._tmp = tempfile.TemporaryDirectory()
+        path = pathlib.Path(self._tmp.name)
+        self.abook1 = path / 'abook1'
+        self.abook2 = path / 'abook2'
+        self.abook1.mkdir()
+        self.abook2.mkdir()
+        self.contact = self.abook1 / 'contact.vcf'
+        shutil.copy('test/fixture/foo.abook/minimal2.vcf', self.contact)
+        config = path / 'conf'
+        config.write_text(
+            """[general]
             editor = /bin/sh
             merge_editor = /bin/sh
             [addressbooks]
@@ -126,39 +126,35 @@ class FileSystemCommands(unittest.TestCase):
             path = {}
             [[abook2]]
             path = {}
-            """.format(abook1, abook2)
-        configfile.write_text(config)
-        self.patch = mock.patch.dict('os.environ',
-                                     KHARD_CONFIG=str(configfile))
-        self.patch.start()
+            """.format(self.abook1, self.abook2))
+        self._patch = mock.patch.dict('os.environ', KHARD_CONFIG=str(config))
+        self._patch.start()
 
     def tearDown(self):
-        self.patch.stop()
-        self.tmp.cleanup()
+        self._patch.stop()
+        self._tmp.cleanup()
 
     def test_simple_mv_without_options(self):
         khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is moved to a filename based on the uid.
-        source = pathlib.Path(self.tmp.name) / 'abook1' / 'contact.vcf'
-        target = pathlib.Path(self.tmp.name) / 'abook2' / 'testuid1.vcf'
+        target = self.abook2 / 'testuid1.vcf'
         # We currently only assert that the target file exists, nothing about
         # its contents.
-        self.assertFalse(source.exists())
+        self.assertFalse(self.contact.exists())
         self.assertTrue(target.exists())
 
     def test_simple_cp_without_options(self):
         khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
-        source = pathlib.Path(self.tmp.name) / 'abook1' / 'contact.vcf'
         # The contact is copied to a filename based on a new uid.
-        results = list((pathlib.Path(self.tmp.name) / 'abook2').glob('*.vcf'))
-        self.assertTrue(source.exists())
+        results = list(self.abook2.glob('*.vcf'))
+        self.assertTrue(self.contact.exists())
         self.assertEqual(len(results), 1)
 
-    def test_simple_rm_without_options(self):
+    def test_simple_remove_with_force_option(self):
+        # Without the --force this asks for confirmation.
         khard.main(['remove', '--force', '-a', 'abook1', 'testuid1'])
-        source = pathlib.Path(self.tmp.name) / 'abook1' / 'contact.vcf'
-        results = list((pathlib.Path(self.tmp.name) / 'abook2').glob('*.vcf'))
-        self.assertFalse(source.exists())
+        results = list(self.abook2.glob('*.vcf'))
+        self.assertFalse(self.contact.exists())
         self.assertEqual(len(results), 0)
 
 
