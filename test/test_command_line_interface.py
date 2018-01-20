@@ -154,6 +154,13 @@ class FileSystemCommands(unittest.TestCase):
         self.assertTrue(source.exists())
         self.assertEqual(len(results), 1)
 
+    def test_simple_rm_without_options(self):
+        khard.main(['remove', '--force', '-a', 'abook1', 'testuid1'])
+        source = pathlib.Path(self.tmp.name) / 'abook1' / 'contact.vcf'
+        results = list((pathlib.Path(self.tmp.name) / 'abook2').glob('*.vcf'))
+        self.assertFalse(source.exists())
+        self.assertEqual(len(results), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
