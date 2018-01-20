@@ -54,17 +54,17 @@ class ListingCommands(unittest.TestCase):
         text = [l.strip() for l in stdout.getvalue().splitlines()]
         expected = [
             "Address book: foo",
-            "Index    Name                                  Phone    E-Mail    UID",
-            "1        one contact with minimal Vcard",
-            "2        second contact with a simple Vcard                       1"]
+            "Index    Name               Phone    E-Mail    UID",
+            "1        minimal contact",
+            "2        second contact                        1"]
         self.assertListEqual(text, expected)
 
     def test_simple_bdays_without_options(self):
         with mock_stdout() as stdout:
             khard.main(['birthdays'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["Name                                  Birthday",
-                  "second contact with a simple Vcard    01/20/2018"]
+        expect = ["Name              Birthday",
+                  "second contact    01/20/2018"]
         self.assertListEqual(text, expect)
 
 
