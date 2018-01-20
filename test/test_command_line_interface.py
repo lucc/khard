@@ -91,6 +91,13 @@ class ListingCommands(unittest.TestCase):
                   "test/fixture/foo.abook/minimal2.vcf"]
         self.assertListEqual(text, expect)
 
+    def test_simple_abooks_without_options(self):
+        with mock_stdout() as stdout:
+            khard.main(['addressbooks'])
+        text = stdout.getvalue().strip()
+        expect = "foo"
+        self.assertEqual(text, expect)
+
 
 if __name__ == "__main__":
     unittest.main()
