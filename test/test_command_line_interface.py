@@ -115,18 +115,19 @@ class FileSystemCommands(unittest.TestCase):
         self.abook1.mkdir()
         self.abook2.mkdir()
         self.contact = self.abook1 / 'contact.vcf'
-        shutil.copy('test/fixture/foo.abook/minimal2.vcf', self.contact)
+        shutil.copy('test/fixture/foo.abook/minimal2.vcf', str(self.contact))
         config = path / 'conf'
-        config.write_text(
-            """[general]
-            editor = /bin/sh
-            merge_editor = /bin/sh
-            [addressbooks]
-            [[abook1]]
-            path = {}
-            [[abook2]]
-            path = {}
-            """.format(self.abook1, self.abook2))
+        with config.open('w') as fh:
+            fh.write(
+                """[general]
+                editor = /bin/sh
+                merge_editor = /bin/sh
+                [addressbooks]
+                [[abook1]]
+                path = {}
+                [[abook2]]
+                path = {}
+                """.format(self.abook1, self.abook2))
         self._patch = mock.patch.dict('os.environ', KHARD_CONFIG=str(config))
         self._patch.start()
 
