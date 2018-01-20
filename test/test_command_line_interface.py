@@ -139,10 +139,20 @@ class FileSystemCommands(unittest.TestCase):
     def test_simple_mv_without_options(self):
         khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is moved to a filename based on the uid.
+        source = pathlib.Path(self.tmp.name) / 'abook1' / 'contact.vcf'
         target = pathlib.Path(self.tmp.name) / 'abook2' / 'testuid1.vcf'
         # We currently only assert that the target file exists, nothing about
         # its contents.
+        self.assertFalse(source.exists())
         self.assertTrue(target.exists())
+
+    def test_simple_cp_without_options(self):
+        khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
+        source = pathlib.Path(self.tmp.name) / 'abook1' / 'contact.vcf'
+        # The contact is copied to a filename based on a new uid.
+        results = list((pathlib.Path(self.tmp.name) / 'abook2').glob('*.vcf'))
+        self.assertTrue(source.exists())
+        self.assertEqual(len(results), 1)
 
 
 if __name__ == "__main__":
