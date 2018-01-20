@@ -1,4 +1,9 @@
-"""Test some features of the command line interface of khard."""
+"""Test some features of the command line interface of khard.
+
+This also contains some "end to end" tests.  That means some very high level
+calls to the main function and a check against the output.  These might later
+be converted to proper "unit" tests.
+"""
 
 import io
 import unittest
@@ -34,6 +39,22 @@ class HelpOption(unittest.TestCase):
                 khard.main(['-h', 'list'])
         text = stdout.getvalue().splitlines()
         self.assertTrue(text[0].startswith('usage: TESTSUITE [-h]'))
+
+
+@mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+class ListingCommands(unittest.TestCase):
+
+    def test_simple_ls_without_options(self):
+        stdout = io.StringIO()
+        with mock.patch("sys.stdout", stdout):
+            khard.main(['list'])
+        text = [l.strip() for l in stdout.getvalue().splitlines()]
+        expected = [
+            "Address book: foo",
+            "Index    Name                                  Phone    E-Mail    UID",
+            "1        one contact with minimal Vcard",
+            "2        second contact with a simple Vcard                       1"]
+        self.assertListEqual(text, expected)
 
 
 if __name__ == "__main__":
