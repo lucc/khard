@@ -6,6 +6,9 @@ be converted to proper "unit" tests.
 """
 
 import io
+import pathlib
+import shutil
+import tempfile
 import unittest
 import unittest.mock as mock
 
@@ -47,6 +50,7 @@ class HelpOption(unittest.TestCase):
 
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
 class ListingCommands(unittest.TestCase):
+    """Tests for subcommands that simply list stuff."""
 
     def test_simple_ls_without_options(self):
         with mock_stdout() as stdout:
@@ -97,6 +101,48 @@ class ListingCommands(unittest.TestCase):
         text = stdout.getvalue().strip()
         expect = "foo"
         self.assertEqual(text, expect)
+
+
+class FileSystemCommands(unittest.TestCase):
+    """Tests for subcommands that interact with different address books."""
+
+    def setUp(self):
+        "Create a temporary directory with two address books and a configfile."
+        self.tmp = tempfile.TemporaryDirectory()
+        path = pathlib.Path(self.tmp.name)
+        abook1 = path / 'abook1'
+        abook2 = path / 'abook2'
+        abook1.mkdir()
+        abook2.mkdir()
+        shutil.copy('test/fixture/foo.abook/minimal2.vcf',
+                    abook1 / 'contact.vcf')
+        configfile = path / 'conf'
+        config = """\
+            [general]
+            editor = /bin/sh
+            merge_editor = /bin/sh
+            [addressbooks]
+            [[abook1]]
+            path = {}
+            [[abook2]]
+            path = {}
+            """.format(abook1, abook2)
+        configfile.write_text(config)
+        self.patch = mock.patch.dict('os.environ',
+                                     KHARD_CONFIG=str(configfile))
+        self.patch.start()
+
+    def tearDown(self):
+        self.patch.stop()
+        self.tmp.cleanup()
+
+    def test_simple_mv_without_options(self):
+        khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
+        # The contact is moved to a filename based on the uid.
+        target = pathlib.Path(self.tmp.name) / 'abook2' / 'testuid1.vcf'
+        # We currently only assert that the target file exists, nothing about
+        # its contents.
+        self.assertTrue(target.exists())
 
 
 if __name__ == "__main__":
