@@ -175,8 +175,11 @@ class AddressBook(metaclass=abc.ABCMeta):
         if self._short_uids is None:
             if not self._loaded:
                 self.load(query)
-            if not self.contacts or len(self.contacts) == 1:
-                self._short_uids = self.contacts
+            if not self.contacts:
+                self._short_uids = {}
+            elif len(self.contacts) == 1:
+                self._short_uids = {uid[0:1]: contact
+                                    for uid, contact in self.contacts.items()}
             else:
                 self._short_uids = {}
                 sorted_uids = sorted(self.contacts)

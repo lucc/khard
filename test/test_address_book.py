@@ -113,7 +113,6 @@ class VcardAdressBookLoad(unittest.TestCase):
 
 class AddressBookGetShortUidDict(unittest.TestCase):
 
-    @unittest.expectedFailure
     def test_uniqe_uid_also_reslts_in_shortend_uid_in_short_uid_dict(self):
         contacts = {'uid123': None}
         abook = _AddressBook('test')
