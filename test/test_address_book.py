@@ -109,3 +109,17 @@ class VcardAdressBookLoad(unittest.TestCase):
             abook.load()
         self.assertEqual(cm.output, ['WARNING:root:1 of 1 vCard files of '
                                      'address book test could not be parsed.'])
+
+
+class AddressBookGetShortUidDict(unittest.TestCase):
+
+    @unittest.expectedFailure
+    def test_uniqe_uid_also_reslts_in_shortend_uid_in_short_uid_dict(self):
+        contacts = {'uid123': None}
+        abook = _AddressBook('test')
+        abook.contacts = contacts
+        abook._loaded = True
+        short_uids = abook.get_short_uid_dict()
+        self.assertEqual(len(short_uids), 1)
+        short_uid, contact = short_uids.popitem()
+        self.assertEqual(short_uid, 'u')
