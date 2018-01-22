@@ -162,3 +162,8 @@ v0.12.0: 2018.01.12
 
 v0.12.1: 2018.01.14
 - Fix for issue #148: Config variable "sort" not longer mandatory in config file
+
+v0.12.2: 2018.01.21
+- Fixed: Found contact twice when the whole uid was used with -u (#161)
+- Fixed: A minor bug in the contact search function (#160)
+

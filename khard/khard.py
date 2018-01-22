@@ -612,8 +612,7 @@ def generate_contact_list(config, args):
         # set search terms to the empty query to prevent errors in
         # phone and email actions
         args.search_terms = ".*"
-        vcard_list = get_contacts(config.get_all_address_books(), args.uid,
-                                  method="uid")
+        vcard_list = get_contacts(args.addressbook, args.uid, method="uid")
         # We require that the uid given can uniquely identify a contact.
         if not vcard_list:
             sys.exit("Found no contact for {}uid {}".format(
