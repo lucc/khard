@@ -105,7 +105,8 @@ class VcardAdressBookLoad(unittest.TestCase):
         abook = address_book.VdirAddressBook('test',
                                              'test/fixture/broken.abook')
         with self.assertRaises(SystemExit):
-            abook.load()
+            with self.assertLogs(level='ERROR'):
+                abook.load()
 
     def test_unparsable_files_can_be_skipped(self):
         abook = address_book.VdirAddressBook(
