@@ -66,15 +66,19 @@ class ListingCommands(unittest.TestCase):
             "E-Mail                    UID",
             "1        second contact    voice: 0123456789    "
             "home: user@example.com    testuid1",
-            "2        third contact                          "
+            "2        text birthday                          "
+            "                          testuid3",
+            "3        third contact                          "
             "                          testuid2"]
         self.assertListEqual(text, expected)
 
+    @unittest.expectedFailure
     def test_simple_bdays_without_options(self):
         with mock_stdout() as stdout:
             khard.main(['birthdays'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["Name              Birthday",
+                  "text birthday     circa 1800",
                   "second contact    01/20/2018"]
         self.assertListEqual(text, expect)
 
@@ -99,6 +103,7 @@ class ListingCommands(unittest.TestCase):
             khard.main(['filename'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["test/fixture/foo.abook/contact1.vcf",
+                  "test/fixture/foo.abook/text-bday.vcf",
                   "test/fixture/foo.abook/contact2.vcf"]
         self.assertListEqual(text, expect)
 
