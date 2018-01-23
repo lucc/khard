@@ -1,5 +1,6 @@
 """Test some features of the command line interface of khard.
 
+
 This also contains some "end to end" tests.  That means some very high level
 calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
@@ -58,9 +59,9 @@ class ListingCommands(unittest.TestCase):
         text = [l.strip() for l in stdout.getvalue().splitlines()]
         expected = [
             "Address book: foo",
-            "Index    Name               Phone                E-Mail                    UID",
-            "1        minimal contact",
-            "2        second contact     voice: 0123456789    home: user@example.com    t"]
+            "Index    Name              Phone                E-Mail                    UID",
+            "1        second contact    voice: 0123456789    home: user@example.com    testuid1",
+            "2        third contact                                                    testuid2"]
         self.assertListEqual(text, expected)
 
     def test_simple_bdays_without_options(self):
@@ -91,8 +92,8 @@ class ListingCommands(unittest.TestCase):
         with mock_stdout() as stdout:
             khard.main(['filename'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["test/fixture/foo.abook/minimal.vcf",
-                  "test/fixture/foo.abook/minimal2.vcf"]
+        expect = ["test/fixture/foo.abook/minimal2.vcf",
+                  "test/fixture/foo.abook/minimal3.vcf"]
         self.assertListEqual(text, expect)
 
     def test_simple_abooks_without_options(self):

@@ -16,7 +16,7 @@ def expectedFailureForVersion(major, minor):
 
 class _AddressBook(address_book.AddressBook):
     """Class for testing the abstract AddressBook base class."""
-    def load(self, query=None, private_objects=tuple(), localize_dates=True):
+    def load(self, query=None):
         pass
 
 
@@ -42,7 +42,7 @@ class AbstractAddressBookSearch(unittest.TestCase):
         abook = _AddressBook('test')
         load_mock = mock.Mock()
         abook.load = load_mock
-        abook.loaded = True
+        abook._loaded = True
         abook.search('foo')
         load_mock.assert_not_called()
 
@@ -87,10 +87,9 @@ class VcardAdressBookLoad(unittest.TestCase):
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
         self.assertEqual(len(abook.contacts), 2)
-        # TODO: There is also a warning about duplicate uids but that might be
-        # a bug.
-        self.assertIn('WARNING:root:The contact minimal contact from address '
-                      'book test has no UID', cm.output)
+        messages = ['WARNING:root:Card minimal contact from address book test '
+                    'has no UID and will not be availbale.']
+        self.assertListEqual(cm.output, messages)
 
     def test_search_in_source_files_only_loads_matching_cards(self):
         abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
@@ -100,13 +99,26 @@ class VcardAdressBookLoad(unittest.TestCase):
     def test_loading_unparsable_vcard_fails(self):
         abook = address_book.VdirAddressBook('test',
                                              'test/fixture/broken.abook')
-        with self.assertRaises(address_book.AddressBookParseError):
+        with self.assertRaises(SystemExit):
             abook.load()
 
     def test_unparsable_files_can_be_skipped(self):
-        abook = address_book.VdirAddressBook('test',
-                                             'test/fixture/broken.abook')
+        abook = address_book.VdirAddressBook(
+            'test', 'test/fixture/broken.abook', skip=True)
         with self.assertLogs(level='WARNING') as cm:
-            abook.load(skip=True)
+            abook.load()
         self.assertEqual(cm.output, ['WARNING:root:1 of 1 vCard files of '
                                      'address book test could not be parsed.'])
+
+
+class AddressBookGetShortUidDict(unittest.TestCase):
+
+    def test_uniqe_uid_also_reslts_in_shortend_uid_in_short_uid_dict(self):
+        contacts = {'uid123': None}
+        abook = _AddressBook('test')
+        abook.contacts = contacts
+        abook._loaded = True
+        short_uids = abook.get_short_uid_dict()
+        self.assertEqual(len(short_uids), 1)
+        short_uid, contact = short_uids.popitem()
+        self.assertEqual(short_uid, 'u')

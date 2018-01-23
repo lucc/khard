@@ -2,7 +2,6 @@
 
 from distutils.spawn import find_executable
 import locale
-import logging
 import os
 import re
 import sys
@@ -10,7 +9,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import AddressBookCollection, AddressBookParseError
+from .address_book import AddressBookCollection
 
 
 def exit(message, prefix="Error in config file\n"):
@@ -36,7 +35,7 @@ class Config:
 
     def __init__(self, config_file=""):
         self.config = None
-        self.address_book_list = []
+        self.abooks = []
         self.uid_dict = {}
 
         # set locale
@@ -179,13 +178,15 @@ class Config:
         section = self.config['addressbooks']
         try:
             self.abook = AddressBookCollection(
-                "tmp", *[(name, section[name]['path']) for name in section])
+                "tmp", *[(name, section[name]['path']) for name in section],
+                private_objects=self.get_supported_private_objects(),
+                localize_dates=self.localize_dates(),
+                skip=self.skip_unparsable())
         except KeyError as err:
             exit('Missing path to the "{}" address book.'.format(err.args[0]))
         except IOError as err:
             exit(str(err))
-        self.address_book_list = [self.abook.get_abook(name)
-                                  for name in section]
+        self.abooks = [self.abook.get_abook(name) for name in section]
 
     @staticmethod
     def _convert_boolean_config_value(config, name, default=True):
@@ -215,17 +216,6 @@ class Config:
             raise ValueError("Error in config file\nInvalid value for %s "
                              "parameter\nPossible values: yes, no" % name)
 
-    def get_all_address_books(self):
-        """
-        return a list of all address books from config file
-        But due to performance optimizations its not guaranteed, that the
-        address books already contain their contact objects
-        if you must be sure, get every address book individually with the
-        get_address_book() function below
-        :rtype: list(address_book.AddressBook)
-        """
-        return self.address_book_list
-
     def get_address_book(self, name, search_queries=None):
         """
         return address book object or None, if the address book with the
@@ -238,24 +228,11 @@ class Config:
         if not address_book:
             # Return None if no address book did match the given name.
             return None
-        if not address_book.loaded:
-            try:
-                # Load vcard files of the address book.
-                contacts, errors = address_book.load(
-                    search_queries, self.get_supported_private_objects(),
-                    self.localize_dates(), self.skip_unparsable())
-                # Check uniqueness of vcard uids and create short uid
-                # dictionary. This can be disabled with the show_uids option in
-                # the config file, if desired.
-                if self.config['contact table']['show_uids']:
-                    self.uid_dict = self.abook.get_short_uid_dict()
-            except AddressBookParseError as err:
-                if not self.skip_unparsable():
-                    logging.error(
-                        "The vcard file %s of address book %s could not be "
-                        "parsed\nUse --debug for more information or "
-                        "--skip-unparsable to proceed", err.filename, name)
-                    sys.exit(2)
+        # Check uniqueness of vcard uids and create short uid
+        # dictionary. This can be disabled with the show_uids option in
+        # the config file, if desired.
+        if self.config['contact table']['show_uids']:
+            self.uid_dict = self.abook.get_short_uid_dict(search_queries)
         return address_book
 
     def has_uids(self):

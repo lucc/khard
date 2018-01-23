@@ -547,14 +547,14 @@ def load_address_books(names, config, search_queries=None):
         address_book = config.get_address_book(name, search_queries)
         if address_book is None:
             sys.exit('Error: The entered address book "{}" does not exist.\n'
-                     'Possible values are: {}'.format(name, ', '.join(
-                         str(book) for book in config.get_all_address_books())))
+                     'Possible values are: {}'.format(
+                         name, ', '.join(str(book) for book in config.abooks)))
         else:
             result.append(address_book)
     # In case names were empty and the for loop did not run.
     if not result and not names:
         # load contacts of all address books
-        for address_book in config.get_all_address_books():
+        for address_book in config.abooks:
             result.append(config.get_address_book(address_book.name,
                                                   search_queries))
     logging.debug("addressbooks: %s", result)
@@ -751,8 +751,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
                 break
         # ask for address book, in which to create the new contact
         selected_address_book = choose_address_book_from_list(
-            "Select address book for new contact",
-            config.get_all_address_books())
+            "Select address book for new contact", config.abooks)
         if selected_address_book is None:
             print("Error: address book list is empty")
             sys.exit(1)
@@ -1024,14 +1023,8 @@ def list_subcommand(vcard_list, parsable):
             else:
                 name = vcard.get_last_name_first_name()
             contact_line_list.append(
-                    '\t'.join(
-                        [
-                            config.get_shortened_uid(vcard.get_uid()),
-                            name,
-                            vcard.address_book.name
-                            ]
-                        )
-                    )
+                '\t'.join([config.get_shortened_uid(vcard.get_uid()), name,
+                           vcard.address_book.name]))
         print('\n'.join(contact_line_list))
     else:
         list_contacts(vcard_list)
@@ -1647,7 +1640,7 @@ def main(argv=sys.argv[1:]):
     # options and can directly be run.  That is much faster than checking all
     # options first and getting default values.
     if args.action == "addressbooks":
-        print('\n'.join(str(book) for book in config.get_all_address_books()))
+        print('\n'.join(str(book) for book in config.abooks))
         return
 
     merge_args_into_config(args, config)
