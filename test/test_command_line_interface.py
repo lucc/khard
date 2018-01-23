@@ -55,9 +55,12 @@ class ListingCommands(unittest.TestCase):
         text = [l.strip() for l in stdout.getvalue().splitlines()]
         expected = [
             "Address book: foo",
-            "Index    Name              Phone                E-Mail                    UID",
-            "1        second contact    voice: 0123456789    home: user@example.com    testuid1",
-            "2        third contact                                                    testuid2"]
+            "Index    Name              Phone                "
+            "E-Mail                    UID",
+            "1        second contact    voice: 0123456789    "
+            "home: user@example.com    testuid1",
+            "2        third contact                          "
+            "                          testuid2"]
         self.assertListEqual(text, expected)
 
     def test_simple_bdays_without_options(self):
@@ -132,7 +135,7 @@ class FileSystemCommands(unittest.TestCase):
         self._patch.stop()
         self._tmp.cleanup()
 
-    def test_simple_mv_without_options(self):
+    def test_simple_move(self):
         khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is moved to a filename based on the uid.
         target = self.abook2 / 'testuid1.vcf'
@@ -141,7 +144,7 @@ class FileSystemCommands(unittest.TestCase):
         self.assertFalse(self.contact.exists())
         self.assertTrue(target.exists())
 
-    def test_simple_cp_without_options(self):
+    def test_simple_copy(self):
         khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is copied to a filename based on a new uid.
         results = list(self.abook2.glob('*.vcf'))
