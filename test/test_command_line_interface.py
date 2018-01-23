@@ -95,8 +95,8 @@ class ListingCommands(unittest.TestCase):
         with mock_stdout() as stdout:
             khard.main(['filename'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["test/fixture/foo.abook/minimal2.vcf",
-                  "test/fixture/foo.abook/minimal3.vcf"]
+        expect = ["test/fixture/foo.abook/contact1.vcf",
+                  "test/fixture/foo.abook/contact2.vcf"]
         self.assertListEqual(text, expect)
 
     def test_simple_abooks_without_options(self):
@@ -120,7 +120,7 @@ class FileSystemCommands(unittest.TestCase):
         self.abook1.mkdir()
         self.abook2.mkdir()
         self.contact = self.abook1 / 'contact.vcf'
-        shutil.copy('test/fixture/foo.abook/minimal2.vcf', str(self.contact))
+        shutil.copy('test/fixture/foo.abook/contact1.vcf', str(self.contact))
         config = path / 'conf'
         with config.open('w') as fh:
             fh.write(
