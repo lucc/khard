@@ -40,6 +40,7 @@ class HelpOption(unittest.TestCase):
         self._test(['-h'], 'usage: TESTSUITE [-h]')
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    @mock.patch('khard.config.find_executable', lambda x: x)
     def test_subcommand_help(self):
         self._test(['list', '-h'], 'usage: TESTSUITE list [-h]')
 
@@ -47,6 +48,7 @@ class HelpOption(unittest.TestCase):
         self._test(['-h', 'list'], 'usage: TESTSUITE [-h]')
 
 
+@mock.patch('khard.config.find_executable', lambda x: x)
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
 class ListingCommands(unittest.TestCase):
     """Tests for subcommands that simply list stuff."""
@@ -105,6 +107,7 @@ class ListingCommands(unittest.TestCase):
         self.assertEqual(text, expect)
 
 
+@mock.patch('khard.config.find_executable', lambda x: x)
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""
 
@@ -122,8 +125,8 @@ class FileSystemCommands(unittest.TestCase):
         with config.open('w') as fh:
             fh.write(
                 """[general]
-                editor = /bin/sh
-                merge_editor = /bin/sh
+                editor = editor
+                merge_editor = meditor
                 [addressbooks]
                 [[abook1]]
                 path = {}
@@ -161,6 +164,7 @@ class FileSystemCommands(unittest.TestCase):
         self.assertEqual(len(results), 0)
 
 
+@mock.patch('khard.config.find_executable', lambda x: x)
 class MiscCommands(unittest.TestCase):
     """Tests for other subcommands."""
 
