@@ -13,6 +13,8 @@ import tempfile
 import unittest
 import unittest.mock as mock
 
+from ruamel.yaml import YAML
+
 from khard import khard
 
 
@@ -157,6 +159,24 @@ class FileSystemCommands(unittest.TestCase):
         results = list(self.abook2.glob('*.vcf'))
         self.assertFalse(self.contact.exists())
         self.assertEqual(len(results), 0)
+
+
+class MiscCommands(unittest.TestCase):
+    """Tests for other subcommands."""
+
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    def test_simple_export_without_options(self):
+        with mock_stdout() as stdout:
+            khard.main(["export", "uid1"])
+        # This implicitly tests if the output is valid yaml.
+        yaml = YAML(typ="base").load(stdout.getvalue())
+        # Just test some keys.
+        self.assertIn('Address', yaml)
+        self.assertIn('Birthday', yaml)
+        self.assertIn('Email', yaml)
+        self.assertIn('First name', yaml)
+        self.assertIn('Last name', yaml)
+        self.assertIn('Nickname', yaml)
 
 
 if __name__ == "__main__":
