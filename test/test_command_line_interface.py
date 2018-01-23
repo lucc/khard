@@ -1,10 +1,11 @@
 """Test some features of the command line interface of khard.
 
-
 This also contains some "end to end" tests.  That means some very high level
 calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
 """
+# TODO We are still missing high level tests for the following subcommands:
+# details, new, add-email and merge.
 
 import io
 import pathlib
@@ -195,6 +196,18 @@ class MiscCommands(unittest.TestCase):
         # The editor is called with a temp file so how to we check this more
         # precisely?
         popen.assert_called_once()
+
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    def test_edit_source_file_without_modifications(self):
+        popen = mock.Mock()
+        with mock.patch('subprocess.Popen', popen):
+            # just hide stdout
+            with mock.patch('sys.stdout', mock.Mock()):
+                khard.main(["source", "uid1"])
+        # The editor is called with a temp file so how to we check this more
+        # precisely?
+        popen.assert_called_once_with(['editor',
+                                       'test/fixture/foo.abook/contact1.vcf'])
 
 
 if __name__ == "__main__":
