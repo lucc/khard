@@ -222,25 +222,17 @@ def merge_existing_contacts(source_contact, target_contact,
         print("Target contact unmodified\n\n%s" % target_contact.print_vcard())
         sys.exit(0)
 
+    print("Merge contact {} from address book {} into contact {} from address "
+          "book {}\n\n".format(source_contact, source_contact.address_book,
+                               merged_contact, merged_contact.address_book))
+    if delete_source_contact:
+        print("To be removed")
+    else:
+        print("Keep unchanged")
+    print("\n\n{}\n\nMerged\n\n{}\n".format(source_contact.print_vcard(),
+                                            merged_contact.print_vcard()))
     while True:
-        if delete_source_contact:
-            input_string = input(
-                "Merge contact %s from address book %s into contact %s from "
-                "address book %s\n\nTo be removed\n\n%s\n\nMerged\n\n%s\n\n"
-                "Are you sure? (y/n): " % (
-                    source_contact, source_contact.address_book,
-                    merged_contact, merged_contact.address_book,
-                    source_contact.print_vcard(),
-                    merged_contact.print_vcard()))
-        else:
-            input_string = input(
-                "Merge contact %s from address book %s into contact %s from "
-                "address book %s\n\nKeep unchanged\n\n%s\n\nMerged:\n\n%s\n\n"
-                "Are you sure? (y/n): " % (
-                    source_contact, source_contact.address_book,
-                    merged_contact, merged_contact.address_book,
-                    source_contact.print_vcard(),
-                    merged_contact.print_vcard()))
+        input_string = input("Are you sure? (y/n): ")
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
             return
