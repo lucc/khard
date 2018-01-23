@@ -17,6 +17,8 @@ from ruamel.yaml import YAML
 
 from khard import khard
 
+from .helpers import expectedFailureForVersion
+
 
 def mock_stdout():
     stdout = io.StringIO()
@@ -182,6 +184,7 @@ class MiscCommands(unittest.TestCase):
         self.assertIn('Last name', yaml)
         self.assertIn('Nickname', yaml)
 
+    @expectedFailureForVersion(3, 5)
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
         popen = mock.Mock()

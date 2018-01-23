@@ -6,12 +6,7 @@ from unittest import mock
 
 from khard import address_book
 
-
-def expectedFailureForVersion(major, minor):
-    if sys.version_info.major == major and sys.version_info.minor == minor:
-        return unittest.expectedFailure
-    else:
-        return lambda x: x
+from .helpers import expectedFailureForVersion
 
 
 class _AddressBook(address_book.AddressBook):
