@@ -182,6 +182,17 @@ class MiscCommands(unittest.TestCase):
         self.assertIn('Last name', yaml)
         self.assertIn('Nickname', yaml)
 
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    def test_simple_edit_without_modification(self):
+        popen = mock.Mock()
+        with mock.patch('subprocess.Popen', popen):
+            # just hide stdout
+            with mock.patch('sys.stdout', mock.Mock()):
+                khard.main(["modify", "uid1"])
+        # The editor is called with a temp file so how to we check this more
+        # precisely?
+        popen.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
