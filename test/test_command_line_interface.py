@@ -4,8 +4,9 @@ This also contains some "end to end" tests.  That means some very high level
 calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
 """
-# TODO We are still missing high level tests for the following subcommands:
-# details, new, add-email and merge.
+# TODO We are still missing high level tests for the add-email and merge
+# subcommands.  They depend heavily on user interaction and are hard to test in
+# their current form.
 
 import io
 import pathlib
@@ -66,7 +67,9 @@ class ListingCommands(unittest.TestCase):
             "E-Mail                    UID",
             "1        second contact    voice: 0123456789    "
             "home: user@example.com    testuid1",
-            "2        third contact                          "
+            "2        text birthday                          "
+            "                          testuid3",
+            "3        third contact                          "
             "                          testuid2"]
         self.assertListEqual(text, expected)
 
@@ -75,6 +78,7 @@ class ListingCommands(unittest.TestCase):
             khard.main(['birthdays'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["Name              Birthday",
+                  "text birthday     circa 1800",
                   "second contact    01/20/2018"]
         self.assertListEqual(text, expect)
 
@@ -99,6 +103,7 @@ class ListingCommands(unittest.TestCase):
             khard.main(['filename'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["test/fixture/foo.abook/contact1.vcf",
+                  "test/fixture/foo.abook/text-bday.vcf",
                   "test/fixture/foo.abook/contact2.vcf"]
         self.assertListEqual(text, expect)
 
@@ -108,6 +113,14 @@ class ListingCommands(unittest.TestCase):
         text = stdout.getvalue().strip()
         expect = "foo"
         self.assertEqual(text, expect)
+
+    def test_simple_details_without_options(self):
+        with mock_stdout() as stdout:
+            khard.main(['details', 'uid1'])
+        text = stdout.getvalue()
+        # Currently the FN field is not shown with "details".
+        self.assertIn('Address book: foo', text)
+        self.assertIn('UID: testuid1', text)
 
 
 @mock.patch('khard.config.find_executable', lambda x: x)
@@ -144,7 +157,9 @@ class FileSystemCommands(unittest.TestCase):
         self._tmp.cleanup()
 
     def test_simple_move(self):
-        khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
+        # just hide stdout
+        with mock.patch('sys.stdout'):
+            khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is moved to a filename based on the uid.
         target = self.abook2 / 'testuid1.vcf'
         # We currently only assert that the target file exists, nothing about
@@ -153,18 +168,34 @@ class FileSystemCommands(unittest.TestCase):
         self.assertTrue(target.exists())
 
     def test_simple_copy(self):
-        khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
+        # just hide stdout
+        with mock.patch('sys.stdout'):
+            khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is copied to a filename based on a new uid.
         results = list(self.abook2.glob('*.vcf'))
         self.assertTrue(self.contact.exists())
         self.assertEqual(len(results), 1)
 
     def test_simple_remove_with_force_option(self):
-        # Without the --force this asks for confirmation.
-        khard.main(['remove', '--force', '-a', 'abook1', 'testuid1'])
+        # just hide stdout
+        with mock.patch('sys.stdout'):
+            # Without the --force this asks for confirmation.
+            khard.main(['remove', '--force', '-a', 'abook1', 'testuid1'])
         results = list(self.abook2.glob('*.vcf'))
         self.assertFalse(self.contact.exists())
         self.assertEqual(len(results), 0)
+
+    def test_new_contact_with_simple_user_input(self):
+        old = len(list(self.abook1.glob('*.vcf')))
+        # Mock user input on stdin (yaml format).
+        with mock.patch('sys.stdin.isatty', return_value=False):
+            with mock.patch('sys.stdin.read',
+                            return_value='First name: foo\nLast name: bar'):
+                # just hide stdout
+                with mock.patch('sys.stdout'):
+                    khard.main(['new', '-a', 'abook1'])
+        new = len(list(self.abook1.glob('*.vcf')))
+        self.assertEqual(new, old + 1)
 
 
 @mock.patch('khard.config.find_executable', lambda x: x)
@@ -188,10 +219,9 @@ class MiscCommands(unittest.TestCase):
     @expectedFailureForVersion(3, 5)
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
-        popen = mock.Mock()
-        with mock.patch('subprocess.Popen', popen):
+        with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
-            with mock.patch('sys.stdout', mock.Mock()):
+            with mock.patch('sys.stdout'):
                 khard.main(["modify", "uid1"])
         # The editor is called with a temp file so how to we check this more
         # precisely?
@@ -199,13 +229,10 @@ class MiscCommands(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_edit_source_file_without_modifications(self):
-        popen = mock.Mock()
-        with mock.patch('subprocess.Popen', popen):
+        with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
-            with mock.patch('sys.stdout', mock.Mock()):
+            with mock.patch('sys.stdout'):
                 khard.main(["source", "uid1"])
-        # The editor is called with a temp file so how to we check this more
-        # precisely?
         popen.assert_called_once_with(['editor',
                                        'test/fixture/foo.abook/contact1.vcf'])
 

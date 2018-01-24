@@ -89,7 +89,7 @@ class VcardAdressBookLoad(unittest.TestCase):
         # it could be a list or dict or set or whatever.
         self.assertEqual(len(abook.contacts), 0)
         abook.load()
-        self.assertEqual(len(abook.contacts), 2)
+        self.assertEqual(len(abook.contacts), 3)
 
     def test_search_in_source_files_only_loads_matching_cards(self):
         abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
