@@ -148,7 +148,9 @@ class FileSystemCommands(unittest.TestCase):
         self._tmp.cleanup()
 
     def test_simple_move(self):
-        khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
+        # just hide stdout
+        with mock.patch('sys.stdout'):
+            khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is moved to a filename based on the uid.
         target = self.abook2 / 'testuid1.vcf'
         # We currently only assert that the target file exists, nothing about
@@ -157,15 +159,19 @@ class FileSystemCommands(unittest.TestCase):
         self.assertTrue(target.exists())
 
     def test_simple_copy(self):
-        khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
+        # just hide stdout
+        with mock.patch('sys.stdout'):
+            khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is copied to a filename based on a new uid.
         results = list(self.abook2.glob('*.vcf'))
         self.assertTrue(self.contact.exists())
         self.assertEqual(len(results), 1)
 
     def test_simple_remove_with_force_option(self):
-        # Without the --force this asks for confirmation.
-        khard.main(['remove', '--force', '-a', 'abook1', 'testuid1'])
+        # just hide stdout
+        with mock.patch('sys.stdout'):
+            # Without the --force this asks for confirmation.
+            khard.main(['remove', '--force', '-a', 'abook1', 'testuid1'])
         results = list(self.abook2.glob('*.vcf'))
         self.assertFalse(self.contact.exists())
         self.assertEqual(len(results), 0)
@@ -192,10 +198,9 @@ class MiscCommands(unittest.TestCase):
     @expectedFailureForVersion(3, 5)
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
-        popen = mock.Mock()
-        with mock.patch('subprocess.Popen', popen):
+        with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
-            with mock.patch('sys.stdout', mock.Mock()):
+            with mock.patch('sys.stdout'):
                 khard.main(["modify", "uid1"])
         # The editor is called with a temp file so how to we check this more
         # precisely?
@@ -203,13 +208,10 @@ class MiscCommands(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_edit_source_file_without_modifications(self):
-        popen = mock.Mock()
-        with mock.patch('subprocess.Popen', popen):
+        with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
-            with mock.patch('sys.stdout', mock.Mock()):
+            with mock.patch('sys.stdout'):
                 khard.main(["source", "uid1"])
-        # The editor is called with a temp file so how to we check this more
-        # precisely?
         popen.assert_called_once_with(['editor',
                                        'test/fixture/foo.abook/contact1.vcf'])
 
