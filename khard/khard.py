@@ -1029,9 +1029,8 @@ def list_subcommand(vcard_list, parsable):
                 name = vcard.get_first_name_last_name()
             else:
                 name = vcard.get_last_name_first_name()
-            contact_line_list.append(
-                '\t'.join([config.get_shortened_uid(vcard.get_uid()), name,
-                           vcard.address_book.name]))
+            contact_line_list.append('\t'.join([vcard.get_uid(), name,
+                                                vcard.address_book.name]))
         print('\n'.join(contact_line_list))
     else:
         list_contacts(vcard_list)
