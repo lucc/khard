@@ -36,7 +36,6 @@ class Config:
     def __init__(self, config_file=""):
         self.config = None
         self.abooks = []
-        self.uid_dict = {}
 
         # set locale
         locale.setlocale(locale.LC_ALL, '')
@@ -229,22 +228,10 @@ class Config:
         if not address_book:
             # Return None if no address book did match the given name.
             return None
-        # Check uniqueness of vcard uids and create short uid
-        # dictionary. This can be disabled with the show_uids option in
-        # the config file, if desired.
-        if self.config['contact table']['show_uids']:
-            self.uid_dict = self.abook.get_short_uid_dict(search_queries)
         return address_book
 
     def has_uids(self):
-        return bool(self.uid_dict)
-
-    def get_shortened_uid(self, uid):
-        if uid:
-            for length_of_uid in range(len(uid), 0, -1):
-                if self.uid_dict.get(uid[:length_of_uid]) is not None:
-                    return uid[:length_of_uid]
-        return ""
+        return self.config['contact table']['show_uids']
 
     def localize_dates(self):
         return self.config['contact table']['localize_dates']

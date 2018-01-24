@@ -13,6 +13,7 @@ from unidecode import unidecode
 
 from . import helpers
 from .actions import Actions
+from .address_book import AddressBookCollection
 from .carddav_object import CarddavObject
 from .config import Config
 from .version import khard_version
@@ -304,6 +305,12 @@ def list_contacts(vcard_list):
         table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
     if config.has_uids():
         table_header.append("UID")
+        abook_collection = AddressBookCollection(
+            'short uids collection', selected_address_books,
+            private_objects=config.get_supported_private_objects(),
+            localize_dates=config.localize_dates(),
+            skip=config.skip_unparsable())
+
     table.append(table_header)
     # table body
     for index, vcard in enumerate(vcard_list):
@@ -343,8 +350,8 @@ def list_contacts(vcard_list):
         if len(selected_address_books) > 1:
             row.append(vcard.address_book.name)
         if config.has_uids():
-            if config.get_shortened_uid(vcard.get_uid()):
-                row.append(config.get_shortened_uid(vcard.get_uid()))
+            if abook_collection.get_short_uid(vcard.get_uid()):
+                row.append(abook_collection.get_short_uid(vcard.get_uid()))
             else:
                 row.append("")
         table.append(row)

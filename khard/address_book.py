@@ -200,6 +200,21 @@ class AddressBook(metaclass=abc.ABCMeta):
                 self._short_uids[item1[:same1 + 1]] = self.contacts[item1]
         return self._short_uids
 
+    def get_short_uid(self, uid):
+        """Get the shortend UID for the given UID.
+
+        :param uid: the full UID to shorten
+        :type uid: str
+        :returns: the shortend uid or the empty string
+        :rtype: str
+        """
+        if uid:
+            short_uids = self.get_short_uid_dict()
+            for length_of_uid in range(len(uid), 0, -1):
+                if short_uids.get(uid[:length_of_uid]) is not None:
+                    return uid[:length_of_uid]
+        return ""
+
     @abc.abstractmethod
     def load(self, query=None):
         """Load the vCards from the backing store.
