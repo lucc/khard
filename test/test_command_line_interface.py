@@ -4,8 +4,9 @@ This also contains some "end to end" tests.  That means some very high level
 calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
 """
-# TODO We are still missing high level tests for the following subcommands:
-# details, add-email and merge.
+# TODO We are still missing high level tests for the add-email and merge
+# subcommands.  They depend heavily on user interaction and are hard to test in
+# their current form.
 
 import io
 import pathlib
@@ -112,6 +113,14 @@ class ListingCommands(unittest.TestCase):
         text = stdout.getvalue().strip()
         expect = "foo"
         self.assertEqual(text, expect)
+
+    def test_simple_details_without_options(self):
+        with mock_stdout() as stdout:
+            khard.main(['details', 'uid1'])
+        text = stdout.getvalue()
+        # Currently the FN field is not shown with "details".
+        self.assertIn('Address book: foo', text)
+        self.assertIn('UID: testuid1', text)
 
 
 @mock.patch('khard.config.find_executable', lambda x: x)
