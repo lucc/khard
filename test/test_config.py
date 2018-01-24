@@ -29,8 +29,8 @@ class LoadingConfigFile(unittest.TestCase):
 
     def test_load_minimal_file_by_name(self):
         cfg = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(cfg.editor, "/bin/sh")
-        self.assertEqual(cfg.merge_editor, "/bin/sh")
+        self.assertEqual(cfg.editor, "editor")
+        self.assertEqual(cfg.merge_editor, "meditor")
 
 
 class TestConvertBooleanConfigValue(unittest.TestCase):
@@ -71,6 +71,7 @@ class TestConvertBooleanConfigValue(unittest.TestCase):
                                                         'realfalse')
 
 
+@mock.patch('khard.config.find_executable', lambda x: x)
 class ConfigPreferredVcardVersion(unittest.TestCase):
 
     def test_default_value_is_3(self):

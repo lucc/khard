@@ -1,10 +1,11 @@
 """Test some features of the command line interface of khard.
 
-
 This also contains some "end to end" tests.  That means some very high level
 calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
 """
+# TODO We are still missing high level tests for the following subcommands:
+# details, new, add-email and merge.
 
 import io
 import pathlib
@@ -13,7 +14,11 @@ import tempfile
 import unittest
 import unittest.mock as mock
 
+from ruamel.yaml import YAML
+
 from khard import khard
+
+from .helpers import expectedFailureForVersion
 
 
 def mock_stdout():
@@ -26,29 +31,27 @@ def mock_stdout():
 @mock.patch('sys.argv', ['TESTSUITE'])
 class HelpOption(unittest.TestCase):
 
-    def test_global_help(self):
+    def _test(self, args, expect):
+        """Test the command line args and compare the prefix of the output."""
         with self.assertRaises(SystemExit):
             with mock_stdout() as stdout:
-                khard.main(['-h'])
-        text = stdout.getvalue().splitlines()
-        self.assertTrue(text[0].startswith('usage: TESTSUITE [-h]'))
+                khard.main(args)
+        text = stdout.getvalue()
+        self.assertTrue(text.startswith(expect))
+
+    def test_global_help(self):
+        self._test(['-h'], 'usage: TESTSUITE [-h]')
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    @mock.patch('khard.config.find_executable', lambda x: x)
     def test_subcommand_help(self):
-        with self.assertRaises(SystemExit):
-            with mock_stdout() as stdout:
-                khard.main(['list', '-h'])
-        text = stdout.getvalue().splitlines()
-        self.assertTrue(text[0].startswith('usage: TESTSUITE list [-h]'))
+        self._test(['list', '-h'], 'usage: TESTSUITE list [-h]')
 
     def test_global_help_with_subcommand(self):
-        with self.assertRaises(SystemExit):
-            with mock_stdout() as stdout:
-                khard.main(['-h', 'list'])
-        text = stdout.getvalue().splitlines()
-        self.assertTrue(text[0].startswith('usage: TESTSUITE [-h]'))
+        self._test(['-h', 'list'], 'usage: TESTSUITE [-h]')
 
 
+@mock.patch('khard.config.find_executable', lambda x: x)
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
 class ListingCommands(unittest.TestCase):
     """Tests for subcommands that simply list stuff."""
@@ -59,9 +62,12 @@ class ListingCommands(unittest.TestCase):
         text = [l.strip() for l in stdout.getvalue().splitlines()]
         expected = [
             "Address book: foo",
-            "Index    Name              Phone                E-Mail                    UID",
-            "1        second contact    voice: 0123456789    home: user@example.com    testuid1",
-            "2        third contact                                                    testuid2"]
+            "Index    Name              Phone                "
+            "E-Mail                    UID",
+            "1        second contact    voice: 0123456789    "
+            "home: user@example.com    testuid1",
+            "2        third contact                          "
+            "                          testuid2"]
         self.assertListEqual(text, expected)
 
     def test_simple_bdays_without_options(self):
@@ -92,8 +98,8 @@ class ListingCommands(unittest.TestCase):
         with mock_stdout() as stdout:
             khard.main(['filename'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["test/fixture/foo.abook/minimal2.vcf",
-                  "test/fixture/foo.abook/minimal3.vcf"]
+        expect = ["test/fixture/foo.abook/contact1.vcf",
+                  "test/fixture/foo.abook/contact2.vcf"]
         self.assertListEqual(text, expect)
 
     def test_simple_abooks_without_options(self):
@@ -104,6 +110,7 @@ class ListingCommands(unittest.TestCase):
         self.assertEqual(text, expect)
 
 
+@mock.patch('khard.config.find_executable', lambda x: x)
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""
 
@@ -116,13 +123,13 @@ class FileSystemCommands(unittest.TestCase):
         self.abook1.mkdir()
         self.abook2.mkdir()
         self.contact = self.abook1 / 'contact.vcf'
-        shutil.copy('test/fixture/foo.abook/minimal2.vcf', str(self.contact))
+        shutil.copy('test/fixture/foo.abook/contact1.vcf', str(self.contact))
         config = path / 'conf'
         with config.open('w') as fh:
             fh.write(
                 """[general]
-                editor = /bin/sh
-                merge_editor = /bin/sh
+                editor = editor
+                merge_editor = meditor
                 [addressbooks]
                 [[abook1]]
                 path = {}
@@ -136,7 +143,7 @@ class FileSystemCommands(unittest.TestCase):
         self._patch.stop()
         self._tmp.cleanup()
 
-    def test_simple_mv_without_options(self):
+    def test_simple_move(self):
         khard.main(['move', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is moved to a filename based on the uid.
         target = self.abook2 / 'testuid1.vcf'
@@ -145,7 +152,7 @@ class FileSystemCommands(unittest.TestCase):
         self.assertFalse(self.contact.exists())
         self.assertTrue(target.exists())
 
-    def test_simple_cp_without_options(self):
+    def test_simple_copy(self):
         khard.main(['copy', '-a', 'abook1', '-A', 'abook2', 'testuid1'])
         # The contact is copied to a filename based on a new uid.
         results = list(self.abook2.glob('*.vcf'))
@@ -158,6 +165,49 @@ class FileSystemCommands(unittest.TestCase):
         results = list(self.abook2.glob('*.vcf'))
         self.assertFalse(self.contact.exists())
         self.assertEqual(len(results), 0)
+
+
+@mock.patch('khard.config.find_executable', lambda x: x)
+class MiscCommands(unittest.TestCase):
+    """Tests for other subcommands."""
+
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    def test_simple_export_without_options(self):
+        with mock_stdout() as stdout:
+            khard.main(["export", "uid1"])
+        # This implicitly tests if the output is valid yaml.
+        yaml = YAML(typ="base").load(stdout.getvalue())
+        # Just test some keys.
+        self.assertIn('Address', yaml)
+        self.assertIn('Birthday', yaml)
+        self.assertIn('Email', yaml)
+        self.assertIn('First name', yaml)
+        self.assertIn('Last name', yaml)
+        self.assertIn('Nickname', yaml)
+
+    @expectedFailureForVersion(3, 5)
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    def test_simple_edit_without_modification(self):
+        popen = mock.Mock()
+        with mock.patch('subprocess.Popen', popen):
+            # just hide stdout
+            with mock.patch('sys.stdout', mock.Mock()):
+                khard.main(["modify", "uid1"])
+        # The editor is called with a temp file so how to we check this more
+        # precisely?
+        popen.assert_called_once()
+
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    def test_edit_source_file_without_modifications(self):
+        popen = mock.Mock()
+        with mock.patch('subprocess.Popen', popen):
+            # just hide stdout
+            with mock.patch('sys.stdout', mock.Mock()):
+                khard.main(["source", "uid1"])
+        # The editor is called with a temp file so how to we check this more
+        # precisely?
+        popen.assert_called_once_with(['editor',
+                                       'test/fixture/foo.abook/contact1.vcf'])
 
 
 if __name__ == "__main__":
