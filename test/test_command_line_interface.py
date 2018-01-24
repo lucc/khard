@@ -5,7 +5,7 @@ calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
 """
 # TODO We are still missing high level tests for the following subcommands:
-# details, new, add-email and merge.
+# details, add-email and merge.
 
 import io
 import pathlib
@@ -175,6 +175,18 @@ class FileSystemCommands(unittest.TestCase):
         results = list(self.abook2.glob('*.vcf'))
         self.assertFalse(self.contact.exists())
         self.assertEqual(len(results), 0)
+
+    def test_new_contact_with_simple_user_input(self):
+        old = len(list(self.abook1.glob('*.vcf')))
+        # Mock user input on stdin (yaml format).
+        with mock.patch('sys.stdin.isatty', return_value=False):
+            with mock.patch('sys.stdin.read',
+                            return_value='First name: foo\nLast name: bar'):
+                # just hide stdout
+                with mock.patch('sys.stdout'):
+                    khard.main(['new', '-a', 'abook1'])
+        new = len(list(self.abook1.glob('*.vcf')))
+        self.assertEqual(new, old + 1)
 
 
 @mock.patch('khard.config.find_executable', lambda x: x)
