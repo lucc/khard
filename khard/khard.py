@@ -541,15 +541,15 @@ def merge_args_into_config(args, config):
         args.target_addressbook = [abook.name for abook in config.abooks]
 
 
-def load_address_books(names, config, search_queries=None):
+def load_address_books(names, config, search_queries):
     """Load all address books with the given names from the config.
 
     :param names: the address books to load
     :type names: list(str)
     :param config: the config instance to use when looking up address books
     :type config: config.Config
-    :param search_queries:
-    :type search_queries: None or str
+    :param search_queries: a mapping of address book names to search queries
+    :type search_queries: dict
     :yields: the loaded address books
     :ytype: addressbook.AddressBook
 
@@ -565,17 +565,23 @@ def load_address_books(names, config, search_queries=None):
     # load address books which are defined in the configuration file
     for name in names:
         address_book = config.abook.get_abook(name)
-        address_book.load(search_queries)
+        address_book.load(search_queries[address_book.name])
         yield address_book
 
 
 def prepare_search_queries(args):
     """Prepare the search query string from the given command line args.
 
+    Each address book can get a search query string to filter vcards befor
+    loading them.  Depending on the question if the address book is used for
+    source or target searches different regexes have to be combined into one
+    search string.
+
     :param args: the parsed command line
     :type args: argparse.Namespace
-    :returns: the query string to find matching contacts
-    :rtype: str or None
+    :returns: a dict mapping abook names to their loading queries, if the query
+        is None it means that all cards should be loaded
+    :rtype: dict(str:str or None)
 
     """
     # get all possible search queries for address book parsing
@@ -598,12 +604,31 @@ def prepare_search_queries(args):
         source_queries.append(args.uid)
     if "target_uid" in args and args.target_uid:
         target_queries.append(args.target_uid)
-    # create and return regexp
+    # create and return regexp, None means that no query is given and hence all
+    # contacts should be searched.
     source_queries = "^.*(%s).*$" % ')|('.join(source_queries) if source_queries else None
     target_queries = "^.*(%s).*$" % ')|('.join(target_queries) if target_queries else None
     logging.debug('Created source query regex: %s', source_queries)
     logging.debug('Created target query regex: %s', target_queries)
-    return source_queries, target_queries
+    # Get all possible search queries for address book parsing, always
+    # depending on the fact if the address book is used to find source or
+    # target contacts or both.
+    queries = {abook.name: [] for abook in config.abook._abooks}
+    for name in queries:
+        if "addressbook" in args and name in args.addressbook:
+            queries[name].append(source_queries)
+        if "target_addressbook" in args and name in args.target_addressbook:
+            queries[name].append(target_queries)
+        # If None is included in the search queries of an address book it means
+        # that either no source or target query was given and this address book
+        # is affected by this.  All contacts should be loaded from that address
+        # book.
+        if None in queries[name]:
+            queries[name] = None
+        else:
+            queries[name] = "({})".format(')|('.join(queries[name]))
+    logging.debug('Created query regex: %s', queries)
+    return queries
 
 
 def generate_contact_list(config, args):
@@ -1660,15 +1685,15 @@ def main(argv=sys.argv[1:]):
         return
 
     merge_args_into_config(args, config)
-    source_queries, target_queries = prepare_search_queries(args)
+    search_queries = prepare_search_queries(args)
 
     # load address books
     if "addressbook" in args:
         args.addressbook = list(load_address_books(args.addressbook, config,
-                                                   source_queries))
+                                                   search_queries))
     if "target_addressbook" in args:
         args.target_addressbook = list(load_address_books(
-            args.target_addressbook, config, target_queries))
+            args.target_addressbook, config, search_queries))
 
     vcard_list = generate_contact_list(config, args)
 

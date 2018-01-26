@@ -171,7 +171,6 @@ class AddressBook(metaclass=abc.ABCMeta):
         :type query: str
         :returns: the contacts mapped by the shortes unique prefix of their UID
         :rtype: dict(str: CarddavObject)
-
         """
         if self._short_uids is None:
             if not self._loaded:
