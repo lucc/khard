@@ -273,6 +273,7 @@ class VdirAddressBook(AddressBook):
         """
         if self._loaded:
             return
+        logging.debug('Loading Vdir %s with query %s', self.name, query)
         errors = 0
         for filename in self._find_vcard_files(search=query):
             try:
@@ -312,6 +313,8 @@ class VdirAddressBook(AddressBook):
             logging.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
+        logging.debug('Loded %s contacts from address book %s.',
+                      len(self.contacts), self.name)
 
 
 class AddressBookCollection(AddressBook):
@@ -341,6 +344,7 @@ class AddressBookCollection(AddressBook):
     def load(self, query=None):
         if self._loaded:
             return
+        logging.debug('Loading collection %s with query %s', self.name, query)
         for abook in self._abooks:
             abook.load(query)
             for uid in abook.contacts:
@@ -352,6 +356,8 @@ class AddressBookCollection(AddressBook):
                 else:
                     self.contacts[uid] = abook.contacts[uid]
         self._loaded = True
+        logging.debug('Loded %s contacts from address book %s.',
+                      len(self.contacts), self.name)
 
     def get_abook(self, name):
         """Get one of the backing abdress books by its name,
