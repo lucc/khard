@@ -577,15 +577,15 @@ def prepare_search_queries(args):
         escaped_term = ".*".join(re.escape(x)
                                  for x in args.source_search_terms)
         queries.append(escaped_term)
-        args.source_search_terms = ".*%s.*" % escaped_term
+        args.source_search_terms = escaped_term
     if "search_terms" in args and args.search_terms:
         escaped_term = ".*".join(re.escape(x) for x in args.search_terms)
         queries.append(escaped_term)
-        args.search_terms = ".*%s.*" % escaped_term
+        args.search_terms = escaped_term
     if "target_contact" in args and args.target_contact:
         escaped_term = re.escape(args.target_contact)
         queries.append(escaped_term)
-        args.target_contact = ".*%s.*" % escaped_term
+        args.target_contact = escaped_term
     if "uid" in args and args.uid:
         queries.append(args.uid)
     if "target_uid" in args and args.target_uid:
