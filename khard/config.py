@@ -9,7 +9,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import AddressBookCollection
+from .address_book import AddressBookCollection, VdirAddressBook
 
 
 def exit(message, prefix="Error in config file\n"):
@@ -176,12 +176,13 @@ class Config:
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
         section = self.config['addressbooks']
+        kwargs = {'private_objects': self.get_supported_private_objects(),
+                  'localize_dates': self.localize_dates(),
+                  'skip': self.skip_unparsable()}
         try:
             self.abook = AddressBookCollection(
-                "tmp", *[(name, section[name]['path']) for name in section],
-                private_objects=self.get_supported_private_objects(),
-                localize_dates=self.localize_dates(),
-                skip=self.skip_unparsable())
+                "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
+                        for name in section], **kwargs)
         except KeyError as err:
             exit('Missing path to the "{}" address book.'.format(err.args[0]))
         except IOError as err:

@@ -327,20 +327,16 @@ class AddressBookCollection(AddressBook):
     all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name, abooks, **kwargs):
         """
         :param name: the name to identify the address book
         :type name: str
-        :param *args: two-tuples, each holding the name and path arguments for
-            one VdirAddressBook instance
-        :type *args: tuple(str,str)
+        :param abooks: a list of address books to combine in this collection
+        :type abooks: list(AddressBook)
         :param **kwargs: further arguments for the parent constructor
-            (AddressBook) and all sub address books
         """
         super().__init__(name, **kwargs)
-        self._abooks = []
-        for name, path in args:
-            self._abooks.append(VdirAddressBook(name, path, **kwargs))
+        self._abooks = abooks
 
     def load(self, query=None):
         if self._loaded:
