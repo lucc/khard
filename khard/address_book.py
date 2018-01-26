@@ -147,6 +147,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: list(carddav_object.CarddavObject)
 
         """
+        logging.debug('address book %s, searching with %s', self.name, query)
         if not self._loaded:
             self.load(query)
         if method == "all":

@@ -591,7 +591,9 @@ def prepare_search_queries(args):
     if "target_uid" in args and args.target_uid:
         queries.append(args.target_uid)
     # create and return regexp
-    return "^.*(%s).*$" % ')|('.join(queries) if queries else None
+    queries = "^.*(%s).*$" % ')|('.join(queries) if queries else None
+    logging.debug('Created query regex: %s', queries)
+    return queries
 
 
 def generate_contact_list(config, args):
