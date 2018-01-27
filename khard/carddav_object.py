@@ -81,7 +81,8 @@ class CarddavObject:
                 self.vcard = vobject.readOne(contents)
             except Exception:
                 # if creation fails, try to repair some vcard attributes
-                self.vcard = vobject.readOne(self._filter_invalid_tags(contents))
+                self.vcard = vobject.readOne(
+                    self._filter_invalid_tags(contents))
 
     #######################################
     # factory methods to create new contact
@@ -89,33 +90,33 @@ class CarddavObject:
 
     @classmethod
     def new_contact(cls, address_book, supported_private_objects, version,
-            localize_dates):
+                    localize_dates):
         """Use this to create a new and empty contact."""
         return cls(address_book, None, supported_private_objects, version,
-                localize_dates)
+                   localize_dates)
 
     @classmethod
     def from_file(cls, address_book, filename, supported_private_objects,
-            localize_dates):
+                  localize_dates):
         """
         Use this if you want to create a new contact from an existing .vcf
         file.
         """
         return cls(address_book, filename, supported_private_objects, None,
-                localize_dates)
+                   localize_dates)
 
     @classmethod
     def from_user_input(cls, address_book, user_input,
                         supported_private_objects, version, localize_dates):
         """Use this if you want to create a new contact from user input."""
         contact = cls(address_book, None, supported_private_objects, version,
-                localize_dates)
+                      localize_dates)
         contact._process_user_input(user_input)
         return contact
 
     @classmethod
     def from_existing_contact_with_new_user_input(cls, contact, user_input,
-            localize_dates):
+                                                  localize_dates):
         """
         Use this if you want to clone an existing contact and  replace its data
         with new user input in one step.
@@ -271,7 +272,8 @@ class CarddavObject:
                 "additional name", additional_name,
                 ObjectType.string_or_list_with_strings),
             family=helpers.convert_to_vcard(
-                "last name", last_name, ObjectType.string_or_list_with_strings),
+                "last name", last_name,
+                ObjectType.string_or_list_with_strings),
             suffix=helpers.convert_to_vcard(
                 "name suffix", suffix, ObjectType.string_or_list_with_strings))
         # fn
@@ -406,7 +408,7 @@ class CarddavObject:
                             and label.group.startswith("itemtel"):
                         number_of_custom_phone_number_labels += 1
                 group_name = "itemtel%d" % (
-                    number_of_custom_phone_number_labels+1)
+                    number_of_custom_phone_number_labels + 1)
                 phone_obj.group = group_name
                 label_obj = self.vcard.add('x-ablabel')
                 label_obj.group = group_name
@@ -443,8 +445,8 @@ class CarddavObject:
                              helpers.list_to_string(custom_types, ", "))
         else:
             email_obj = self.vcard.add('email')
-            email_obj.value = helpers.convert_to_vcard("email address", address,
-                                                       ObjectType.string)
+            email_obj.value = helpers.convert_to_vcard(
+                "email address", address, ObjectType.string)
             if self.get_version() == "4.0":
                 if pref > 0:
                     email_obj.params['PREF'] = str(pref)
@@ -459,7 +461,8 @@ class CarddavObject:
                     if label.name == "X-ABLABEL" \
                             and label.group.startswith("itememail"):
                         number_of_custom_email_labels += 1
-                group_name = "itememail%d" % (number_of_custom_email_labels+1)
+                group_name = "itememail%d" % (
+                    number_of_custom_email_labels + 1)
                 email_obj.group = group_name
                 label_obj = self.vcard.add('x-ablabel')
                 label_obj.group = group_name
@@ -567,7 +570,8 @@ class CarddavObject:
                 region=helpers.convert_to_vcard(
                     "region", region, ObjectType.string_or_list_with_strings),
                 country=helpers.convert_to_vcard(
-                    "country", country, ObjectType.string_or_list_with_strings))
+                    "country", country,
+                    ObjectType.string_or_list_with_strings))
             if self.get_version() == "4.0":
                 if pref > 0:
                     adr_obj.params['PREF'] = str(pref)
@@ -705,7 +709,7 @@ class CarddavObject:
 
     def get_formatted_anniversary(self):
         return self._format_date_object(
-                self.get_anniversary(), self.localize_dates)
+            self.get_anniversary(), self.localize_dates)
 
     def _add_anniversary(self, date):
         if isinstance(date, str):
@@ -743,12 +747,12 @@ class CarddavObject:
         else:
             if self.get_version() == "4.0":
                 anniversary_obj = self.vcard.add('anniversary')
-                anniversary_obj.value = "%.4d%.2d%.2d" % (date.year, date.month,
-                                                   date.day)
+                anniversary_obj.value = "%.4d%.2d%.2d" % (date.year,
+                                                          date.month, date.day)
             else:
                 anniversary_obj = self.vcard.add('x-anniversary')
-                anniversary_obj.value = "%.4d-%.2d-%.2d" % (date.year,
-                        date.month, date.day)
+                anniversary_obj.value = "%.4d-%.2d-%.2d" % (
+                    date.year, date.month, date.day)
 
     def get_birthday(self):
         """:returns: contacts birthday or None if not available
@@ -769,7 +773,7 @@ class CarddavObject:
 
     def get_formatted_birthday(self):
         return self._format_date_object(
-                self.get_birthday(), self.localize_dates)
+            self.get_birthday(), self.localize_dates)
 
     def _add_birthday(self, date):
         if isinstance(date, str):
@@ -829,9 +833,10 @@ class CarddavObject:
                 if localize:
                     return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
                 else:
-                    utc_offset=-time.timezone/60/60
+                    utc_offset = -time.timezone / 60 / 60
                     return date.strftime(
-                            "%Y-%m-%dT%H:%M:%S+" + str(int(utc_offset)).zfill(2) + ":00")
+                        "%Y-%m-%dT%H:%M:%S+" + str(int(utc_offset)).zfill(2) +
+                        ":00")
             else:
                 if localize:
                     return date.strftime(locale.nl_langinfo(locale.D_FMT))
@@ -1075,10 +1080,11 @@ class CarddavObject:
         self.delete_vcard_object("X-ANNIVERSARY")
         if contact_data.get("Anniversary"):
             if isinstance(contact_data.get("Anniversary"), str):
-                if re.match(r"^text[\s]*=.*$", contact_data.get("Anniversary")):
-                    l = [x.strip() for x in
-                         re.split("text[\s]*=", contact_data.get("Anniversary"))
-                         if x.strip()]
+                if re.match(r"^text[\s]*=.*$",
+                            contact_data.get("Anniversary")):
+                    l = [x.strip() for x in re.split(
+                        "text[\s]*=", contact_data.get("Anniversary"))
+                        if x.strip()]
                     if self.get_version() == "4.0":
                         date = ', '.join(l)
                     else:
@@ -1239,7 +1245,7 @@ class CarddavObject:
                             self.get_phone_numbers().items(),
                             key=lambda k: k[0].lower()):
                         strings += helpers.convert_to_yaml(
-                            type, number_list, 4, len(longest_key)+1, True)
+                            type, number_list, 4, len(longest_key) + 1, True)
 
             elif line.lower().startswith("email"):
                 strings.append("Email :")
@@ -1253,7 +1259,7 @@ class CarddavObject:
                             self.get_email_addresses().items(),
                             key=lambda k: k[0].lower()):
                         strings += helpers.convert_to_yaml(
-                            type, email_list, 4, len(longest_key)+1, True)
+                            type, email_list, 4, len(longest_key) + 1, True)
 
             elif line.lower().startswith("address"):
                 strings.append("Address :")
@@ -1304,27 +1310,31 @@ class CarddavObject:
                     longest_key = max(self.supported_private_objects, key=len)
                     for object in self.supported_private_objects:
                         strings += helpers.convert_to_yaml(
-                            object, self._get_private_objects().get(object, ""),
-                            4, len(longest_key)+1, True)
+                            object,
+                            self._get_private_objects().get(object, ""), 4,
+                            len(longest_key)+1, True)
 
             elif line.lower().startswith("anniversary"):
                 anniversary = self.get_anniversary()
                 if anniversary:
                     if isinstance(anniversary, str):
                         strings.append("Anniversary : text= %s" % anniversary)
-                    elif anniversary.year == 1900 and anniversary.month != 0 and \
-                            anniversary.day != 0 and anniversary.hour == 0 and \
-                            anniversary.minute == 0 and anniversary.second == 0 and \
-                            self.get_version() == "4.0":
+                    elif (anniversary.year == 1900 and anniversary.month != 0
+                            and anniversary.day != 0 and anniversary.hour == 0
+                            and anniversary.minute == 0
+                            and anniversary.second == 0
+                            and self.get_version() == "4.0"):
                         strings.append("Anniversary : --%.2d-%.2d"
                                        % (anniversary.month, anniversary.day))
-                    elif (anniversary.tzname() and anniversary.tzname()[3:]) or \
-                            (anniversary.hour != 0 or anniversary.minute != 0
-                             or anniversary.second != 0):
-                        strings.append("Anniversary : %s" % anniversary.isoformat())
+                    elif ((anniversary.tzname() and anniversary.tzname()[3:])
+                            or anniversary.hour != 0 or anniversary.minute != 0
+                            or anniversary.second != 0):
+                        strings.append("Anniversary : %s" %
+                                       anniversary.isoformat())
                     else:
                         strings.append("Anniversary : %.4d-%.2d-%.2d" % (
-                            anniversary.year, anniversary.month, anniversary.day))
+                            anniversary.year, anniversary.month,
+                            anniversary.day))
                 else:
                     strings.append("Anniversary : ")
             elif line.lower().startswith("birthday"):
@@ -1356,7 +1366,8 @@ class CarddavObject:
             elif line.lower().startswith("webpage"):
                 strings += helpers.convert_to_yaml(
                     "Webpage", self._get_webpages(), 0, 8, True)
-        return '\n'.join(strings) + "\n"   # posix standard: eof char must be \n
+        # posix standard: eof char must be \n
+        return '\n'.join(strings) + "\n"
 
     def print_vcard(self, show_address_book=True, show_uid=True):
         strings = []
@@ -1388,8 +1399,9 @@ class CarddavObject:
             strings.append("Address book: %s" % self.address_book.name)
 
         # person related information
-        if self.get_birthday() is not None or self.get_anniversary() is not None \
-                or self.get_nicknames() or self._get_roles() or self._get_titles():
+        if (self.get_birthday() is not None or
+                self.get_anniversary() is not None or self.get_nicknames() or
+                self._get_roles() or self._get_titles()):
             strings.append("General:")
             if self.get_anniversary():
                 strings.append("    Anniversary: %s"
@@ -1532,7 +1544,8 @@ class CarddavObject:
                 if type and type.lower() != "pref":
                     if not type.lower().startswith("x-"):
                         type_list.append(type)
-                    elif type[2:].lower() not in [x.lower() for x in type_list]:
+                    elif type[2:].lower() not in [x.lower()
+                                                  for x in type_list]:
                         # add x-custom type in case it's not already added by
                         # custom label for loop above but strip x- before
                         type_list.append(type[2:])
