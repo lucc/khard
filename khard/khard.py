@@ -579,28 +579,31 @@ def prepare_search_queries(args):
 
     """
     # get all possible search queries for address book parsing
-    queries = []
+    source_queries = []
+    target_queries = []
     if "source_search_terms" in args and args.source_search_terms:
         escaped_term = ".*".join(re.escape(x)
                                  for x in args.source_search_terms)
-        queries.append(escaped_term)
+        source_queries.append(escaped_term)
         args.source_search_terms = escaped_term
     if "search_terms" in args and args.search_terms:
         escaped_term = ".*".join(re.escape(x) for x in args.search_terms)
-        queries.append(escaped_term)
+        source_queries.append(escaped_term)
         args.search_terms = escaped_term
     if "target_contact" in args and args.target_contact:
         escaped_term = re.escape(args.target_contact)
-        queries.append(escaped_term)
+        target_queries.append(escaped_term)
         args.target_contact = escaped_term
     if "uid" in args and args.uid:
-        queries.append(args.uid)
+        source_queries.append(args.uid)
     if "target_uid" in args and args.target_uid:
-        queries.append(args.target_uid)
+        target_queries.append(args.target_uid)
     # create and return regexp
-    queries = "^.*(%s).*$" % ')|('.join(queries) if queries else None
-    logging.debug('Created query regex: %s', queries)
-    return queries
+    source_queries = "^.*(%s).*$" % ')|('.join(source_queries) if source_queries else None
+    target_queries = "^.*(%s).*$" % ')|('.join(target_queries) if target_queries else None
+    logging.debug('Created source query regex: %s', source_queries)
+    logging.debug('Created target query regex: %s', target_queries)
+    return source_queries, target_queries
 
 
 def generate_contact_list(config, args):
@@ -1657,15 +1660,15 @@ def main(argv=sys.argv[1:]):
         return
 
     merge_args_into_config(args, config)
-    search_queries = prepare_search_queries(args)
+    source_queries, target_queries = prepare_search_queries(args)
 
     # load address books
     if "addressbook" in args:
         args.addressbook = list(load_address_books(args.addressbook, config,
-                                                   search_queries))
+                                                   source_queries))
     if "target_addressbook" in args:
         args.target_addressbook = list(load_address_books(
-            args.target_addressbook, config, search_queries))
+            args.target_addressbook, config, target_queries))
 
     vcard_list = generate_contact_list(config, args)
 
