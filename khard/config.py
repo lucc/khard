@@ -216,20 +216,6 @@ class Config:
             raise ValueError("Error in config file\nInvalid value for %s "
                              "parameter\nPossible values: yes, no" % name)
 
-    def get_address_book(self, name, search_queries=None):
-        """
-        return address book object or None, if the address book with the
-        given name does not exist
-        :rtype: address_book.AddressBook
-        """
-        if not self.search_in_source_files():
-            search_queries = None
-        address_book = self.abook.get_abook(name)
-        if not address_book:
-            # Return None if no address book did match the given name.
-            return None
-        return address_book
-
     def has_uids(self):
         return self.config['contact table']['show_uids']
 

@@ -396,8 +396,7 @@ def choose_address_book_from_list(header_string, address_book_list):
                 addr_index = int(input_string)
                 if addr_index > 0:
                     # make sure the address book is loaded afterwards
-                    selected_address_book = config.get_address_book(
-                        address_book_list[addr_index-1].name)
+                    selected_address_book = address_book_list[addr_index - 1]
                 else:
                     raise ValueError
             except (EOFError, IndexError, ValueError):
@@ -545,28 +544,23 @@ def load_address_books(names, config, search_queries=None):
     :type config: config.Config
     :param search_queries:
     :type search_queries: None or str
-    :returns: the loaded address books
-    :rtype: list(addressbook.AddressBook)
+    :yields: the loaded address books
+    :ytype: addressbook.AddressBook
 
     """
-    result = []
+    all_names = {str(book) for book in config.abooks}
+    if not names:
+        names = all_names
+    elif not all_names.issuperset(names):
+        sys.exit('Error: The entered address books "{}" do not exist.\n'
+                 'Possible values are: {}'.format(
+                     '", "'.join(set(names) - all_names),
+                     ', '.join(all_names)))
     # load address books which are defined in the configuration file
     for name in names:
-        address_book = config.get_address_book(name, search_queries)
-        if address_book is None:
-            sys.exit('Error: The entered address book "{}" does not exist.\n'
-                     'Possible values are: {}'.format(
-                         name, ', '.join(str(book) for book in config.abooks)))
-        else:
-            result.append(address_book)
-    # In case names were empty and the for loop did not run.
-    if not result and not names:
-        # load contacts of all address books
-        for address_book in config.abooks:
-            result.append(config.get_address_book(address_book.name,
-                                                  search_queries))
-    logging.debug("addressbooks: %s", result)
-    return result
+        address_book = config.abook.get_abook(name)
+        address_book.load(search_queries)
+        yield address_book
 
 
 def prepare_search_queries(args):
@@ -1661,11 +1655,11 @@ def main(argv=sys.argv[1:]):
 
     # load address books
     if "addressbook" in args:
-        args.addressbook = load_address_books(args.addressbook, config,
-                                              search_queries)
+        args.addressbook = list(load_address_books(args.addressbook, config,
+                                                   search_queries))
     if "target_addressbook" in args:
-        args.target_addressbook = load_address_books(args.target_addressbook,
-                                                     config, search_queries)
+        args.target_addressbook = list(load_address_books(
+            args.target_addressbook, config, search_queries))
 
     vcard_list = generate_contact_list(config, args)
 
