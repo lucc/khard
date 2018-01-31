@@ -20,6 +20,47 @@ from . import helpers
 from .object_type import ObjectType
 
 
+def convert_to_vcard(name, value, allowed_object_type):
+    """converts user input into vcard compatible data structures
+    :param name: object name, only required for error messages
+    :type name: str
+    :param value: user input
+    :type value: str or list(str)
+    :param allowed_object_type: set the accepted return type for vcard
+        attribute
+    :type allowed_object_type: enum of type ObjectType
+    :returns: cleaned user input, ready for vcard or a ValueError
+    :rtype: str or list(str)
+    """
+    if isinstance(value, str):
+        if allowed_object_type == ObjectType.list_with_strings:
+            raise ValueError(
+                "Error: " + name + " must not contain a single string.")
+        else:
+            return value.strip()
+    elif isinstance(value, list):
+        if allowed_object_type == ObjectType.string:
+            raise ValueError(
+                "Error: " + name + " must not contain a list.")
+        else:
+            for entry in value:
+                if not isinstance(entry, str):
+                    raise ValueError(
+                        "Error: " + name + " must not contain a nested list")
+            # filter out empty list items and strip leading and trailing space
+            return [x.strip() for x in value if x]
+    else:
+        if allowed_object_type == ObjectType.string:
+            raise ValueError(
+                "Error: " + name + " must be a string.")
+        elif allowed_object_type == ObjectType.list_with_strings:
+            raise ValueError(
+                "Error: " + name + " must be a list with strings.")
+        else:
+            raise ValueError(
+                "Error: " + name + " must be a string or a list with strings.")
+
+
 class VCardWrapper:
     """Wrapper class around a vobject.vCard object.
 
@@ -190,15 +231,15 @@ class CarddavObject(VCardWrapper):
 
     def add_uid(self, uid):
         uid_obj = self.vcard.add('uid')
-        uid_obj.value = helpers.convert_to_vcard("uid", uid, ObjectType.string)
+        uid_obj.value = convert_to_vcard("uid", uid, ObjectType.string)
 
     def get_version(self):
         return self._get_string_field("version")
 
     def _add_version(self, vcard_version):
         version_obj = self.vcard.add('version')
-        version_obj.value = helpers.convert_to_vcard("version", vcard_version,
-                                                     ObjectType.string)
+        version_obj.value = convert_to_vcard("version", vcard_version,
+                                             ObjectType.string)
 
     def _get_names_part(self, part):
         """Get some part of the "N" entry in the vCard as a list
@@ -281,19 +322,17 @@ class CarddavObject(VCardWrapper):
         # n
         name_obj = self.vcard.add('n')
         name_obj.value = vobject.vcard.Name(
-            prefix=helpers.convert_to_vcard(
-                "name prefix", prefix, ObjectType.string_or_list_with_strings),
-            given=helpers.convert_to_vcard(
-                "first name", first_name,
-                ObjectType.string_or_list_with_strings),
-            additional=helpers.convert_to_vcard(
+            prefix=convert_to_vcard("name prefix", prefix,
+                                    ObjectType.string_or_list_with_strings),
+            given=convert_to_vcard("first name", first_name,
+                                   ObjectType.string_or_list_with_strings),
+            additional=convert_to_vcard(
                 "additional name", additional_name,
                 ObjectType.string_or_list_with_strings),
-            family=helpers.convert_to_vcard(
-                "last name", last_name,
-                ObjectType.string_or_list_with_strings),
-            suffix=helpers.convert_to_vcard(
-                "name suffix", suffix, ObjectType.string_or_list_with_strings))
+            family=convert_to_vcard("last name", last_name,
+                                    ObjectType.string_or_list_with_strings),
+            suffix=convert_to_vcard("name suffix", suffix,
+                                    ObjectType.string_or_list_with_strings))
         # fn
         if not self.vcard.getChildValue("fn") and (self._get_first_names() or
                                                    self._get_last_names()):
@@ -322,8 +361,8 @@ class CarddavObject(VCardWrapper):
 
     def _add_organisation(self, organisation):
         org_obj = self.vcard.add('org')
-        org_obj.value = helpers.convert_to_vcard(
-            "organisation", organisation, ObjectType.list_with_strings)
+        org_obj.value = convert_to_vcard("organisation", organisation,
+                                         ObjectType.list_with_strings)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self._get_organisations():
             # if not, set fn to organisation name
@@ -346,8 +385,7 @@ class CarddavObject(VCardWrapper):
 
     def _add_title(self, title):
         title_obj = self.vcard.add('title')
-        title_obj.value = helpers.convert_to_vcard("title", title,
-                                                   ObjectType.string)
+        title_obj.value = convert_to_vcard("title", title, ObjectType.string)
 
     def _get_roles(self):
         """
@@ -361,8 +399,7 @@ class CarddavObject(VCardWrapper):
 
     def _add_role(self, role):
         role_obj = self.vcard.add('role')
-        role_obj.value = helpers.convert_to_vcard("role", role,
-                                                  ObjectType.string)
+        role_obj.value = convert_to_vcard("role", role, ObjectType.string)
 
     def get_phone_numbers(self):
         """
@@ -407,14 +444,14 @@ class CarddavObject(VCardWrapper):
         else:
             phone_obj = self.vcard.add('tel')
             if self.get_version() == "4.0":
-                phone_obj.value = "tel:%s" % helpers.convert_to_vcard(
+                phone_obj.value = "tel:%s" % convert_to_vcard(
                     "phone number", number, ObjectType.string)
                 phone_obj.params['VALUE'] = ["uri"]
                 if pref > 0:
                     phone_obj.params['PREF'] = str(pref)
             else:
-                phone_obj.value = helpers.convert_to_vcard(
-                    "phone number", number, ObjectType.string)
+                phone_obj.value = convert_to_vcard("phone number", number,
+                                                   ObjectType.string)
                 if pref > 0:
                     standard_types.append("pref")
             if standard_types:
@@ -463,8 +500,8 @@ class CarddavObject(VCardWrapper):
                              helpers.list_to_string(custom_types, ", "))
         else:
             email_obj = self.vcard.add('email')
-            email_obj.value = helpers.convert_to_vcard(
-                "email address", address, ObjectType.string)
+            email_obj.value = convert_to_vcard("email address", address,
+                                               ObjectType.string)
             if self.get_version() == "4.0":
                 if pref > 0:
                     email_obj.params['PREF'] = str(pref)
@@ -573,21 +610,20 @@ class CarddavObject(VCardWrapper):
         else:
             adr_obj = self.vcard.add('adr')
             adr_obj.value = vobject.vcard.Address(
-                box=helpers.convert_to_vcard(
-                    "box address field", box,
-                    ObjectType.string_or_list_with_strings),
-                extended=helpers.convert_to_vcard(
+                box=convert_to_vcard("box address field", box,
+                                     ObjectType.string_or_list_with_strings),
+                extended=convert_to_vcard(
                     "extended address field", extended,
                     ObjectType.string_or_list_with_strings),
-                street=helpers.convert_to_vcard(
+                street=convert_to_vcard(
                     "street", street, ObjectType.string_or_list_with_strings),
-                code=helpers.convert_to_vcard(
-                    "post code", code, ObjectType.string_or_list_with_strings),
-                city=helpers.convert_to_vcard(
-                    "city", city, ObjectType.string_or_list_with_strings),
-                region=helpers.convert_to_vcard(
+                code=convert_to_vcard("post code", code,
+                                      ObjectType.string_or_list_with_strings),
+                city=convert_to_vcard("city", city,
+                                      ObjectType.string_or_list_with_strings),
+                region=convert_to_vcard(
                     "region", region, ObjectType.string_or_list_with_strings),
-                country=helpers.convert_to_vcard(
+                country=convert_to_vcard(
                     "country", country,
                     ObjectType.string_or_list_with_strings))
             if self.get_version() == "4.0":
@@ -628,8 +664,8 @@ class CarddavObject(VCardWrapper):
     def _add_category(self, categories):
         """ categories variable must be a list """
         categories_obj = self.vcard.add('categories')
-        categories_obj.value = helpers.convert_to_vcard(
-            "category", categories, ObjectType.list_with_strings)
+        categories_obj.value = convert_to_vcard("category", categories,
+                                                ObjectType.list_with_strings)
 
     def get_nicknames(self):
         """
@@ -643,8 +679,8 @@ class CarddavObject(VCardWrapper):
 
     def _add_nickname(self, nickname):
         nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = helpers.convert_to_vcard("nickname", nickname,
-                                                      ObjectType.string)
+        nickname_obj.value = convert_to_vcard("nickname", nickname,
+                                              ObjectType.string)
 
     def _get_notes(self):
         """
@@ -658,8 +694,7 @@ class CarddavObject(VCardWrapper):
 
     def _add_note(self, note):
         note_obj = self.vcard.add('note')
-        note_obj.value = helpers.convert_to_vcard("note", note,
-                                                  ObjectType.string)
+        note_obj.value = convert_to_vcard("note", note, ObjectType.string)
 
     def _get_private_objects(self):
         """
@@ -686,8 +721,7 @@ class CarddavObject(VCardWrapper):
 
     def _add_private_object(self, key, value):
         private_obj = self.vcard.add('X-' + key.upper())
-        private_obj.value = helpers.convert_to_vcard(key, value,
-                                                     ObjectType.string)
+        private_obj.value = convert_to_vcard(key, value, ObjectType.string)
 
     def _get_webpages(self):
         """
@@ -701,8 +735,8 @@ class CarddavObject(VCardWrapper):
 
     def _add_webpage(self, webpage):
         webpage_obj = self.vcard.add('url')
-        webpage_obj.value = helpers.convert_to_vcard("webpage", webpage,
-                                                     ObjectType.string)
+        webpage_obj.value = convert_to_vcard("webpage", webpage,
+                                             ObjectType.string)
 
     def get_anniversary(self):
         """:returns: contacts anniversary or None if not available

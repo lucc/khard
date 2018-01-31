@@ -6,8 +6,6 @@ import string
 from datetime import datetime
 from textwrap import dedent
 
-from .object_type import ObjectType
-
 
 def pretty_print(table, justify="L"):
     # support for multiline columns
@@ -180,47 +178,6 @@ def convert_to_yaml(
                                 inner, indentation+12,
                                 show_multi_line_character)))
     return strings
-
-
-def convert_to_vcard(name, value, allowed_object_type):
-    """converts user input into vcard compatible data structures
-    :param name: object name, only required for error messages
-    :type name: str
-    :param value: user input
-    :type value: str or list(str)
-    :param allowed_object_type: set the accepted return type for vcard
-        attribute
-    :type allowed_object_type: enum of type ObjectType
-    :returns: cleaned user input, ready for vcard or a ValueError
-    :rtype: str or list(str)
-    """
-    if isinstance(value, str):
-        if allowed_object_type == ObjectType.list_with_strings:
-            raise ValueError(
-                "Error: " + name + " must not contain a single string.")
-        else:
-            return value.strip()
-    elif isinstance(value, list):
-        if allowed_object_type == ObjectType.string:
-            raise ValueError(
-                "Error: " + name + " must not contain a list.")
-        else:
-            for entry in value:
-                if not isinstance(entry, str):
-                    raise ValueError(
-                        "Error: " + name + " must not contain a nested list")
-            # filter out empty list items and strip leading and trailing space
-            return [x.strip() for x in value if x]
-    else:
-        if allowed_object_type == ObjectType.string:
-            raise ValueError(
-                "Error: " + name + " must be a string.")
-        elif allowed_object_type == ObjectType.list_with_strings:
-            raise ValueError(
-                "Error: " + name + " must be a list with strings.")
-        else:
-            raise ValueError(
-                "Error: " + name + " must be a string or a list with strings.")
 
 
 def indent_multiline_string(input, indentation, show_multi_line_character):
