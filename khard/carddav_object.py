@@ -20,7 +20,25 @@ from . import helpers
 from .object_type import ObjectType
 
 
-class CarddavObject:
+class VCardWrapper:
+    """Wrapper class around a vobject.vCard object.
+
+    This class can wrap a single vCard and presents its data in a manner
+    suitable for khard.  Additionally some details of the vCard specifications
+    in RFC 2426 (version 3.0) and RFC 6350 (version 4.0) that are not enforced
+    by the vobject library are enforced here.
+    """
+
+    def __init__(self, vcard):
+        """Initialize the wrapper around the given vcard.
+
+        :param vcard: the vCard to wrap
+        :type vcard: vobject.vCard
+        """
+        self.vcard = vcard
+
+
+class CarddavObject(VCardWrapper):
 
     # vcard v3.0 supports the following type values
     phone_types_v3 = ("bbs", "car", "cell", "fax", "home", "isdn", "msg",
@@ -63,7 +81,7 @@ class CarddavObject:
         # load vcard
         if self.filename is None:
             # create new vcard object
-            self.vcard = vobject.vCard()
+            super().__init__(vobject.vCard())
             # add uid
             self.add_uid(helpers.get_random_uid())
             # use uid for vcard filename
@@ -78,11 +96,11 @@ class CarddavObject:
                 contents = file.read()
             # create vcard object
             try:
-                self.vcard = vobject.readOne(contents)
+                vcard = vobject.readOne(contents)
             except Exception:
                 # if creation fails, try to repair some vcard attributes
-                self.vcard = vobject.readOne(
-                    self._filter_invalid_tags(contents))
+                vcard = vobject.readOne(self._filter_invalid_tags(contents))
+            super().__init__(vcard)
 
     #######################################
     # factory methods to create new contact
