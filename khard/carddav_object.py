@@ -6,6 +6,7 @@
 
 import datetime
 import locale
+import logging
 import os
 import re
 import sys
@@ -178,44 +179,14 @@ class VCardWrapper:
         :param date: the new date to store as birthday
         :type date: datetime.datetime or str
         """
-        if isinstance(date, str):
-            if self.version == "4.0":
-                bday_obj = self.vcard.add('bday')
-                bday_obj.params['VALUE'] = ["text"]
-                bday_obj.value = date.strip()
-        elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                and date.hour == 0 and date.minute == 0 and date.second == 0 \
-                and self.version == "4.0":
-            bday_obj = self.vcard.add('bday')
-            bday_obj.value = "--%.2d%.2d" % (date.month, date.day)
-        elif date.tzname() and date.tzname()[3:]:
-            bday_obj = self.vcard.add('bday')
-            if self.version == "4.0":
-                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second, date.tzname()[3:])
-            else:
-                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second, date.tzname()[3:])
-        elif date.hour != 0 or date.minute != 0 or date.second != 0:
-            bday_obj = self.vcard.add('bday')
-            if self.version == "4.0":
-                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second)
-            else:
-                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second)
-        else:
-            bday_obj = self.vcard.add('bday')
-            if self.version == "4.0":
-                bday_obj.value = "%.4d%.2d%.2d" % (date.year, date.month,
-                                                   date.day)
-            else:
-                bday_obj.value = "%.4d-%.2d-%.2d" % (date.year, date.month,
-                                                     date.day)
+        value, text = self._prepare_birthday_value(date)
+        if value is None:
+            logging.warning('Failed to set anniversary to %s', date)
+            return
+        bday = self.vcard.add('bday')
+        bday.value = value
+        if text:
+            bday.params['VALUE'] = ['text']
 
     @property
     def anniversary(self):
@@ -241,47 +212,52 @@ class VCardWrapper:
 
     @anniversary.setter
     def anniversary(self, date):
+        value, text = self._prepare_birthday_value(date)
+        if value is None:
+            logging.warning('Failed to set anniversary to %s', date)
+            return
+        if text:
+            anniversary = self.vcard.add('anniversary')
+            anniversary.params['VALUE'] = ['text']
+            anniversary.value = value
+        elif self.version == "4.0":
+            self.vcard.add('anniversary').value = value
+        else:
+            self.vcard.add('x-anniversary').value = value
+
+    def _prepare_birthday_value(self, date):
+        """Prepare a value to be stored in a BDAY or ANNIVERSARY attribute.
+
+        :param date: the date like value to be stored
+        :type date: datetime.datetime or str
+        :returns: the object to set as the .value for the attribute and weather
+            it should be stored as plain text
+        :rtype: tuple(str,bool)
+        """
         if isinstance(date, str):
             if self.version == "4.0":
-                anniversary_obj = self.vcard.add('anniversary')
-                anniversary_obj.params['VALUE'] = ["text"]
-                anniversary_obj.value = date.strip()
+                return date.strip(), True
+            return None, False
         elif date.year == 1900 and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0 \
                 and self.version == "4.0":
-            anniversary_obj = self.vcard.add('anniversary')
-            anniversary_obj.value = "--%.2d%.2d" % (date.month, date.day)
+            fmt = '--%m%d'
         elif date.tzname() and date.tzname()[3:]:
             if self.version == "4.0":
-                anniversary_obj = self.vcard.add('anniversary')
-                anniversary_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second, date.tzname()[3:])
+                fmt = "%Y%m%dT%H%M%S{}".format(date.tzname()[3:])
             else:
-                anniversary_obj = self.vcard.add('x-anniversary')
-                anniversary_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second, date.tzname()[3:])
+                fmt = "%Y-%m-%dT%H:%M:%S{}".format(date.tzname()[3:])
         elif date.hour != 0 or date.minute != 0 or date.second != 0:
             if self.version == "4.0":
-                anniversary_obj = self.vcard.add('anniversary')
-                anniversary_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second)
+                fmt = "%Y%m%dT%H%M%SZ"
             else:
-                anniversary_obj = self.vcard.add('x-anniversary')
-                anniversary_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second)
+                fmt = "%Y-%m-%dT%H:%M:%SZ"
         else:
             if self.version == "4.0":
-                anniversary_obj = self.vcard.add('anniversary')
-                anniversary_obj.value = "%.4d%.2d%.2d" % (date.year,
-                                                          date.month, date.day)
+                fmt = "%Y%m%d"
             else:
-                anniversary_obj = self.vcard.add('x-anniversary')
-                anniversary_obj.value = "%.4d-%.2d-%.2d" % (
-                    date.year, date.month, date.day)
+                fmt = "%Y-%m-%d"
+        return date.strftime(fmt), False
 
 
 class CarddavObject(VCardWrapper):
