@@ -78,6 +78,45 @@ class VCardWrapper:
         """
         self.vcard = vcard
 
+    def _get_string_field(self, field):
+        """Get a string field from the underlying vCard.
+
+        :param field: the field value to get
+        :type field: str
+        :returns: the field value or the empty string
+        :rtype: str
+
+        """
+        try:
+            return getattr(self.vcard, field).value
+        except AttributeError:
+            return ""
+
+    def delete_vcard_object(self, name):
+        """Delete all fields with the given name from the underlying vCard.
+
+        If a field that will be deleted is in a group with an X-ABLABEL field,
+        that X-ABLABEL field will also be deleted.  These fields are commonly
+        added by the Apple address book to attach custom labels to some fields.
+
+        :param name: the name of the fields to delete
+        :type name: str
+        :returns: None
+        """
+        # first collect all vcard items, which should be removed
+        to_be_removed = []
+        for child in self.vcard.getChildren():
+            if child.name == name:
+                if child.group:
+                    for label in self.vcard.getChildren():
+                        if label.name == "X-ABLABEL" and \
+                                label.group == child.group:
+                            to_be_removed.append(label)
+                to_be_removed.append(child)
+        # then delete them one by one
+        for item in to_be_removed:
+            self.vcard.remove(item)
+
 
 class CarddavObject(VCardWrapper):
 
@@ -203,20 +242,6 @@ class CarddavObject(VCardWrapper):
     #####################
     # getters and setters
     #####################
-
-    def _get_string_field(self, field):
-        """Get a string field from the underlying vCard.
-
-        :param field: the field value to get
-        :type field: str
-        :returns: the field value or the empty string
-        :rtype: str
-
-        """
-        try:
-            return getattr(self.vcard, field).value
-        except AttributeError:
-            return ""
 
     def _get_rev(self):
         return self._get_string_field("rev")
@@ -1541,21 +1566,6 @@ class CarddavObject(VCardWrapper):
             print("Error: vcard with the file name {} already exists\n"
                   "{}".format(os.path.basename(self.filename), err))
             sys.exit(4)
-
-    def delete_vcard_object(self, object_name):
-        # first collect all vcard items, which should be removed
-        to_be_removed = []
-        for child in self.vcard.getChildren():
-            if child.name == object_name:
-                if child.group:
-                    for label in self.vcard.getChildren():
-                        if label.name == "X-ABLABEL" and \
-                                label.group == child.group:
-                            to_be_removed.append(label)
-                to_be_removed.append(child)
-        # then delete them one by one
-        for item in to_be_removed:
-            self.vcard.remove(item)
 
     def delete_vcard_file(self):
         if os.path.exists(self.filename):
