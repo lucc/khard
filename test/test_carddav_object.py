@@ -1,5 +1,6 @@
 """Tests for the carddav module."""
 
+import datetime
 import unittest
 
 import vobject
@@ -60,3 +61,80 @@ class DeleteVcardObject(unittest.TestCase):
         wrapper = carddav_object.VCardWrapper(vcard)
         wrapper.delete_vcard_object('BAR')
         self.assertEqual(wrapper.vcard.serialize(), expected)
+
+
+class BirthdayLikeAttributes(unittest.TestCase):
+
+    def test_birthday_supports_setting_date_objects(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        date = datetime.datetime(2018, 2, 1)
+        wrapper.birthday = date
+        wrapper.vcard.validate()
+        self.assertEqual(wrapper.birthday, date)
+
+    def test_birthday_supports_setting_datetime_objects(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        date = datetime.datetime(2018, 2, 1, 19, 29, 31)
+        wrapper.birthday = date
+        wrapper.vcard.validate()
+        self.assertEqual(wrapper.birthday, date)
+
+    def test_birthday_supports_setting_text_values_for_v4(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.version = "4.0"
+        date = 'some time yesterday'
+        wrapper.birthday = date
+        wrapper.vcard.validate()
+        self.assertEqual(wrapper.birthday, date)
+
+    def test_birthday_does_not_support_setting_text_values_for_v3(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.version = "3.0"
+        wrapper.birthday = 'some time yesterday'
+        wrapper.vcard.validate()
+        self.assertIsNone(wrapper.birthday)
+
+    def test_anniversary_supports_setting_date_objects(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        date = datetime.datetime(2018, 2, 1)
+        wrapper.anniversary = date
+        wrapper.vcard.validate()
+        self.assertEqual(wrapper.anniversary, date)
+
+    def test_anniversary_supports_setting_datetime_objects(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        date = datetime.datetime(2018, 2, 1, 19, 29, 31)
+        wrapper.anniversary = date
+        wrapper.vcard.validate()
+        self.assertEqual(wrapper.anniversary, date)
+
+    def test_anniversary_supports_setting_text_values_for_v4(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.version = "4.0"
+        date = 'some time yesterday'
+        wrapper.anniversary = date
+        wrapper.vcard.validate()
+        self.assertEqual(wrapper.anniversary, date)
+
+    def test_anniversary_does_not_support_setting_text_values_for_v3(self):
+        vcard = vobject.vCard()
+        vcard.add('FN').value = "Test vCard"
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.version = "3.0"
+        wrapper.anniversary = 'some time yesterday'
+        wrapper.vcard.validate()
+        self.assertIsNone(wrapper.anniversary)
