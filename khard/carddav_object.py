@@ -129,6 +129,18 @@ class VCardWrapper:
         version = self.vcard.add("version")
         version.value = convert_to_vcard("version", value, ObjectType.string)
 
+    @property
+    def uid(self):
+        return self._get_string_field("uid")
+
+    @uid.setter
+    def uid(self, value):
+        # All vCards should only always have one UID, this is a requirement
+        # for version 4 but also makes sense for all other versions.
+        self.delete_vcard_object("UID")
+        uid = self.vcard.add('uid')
+        uid.value = convert_to_vcard("uid", value, ObjectType.string)
+
 
 class CarddavObject(VCardWrapper):
 
@@ -175,10 +187,9 @@ class CarddavObject(VCardWrapper):
             # create new vcard object
             super().__init__(vobject.vCard())
             # add uid
-            self.add_uid(helpers.get_random_uid())
+            self.uid = helpers.get_random_uid()
             # use uid for vcard filename
-            self.filename = os.path.join(address_book.path,
-                                         self.get_uid() + ".vcf")
+            self.filename = os.path.join(address_book.path, self.uid + ".vcf")
             # add preferred vcard version
             self.version = vcard_version
 
@@ -262,13 +273,6 @@ class CarddavObject(VCardWrapper):
         rev_obj = self.vcard.add('rev')
         rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
             dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-
-    def get_uid(self):
-        return self._get_string_field("uid")
-
-    def add_uid(self, uid):
-        uid_obj = self.vcard.add('uid')
-        uid_obj.value = convert_to_vcard("uid", uid, ObjectType.string)
 
     def _get_names_part(self, part):
         """Get some part of the "N" entry in the vCard as a list
@@ -1537,11 +1541,11 @@ class CarddavObject(VCardWrapper):
                         False)
 
         # misc stuff
-        if self._get_categories() or (show_uid and self.get_uid() != "") \
+        if self._get_categories() or (show_uid and self.uid != "") \
                 or self._get_webpages() or self._get_notes():
             strings.append("Miscellaneous")
-            if show_uid and self.get_uid():
-                strings.append("    UID: {}".format(self.get_uid()))
+            if show_uid and self.uid:
+                strings.append("    UID: {}".format(self.uid))
             if self._get_categories():
                 strings += helpers.convert_to_yaml(
                     "Categories", self._get_categories(), 4, -1, False)
@@ -1555,8 +1559,8 @@ class CarddavObject(VCardWrapper):
 
     def write_to_file(self, overwrite=False):
         # make sure, that every contact contains a uid
-        if not self.get_uid():
-            self.add_uid(helpers.get_random_uid())
+        if not self.uid:
+            self.uid = helpers.get_random_uid()
         try:
             with atomic_write(self.filename, overwrite=overwrite) as f:
                 f.write(self.vcard.serialize())

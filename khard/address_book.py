@@ -316,7 +316,7 @@ class VdirAddressBook(AddressBook):
                         "--skip-unparsable to proceed", filename, self.name)
                     sys.exit(2)
             else:
-                uid = card.get_uid()
+                uid = card.uid
                 if not uid:
                     logging.warning("Card %s from address book %s has no UID "
                                     "and will not be availbale.", card,

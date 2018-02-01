@@ -258,14 +258,14 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         # if source file should be moved, get its file location to delete after
         # successful movement
         source_contact_filename = contact.filename
-    if not delete_source_contact or not contact.get_uid():
+    if not delete_source_contact or not contact.uid:
         # if copy contact or contact has no uid yet
         # create a new uid
         contact.delete_vcard_object("UID")
-        contact.add_uid(helpers.get_random_uid())
+        contact.uid = helpers.get_random_uid()
     # set destination file name
     contact.filename = os.path.join(target_address_book.path,
-                                    "%s.vcf" % contact.get_uid())
+                                    "%s.vcf" % contact.uid)
     # save
     contact.write_to_file()
     # delete old file
@@ -365,8 +365,8 @@ def list_contacts(vcard_list):
         if len(selected_address_books) > 1:
             row.append(vcard.address_book.name)
         if config.has_uids():
-            if abook_collection.get_short_uid(vcard.get_uid()):
-                row.append(abook_collection.get_short_uid(vcard.get_uid()))
+            if abook_collection.get_short_uid(vcard.uid):
+                row.append(abook_collection.get_short_uid(vcard.uid))
             else:
                 row.append("")
         table.append(row)
@@ -684,7 +684,7 @@ def generate_contact_list(config, args):
             print("Found multiple contacts for {}uid {}".format(
                 "source " if args.action == "merge" else "", args.uid))
             for vcard in vcard_list:
-                print("    {}: {}".format(vcard, vcard.get_uid()))
+                print("    {}: {}".format(vcard, vcard.uid))
             sys.exit(1)
     else:
         # No uid was given so we try to use the search terms to select a
@@ -1136,7 +1136,7 @@ def list_subcommand(vcard_list, parsable):
                 name = vcard.get_first_name_last_name()
             else:
                 name = vcard.get_last_name_first_name()
-            contact_line_list.append('\t'.join([vcard.get_uid(), name,
+            contact_line_list.append('\t'.join([vcard.uid, name,
                                                 vcard.address_book.name]))
         print('\n'.join(contact_line_list))
     else:
@@ -1278,7 +1278,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
             else:
                 print("Found multiple contacts for target uid %s" % target_uid)
                 for vcard in target_vcards:
-                    print("    %s: %s" % (vcard, vcard.get_uid()))
+                    print("    %s: %s" % (vcard, vcard.uid))
             sys.exit(1)
     else:
         target_vcards = get_contact_list_by_user_selection(
