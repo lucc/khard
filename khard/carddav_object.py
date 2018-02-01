@@ -149,6 +149,74 @@ class VCardWrapper:
         rev = self.vcard.add('rev')
         rev.value = datetime.datetime.now().strftime("%Y%mdT%H%M%SZ")
 
+    @property
+    def birthday(self):
+        """Return the birthday as a datetime object or a string depending on
+        weather it is of type text or not.  If no birthday is present in the
+        vcard None is returned.
+
+        :returns: contacts birthday or None if not available
+        :rtype: datetime.datetime or str or NoneType
+        """
+        # vcard 4.0 could contain a single text value
+        try:
+            if self.vcard.bday.params.get("VALUE")[0] == "text":
+                return self.vcard.bday.value
+        except (AttributeError, IndexError, TypeError):
+            pass
+        # else try to convert to a datetime object
+        try:
+            return helpers.string_to_date(self.vcard.bday.value)
+        except (AttributeError, ValueError):
+            pass
+        return None
+
+    @birthday.setter
+    def birthday(self, date):
+        """Store the given date as BDAY in the vcard.
+
+        :param date: the new date to store as birthday
+        :type date: datetime.datetime or str
+        """
+        if isinstance(date, str):
+            if self.version == "4.0":
+                bday_obj = self.vcard.add('bday')
+                bday_obj.params['VALUE'] = ["text"]
+                bday_obj.value = date.strip()
+        elif date.year == 1900 and date.month != 0 and date.day != 0 \
+                and date.hour == 0 and date.minute == 0 and date.second == 0 \
+                and self.version == "4.0":
+            bday_obj = self.vcard.add('bday')
+            bday_obj.value = "--%.2d%.2d" % (date.month, date.day)
+        elif date.tzname() and date.tzname()[3:]:
+            bday_obj = self.vcard.add('bday')
+            if self.version == "4.0":
+                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second, date.tzname()[3:])
+            else:
+                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second, date.tzname()[3:])
+        elif date.hour != 0 or date.minute != 0 or date.second != 0:
+            bday_obj = self.vcard.add('bday')
+            if self.version == "4.0":
+                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second)
+            else:
+                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" % (
+                    date.year, date.month, date.day, date.hour, date.minute,
+                    date.second)
+        else:
+            bday_obj = self.vcard.add('bday')
+            if self.version == "4.0":
+                bday_obj.value = "%.4d%.2d%.2d" % (date.year, date.month,
+                                                   date.day)
+            else:
+                bday_obj.value = "%.4d-%.2d-%.2d" % (date.year, date.month,
+                                                     date.day)
+
 
 class CarddavObject(VCardWrapper):
 
@@ -839,66 +907,8 @@ class CarddavObject(VCardWrapper):
                 anniversary_obj.value = "%.4d-%.2d-%.2d" % (
                     date.year, date.month, date.day)
 
-    def get_birthday(self):
-        """:returns: contacts birthday or None if not available
-            :rtype: datetime.datetime or str
-        """
-        # vcard 4.0 could contain a single text value
-        try:
-            if self.vcard.bday.params.get("VALUE")[0] == "text":
-                return self.vcard.bday.value
-        except (AttributeError, IndexError, TypeError):
-            pass
-        # else try to convert to a datetime object
-        try:
-            return helpers.string_to_date(self.vcard.bday.value)
-        except (AttributeError, ValueError):
-            pass
-        return None
-
     def get_formatted_birthday(self):
-        return self._format_date_object(
-            self.get_birthday(), self.localize_dates)
-
-    def _add_birthday(self, date):
-        if isinstance(date, str):
-            if self.version == "4.0":
-                bday_obj = self.vcard.add('bday')
-                bday_obj.params['VALUE'] = ["text"]
-                bday_obj.value = date.strip()
-        elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                and date.hour == 0 and date.minute == 0 and date.second == 0 \
-                and self.version == "4.0":
-            bday_obj = self.vcard.add('bday')
-            bday_obj.value = "--%.2d%.2d" % (date.month, date.day)
-        elif date.tzname() and date.tzname()[3:]:
-            bday_obj = self.vcard.add('bday')
-            if self.version == "4.0":
-                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second, date.tzname()[3:])
-            else:
-                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d%s" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second, date.tzname()[3:])
-        elif date.hour != 0 or date.minute != 0 or date.second != 0:
-            bday_obj = self.vcard.add('bday')
-            if self.version == "4.0":
-                bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second)
-            else:
-                bday_obj.value = "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ" % (
-                    date.year, date.month, date.day, date.hour, date.minute,
-                    date.second)
-        else:
-            bday_obj = self.vcard.add('bday')
-            if self.version == "4.0":
-                bday_obj.value = "%.4d%.2d%.2d" % (date.year, date.month,
-                                                   date.day)
-            else:
-                bday_obj.value = "%.4d-%.2d-%.2d" % (date.year, date.month,
-                                                     date.day)
+        return self._format_date_object(self.birthday, self.localize_dates)
 
     #######################
     # object helper methods
@@ -1237,7 +1247,7 @@ class CarddavObject(VCardWrapper):
                             "Error: Wrong birthday format or invalid date\n"
                             "Use format yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
                 if date:
-                    self._add_birthday(date)
+                    self.birthday = date
             else:
                 raise ValueError("Error: birthday must be a string object.")
 
@@ -1422,7 +1432,7 @@ class CarddavObject(VCardWrapper):
                 else:
                     strings.append("Anniversary : ")
             elif line.lower().startswith("birthday"):
-                birthday = self.get_birthday()
+                birthday = self.birthday
                 if birthday:
                     if isinstance(birthday, str):
                         strings.append("Birthday : text= %s" % birthday)
@@ -1483,14 +1493,14 @@ class CarddavObject(VCardWrapper):
             strings.append("Address book: %s" % self.address_book.name)
 
         # person related information
-        if (self.get_birthday() is not None or
-                self.get_anniversary() is not None or self.get_nicknames() or
-                self._get_roles() or self._get_titles()):
+        if (self.birthday is not None or self.get_anniversary() is not None
+                or self.get_nicknames() or self._get_roles()
+                or self._get_titles()):
             strings.append("General:")
             if self.get_anniversary():
                 strings.append("    Anniversary: %s"
                                % self.get_formatted_anniversary())
-            if self.get_birthday():
+            if self.birthday:
                 strings.append(
                     "    Birthday: {}".format(self.get_formatted_birthday()))
             if self.get_nicknames():

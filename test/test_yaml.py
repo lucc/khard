@@ -27,12 +27,12 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
     def test_empty_birthday_in_yaml_input(self):
         empty_birthday = "First name: foo\nBirthday:"
         x = self._parse_yaml(empty_birthday)
-        self.assertIsNone(x.get_birthday())
+        self.assertIsNone(x.birthday)
 
     def test_only_spaces_in_birthday_in_yaml_input(self):
         spaces_birthday = "First name: foo\nBirthday:  "
         x = self._parse_yaml(spaces_birthday)
-        self.assertIsNone(x.get_birthday())
+        self.assertIsNone(x.birthday)
 
     def test_empty_anniversary_in_yaml_input(self):
         empty_anniversary = "First name: foo\nAnniversary:"

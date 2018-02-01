@@ -876,18 +876,17 @@ def birthdays_subcommand(vcard_list, parsable):
     """
     # filter out contacts without a birthday date
     vcard_list = [
-        vcard for vcard in vcard_list if vcard.get_birthday() is not None]
+        vcard for vcard in vcard_list if vcard.birthday is not None]
     # sort by date (month and day)
     # The sort function should work for strings and datetime objects.  All
     # strings will besorted before any datetime objects.
-    vcard_list.sort(
-        key=lambda x: (x.get_birthday().month, x.get_birthday().day)
-        if isinstance(x.get_birthday(), datetime.datetime)
-        else (0, 0, x.get_birthday()))
+    vcard_list.sort(key=lambda x: (x.birthday.month, x.birthday.day)
+                    if isinstance(x.birthday, datetime.datetime)
+                    else (0, 0, x.birthday))
     # add to string list
     birthday_list = []
     for vcard in vcard_list:
-        date = vcard.get_birthday()
+        date = vcard.birthday
         if parsable:
             if config.display_by_name() == "first_name":
                 birthday_list.append("%04d.%02d.%02d\t%s"
