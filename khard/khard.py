@@ -98,7 +98,7 @@ def modify_existing_contact(old_contact):
     temp_file_name = write_temp_file(
         "# Edit contact: %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (old_contact, old_contact.address_book, old_contact.get_version(),
+        % (old_contact, old_contact.address_book, old_contact.version,
            old_contact.get_template()))
 
     temp_file_creation = helpers.file_modification_date(temp_file_name)
@@ -148,14 +148,13 @@ def modify_existing_contact(old_contact):
 def merge_existing_contacts(source_contact, target_contact,
                             delete_source_contact):
     # show warning, if target vcard version is not 3.0 or 4.0
-    if target_contact.get_version() not in config.supported_vcard_versions:
+    if target_contact.version not in config.supported_vcard_versions:
         print("Warning:\nThe target contact in which to merge is based on "
               "vcard version %s but khard only supports the modification of "
               "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
               "will be converted to vcard version %s but beware: This could "
               "corrupt the contact file or cause data loss."
-              % (target_contact.get_version(),
-                 config.get_preferred_vcard_version()))
+              % (target_contact.version, config.get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -168,14 +167,14 @@ def merge_existing_contacts(source_contact, target_contact,
     source_temp_file_name = write_temp_file(
         "# merge from %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (source_contact, source_contact.address_book,
-           source_contact.get_version(), source_contact.get_template()))
+        % (source_contact, source_contact.address_book, source_contact.version,
+           source_contact.get_template()))
     # target vcard
     target_temp_file_name = write_temp_file(
         "# merge into %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (target_contact, target_contact.address_book,
-           target_contact.get_version(), target_contact.get_template()))
+        % (target_contact, target_contact.address_book, target_contact.version,
+           target_contact.get_template()))
 
     target_temp_file_creation = helpers.file_modification_date(
         target_temp_file_name)
@@ -1161,14 +1160,13 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
 
     """
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
-    if selected_vcard.get_version() not in config.supported_vcard_versions:
+    if selected_vcard.version not in config.supported_vcard_versions:
         print("Warning:\nThe selected contact is based on vcard version %s "
               "but khard only supports the creation and modification of vcards"
               " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
               " converted to vcard version %s but beware: This could corrupt "
               "the contact file or cause data loss."
-              % (selected_vcard.get_version(),
-                 config.get_preferred_vcard_version()))
+              % (selected_vcard.version, config.get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -1847,7 +1845,7 @@ def main(argv=sys.argv[1:]):
             args.output_file.write(
                 "# Contact template for khard version %s\n"
                 "# Name: %s\n# Vcard version: %s\n\n%s"
-                % (khard_version, selected_vcard, selected_vcard.get_version(),
+                % (khard_version, selected_vcard, selected_vcard.version,
                    selected_vcard.get_template()))
         elif args.action == "modify":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,

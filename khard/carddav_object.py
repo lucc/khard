@@ -117,6 +117,18 @@ class VCardWrapper:
         for item in to_be_removed:
             self.vcard.remove(item)
 
+    @property
+    def version(self):
+        return self._get_string_field("version")
+
+    @version.setter
+    def version(self, value):
+        # All vCards should only always have one version, this is a requirement
+        # for version 4 but also makes sense for all other versions.
+        self.delete_vcard_object("VERSION")
+        version = self.vcard.add("version")
+        version.value = convert_to_vcard("version", value, ObjectType.string)
+
 
 class CarddavObject(VCardWrapper):
 
@@ -168,7 +180,7 @@ class CarddavObject(VCardWrapper):
             self.filename = os.path.join(address_book.path,
                                          self.get_uid() + ".vcf")
             # add preferred vcard version
-            self._add_version(vcard_version)
+            self.version = vcard_version
 
         else:
             # create vcard from .vcf file
@@ -257,14 +269,6 @@ class CarddavObject(VCardWrapper):
     def add_uid(self, uid):
         uid_obj = self.vcard.add('uid')
         uid_obj.value = convert_to_vcard("uid", uid, ObjectType.string)
-
-    def get_version(self):
-        return self._get_string_field("version")
-
-    def _add_version(self, vcard_version):
-        version_obj = self.vcard.add('version')
-        version_obj.value = convert_to_vcard("version", vcard_version,
-                                             ObjectType.string)
 
     def _get_names_part(self, part):
         """Get some part of the "N" entry in the vCard as a list
@@ -458,7 +462,7 @@ class CarddavObject(VCardWrapper):
     def _add_phone_number(self, type, number):
         standard_types, custom_types, pref = self._parse_type_value(
             helpers.string_to_list(type, ","), number, self.phone_types_v4 if
-            self.get_version() == "4.0" else self.phone_types_v3)
+            self.version == "4.0" else self.phone_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for phone number " + number +
                              " is missing.")
@@ -468,7 +472,7 @@ class CarddavObject(VCardWrapper):
                              helpers.list_to_string(custom_types, ", "))
         else:
             phone_obj = self.vcard.add('tel')
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 phone_obj.value = "tel:%s" % convert_to_vcard(
                     "phone number", number, ObjectType.string)
                 phone_obj.params['VALUE'] = ["uri"]
@@ -515,7 +519,7 @@ class CarddavObject(VCardWrapper):
     def add_email_address(self, type, address):
         standard_types, custom_types, pref = self._parse_type_value(
             helpers.string_to_list(type, ","), address, self.email_types_v4 if
-            self.get_version() == "4.0" else self.email_types_v3)
+            self.version == "4.0" else self.email_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for email address " + address +
                              " is missing.")
@@ -527,7 +531,7 @@ class CarddavObject(VCardWrapper):
             email_obj = self.vcard.add('email')
             email_obj.value = convert_to_vcard("email address", address,
                                                ObjectType.string)
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 if pref > 0:
                     email_obj.params['PREF'] = str(pref)
             else:
@@ -623,7 +627,7 @@ class CarddavObject(VCardWrapper):
                           region, country):
         standard_types, custom_types, pref = self._parse_type_value(
             helpers.string_to_list(type, ","), "{}, {}".format(street, city),
-            self.address_types_v4 if self.get_version() == "4.0" else
+            self.address_types_v4 if self.version == "4.0" else
             self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for post address " + street +
@@ -651,7 +655,7 @@ class CarddavObject(VCardWrapper):
                 country=convert_to_vcard(
                     "country", country,
                     ObjectType.string_or_list_with_strings))
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 if pref > 0:
                     adr_obj.params['PREF'] = str(pref)
             else:
@@ -790,17 +794,17 @@ class CarddavObject(VCardWrapper):
 
     def _add_anniversary(self, date):
         if isinstance(date, str):
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 anniversary_obj = self.vcard.add('anniversary')
                 anniversary_obj.params['VALUE'] = ["text"]
                 anniversary_obj.value = date.strip()
         elif date.year == 1900 and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0 \
-                and self.get_version() == "4.0":
+                and self.version == "4.0":
             anniversary_obj = self.vcard.add('anniversary')
             anniversary_obj.value = "--%.2d%.2d" % (date.month, date.day)
         elif date.tzname() and date.tzname()[3:]:
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 anniversary_obj = self.vcard.add('anniversary')
                 anniversary_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" % (
                     date.year, date.month, date.day, date.hour, date.minute,
@@ -811,7 +815,7 @@ class CarddavObject(VCardWrapper):
                     date.year, date.month, date.day, date.hour, date.minute,
                     date.second, date.tzname()[3:])
         elif date.hour != 0 or date.minute != 0 or date.second != 0:
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 anniversary_obj = self.vcard.add('anniversary')
                 anniversary_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
                     date.year, date.month, date.day, date.hour, date.minute,
@@ -822,7 +826,7 @@ class CarddavObject(VCardWrapper):
                     date.year, date.month, date.day, date.hour, date.minute,
                     date.second)
         else:
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 anniversary_obj = self.vcard.add('anniversary')
                 anniversary_obj.value = "%.4d%.2d%.2d" % (date.year,
                                                           date.month, date.day)
@@ -854,18 +858,18 @@ class CarddavObject(VCardWrapper):
 
     def _add_birthday(self, date):
         if isinstance(date, str):
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 bday_obj = self.vcard.add('bday')
                 bday_obj.params['VALUE'] = ["text"]
                 bday_obj.value = date.strip()
         elif date.year == 1900 and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0 \
-                and self.get_version() == "4.0":
+                and self.version == "4.0":
             bday_obj = self.vcard.add('bday')
             bday_obj.value = "--%.2d%.2d" % (date.month, date.day)
         elif date.tzname() and date.tzname()[3:]:
             bday_obj = self.vcard.add('bday')
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2d%s" % (
                     date.year, date.month, date.day, date.hour, date.minute,
                     date.second, date.tzname()[3:])
@@ -875,7 +879,7 @@ class CarddavObject(VCardWrapper):
                     date.second, date.tzname()[3:])
         elif date.hour != 0 or date.minute != 0 or date.second != 0:
             bday_obj = self.vcard.add('bday')
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 bday_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
                     date.year, date.month, date.day, date.hour, date.minute,
                     date.second)
@@ -885,7 +889,7 @@ class CarddavObject(VCardWrapper):
                     date.second)
         else:
             bday_obj = self.vcard.add('bday')
-            if self.get_version() == "4.0":
+            if self.version == "4.0":
                 bday_obj.value = "%.4d%.2d%.2d" % (date.year, date.month,
                                                    date.day)
             else:
@@ -1162,21 +1166,21 @@ class CarddavObject(VCardWrapper):
                     l = [x.strip() for x in re.split(
                         "text[\s]*=", contact_data.get("Anniversary"))
                         if x.strip()]
-                    if self.get_version() == "4.0":
+                    if self.version == "4.0":
                         date = ', '.join(l)
                     else:
                         raise ValueError(
                             "Error: Free text format for anniversary only "
                             "usable with vcard version 4.0.")
                 elif re.match(r"^--\d{4}$", contact_data.get("Anniversary")) \
-                        and self.get_version() != "4.0":
+                        and self.version != "4.0":
                     raise ValueError(
                         "Error: Anniversary format --mmdd only usable with "
                         "vcard version 4.0. You may use 1900 as placeholder, "
                         "if the year of the anniversary is unknown.")
                 elif re.match(
                         r"^--\d{2}-\d{2}$", contact_data.get("Anniversary")) \
-                        and self.get_version() != "4.0":
+                        and self.version != "4.0":
                     raise ValueError(
                         "Error: Anniversary format --mm-dd only usable with "
                         "vcard version 4.0. You may use 1900 as placeholder, "
@@ -1202,21 +1206,21 @@ class CarddavObject(VCardWrapper):
                     l = [x.strip() for x in
                          re.split("text[\s]*=", contact_data.get("Birthday"))
                          if x.strip()]
-                    if self.get_version() == "4.0":
+                    if self.version == "4.0":
                         date = ', '.join(l)
                     else:
                         raise ValueError(
                             "Error: Free text format for birthday only usable "
                             "with vcard version 4.0.")
                 elif re.match(r"^--\d{4}$", contact_data.get("Birthday")) \
-                        and self.get_version() != "4.0":
+                        and self.version != "4.0":
                     raise ValueError(
                         "Error: Birthday format --mmdd only usable with "
                         "vcard version 4.0. You may use 1900 as placeholder, "
                         "if the year of birth is unknown.")
                 elif re.match(
                         r"^--\d{2}-\d{2}$", contact_data.get("Birthday")) \
-                        and self.get_version() != "4.0":
+                        and self.version != "4.0":
                     raise ValueError(
                         "Error: Birthday format --mm-dd only usable with "
                         "vcard version 4.0. You may use 1900 as placeholder, "
@@ -1400,7 +1404,7 @@ class CarddavObject(VCardWrapper):
                             and anniversary.day != 0 and anniversary.hour == 0
                             and anniversary.minute == 0
                             and anniversary.second == 0
-                            and self.get_version() == "4.0"):
+                            and self.version == "4.0"):
                         strings.append("Anniversary : --%.2d-%.2d"
                                        % (anniversary.month, anniversary.day))
                     elif ((anniversary.tzname() and anniversary.tzname()[3:])
@@ -1422,7 +1426,7 @@ class CarddavObject(VCardWrapper):
                     elif birthday.year == 1900 and birthday.month != 0 and \
                             birthday.day != 0 and birthday.hour == 0 and \
                             birthday.minute == 0 and birthday.second == 0 and \
-                            self.get_version() == "4.0":
+                            self.version == "4.0":
                         strings.append("Birthday : --%.2d-%.2d"
                                        % (birthday.month, birthday.day))
                     elif (birthday.tzname() and birthday.tzname()[3:]) or \
