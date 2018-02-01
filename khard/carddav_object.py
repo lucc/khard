@@ -141,6 +141,14 @@ class VCardWrapper:
         uid = self.vcard.add('uid')
         uid.value = convert_to_vcard("uid", value, ObjectType.string)
 
+    def _update_revision(self):
+        # All vCards should only always have one revision, this is a
+        # requirement for version 4 but also makes sense for all other
+        # versions.
+        self.delete_vcard_object("REV")
+        rev = self.vcard.add('rev')
+        rev.value = datetime.datetime.now().strftime("%Y%mdT%H%M%SZ")
+
 
 class CarddavObject(VCardWrapper):
 
@@ -265,14 +273,6 @@ class CarddavObject(VCardWrapper):
     #####################
     # getters and setters
     #####################
-
-    def _get_rev(self):
-        return self._get_string_field("rev")
-
-    def _add_rev(self, dt):
-        rev_obj = self.vcard.add('rev')
-        rev_obj.value = "%.4d%.2d%.2dT%.2d%.2d%.2dZ" % (
-            dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def _get_names_part(self, part):
         """Get some part of the "N" entry in the vCard as a list
@@ -974,8 +974,7 @@ class CarddavObject(VCardWrapper):
                 "Error: You must either enter a name or an organisation")
 
         # update rev
-        self.delete_vcard_object("REV")
-        self._add_rev(datetime.datetime.now())
+        self._update_revision()
 
         # name
         self.delete_vcard_object("FN")
