@@ -1226,7 +1226,7 @@ def remove_subcommand(selected_vcard, force):
             if input_string.lower() == "y":
                 break
     selected_vcard.delete_vcard_file()
-    print("Contact %s deleted successfully" % selected_vcard.get_full_name())
+    print("Contact %s deleted successfully" % selected_vcard.formatted_name)
 
 
 def source_subcommand(selected_vcard, editor):
@@ -1349,7 +1349,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     target_vcard = choose_vcard_from_list(
         "Select target contact which to overwrite",
         get_contact_list_by_user_selection([selected_target_address_book],
-                                           source_vcard.get_full_name(), True))
+                                           source_vcard.formatted_name, True))
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:

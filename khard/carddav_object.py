@@ -265,6 +265,25 @@ class VCardWrapper:
                 fmt = "%Y-%m-%d"
         return date.strftime(fmt), False
 
+    @property
+    def formatted_name(self):
+        return self._get_string_field("fn")
+
+    @formatted_name.setter
+    def formatted_name(self, value):
+        """Set the FN field to the new value.
+
+        All previously existing FN fields are deleted.  Version 4 of the specs
+        requires the vCard to only habe one FN field.  For other versions we
+        enforce this equally.
+
+        :param value: the new formatted name
+        :type value: str
+        """
+        self.delete_vcard_object("FN")
+        self.vcard.add("FN").value = convert_to_vcard("FN", value,
+                                                      ObjectType.string)
+
 
 class CarddavObject(VCardWrapper):
 
@@ -376,7 +395,7 @@ class CarddavObject(VCardWrapper):
     ######################################
 
     def __str__(self):
-        return self.get_full_name()
+        return self.formatted_name
 
     def __eq__(self, other):
         return isinstance(other, CarddavObject) and \
@@ -424,9 +443,6 @@ class CarddavObject(VCardWrapper):
     def _get_name_suffixes(self):
         return self._get_names_part("suffix")
 
-    def get_full_name(self):
-        return self._get_string_field("fn")
-
     def get_first_name_last_name(self):
         """
         :rtype: str
@@ -441,7 +457,7 @@ class CarddavObject(VCardWrapper):
         if names:
             return helpers.list_to_string(names, " ")
         else:
-            return self.get_full_name()
+            return self.formatted_name
 
     def get_last_name_first_name(self):
         """
@@ -464,7 +480,7 @@ class CarddavObject(VCardWrapper):
         elif first_and_additional_names:
             return helpers.list_to_string(first_and_additional_names, " ")
         else:
-            return self.get_full_name()
+            return self.formatted_name
 
     def _add_name(self, prefix, first_name, additional_name, last_name,
                   suffix):
@@ -494,8 +510,7 @@ class CarddavObject(VCardWrapper):
                 names += self._get_last_names()
             if self._get_name_suffixes():
                 names += self._get_name_suffixes()
-            name_obj = self.vcard.add('fn')
-            name_obj.value = helpers.list_to_string(names, " ")
+            self.formatted_name = helpers.list_to_string(names, " ")
 
     def _get_organisations(self):
         """
@@ -517,8 +532,8 @@ class CarddavObject(VCardWrapper):
             # if not, set fn to organisation name
             org_value = helpers.list_to_string(self._get_organisations()[0],
                                                ", ")
-            name_obj = self.vcard.add('fn')
-            name_obj.value = org_value.replace("\n", " ").replace("\\", "")
+            self.formatted_name = org_value.replace("\n", " ").replace("\\",
+                                                                       "")
             showas_obj = self.vcard.add('x-abshowas')
             showas_obj.value = "COMPANY"
 
@@ -1469,7 +1484,7 @@ class CarddavObject(VCardWrapper):
                 "Organisation", self._get_organisations(), 0, -1, False)
         # fn as fallback
         if not strings:
-            strings.append("Name: %s" % self.get_full_name())
+            strings.append("Name: %s" % self.formatted_name)
 
         # address book name
         if show_address_book:
