@@ -63,6 +63,9 @@ class VCardWrapper:
     by the vobject library are enforced here.
     """
 
+    _default_version = "3.0"
+    _supported_versions = ("3.0", "4.0")
+
     def __init__(self, vcard):
         """Initialize the wrapper around the given vcard.
 
@@ -70,6 +73,14 @@ class VCardWrapper:
         :type vcard: vobject.vCard
         """
         self.vcard = vcard
+        if self.version == "":
+            logging.warning("Wrapping unversioned vCard object, setting "
+                            "version to %s.", self._default_version)
+            self.version = self._default_version
+        elif self.version not in self._supported_versions:
+            logging.warning("Wrapping vCard with unsupported version %s, this "
+                            "might change any incompatible attributes.",
+                            self.version)
 
     def _get_string_field(self, field):
         """Get a string field from the underlying vCard.
@@ -116,6 +127,9 @@ class VCardWrapper:
 
     @version.setter
     def version(self, value):
+        if value not in self._supported_versions:
+            logging.warning("Setting vcard version to unsupported version %s",
+                            value)
         # All vCards should only always have one version, this is a requirement
         # for version 4 but also makes sense for all other versions.
         self.delete_vcard_object("VERSION")
