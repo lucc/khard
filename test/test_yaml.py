@@ -37,7 +37,7 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
     def test_empty_anniversary_in_yaml_input(self):
         empty_anniversary = "First name: foo\nAnniversary:"
         x = self._parse_yaml(empty_anniversary)
-        self.assertIsNone(x.get_anniversary())
+        self.assertIsNone(x.anniversary)
 
     def test_empty_organisation_in_yaml_input(self):
         empty_organisation = "First name: foo\nOrganisation:"
