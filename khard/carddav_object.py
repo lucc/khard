@@ -284,6 +284,105 @@ class VCardWrapper:
         self.vcard.add("FN").value = convert_to_vcard("FN", value,
                                                       ObjectType.string)
 
+    def _get_names_part(self, part):
+        """Get some part of the "N" entry in the vCard as a list
+
+        :param part: the name to get e.g. "prefix" or "given"
+        :type part: str
+        :returns: a list of entries for this name part
+        :rtype: list(str)
+
+        """
+        try:
+            the_list = getattr(self.vcard.n.value, part)
+        except AttributeError:
+            return []
+        else:
+            # check if list only contains empty strings
+            if not ''.join(the_list):
+                return []
+        return the_list if isinstance(the_list, list) else [the_list]
+
+    def _get_name_prefixes(self):
+        return self._get_names_part("prefix")
+
+    def _get_first_names(self):
+        return self._get_names_part("given")
+
+    def _get_additional_names(self):
+        return self._get_names_part("additional")
+
+    def _get_last_names(self):
+        return self._get_names_part("family")
+
+    def _get_name_suffixes(self):
+        return self._get_names_part("suffix")
+
+    def get_first_name_last_name(self):
+        """
+        :rtype: str
+        """
+        names = []
+        if self._get_first_names():
+            names += self._get_first_names()
+        if self._get_additional_names():
+            names += self._get_additional_names()
+        if self._get_last_names():
+            names += self._get_last_names()
+        if names:
+            return helpers.list_to_string(names, " ")
+        else:
+            return self.formatted_name
+
+    def get_last_name_first_name(self):
+        """
+        :rtype: str
+        """
+        last_names = []
+        if self._get_last_names():
+            last_names += self._get_last_names()
+        first_and_additional_names = []
+        if self._get_first_names():
+            first_and_additional_names += self._get_first_names()
+        if self._get_additional_names():
+            first_and_additional_names += self._get_additional_names()
+        if last_names and first_and_additional_names:
+            return "{}, {}".format(
+                helpers.list_to_string(last_names, " "),
+                helpers.list_to_string(first_and_additional_names, " "))
+        elif last_names:
+            return helpers.list_to_string(last_names, " ")
+        elif first_and_additional_names:
+            return helpers.list_to_string(first_and_additional_names, " ")
+        else:
+            return self.formatted_name
+
+    def _add_name(self, prefix, first_name, additional_name, last_name,
+                  suffix):
+        # n
+        name_obj = self.vcard.add('n')
+        stringlist = ObjectType.string_or_list_with_strings
+        name_obj.value = vobject.vcard.Name(
+            prefix=convert_to_vcard("name prefix", prefix, stringlist),
+            given=convert_to_vcard("first name", first_name, stringlist),
+            additional=convert_to_vcard("additional name", additional_name,
+                                        stringlist),
+            family=convert_to_vcard("last name", last_name, stringlist),
+            suffix=convert_to_vcard("name suffix", suffix, stringlist))
+        # fn
+        if not self.vcard.getChildValue("fn") and (self._get_first_names() or
+                                                   self._get_last_names()):
+            names = []
+            if self._get_name_prefixes():
+                names += self._get_name_prefixes()
+            if self._get_first_names():
+                names += self._get_first_names()
+            if self._get_last_names():
+                names += self._get_last_names()
+            if self._get_name_suffixes():
+                names += self._get_name_suffixes()
+            self.formatted_name = helpers.list_to_string(names, " ")
+
 
 class CarddavObject(VCardWrapper):
 
@@ -408,109 +507,6 @@ class CarddavObject(VCardWrapper):
     #####################
     # getters and setters
     #####################
-
-    def _get_names_part(self, part):
-        """Get some part of the "N" entry in the vCard as a list
-
-        :param part: the name to get e.g. "prefix" or "given"
-        :type part: str
-        :returns: a list of entries for this name part
-        :rtype: list(str)
-
-        """
-        try:
-            the_list = getattr(self.vcard.n.value, part)
-        except AttributeError:
-            return []
-        else:
-            # check if list only contains empty strings
-            if not ''.join(the_list):
-                return []
-        return the_list if isinstance(the_list, list) else [the_list]
-
-    def _get_name_prefixes(self):
-        return self._get_names_part("prefix")
-
-    def _get_first_names(self):
-        return self._get_names_part("given")
-
-    def _get_additional_names(self):
-        return self._get_names_part("additional")
-
-    def _get_last_names(self):
-        return self._get_names_part("family")
-
-    def _get_name_suffixes(self):
-        return self._get_names_part("suffix")
-
-    def get_first_name_last_name(self):
-        """
-        :rtype: str
-        """
-        names = []
-        if self._get_first_names():
-            names += self._get_first_names()
-        if self._get_additional_names():
-            names += self._get_additional_names()
-        if self._get_last_names():
-            names += self._get_last_names()
-        if names:
-            return helpers.list_to_string(names, " ")
-        else:
-            return self.formatted_name
-
-    def get_last_name_first_name(self):
-        """
-        :rtype: str
-        """
-        last_names = []
-        if self._get_last_names():
-            last_names += self._get_last_names()
-        first_and_additional_names = []
-        if self._get_first_names():
-            first_and_additional_names += self._get_first_names()
-        if self._get_additional_names():
-            first_and_additional_names += self._get_additional_names()
-        if last_names and first_and_additional_names:
-            return "{}, {}".format(
-                helpers.list_to_string(last_names, " "),
-                helpers.list_to_string(first_and_additional_names, " "))
-        elif last_names:
-            return helpers.list_to_string(last_names, " ")
-        elif first_and_additional_names:
-            return helpers.list_to_string(first_and_additional_names, " ")
-        else:
-            return self.formatted_name
-
-    def _add_name(self, prefix, first_name, additional_name, last_name,
-                  suffix):
-        # n
-        name_obj = self.vcard.add('n')
-        name_obj.value = vobject.vcard.Name(
-            prefix=convert_to_vcard("name prefix", prefix,
-                                    ObjectType.string_or_list_with_strings),
-            given=convert_to_vcard("first name", first_name,
-                                   ObjectType.string_or_list_with_strings),
-            additional=convert_to_vcard(
-                "additional name", additional_name,
-                ObjectType.string_or_list_with_strings),
-            family=convert_to_vcard("last name", last_name,
-                                    ObjectType.string_or_list_with_strings),
-            suffix=convert_to_vcard("name suffix", suffix,
-                                    ObjectType.string_or_list_with_strings))
-        # fn
-        if not self.vcard.getChildValue("fn") and (self._get_first_names() or
-                                                   self._get_last_names()):
-            names = []
-            if self._get_name_prefixes():
-                names += self._get_name_prefixes()
-            if self._get_first_names():
-                names += self._get_first_names()
-            if self._get_last_names():
-                names += self._get_last_names()
-            if self._get_name_suffixes():
-                names += self._get_name_suffixes()
-            self.formatted_name = helpers.list_to_string(names, " ")
 
     def _get_organisations(self):
         """
