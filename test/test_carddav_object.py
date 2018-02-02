@@ -133,3 +133,110 @@ class BirthdayLikeAttributes(unittest.TestCase):
             wrapper.birthday = 'some time yesterday'
         wrapper.vcard.validate()
         self.assertIsNone(wrapper.anniversary)
+
+
+class NameAttributes(unittest.TestCase):
+
+    def test_fn_can_be_set_with_a_string(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.formatted_name = 'foo bar'
+        self.assertEqual(vcard.fn.value, 'foo bar')
+
+    def test_only_one_fn_will_be_stored(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.formatted_name = 'foo bar'
+        self.assertEqual(len(vcard.contents['fn']), 1)
+
+    def test_fn_is_returned_as_string(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        self.assertIsInstance(wrapper.formatted_name, str)
+
+    def test_name_can_be_set_with_empty_strings(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name('', '', '', '', '')
+        self.assertEqual(vcard.serialize(),
+                         'BEGIN:VCARD\r\n'
+                         'VERSION:3.0\r\n'
+                         'FN:Test vCard\r\n'
+                         'N:;;;;\r\n'
+                         'END:VCARD\r\n')
+
+    def test_name_can_be_set_with_empty_lists(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name([], [], [], [], [])
+        self.assertEqual(vcard.serialize(),
+                         'BEGIN:VCARD\r\n'
+                         'VERSION:3.0\r\n'
+                         'FN:Test vCard\r\n'
+                         'N:;;;;\r\n'
+                         'END:VCARD\r\n')
+
+    def test_name_can_be_set_with_lists_of_empty_strings(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name(['', ''], ['', ''], ['', ''], ['', ''], ['', ''])
+        self.assertEqual(vcard.serialize(),
+                         'BEGIN:VCARD\r\n'
+                         'VERSION:3.0\r\n'
+                         'FN:Test vCard\r\n'
+                         'N:;;;;\r\n'
+                         'END:VCARD\r\n')
+
+    def test_get_first_name_last_name_retunrs_fn_if_no_name_present(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        self.assertEqual(wrapper.get_first_name_last_name(), 'Test vCard')
+
+    def test_get_first_name_last_name_with_simple_name(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name('', 'given', '', 'family', '')
+        self.assertEqual(wrapper.get_first_name_last_name(), "given family")
+
+    def test_get_first_name_last_name_with_all_name_fields(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name('prefix', 'given', 'additional', 'family', 'suffix')
+        self.assertEqual(wrapper.get_first_name_last_name(),
+                         'given additional family')
+
+    def test_get_first_name_last_name_with_complex_name(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name(['prefix1', 'prefix2'], ['given1', 'given2'],
+                          ['additional1', 'additional2'],
+                          ['family1', 'family2'], ['suffix1', 'suffix2'])
+        self.assertEqual(wrapper.get_first_name_last_name(), 'given1 given2 '
+                         'additional1 additional2 family1 family2')
+
+    def test_get_last_name_first_name_retunrs_fn_if_no_name_present(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        self.assertEqual(wrapper.get_last_name_first_name(), 'Test vCard')
+
+    def test_get_last_name_first_name_with_simple_name(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name('', 'given', '', 'family', '')
+        self.assertEqual(wrapper.get_last_name_first_name(), "family, given")
+
+    def test_get_last_name_first_name_with_all_name_fields(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name('prefix', 'given', 'additional', 'family', 'suffix')
+        self.assertEqual(wrapper.get_last_name_first_name(),
+                         'family, given additional')
+
+    def test_get_last_name_first_name_with_complex_name(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_name(['prefix1', 'prefix2'], ['given1', 'given2'],
+                          ['additional1', 'additional2'],
+                          ['family1', 'family2'], ['suffix1', 'suffix2'])
+        self.assertEqual(wrapper.get_last_name_first_name(), 'family1 family2,'
+                         ' given1 given2 additional1 additional2')
