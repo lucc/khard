@@ -118,9 +118,8 @@ def modify_existing_contact(old_contact):
         # try to create contact from user input
         try:
             new_contact = \
-                    CarddavObject.from_existing_contact_with_new_user_input(
-                        old_contact, new_contact_template,
-                        config.localize_dates())
+                CarddavObject.from_existing_contact_with_new_user_input(
+                    old_contact, new_contact_template, config.localize_dates())
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -137,8 +136,7 @@ def modify_existing_contact(old_contact):
             break
 
     # check if the user changed anything
-    if new_contact is None \
-            or old_contact == new_contact:
+    if new_contact is None or old_contact == new_contact:
         print("Nothing changed\n\n%s" % old_contact.print_vcard())
     else:
         new_contact.write_to_file(overwrite=True)
@@ -198,9 +196,9 @@ def merge_existing_contacts(source_contact, target_contact,
         # try to create contact from user input
         try:
             merged_contact = \
-                    CarddavObject.from_existing_contact_with_new_user_input(
-                        target_contact, merged_contact_template,
-                        config.localize_dates())
+                CarddavObject.from_existing_contact_with_new_user_input(
+                    target_contact, merged_contact_template,
+                    config.localize_dates())
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -259,8 +257,7 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         # if source file should be moved, get its file location to delete after
         # successful movement
         source_contact_filename = contact.filename
-    if not delete_source_contact \
-            or not contact.get_uid():
+    if not delete_source_contact or not contact.get_uid():
         # if copy contact or contact has no uid yet
         # create a new uid
         contact.delete_vcard_object("UID")
@@ -281,7 +278,7 @@ def copy_contact(contact, target_address_book, delete_source_contact):
 def list_address_books(address_book_list):
     table = [["Index", "Address book"]]
     for index, address_book in enumerate(address_book_list):
-        table.append([index+1, address_book.name])
+        table.append([index + 1, address_book.name])
     print(helpers.pretty_print(table))
 
 
@@ -311,9 +308,8 @@ def list_contacts(vcard_list):
     # table body
     for index, vcard in enumerate(vcard_list):
         row = []
-        row.append(index+1)
-        if vcard.get_nicknames() \
-                and config.show_nicknames():
+        row.append(index + 1)
+        if vcard.get_nicknames() and config.show_nicknames():
             if config.display_by_name() == "first_name":
                 row.append("%s (Nickname: %s)" % (
                     vcard.get_first_name_last_name(),
@@ -420,7 +416,7 @@ def choose_vcard_from_list(header_string, vcard_list):
                     sys.exit(0)
                 addr_index = int(input_string)
                 if addr_index > 0:
-                    selected_vcard = vcard_list[addr_index-1]
+                    selected_vcard = vcard_list[addr_index - 1]
                 else:
                     raise ValueError
             except (EOFError, IndexError, ValueError):
@@ -488,10 +484,10 @@ def get_contacts(address_books, query, method="all", reverse=False,
     else:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
-                    unidecode(x.get_first_name_last_name()).lower())
+                          unidecode(x.get_first_name_last_name()).lower())
         elif sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
-                    unidecode(x.get_last_name_first_name()).lower())
+                          unidecode(x.get_last_name_first_name()).lower())
         else:
             raise ValueError('sort must be "first_name" or "last_name" not '
                              '{}.'.format(sort))
@@ -602,8 +598,10 @@ def prepare_search_queries(args):
         target_queries.append(args.target_uid)
     # create and return regexp, None means that no query is given and hence all
     # contacts should be searched.
-    source_queries = "^.*(%s).*$" % ')|('.join(source_queries) if source_queries else None
-    target_queries = "^.*(%s).*$" % ')|('.join(target_queries) if target_queries else None
+    source_queries = "^.*(%s).*$" % ')|('.join(source_queries) \
+        if source_queries else None
+    target_queries = "^.*(%s).*$" % ')|('.join(target_queries) \
+        if target_queries else None
     logging.debug('Created source query regex: %s', source_queries)
     logging.debug('Created target query regex: %s', target_queries)
     # Get all possible search queries for address book parsing, always
@@ -745,8 +743,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     for line in input_from_stdin_or_file.splitlines():
         if line.startswith("From:"):
             try:
-                name = line[6:line.index("<")-1]
-                email_address = line[line.index("<")+1:line.index(">")]
+                name = line[6:line.index("<") - 1]
+                email_address = line[line.index("<") + 1:line.index(">")]
             except ValueError:
                 email_address = line[6:].strip()
             break
@@ -945,7 +943,7 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                     # search string contains at least three digits.  So we
                     # remove all non-digit chars from the phone number field
                     # and match against that.
-                    if re.search(re.sub("\D", "", search_terms), \
+                    if re.search(re.sub("\D", "", search_terms),
                                  re.sub("\D", "", number), re.IGNORECASE):
                         matching_phone_number_list.append(phone_number_line)
                 # collect all phone numbers in a different list as fallback
@@ -1104,9 +1102,9 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
         # create new contact from stdin
         try:
             new_contact = \
-                    CarddavObject.from_existing_contact_with_new_user_input(
-                        selected_vcard, input_from_stdin_or_file,
-                        config.localize_dates())
+                CarddavObject.from_existing_contact_with_new_user_input(
+                    selected_vcard, input_from_stdin_or_file,
+                    config.localize_dates())
         except ValueError as err:
             print(err)
             sys.exit(1)
@@ -1144,8 +1142,8 @@ def remove_subcommand(selected_vcard, force):
     if not force:
         while True:
             input_string = input(
-                "Deleting contact %s from address book %s. Are you sure? (y/n): "
-                % (selected_vcard, selected_vcard.address_book))
+                "Deleting contact %s from address book %s. Are you sure? "
+                "(y/n): " % (selected_vcard, selected_vcard.address_book))
             if input_string.lower() in ["", "n", "q"]:
                 print("Canceled")
                 sys.exit(0)
@@ -1738,8 +1736,7 @@ def main(argv=sys.argv[1:]):
                          args.parsable, args.remove_first_line)
     elif args.action == "list":
         list_subcommand(vcard_list, args.parsable)
-    elif args.action == "export" \
-            and "empty_contact_template" in args \
+    elif args.action == "export" and "empty_contact_template" in args \
             and args.empty_contact_template:
         # export empty template must work without selecting a contact first
         args.output_file.write(
