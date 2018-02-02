@@ -1261,10 +1261,8 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
               % (source_vcard, target_address_book_list[0]))
         sys.exit(1)
     else:
-        available_address_books = []
-        for address_book in target_address_book_list:
-            if address_book != source_vcard.address_book:
-                available_address_books.append(address_book)
+        available_address_books = [abook for abook in target_address_book_list
+                                   if abook != source_vcard.address_book]
         selected_target_address_book = choose_address_book_from_list(
             "Select target address book", available_address_books)
         if selected_target_address_book is None:
