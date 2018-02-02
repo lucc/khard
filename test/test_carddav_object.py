@@ -11,7 +11,10 @@ from khard import carddav_object
 def _create_test_vcard(**kwargs):
     """Create a simple vcard for tests."""
     vcard = vobject.vCard()
-    vcard.add('FN').value = "Test vCard"
+    if 'fn' not in kwargs:
+        kwargs['fn'] = 'Test vCard'
+    if 'version' not in kwargs:
+        kwargs['version'] = '3.0'
     for key, value in kwargs.items():
         vcard.add(key.upper()).value = value
     return vcard
