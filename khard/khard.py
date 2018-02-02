@@ -47,10 +47,6 @@ def create_new_contact(address_book):
     temp_file_name = write_temp_file(template)
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
-    # read temp file contents before editing
-    with open(temp_file_name, "r") as tf:
-        old_contact_template = tf.read()
-
     while True:
         # start vim to edit contact template
         child = subprocess.Popen([config.editor, temp_file_name])
