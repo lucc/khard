@@ -194,7 +194,9 @@ class FileSystemCommands(unittest.TestCase):
                             return_value='First name: foo\nLast name: bar'):
                 # just hide stdout
                 with mock.patch('sys.stdout'):
-                    khard.main(['new', '-a', 'abook1'])
+                    # hide warning about missing version in vcard
+                    with self.assertLogs(level='WARNING'):
+                        khard.main(['new', '-a', 'abook1'])
         new = len(list(self.abook1.glob('*.vcf')))
         self.assertEqual(new, old + 1)
 
