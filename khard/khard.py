@@ -533,6 +533,12 @@ def merge_args_into_config(args, config):
     # skip unparsable vcards
     if "skip_unparsable" in args and args.skip_unparsable:
         config.set_skip_unparsable(True)
+    # If the user could but did not specify address books on the command line
+    # it means they want to use all address books in that place.
+    if "addressbook" in args and not args.addressbook:
+        args.addressbook = [abook.name for abook in config.abooks]
+    if "target_addressbook" in args and not args.target_addressbook:
+        args.target_addressbook = [abook.name for abook in config.abooks]
 
 
 def load_address_books(names, config, search_queries=None):
