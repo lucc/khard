@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:4.0
+UID:altid
+FN:altid
+N;ALTID=1:representation;one;;;
+N;ALTID=1:representation;two;;;
+NOTE:RFC6350 requires N to have cardinality <=1 but allows alternative repr
+ esentations to be included if they are linked by the ALTID parameter.
+END:VCARD

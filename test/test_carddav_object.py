@@ -121,3 +121,10 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         card._process_user_input(data)
         self.assertEqual(card.formatted_name, fn)
 
+
+class AltIds(unittest.TestCase):
+
+    def test_altids_are_read(self):
+        card = CarddavObject.from_file(None, 'test/fixture/vcards/altid.vcf')
+        expected = 'one representation'
+        self.assertEqual(expected, card.get_first_name_last_name())
