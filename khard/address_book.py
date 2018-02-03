@@ -147,6 +147,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: list(carddav_object.CarddavObject)
 
         """
+        logging.debug('address book %s, searching with %s', self.name, query)
         if not self._loaded:
             self.load(query)
         if method == "all":
@@ -170,7 +171,6 @@ class AddressBook(metaclass=abc.ABCMeta):
         :type query: str
         :returns: the contacts mapped by the shortes unique prefix of their UID
         :rtype: dict(str: CarddavObject)
-
         """
         if self._short_uids is None:
             if not self._loaded:
@@ -198,6 +198,21 @@ class AddressBook(metaclass=abc.ABCMeta):
                 # Save the last item.
                 self._short_uids[item1[:same1 + 1]] = self.contacts[item1]
         return self._short_uids
+
+    def get_short_uid(self, uid):
+        """Get the shortend UID for the given UID.
+
+        :param uid: the full UID to shorten
+        :type uid: str
+        :returns: the shortend uid or the empty string
+        :rtype: str
+        """
+        if uid:
+            short_uids = self.get_short_uid_dict()
+            for length_of_uid in range(len(uid), 0, -1):
+                if short_uids.get(uid[:length_of_uid]) is not None:
+                    return uid[:length_of_uid]
+        return ""
 
     @abc.abstractmethod
     def load(self, query=None):
@@ -273,6 +288,7 @@ class VdirAddressBook(AddressBook):
         """
         if self._loaded:
             return
+        logging.debug('Loading Vdir %s with query %s', self.name, query)
         errors = 0
         for filename in self._find_vcard_files(search=query):
             try:
@@ -312,6 +328,8 @@ class VdirAddressBook(AddressBook):
             logging.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
+        logging.debug('Loded %s contacts from address book %s.',
+                      len(self.contacts), self.name)
 
 
 class AddressBookCollection(AddressBook):
@@ -323,24 +341,21 @@ class AddressBookCollection(AddressBook):
     all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name, abooks, **kwargs):
         """
         :param name: the name to identify the address book
         :type name: str
-        :param *args: two-tuples, each holding the name and path arguments for
-            one VdirAddressBook instance
-        :type *args: tuple(str,str)
+        :param abooks: a list of address books to combine in this collection
+        :type abooks: list(AddressBook)
         :param **kwargs: further arguments for the parent constructor
-            (AddressBook) and all sub address books
         """
         super().__init__(name, **kwargs)
-        self._abooks = []
-        for name, path in args:
-            self._abooks.append(VdirAddressBook(name, path, **kwargs))
+        self._abooks = abooks
 
     def load(self, query=None):
         if self._loaded:
             return
+        logging.debug('Loading collection %s with query %s', self.name, query)
         for abook in self._abooks:
             abook.load(query)
             for uid in abook.contacts:
@@ -352,6 +367,8 @@ class AddressBookCollection(AddressBook):
                 else:
                     self.contacts[uid] = abook.contacts[uid]
         self._loaded = True
+        logging.debug('Loded %s contacts from address book %s.',
+                      len(self.contacts), self.name)
 
     def get_abook(self, name):
         """Get one of the backing abdress books by its name,

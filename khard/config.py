@@ -9,7 +9,7 @@ import sys
 import configobj
 
 from .actions import Actions
-from .address_book import AddressBookCollection
+from .address_book import AddressBookCollection, VdirAddressBook
 
 
 def exit(message, prefix="Error in config file\n"):
@@ -36,7 +36,6 @@ class Config:
     def __init__(self, config_file=""):
         self.config = None
         self.abooks = []
-        self.uid_dict = {}
 
         # set locale
         locale.setlocale(locale.LC_ALL, '')
@@ -176,12 +175,13 @@ class Config:
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
         section = self.config['addressbooks']
+        kwargs = {'private_objects': self.get_supported_private_objects(),
+                  'localize_dates': self.localize_dates(),
+                  'skip': self.skip_unparsable()}
         try:
             self.abook = AddressBookCollection(
-                "tmp", *[(name, section[name]['path']) for name in section],
-                private_objects=self.get_supported_private_objects(),
-                localize_dates=self.localize_dates(),
-                skip=self.skip_unparsable())
+                "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
+                        for name in section], **kwargs)
         except KeyError as err:
             exit('Missing path to the "{}" address book.'.format(err.args[0]))
         except IOError as err:
@@ -216,34 +216,8 @@ class Config:
             raise ValueError("Error in config file\nInvalid value for %s "
                              "parameter\nPossible values: yes, no" % name)
 
-    def get_address_book(self, name, search_queries=None):
-        """
-        return address book object or None, if the address book with the
-        given name does not exist
-        :rtype: address_book.AddressBook
-        """
-        if not self.search_in_source_files():
-            search_queries = None
-        address_book = self.abook.get_abook(name)
-        if not address_book:
-            # Return None if no address book did match the given name.
-            return None
-        # Check uniqueness of vcard uids and create short uid
-        # dictionary. This can be disabled with the show_uids option in
-        # the config file, if desired.
-        if self.config['contact table']['show_uids']:
-            self.uid_dict = self.abook.get_short_uid_dict(search_queries)
-        return address_book
-
     def has_uids(self):
-        return bool(self.uid_dict)
-
-    def get_shortened_uid(self, uid):
-        if uid:
-            for length_of_uid in range(len(uid), 0, -1):
-                if self.uid_dict.get(uid[:length_of_uid]) is not None:
-                    return uid[:length_of_uid]
-        return ""
+        return self.config['contact table']['show_uids']
 
     def localize_dates(self):
         return self.config['contact table']['localize_dates']
