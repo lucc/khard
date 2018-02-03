@@ -801,7 +801,7 @@ class CarddavObject(VCardWrapper):
                             and label.group.startswith("itemadr"):
                         number_of_custom_post_address_labels += 1
                 group_name = "itemadr%d" % (
-                    number_of_custom_post_address_labels+1)
+                    number_of_custom_post_address_labels + 1)
                 adr_obj.group = group_name
                 label_obj = self.vcard.add('x-ablabel')
                 label_obj.group = group_name
@@ -1170,11 +1170,11 @@ class CarddavObject(VCardWrapper):
             if isinstance(contact_data.get("Anniversary"), str):
                 if re.match(r"^text[\s]*=.*$",
                             contact_data.get("Anniversary")):
-                    l = [x.strip() for x in re.split(
-                        "text[\s]*=", contact_data.get("Anniversary"))
-                        if x.strip()]
                     if self.version == "4.0":
-                        date = ', '.join(l)
+                        date = ', '.join(
+                            x.strip() for x in re.split(
+                                "text[\s]*=", contact_data.get("Anniversary"))
+                            if x.strip())
                     else:
                         raise ValueError(
                             "Error: Free text format for anniversary only "
@@ -1210,11 +1210,11 @@ class CarddavObject(VCardWrapper):
         if contact_data.get("Birthday"):
             if isinstance(contact_data.get("Birthday"), str):
                 if re.match(r"^text[\s]*=.*$", contact_data.get("Birthday")):
-                    l = [x.strip() for x in
-                         re.split("text[\s]*=", contact_data.get("Birthday"))
-                         if x.strip()]
                     if self.version == "4.0":
-                        date = ', '.join(l)
+                        date = ', '.join(
+                            x.strip() for x in re.split(
+                                "text[\s]*=", contact_data.get("Birthday"))
+                            if x.strip())
                     else:
                         raise ValueError(
                             "Error: Free text format for birthday only usable "
@@ -1400,7 +1400,7 @@ class CarddavObject(VCardWrapper):
                         strings += helpers.convert_to_yaml(
                             object,
                             self._get_private_objects().get(object, ""), 4,
-                            len(longest_key)+1, True)
+                            len(longest_key) + 1, True)
 
             elif line.lower().startswith("anniversary"):
                 anniversary = self.anniversary
