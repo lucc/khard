@@ -269,3 +269,18 @@ class NameAttributes(unittest.TestCase):
                           ['family1', 'family2'], ['suffix1', 'suffix2'])
         self.assertEqual(wrapper.get_last_name_first_name(), 'family1 family2,'
                          ' given1 given2 additional1 additional2')
+
+
+class OtherProperties(unittest.TestCase):
+
+    def test_setting_and_getting_organisations(self):
+        # also test that organisations are returned in sorted order
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        org1 = ["Org", "Sub1", "Sub2"]
+        org2 = ["Org2", "Sub3"]
+        org3 = ["Foo", "Bar", "Baz"]
+        wrapper._add_organisation(org1)
+        wrapper._add_organisation(org2)
+        wrapper._add_organisation(org3)
+        self.assertListEqual(wrapper._get_organisations(), [org3, org1, org2])

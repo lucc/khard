@@ -386,6 +386,31 @@ class VCardWrapper:
                 names += self._get_name_suffixes()
             self.formatted_name = helpers.list_to_string(names, " ")
 
+    def _get_organisations(self):
+        """
+        :returns: list of organisations, sorted alphabetically
+        :rtype: list(list(str))
+        """
+        organisations = []
+        for child in self.vcard.getChildren():
+            if child.name == "ORG":
+                organisations.append(child.value)
+        return sorted(organisations)
+
+    def _add_organisation(self, organisation):
+        org_obj = self.vcard.add('org')
+        org_obj.value = convert_to_vcard("organisation", organisation,
+                                         ObjectType.list_with_strings)
+        # check if fn attribute is already present
+        if not self.vcard.getChildValue("fn") and self._get_organisations():
+            # if not, set fn to organisation name
+            org_value = helpers.list_to_string(self._get_organisations()[0],
+                                               ", ")
+            self.formatted_name = org_value.replace("\n", " ").replace("\\",
+                                                                       "")
+            showas_obj = self.vcard.add('x-abshowas')
+            showas_obj.value = "COMPANY"
+
 
 class CarddavObject(VCardWrapper):
 
@@ -507,31 +532,6 @@ class CarddavObject(VCardWrapper):
     #####################
     # getters and setters
     #####################
-
-    def _get_organisations(self):
-        """
-        :returns: list of organisations, sorted alphabetically
-        :rtype: list(list(str))
-        """
-        organisations = []
-        for child in self.vcard.getChildren():
-            if child.name == "ORG":
-                organisations.append(child.value)
-        return sorted(organisations)
-
-    def _add_organisation(self, organisation):
-        org_obj = self.vcard.add('org')
-        org_obj.value = convert_to_vcard("organisation", organisation,
-                                         ObjectType.list_with_strings)
-        # check if fn attribute is already present
-        if not self.vcard.getChildValue("fn") and self._get_organisations():
-            # if not, set fn to organisation name
-            org_value = helpers.list_to_string(self._get_organisations()[0],
-                                               ", ")
-            self.formatted_name = org_value.replace("\n", " ").replace("\\",
-                                                                       "")
-            showas_obj = self.vcard.add('x-abshowas')
-            showas_obj.value = "COMPANY"
 
     def _get_titles(self):
         """
