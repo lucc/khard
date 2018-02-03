@@ -20,6 +20,30 @@ def _create_test_vcard(**kwargs):
     return vcard
 
 
+class VcardWrapperInit(unittest.TestCase):
+
+    def test_stores_vcard_object_unmodified(self):
+        vcard = _create_test_vcard()
+        expected = vcard.serialize()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        # assert that it is the same object
+        self.assertIs(wrapper.vcard, vcard)
+        # assert that it (the serialization) was not changed
+        self.assertEqual(wrapper.vcard.serialize(), expected)
+
+    def test_warns_about_unsupported_version(self):
+        vcard = _create_test_vcard(version="something unsupported")
+        with self.assertLogs(level="WARNING"):
+            carddav_object.VCardWrapper(vcard)
+
+    def test_warns_about_missing_version_and_sets_it(self):
+        vcard = _create_test_vcard()
+        vcard.remove(vcard.version)
+        with self.assertLogs(level="WARNING"):
+            wrapper = carddav_object.VCardWrapper(vcard)
+        self.assertEqual(wrapper.version, "3.0")
+
+
 class DeleteVcardObject(unittest.TestCase):
 
     def test_deletes_fields_given_in_upper_case(self):
