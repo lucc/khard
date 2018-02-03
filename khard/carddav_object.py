@@ -411,6 +411,78 @@ class VCardWrapper:
             showas_obj = self.vcard.add('x-abshowas')
             showas_obj.value = "COMPANY"
 
+    def _get_titles(self):
+        """
+        :rtype: list(list(str))
+        """
+        titles = []
+        for child in self.vcard.getChildren():
+            if child.name == "TITLE":
+                titles.append(child.value)
+        return sorted(titles)
+
+    def _add_title(self, title):
+        title_obj = self.vcard.add('title')
+        title_obj.value = convert_to_vcard("title", title, ObjectType.string)
+
+    def _get_roles(self):
+        """
+        :rtype: list(list(str))
+        """
+        roles = []
+        for child in self.vcard.getChildren():
+            if child.name == "ROLE":
+                roles.append(child.value)
+        return sorted(roles)
+
+    def _add_role(self, role):
+        role_obj = self.vcard.add('role')
+        role_obj.value = convert_to_vcard("role", role, ObjectType.string)
+
+    def get_nicknames(self):
+        """
+        :rtype: list(list(str))
+        """
+        nicknames = []
+        for child in self.vcard.getChildren():
+            if child.name == "NICKNAME":
+                nicknames.append(child.value)
+        return sorted(nicknames)
+
+    def _add_nickname(self, nickname):
+        nickname_obj = self.vcard.add('nickname')
+        nickname_obj.value = convert_to_vcard("nickname", nickname,
+                                              ObjectType.string)
+
+    def _get_notes(self):
+        """
+        :rtype: list(list(str))
+        """
+        notes = []
+        for child in self.vcard.getChildren():
+            if child.name == "NOTE":
+                notes.append(child.value)
+        return sorted(notes)
+
+    def _add_note(self, note):
+        note_obj = self.vcard.add('note')
+        note_obj.value = convert_to_vcard("note", note, ObjectType.string)
+
+    def _get_webpages(self):
+        """
+        :rtype: list(list(str))
+        """
+        urls = []
+        for child in self.vcard.getChildren():
+            if child.name == "URL":
+                urls.append(child.value)
+        return sorted(urls)
+
+    def _add_webpage(self, webpage):
+        webpage_obj = self.vcard.add('url')
+        webpage_obj.value = convert_to_vcard("webpage", webpage,
+                                             ObjectType.string)
+
 
 class CarddavObject(VCardWrapper):
 
@@ -532,34 +604,6 @@ class CarddavObject(VCardWrapper):
     #####################
     # getters and setters
     #####################
-
-    def _get_titles(self):
-        """
-        :rtype: list(list(str))
-        """
-        titles = []
-        for child in self.vcard.getChildren():
-            if child.name == "TITLE":
-                titles.append(child.value)
-        return sorted(titles)
-
-    def _add_title(self, title):
-        title_obj = self.vcard.add('title')
-        title_obj.value = convert_to_vcard("title", title, ObjectType.string)
-
-    def _get_roles(self):
-        """
-        :rtype: list(list(str))
-        """
-        roles = []
-        for child in self.vcard.getChildren():
-            if child.name == "ROLE":
-                roles.append(child.value)
-        return sorted(roles)
-
-    def _add_role(self, role):
-        role_obj = self.vcard.add('role')
-        role_obj.value = convert_to_vcard("role", role, ObjectType.string)
 
     def get_phone_numbers(self):
         """
@@ -827,35 +871,6 @@ class CarddavObject(VCardWrapper):
         categories_obj.value = convert_to_vcard("category", categories,
                                                 ObjectType.list_with_strings)
 
-    def get_nicknames(self):
-        """
-        :rtype: list(list(str))
-        """
-        nicknames = []
-        for child in self.vcard.getChildren():
-            if child.name == "NICKNAME":
-                nicknames.append(child.value)
-        return sorted(nicknames)
-
-    def _add_nickname(self, nickname):
-        nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = convert_to_vcard("nickname", nickname,
-                                              ObjectType.string)
-
-    def _get_notes(self):
-        """
-        :rtype: list(list(str))
-        """
-        notes = []
-        for child in self.vcard.getChildren():
-            if child.name == "NOTE":
-                notes.append(child.value)
-        return sorted(notes)
-
-    def _add_note(self, note):
-        note_obj = self.vcard.add('note')
-        note_obj.value = convert_to_vcard("note", note, ObjectType.string)
-
     def _get_private_objects(self):
         """
         :rtype: dict(str, list(str))
@@ -882,21 +897,6 @@ class CarddavObject(VCardWrapper):
     def _add_private_object(self, key, value):
         private_obj = self.vcard.add('X-' + key.upper())
         private_obj.value = convert_to_vcard(key, value, ObjectType.string)
-
-    def _get_webpages(self):
-        """
-        :rtype: list(list(str))
-        """
-        urls = []
-        for child in self.vcard.getChildren():
-            if child.name == "URL":
-                urls.append(child.value)
-        return sorted(urls)
-
-    def _add_webpage(self, webpage):
-        webpage_obj = self.vcard.add('url')
-        webpage_obj.value = convert_to_vcard("webpage", webpage,
-                                             ObjectType.string)
 
     def get_formatted_anniversary(self):
         return self._format_date_object(self.anniversary, self.localize_dates)
