@@ -82,6 +82,9 @@ class VCardWrapper:
                             "might change any incompatible attributes.",
                             self.version)
 
+    def __str__(self):
+        return self.formatted_name
+
     def _get_string_field(self, field):
         """Get a string field from the underlying vCard.
 
@@ -492,9 +495,6 @@ class CarddavObject(VCardWrapper):
     ######################################
     # overwrite some default class methods
     ######################################
-
-    def __str__(self):
-        return self.formatted_name
 
     def __eq__(self, other):
         return isinstance(other, CarddavObject) and \

@@ -178,6 +178,11 @@ class NameAttributes(unittest.TestCase):
         wrapper = carddav_object.VCardWrapper(vcard)
         self.assertIsInstance(wrapper.formatted_name, str)
 
+    def test_fn_is_used_as_string_representation(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        self.assertEqual(str(wrapper), wrapper.formatted_name)
+
     def test_name_can_be_set_with_empty_strings(self):
         vcard = _create_test_vcard()
         wrapper = carddav_object.VCardWrapper(vcard)
