@@ -272,6 +272,124 @@ class NameAttributes(unittest.TestCase):
                          ' given1 given2 additional1 additional2')
 
 
+class TypedProperties(unittest.TestCase):
+
+    def test_adding_a_simple_phone_number(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_phone_number('home', '0123456789')
+        self.assertDictEqual(wrapper.phone_numbers, {'home': ['0123456789']})
+
+    def test_adding_a_custom_type_phone_number(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_phone_number('custom_type', '0123456789')
+        self.assertDictEqual(wrapper.phone_numbers,
+                             {'custom_type': ['0123456789']})
+
+    def test_adding_multible_phone_number(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_phone_number('work', '0987654321')
+        wrapper._add_phone_number('home', '0123456789')
+        wrapper._add_phone_number('home', '0112233445')
+        self.assertDictEqual(
+            wrapper.phone_numbers,
+            # The lists are sorted!
+            {'home': ['0112233445', '0123456789'], 'work': ['0987654321']})
+
+    def test_adding_preferred_phone_number(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_phone_number('home', '0123456789')
+        wrapper._add_phone_number('pref,home', '0987654321')
+        self.assertDictEqual(
+            wrapper.phone_numbers, {'home': ['0123456789'],
+                                    'home, pref': ['0987654321']})
+
+    def test_adding_a_simple_email(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.add_email('home', 'foo@bar.net')
+        self.assertDictEqual(wrapper.emails, {'home': ['foo@bar.net']})
+
+    def test_adding_a_custom_type_emails(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.add_email('custom_type', 'foo@bar.net')
+        self.assertDictEqual(wrapper.emails,
+                             {'custom_type': ['foo@bar.net']})
+
+    def test_adding_multible_emails(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.add_email('work', 'foo@bar.net')
+        wrapper.add_email('home', 'foo@baz.net')
+        wrapper.add_email('home', 'baz@baz.net')
+        self.assertDictEqual(
+            wrapper.emails,
+            # The lists are sorted!
+            {'home': ['baz@baz.net', 'foo@baz.net'], 'work': ['foo@bar.net']})
+
+    def test_adding_preferred_emails(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper.add_email('home', 'foo@bar.net')
+        wrapper.add_email('pref,home', 'foo@baz.net')
+        self.assertDictEqual(wrapper.emails, {'home': ['foo@bar.net'],
+                                              'home, pref': ['foo@baz.net']})
+
+    def test_adding_a_simple_address(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        components = ('box', 'extended', 'street', 'code', 'city', 'region',
+                      'country')
+        wrapper._add_post_address('home', *components)
+        expected = {item: item for item in components}
+        self.assertDictEqual(wrapper.post_addresses, {'home': [expected]})
+
+    def test_adding_a_custom_type_address(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        components = ('box', 'extended', 'street', 'code', 'city', 'region',
+                      'country')
+        wrapper._add_post_address('custom_type', *components)
+        expected = {item: item for item in components}
+        self.assertDictEqual(wrapper.post_addresses,
+                             {'custom_type': [expected]})
+
+    def test_adding_multible_addresses(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        components = ('box', 'extended', 'street', 'code', 'city', 'region',
+                      'country')
+        wrapper._add_post_address('work', *['work ' + c for c in components])
+        wrapper._add_post_address('home', *['home1 ' + c for c in components])
+        wrapper._add_post_address('home', *['home2 ' + c for c in components])
+        expected_work = {item: 'work ' + item for item in components}
+        expected_home2 = {item: 'home2 ' + item for item in components}
+        expected_home1 = {item: 'home1 ' + item for item in components}
+        self.assertDictEqual(wrapper.post_addresses,
+                             # The lists are sorted!
+                             {'home': [expected_home1, expected_home2],
+                              'work': [expected_work]})
+
+    def test_adding_preferred_address(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        components = ('box', 'extended', 'street', 'code', 'city', 'region',
+                      'country')
+        wrapper._add_post_address('home', *['home1 ' + c for c in components])
+        wrapper._add_post_address('pref,home',
+                                  *['home2 ' + c for c in components])
+        expected_work = {item: 'work ' + item for item in components}
+        expected_home2 = {item: 'home2 ' + item for item in components}
+        expected_home1 = {item: 'home1 ' + item for item in components}
+        self.assertDictEqual(
+            wrapper.post_addresses, {'home': [expected_home1],
+                                     'home, pref': [expected_home2]})
+
+
 class OtherProperties(unittest.TestCase):
 
     def test_setting_and_getting_organisations(self):
