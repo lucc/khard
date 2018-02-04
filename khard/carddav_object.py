@@ -66,6 +66,17 @@ class VCardWrapper:
     _default_version = "3.0"
     _supported_versions = ("3.0", "4.0")
 
+    # vcard v3.0 supports the following type values
+    phone_types_v3 = ("bbs", "car", "cell", "fax", "home", "isdn", "msg",
+                      "modem", "pager", "pcs", "video", "voice", "work")
+    email_types_v3 = ("home", "internet", "work", "x400")
+    address_types_v3 = ("dom", "intl", "home", "parcel", "postal", "work")
+    # vcard v4.0 supports the following type values
+    phone_types_v4 = ("text", "voice", "fax", "cell", "video", "pager",
+                      "textphone", "home", "work")
+    email_types_v4 = ("home", "internet", "work")
+    address_types_v4 = ("home", "work")
+
     def __init__(self, vcard):
         """Initialize the wrapper around the given vcard.
 
@@ -141,6 +152,90 @@ class VCardWrapper:
         # then delete them one by one
         for item in to_be_removed:
             self.vcard.remove(item)
+
+    @staticmethod
+    def _parse_type_value(types, value, supported_types):
+        """Parse type value of phone numbers, email and post addresses.
+
+        :param types: list of type values
+        :type types: list(str)
+        :param value: the corresponding label, required for more verbose
+            exceptions
+        :type value: str
+        :param supported_types: all allowed standard types
+        :type supported_types: list(str)
+        :returns: tuple of standard and custom types and pref integer
+        :rtype: tuple(list(str), list(str), int)
+        """
+        custom_types = []
+        standard_types = []
+        pref = 0
+        for type in types:
+            type = type.strip()
+            if type:
+                if type.lower() in supported_types:
+                    standard_types.append(type)
+                elif type.lower() == "pref":
+                    pref += 1
+                elif re.match(r"^pref=\d{1,2}$", type.lower()):
+                    pref += int(type.split("=")[1])
+                else:
+                    if type.lower().startswith("x-"):
+                        custom_types.append(type[2:])
+                        standard_types.append(type)
+                    else:
+                        custom_types.append(type)
+                        standard_types.append("X-{}".format(type))
+        return (standard_types, custom_types, pref)
+
+    def _get_types_for_vcard_object(self, object, default_type):
+        """get list of types for phone number, email or post address
+
+        :param object: vcard class object
+        :type object: vobject.base.ContentLine
+        :param default_type: use if the object contains no type
+        :type default_type: str
+        :returns: list of type labels
+        :rtype: list(str)
+        """
+        type_list = []
+        # try to find label group for custom value type
+        if object.group:
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group == object.group:
+                    custom_type = label.value.strip()
+                    if custom_type:
+                        type_list.append(custom_type)
+        # then load type from params dict
+        standard_types = object.params.get("TYPE")
+        if standard_types is not None:
+            if not isinstance(standard_types, list):
+                standard_types = [standard_types]
+            for type in standard_types:
+                type = type.strip()
+                if type and type.lower() != "pref":
+                    if not type.lower().startswith("x-"):
+                        type_list.append(type)
+                    elif type[2:].lower() not in [x.lower()
+                                                  for x in type_list]:
+                        # add x-custom type in case it's not already added by
+                        # custom label for loop above but strip x- before
+                        type_list.append(type[2:])
+        # try to get pref parameter from vcard version 4.0
+        try:
+            type_list.append("pref=%d" % int(object.params.get("PREF")[0]))
+        except (IndexError, TypeError, ValueError):
+            # else try to determine, if type params contain pref attribute
+            try:
+                for x in object.params.get("TYPE"):
+                    if x.lower() == "pref" and "pref" not in type_list:
+                        type_list.append("pref")
+            except TypeError:
+                pass
+        # return type_list or default type
+        if type_list:
+            return type_list
+        return [default_type]
 
     @property
     def version(self):
@@ -505,17 +600,6 @@ class VCardWrapper:
 
 
 class CarddavObject(VCardWrapper):
-
-    # vcard v3.0 supports the following type values
-    phone_types_v3 = ("bbs", "car", "cell", "fax", "home", "isdn", "msg",
-                      "modem", "pager", "pcs", "video", "voice", "work")
-    email_types_v3 = ("home", "internet", "work", "x400")
-    address_types_v3 = ("dom", "intl", "home", "parcel", "postal", "work")
-    # vcard v4.0 supports the following type values
-    phone_types_v4 = ("text", "voice", "fax", "cell", "video", "pager",
-                      "textphone", "home", "work")
-    email_types_v4 = ("home", "internet", "work")
-    address_types_v4 = ("home", "work")
 
     def __init__(self, address_book, filename, supported_private_objects,
                  vcard_version, localize_dates):
@@ -1583,92 +1667,3 @@ class CarddavObject(VCardWrapper):
         else:
             print("Error: Vcard file {} does not exist.".format(self.filename))
             sys.exit(4)
-
-    #######################
-    # static helper methods
-    #######################
-
-    def _get_types_for_vcard_object(self, object, default_type):
-        """
-        get list of types for phone number, email or post address
-        :param object: vcard class object
-        :type object: vobject.base.ContentLine
-        :param default_type: use if the object contains no type
-        :type default_type: str
-        :returns: list of type labels
-        :rtype: list(str)
-        """
-        type_list = []
-        # try to find label group for custom value type
-        if object.group:
-            for label in self.vcard.getChildren():
-                if label.name == "X-ABLABEL" and label.group == object.group:
-                    custom_type = label.value.strip()
-                    if custom_type:
-                        type_list.append(custom_type)
-        # then load type from params dict
-        standard_types = object.params.get("TYPE")
-        if standard_types is not None:
-            if not isinstance(standard_types, list):
-                standard_types = [standard_types]
-            for type in standard_types:
-                type = type.strip()
-                if type and type.lower() != "pref":
-                    if not type.lower().startswith("x-"):
-                        type_list.append(type)
-                    elif type[2:].lower() not in [x.lower()
-                                                  for x in type_list]:
-                        # add x-custom type in case it's not already added by
-                        # custom label for loop above but strip x- before
-                        type_list.append(type[2:])
-        # try to get pref parameter from vcard version 4.0
-        try:
-            type_list.append("pref=%d" % int(object.params.get("PREF")[0]))
-        except (IndexError, TypeError, ValueError):
-            # else try to determine, if type params contain pref attribute
-            try:
-                for x in object.params.get("TYPE"):
-                    if x.lower() == "pref" and "pref" not in type_list:
-                        type_list.append("pref")
-            except TypeError:
-                pass
-        # return type_list or default type
-        if type_list:
-            return type_list
-        return [default_type]
-
-    @staticmethod
-    def _parse_type_value(types, value, supported_types):
-        """Parse type value of phone numbers, email and post addresses.
-
-        :param types: list of type values
-        :type types: list(str)
-        :param value: the corresponding label, required for more verbose
-            exceptions
-        :type value: str
-        :param supported_types: all allowed standard types
-        :type supported_types: list(str)
-        :returns: tuple of standard and custom types and pref integer
-        :rtype: tuple(list(str), list(str), int)
-
-        """
-        custom_types = []
-        standard_types = []
-        pref = 0
-        for type in types:
-            type = type.strip()
-            if type:
-                if type.lower() in supported_types:
-                    standard_types.append(type)
-                elif type.lower() == "pref":
-                    pref += 1
-                elif re.match(r"^pref=\d{1,2}$", type.lower()):
-                    pref += int(type.split("=")[1])
-                else:
-                    if type.lower().startswith("x-"):
-                        custom_types.append(type[2:])
-                        standard_types.append(type)
-                    else:
-                        custom_types.append(type)
-                        standard_types.append("X-{}".format(type))
-        return (standard_types, custom_types, pref)
