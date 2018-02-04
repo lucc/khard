@@ -309,15 +309,13 @@ def list_contacts(vcard_list):
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index + 1)
-        if vcard.get_nicknames() and config.show_nicknames():
+        if vcard.nicknames and config.show_nicknames():
             if config.display_by_name() == "first_name":
                 row.append("%s (Nickname: %s)" % (
-                    vcard.get_first_name_last_name(),
-                    vcard.get_nicknames()[0]))
+                    vcard.get_first_name_last_name(), vcard.nicknames[0]))
             else:
                 row.append("%s (Nickname: %s)" % (
-                    vcard.get_last_name_first_name(),
-                    vcard.get_nicknames()[0]))
+                    vcard.get_last_name_first_name(), vcard.nicknames[0]))
         else:
             if config.display_by_name() == "first_name":
                 row.append(vcard.get_first_name_last_name())

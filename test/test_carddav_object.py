@@ -284,35 +284,35 @@ class OtherProperties(unittest.TestCase):
         wrapper._add_organisation(org1)
         wrapper._add_organisation(org2)
         wrapper._add_organisation(org3)
-        self.assertListEqual(wrapper._get_organisations(), [org3, org1, org2])
+        self.assertListEqual(wrapper.organisations, [org3, org1, org2])
 
     def test_setting_and_getting_titles(self):
         vcard = _create_test_vcard()
         wrapper = carddav_object.VCardWrapper(vcard)
         wrapper._add_title('Foo')
         wrapper._add_title('Bar')
-        self.assertListEqual(wrapper._get_titles(), ['Bar', 'Foo'])
+        self.assertListEqual(wrapper.titles, ['Bar', 'Foo'])
 
     def test_setting_and_getting_roles(self):
         vcard = _create_test_vcard()
         wrapper = carddav_object.VCardWrapper(vcard)
         wrapper._add_role('Foo')
         wrapper._add_role('Bar')
-        self.assertListEqual(wrapper._get_roles(), ['Bar', 'Foo'])
+        self.assertListEqual(wrapper.roles, ['Bar', 'Foo'])
 
     def test_setting_and_getting_nicks(self):
         vcard = _create_test_vcard()
         wrapper = carddav_object.VCardWrapper(vcard)
         wrapper._add_nickname('Foo')
         wrapper._add_nickname('Bar')
-        self.assertListEqual(wrapper.get_nicknames(), ['Bar', 'Foo'])
+        self.assertListEqual(wrapper.nicknames, ['Bar', 'Foo'])
 
     def test_setting_and_getting_notes(self):
         vcard = _create_test_vcard()
         wrapper = carddav_object.VCardWrapper(vcard)
         wrapper._add_note('First long note')
         wrapper._add_note('Second long note\nwith newline')
-        self.assertListEqual(wrapper._get_notes(), ['First long note',
+        self.assertListEqual(wrapper.notes, ['First long note',
                              'Second long note\nwith newline'])
 
     def test_setting_and_getting_webpages(self):
@@ -320,7 +320,7 @@ class OtherProperties(unittest.TestCase):
         wrapper = carddav_object.VCardWrapper(vcard)
         wrapper._add_webpage('https://github.com/scheibler/khard')
         wrapper._add_webpage('http://example.com')
-        self.assertListEqual(wrapper._get_webpages(), ['http://example.com',
+        self.assertListEqual(wrapper.webpages, ['http://example.com',
                              'https://github.com/scheibler/khard'])
 
     def test_setting_and_getting_categories(self):
@@ -328,7 +328,7 @@ class OtherProperties(unittest.TestCase):
         wrapper = carddav_object.VCardWrapper(vcard)
         wrapper._add_category(["rfc", "address book"])
         wrapper._add_category(["coding", "open source"])
-        self.assertListEqual(wrapper._get_categories(),
+        self.assertListEqual(wrapper.categories,
                              [["coding", "open source"],
                               ["rfc", "address book"]])
 

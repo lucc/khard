@@ -42,34 +42,34 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
     def test_empty_organisation_in_yaml_input(self):
         empty_organisation = "First name: foo\nOrganisation:"
         x = self._parse_yaml(empty_organisation)
-        self.assertListEqual(x._get_organisations(), [])
+        self.assertListEqual(x.organisations, [])
 
     def test_empty_nickname_in_yaml_input(self):
         empty_nickname = "First name: foo\nNickname:"
         x = self._parse_yaml(empty_nickname)
-        self.assertListEqual(x.get_nicknames(), [])
+        self.assertListEqual(x.nicknames, [])
 
     def test_empty_role_in_yaml_input(self):
         empty_role = "First name: foo\nRole:"
         x = self._parse_yaml(empty_role)
-        self.assertListEqual(x._get_roles(), [])
+        self.assertListEqual(x.roles, [])
 
     def test_empty_title_in_yaml_input(self):
         empty_title = "First name: foo\nTitle:"
         x = self._parse_yaml(empty_title)
-        self.assertListEqual(x._get_titles(), [])
+        self.assertListEqual(x.titles, [])
 
     def test_empty_categories_in_yaml_input(self):
         empty_categories = "First name: foo\nCategories:"
         x = self._parse_yaml(empty_categories)
-        self.assertListEqual(x._get_categories(), [])
+        self.assertListEqual(x.categories, [])
 
     def test_empty_webpage_in_yaml_input(self):
         empty_webpage = "First name: foo\nWebpage:"
         x = self._parse_yaml(empty_webpage)
-        self.assertListEqual(x._get_webpages(), [])
+        self.assertListEqual(x.webpages, [])
 
     def test_empty_note_in_yaml_input(self):
         empty_note = "First name: foo\nNote:"
         x = self._parse_yaml(empty_note)
-        self.assertListEqual(x._get_notes(), [])
+        self.assertListEqual(x.notes, [])

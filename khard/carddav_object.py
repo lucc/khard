@@ -404,7 +404,8 @@ class VCardWrapper:
                 names += self._get_name_suffixes()
             self.formatted_name = helpers.list_to_string(names, " ")
 
-    def _get_organisations(self):
+    @property
+    def organisations(self):
         """
         :returns: list of organisations, sorted alphabetically
         :rtype: list(list(str))
@@ -416,16 +417,16 @@ class VCardWrapper:
         org_obj.value = convert_to_vcard("organisation", organisation,
                                          ObjectType.list_with_strings)
         # check if fn attribute is already present
-        if not self.vcard.getChildValue("fn") and self._get_organisations():
+        if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
-            org_value = helpers.list_to_string(self._get_organisations()[0],
-                                               ", ")
+            org_value = helpers.list_to_string(self.organisations[0], ", ")
             self.formatted_name = org_value.replace("\n", " ").replace("\\",
                                                                        "")
             showas_obj = self.vcard.add('x-abshowas')
             showas_obj.value = "COMPANY"
 
-    def _get_titles(self):
+    @property
+    def titles(self):
         """
         :rtype: list(list(str))
         """
@@ -435,7 +436,8 @@ class VCardWrapper:
         title_obj = self.vcard.add('title')
         title_obj.value = convert_to_vcard("title", title, ObjectType.string)
 
-    def _get_roles(self):
+    @property
+    def roles(self):
         """
         :rtype: list(list(str))
         """
@@ -445,7 +447,8 @@ class VCardWrapper:
         role_obj = self.vcard.add('role')
         role_obj.value = convert_to_vcard("role", role, ObjectType.string)
 
-    def get_nicknames(self):
+    @property
+    def nicknames(self):
         """
         :rtype: list(list(str))
         """
@@ -456,7 +459,8 @@ class VCardWrapper:
         nickname_obj.value = convert_to_vcard("nickname", nickname,
                                               ObjectType.string)
 
-    def _get_notes(self):
+    @property
+    def notes(self):
         """
         :rtype: list(list(str))
         """
@@ -466,7 +470,8 @@ class VCardWrapper:
         note_obj = self.vcard.add('note')
         note_obj.value = convert_to_vcard("note", note, ObjectType.string)
 
-    def _get_webpages(self):
+    @property
+    def webpages(self):
         """
         :rtype: list(list(str))
         """
@@ -477,7 +482,8 @@ class VCardWrapper:
         webpage_obj.value = convert_to_vcard("webpage", webpage,
                                              ObjectType.string)
 
-    def _get_categories(self):
+    @property
+    def categories(self):
         """
         :rtype: list(str) or list(list(str))
         """
@@ -1304,17 +1310,17 @@ class CarddavObject(VCardWrapper):
                     "Suffix", self._get_name_suffixes(), 0, 11, True)
             elif line.lower().startswith("nickname"):
                 strings += helpers.convert_to_yaml(
-                    "Nickname", self.get_nicknames(), 0, 9, True)
+                    "Nickname", self.nicknames, 0, 9, True)
 
             elif line.lower().startswith("organisation"):
                 strings += helpers.convert_to_yaml(
-                    "Organisation", self._get_organisations(), 0, 13, True)
+                    "Organisation", self.organisations, 0, 13, True)
             elif line.lower().startswith("title"):
                 strings += helpers.convert_to_yaml(
-                    "Title", self._get_titles(), 0, 6, True)
+                    "Title", self.titles, 0, 6, True)
             elif line.lower().startswith("role"):
                 strings += helpers.convert_to_yaml(
-                    "Role", self._get_roles(), 0, 6, True)
+                    "Role", self.roles, 0, 6, True)
 
             elif line.lower().startswith("phone"):
                 strings.append("Phone :")
@@ -1441,13 +1447,13 @@ class CarddavObject(VCardWrapper):
                     strings.append("Birthday : ")
             elif line.lower().startswith("categories"):
                 strings += helpers.convert_to_yaml(
-                    "Categories", self._get_categories(), 0, 11, True)
+                    "Categories", self.categories, 0, 11, True)
             elif line.lower().startswith("note"):
                 strings += helpers.convert_to_yaml(
-                    "Note", self._get_notes(), 0, 5, True)
+                    "Note", self.notes, 0, 5, True)
             elif line.lower().startswith("webpage"):
                 strings += helpers.convert_to_yaml(
-                    "Webpage", self._get_webpages(), 0, 8, True)
+                    "Webpage", self.webpages, 0, 8, True)
         # posix standard: eof char must be \n
         return '\n'.join(strings) + "\n"
 
@@ -1469,9 +1475,9 @@ class CarddavObject(VCardWrapper):
                 names += self._get_name_suffixes()
             strings.append("Name: %s" % helpers.list_to_string(names, " "))
         # organisation
-        if self._get_organisations():
+        if self.organisations:
             strings += helpers.convert_to_yaml(
-                "Organisation", self._get_organisations(), 0, -1, False)
+                "Organisation", self.organisations, 0, -1, False)
         # fn as fallback
         if not strings:
             strings.append("Name: %s" % self.formatted_name)
@@ -1482,8 +1488,7 @@ class CarddavObject(VCardWrapper):
 
         # person related information
         if (self.birthday is not None or self.anniversary is not None
-                or self.get_nicknames() or self._get_roles()
-                or self._get_titles()):
+                or self.nicknames or self.roles or self.titles):
             strings.append("General:")
             if self.anniversary:
                 strings.append("    Anniversary: %s"
@@ -1491,15 +1496,15 @@ class CarddavObject(VCardWrapper):
             if self.birthday:
                 strings.append(
                     "    Birthday: {}".format(self.get_formatted_birthday()))
-            if self.get_nicknames():
+            if self.nicknames:
                 strings += helpers.convert_to_yaml(
-                    "Nickname", self.get_nicknames(), 4, -1, False)
-            if self._get_roles():
+                    "Nickname", self.nicknames, 4, -1, False)
+            if self.roles:
                 strings += helpers.convert_to_yaml(
-                    "Role", self._get_roles(), 4, -1, False)
-            if self._get_titles():
+                    "Role", self.roles, 4, -1, False)
+            if self.titles:
                 strings += helpers.convert_to_yaml(
-                    "Title", self._get_titles(), 4, -1, False)
+                    "Title", self.titles, 4, -1, False)
 
         # phone numbers
         if self.get_phone_numbers().keys():
@@ -1538,20 +1543,20 @@ class CarddavObject(VCardWrapper):
                         False)
 
         # misc stuff
-        if self._get_categories() or (show_uid and self.uid != "") \
-                or self._get_webpages() or self._get_notes():
+        if self.categories or self.webpages or self.notes or (
+                show_uid and self.uid):
             strings.append("Miscellaneous")
             if show_uid and self.uid:
                 strings.append("    UID: {}".format(self.uid))
-            if self._get_categories():
+            if self.categories:
                 strings += helpers.convert_to_yaml(
-                    "Categories", self._get_categories(), 4, -1, False)
-            if self._get_webpages():
+                    "Categories", self.categories, 4, -1, False)
+            if self.webpages:
                 strings += helpers.convert_to_yaml(
-                    "Webpage", self._get_webpages(), 4, -1, False)
-            if self._get_notes():
+                    "Webpage", self.webpages, 4, -1, False)
+            if self.notes:
                 strings += helpers.convert_to_yaml(
-                    "Note", self._get_notes(), 4, -1, False)
+                    "Note", self.notes, 4, -1, False)
         return '\n'.join(strings)
 
     def write_to_file(self, overwrite=False):
@@ -1587,7 +1592,7 @@ class CarddavObject(VCardWrapper):
         """
         get list of types for phone number, email or post address
         :param object: vcard class object
-        :type object: vobject.vCard
+        :type object: vobject.base.ContentLine
         :param default_type: use if the object contains no type
         :type default_type: str
         :returns: list of type labels
