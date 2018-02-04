@@ -733,16 +733,13 @@ class VCardWrapper:
                     child, "home"), ", ")
                 if type not in post_adr_dict:
                     post_adr_dict[type] = []
-                post_adr_dict[type].append(
-                    {
-                        "box": child.value.box,
-                        "extended": child.value.extended,
-                        "street": child.value.street,
-                        "code": child.value.code,
-                        "city": child.value.city,
-                        "region": child.value.region,
-                        "country": child.value.country
-                    })
+                post_adr_dict[type].append({"box": child.value.box,
+                                            "extended": child.value.extended,
+                                            "street": child.value.street,
+                                            "code": child.value.code,
+                                            "city": child.value.city,
+                                            "region": child.value.region,
+                                            "country": child.value.country})
         # sort post address lists
         for post_adr_list in post_adr_dict.values():
             post_adr_list.sort(key=lambda x: (
@@ -833,13 +830,12 @@ class VCardWrapper:
             if standard_types:
                 adr_obj.params['TYPE'] = standard_types
             if custom_types:
-                number_of_custom_post_address_labels = 0
+                custom_label_count = 0
                 for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" \
-                            and label.group.startswith("itemadr"):
-                        number_of_custom_post_address_labels += 1
-                group_name = "itemadr%d" % (
-                    number_of_custom_post_address_labels + 1)
+                    if label.name == "X-ABLABEL" and label.group.startswith(
+                            "itemadr"):
+                        custom_label_count += 1
+                group_name = "itemadr%d" % (custom_label_count + 1)
                 adr_obj.group = group_name
                 label_obj = self.vcard.add('x-ablabel')
                 label_obj.group = group_name
