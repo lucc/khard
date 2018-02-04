@@ -483,6 +483,26 @@ class VCardWrapper:
         webpage_obj.value = convert_to_vcard("webpage", webpage,
                                              ObjectType.string)
 
+    def _get_categories(self):
+        """
+        :rtype: list(str) or list(list(str))
+        """
+        category_list = []
+        for child in self.vcard.getChildren():
+            if child.name == "CATEGORIES":
+                value = child.value
+                category_list.append(
+                    value if isinstance(value, list) else [value])
+        if len(category_list) == 1:
+            return category_list[0]
+        return sorted(category_list)
+
+    def _add_category(self, categories):
+        """ categories variable must be a list """
+        categories_obj = self.vcard.add('categories')
+        categories_obj.value = convert_to_vcard("category", categories,
+                                                ObjectType.list_with_strings)
+
 
 class CarddavObject(VCardWrapper):
 
@@ -850,26 +870,6 @@ class CarddavObject(VCardWrapper):
                 label_obj = self.vcard.add('x-ablabel')
                 label_obj.group = group_name
                 label_obj.value = custom_types[0]
-
-    def _get_categories(self):
-        """
-        :rtype: list(str) or list(list(str))
-        """
-        category_list = []
-        for child in self.vcard.getChildren():
-            if child.name == "CATEGORIES":
-                value = child.value
-                category_list.append(
-                    value if isinstance(value, list) else [value])
-        if len(category_list) == 1:
-            return category_list[0]
-        return sorted(category_list)
-
-    def _add_category(self, categories):
-        """ categories variable must be a list """
-        categories_obj = self.vcard.add('categories')
-        categories_obj.value = convert_to_vcard("category", categories,
-                                                ObjectType.list_with_strings)
 
     def _get_private_objects(self):
         """

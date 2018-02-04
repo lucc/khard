@@ -321,3 +321,12 @@ class OtherProperties(unittest.TestCase):
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper._get_webpages(), ['http://example.com',
                              'https://github.com/scheibler/khard'])
+
+    def test_setting_and_getting_categories(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_category(["rfc", "address book"])
+        wrapper._add_category(["coding", "open source"])
+        self.assertListEqual(wrapper._get_categories(),
+                             [["coding", "open source"],
+                              ["rfc", "address book"]])
