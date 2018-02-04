@@ -598,6 +598,253 @@ class VCardWrapper:
         categories_obj.value = convert_to_vcard("category", categories,
                                                 ObjectType.list_with_strings)
 
+    @property
+    def phone_numbers(self):
+        """
+        : returns: dict of type and phone number list
+        :rtype: dict(str, list(str))
+        """
+        phone_dict = {}
+        for child in self.vcard.getChildren():
+            if child.name == "TEL":
+                # phone types
+                type = helpers.list_to_string(
+                    self._get_types_for_vcard_object(child, "voice"), ", ")
+                if type not in phone_dict:
+                    phone_dict[type] = []
+                # phone value
+                #
+                # vcard version 4.0 allows URI scheme "tel" in phone attribute value
+                # Doc: https://tools.ietf.org/html/rfc6350#section-6.4.1
+                # example: TEL;VALUE=uri;PREF=1;TYPE="voice,home":tel:+1-555-555-5555;ext=5555
+                if child.value.lower().startswith("tel:"):
+                    # cut off the "tel:" uri prefix
+                    phone_dict[type].append(child.value[4:])
+                else:
+                    # free text field
+                    phone_dict[type].append(child.value)
+        # sort phone number lists
+        for number_list in phone_dict.values():
+            number_list.sort()
+        return phone_dict
+
+    def _add_phone_number(self, type, number):
+        standard_types, custom_types, pref = self._parse_type_value(
+            helpers.string_to_list(type, ","), number, self.phone_types_v4 if
+            self.version == "4.0" else self.phone_types_v3)
+        if not standard_types and not custom_types and pref == 0:
+            raise ValueError("Error: label for phone number " + number +
+                             " is missing.")
+        elif len(custom_types) > 1:
+            raise ValueError("Error: phone number " + number + " got more "
+                             "than one custom label: " +
+                             helpers.list_to_string(custom_types, ", "))
+        else:
+            phone_obj = self.vcard.add('tel')
+            if self.version == "4.0":
+                phone_obj.value = "tel:%s" % convert_to_vcard(
+                    "phone number", number, ObjectType.string)
+                phone_obj.params['VALUE'] = ["uri"]
+                if pref > 0:
+                    phone_obj.params['PREF'] = str(pref)
+            else:
+                phone_obj.value = convert_to_vcard("phone number", number,
+                                                   ObjectType.string)
+                if pref > 0:
+                    standard_types.append("pref")
+            if standard_types:
+                phone_obj.params['TYPE'] = standard_types
+            if custom_types:
+                custom_label_count = 0
+                for label in self.vcard.getChildren():
+                    if label.name == "X-ABLABEL" and label.group.startswith(
+                            "itemtel"):
+                        custom_label_count += 1
+                group_name = "itemtel%d" % (custom_label_count + 1)
+                phone_obj.group = group_name
+                label_obj = self.vcard.add('x-ablabel')
+                label_obj.group = group_name
+                label_obj.value = custom_types[0]
+
+    @property
+    def emails(self):
+        """
+        : returns: dict of type and email address list
+        :rtype: dict(str, list(str))
+        """
+        email_dict = {}
+        for child in self.vcard.getChildren():
+            if child.name == "EMAIL":
+                type = helpers.list_to_string(
+                    self._get_types_for_vcard_object(child, "internet"), ", ")
+                if type not in email_dict:
+                    email_dict[type] = []
+                email_dict[type].append(child.value)
+        # sort email address lists
+        for email_list in email_dict.values():
+            email_list.sort()
+        return email_dict
+
+    def add_email(self, type, address):
+        standard_types, custom_types, pref = self._parse_type_value(
+            helpers.string_to_list(type, ","), address, self.email_types_v4 if
+            self.version == "4.0" else self.email_types_v3)
+        if not standard_types and not custom_types and pref == 0:
+            raise ValueError("Error: label for email address " + address +
+                             " is missing.")
+        elif len(custom_types) > 1:
+            raise ValueError("Error: email address " + address + " got more "
+                             "than one custom label: " +
+                             helpers.list_to_string(custom_types, ", "))
+        else:
+            email_obj = self.vcard.add('email')
+            email_obj.value = convert_to_vcard("email address", address,
+                                               ObjectType.string)
+            if self.version == "4.0":
+                if pref > 0:
+                    email_obj.params['PREF'] = str(pref)
+            else:
+                if pref > 0:
+                    standard_types.append("pref")
+            if standard_types:
+                email_obj.params['TYPE'] = standard_types
+            if custom_types:
+                custom_label_count = 0
+                for label in self.vcard.getChildren():
+                    if label.name == "X-ABLABEL" and label.group.startswith(
+                            "itememail"):
+                        custom_label_count += 1
+                group_name = "itememail%d" % (custom_label_count + 1)
+                email_obj.group = group_name
+                label_obj = self.vcard.add('x-ablabel')
+                label_obj.group = group_name
+                label_obj.value = custom_types[0]
+
+    @property
+    def post_addresses(self):
+        """
+        : returns: dict of type and post address list
+        :rtype: dict(str, list(dict(str,list|str)))
+        """
+        post_adr_dict = {}
+        for child in self.vcard.getChildren():
+            if child.name == "ADR":
+                type = helpers.list_to_string(self._get_types_for_vcard_object(
+                    child, "home"), ", ")
+                if type not in post_adr_dict:
+                    post_adr_dict[type] = []
+                post_adr_dict[type].append(
+                    {
+                        "box": child.value.box,
+                        "extended": child.value.extended,
+                        "street": child.value.street,
+                        "code": child.value.code,
+                        "city": child.value.city,
+                        "region": child.value.region,
+                        "country": child.value.country
+                    })
+        # sort post address lists
+        for post_adr_list in post_adr_dict.values():
+            post_adr_list.sort(key=lambda x: (
+                helpers.list_to_string(x['city'], " ").lower(),
+                helpers.list_to_string(x['street'], " ").lower()))
+        return post_adr_dict
+
+    def get_formatted_post_addresses(self):
+        formatted_post_adr_dict = {}
+        for type, post_adr_list in self.post_addresses.items():
+            formatted_post_adr_dict[type] = []
+            for post_adr in post_adr_list:
+                strings = []
+                if post_adr.get("street"):
+                    strings.append(
+                        helpers.list_to_string(post_adr.get("street"), "\n"))
+                if post_adr.get("box") and post_adr.get("extended"):
+                    strings.append("{} {}".format(
+                        helpers.list_to_string(post_adr.get("box"), " "),
+                        helpers.list_to_string(post_adr.get("extended"), " ")))
+                elif post_adr.get("box"):
+                    strings.append(
+                        helpers.list_to_string(post_adr.get("box"), " "))
+                elif post_adr.get("extended"):
+                    strings.append(
+                        helpers.list_to_string(post_adr.get("extended"), " "))
+                if post_adr.get("code") and post_adr.get("city"):
+                    strings.append("{} {}".format(
+                        helpers.list_to_string(post_adr.get("code"), " "),
+                        helpers.list_to_string(post_adr.get("city"), " ")))
+                elif post_adr.get("code"):
+                    strings.append(
+                        helpers.list_to_string(post_adr.get("code"), " "))
+                elif post_adr.get("city"):
+                    strings.append(
+                        helpers.list_to_string(post_adr.get("city"), " "))
+                if post_adr.get("region") and post_adr.get("country"):
+                    strings.append("{}, {}".format(
+                        helpers.list_to_string(post_adr.get("region"), " "),
+                        helpers.list_to_string(post_adr.get("country"), " ")))
+                elif post_adr.get("region"):
+                    strings.append(
+                        helpers.list_to_string(post_adr.get("region"), " "))
+                elif post_adr.get("country"):
+                    strings.append(
+                        helpers.list_to_string(post_adr.get("country"), " "))
+                formatted_post_adr_dict[type].append('\n'.join(strings))
+        return formatted_post_adr_dict
+
+    def _add_post_address(self, type, box, extended, street, code, city,
+                          region, country):
+        standard_types, custom_types, pref = self._parse_type_value(
+            helpers.string_to_list(type, ","), "{}, {}".format(street, city),
+            self.address_types_v4 if self.version == "4.0" else
+            self.address_types_v3)
+        if not standard_types and not custom_types and pref == 0:
+            raise ValueError("Error: label for post address " + street +
+                             " is missing.")
+        elif len(custom_types) > 1:
+            raise ValueError("Error: post address " + street + " got more "
+                             "than one custom " "label: " +
+                             helpers.list_to_string(custom_types, ", "))
+        else:
+            adr_obj = self.vcard.add('adr')
+            adr_obj.value = vobject.vcard.Address(
+                box=convert_to_vcard("box address field", box,
+                                     ObjectType.string_or_list_with_strings),
+                extended=convert_to_vcard(
+                    "extended address field", extended,
+                    ObjectType.string_or_list_with_strings),
+                street=convert_to_vcard(
+                    "street", street, ObjectType.string_or_list_with_strings),
+                code=convert_to_vcard("post code", code,
+                                      ObjectType.string_or_list_with_strings),
+                city=convert_to_vcard("city", city,
+                                      ObjectType.string_or_list_with_strings),
+                region=convert_to_vcard(
+                    "region", region, ObjectType.string_or_list_with_strings),
+                country=convert_to_vcard(
+                    "country", country,
+                    ObjectType.string_or_list_with_strings))
+            if self.version == "4.0":
+                if pref > 0:
+                    adr_obj.params['PREF'] = str(pref)
+            else:
+                if pref > 0:
+                    standard_types.append("pref")
+            if standard_types:
+                adr_obj.params['TYPE'] = standard_types
+            if custom_types:
+                number_of_custom_post_address_labels = 0
+                for label in self.vcard.getChildren():
+                    if label.name == "X-ABLABEL" \
+                            and label.group.startswith("itemadr"):
+                        number_of_custom_post_address_labels += 1
+                group_name = "itemadr%d" % (
+                    number_of_custom_post_address_labels + 1)
+                adr_obj.group = group_name
+                label_obj = self.vcard.add('x-ablabel')
+                label_obj.group = group_name
+                label_obj.value = custom_types[0]
+
 
 class CarddavObject(VCardWrapper):
 
@@ -709,251 +956,47 @@ class CarddavObject(VCardWrapper):
     # getters and setters
     #####################
 
-    def get_phone_numbers(self):
-        """
-        : returns: dict of type and phone number list
-        :rtype: dict(str, list(str))
-        """
-        phone_dict = {}
-        for child in self.vcard.getChildren():
-            if child.name == "TEL":
-                # phone types
-                type = helpers.list_to_string(
-                    self._get_types_for_vcard_object(child, "voice"), ", ")
-                if type not in phone_dict:
-                    phone_dict[type] = []
-                # phone value
-                #
-                # vcard version 4.0 allows URI scheme "tel" in phone attribute value
-                # Doc: https://tools.ietf.org/html/rfc6350#section-6.4.1
-                # example: TEL;VALUE=uri;PREF=1;TYPE="voice,home":tel:+1-555-555-5555;ext=5555
-                if child.value.lower().startswith("tel:"):
-                    # cut off the "tel:" uri prefix
-                    phone_dict[type].append(child.value[4:])
-                else:
-                    # free text field
-                    phone_dict[type].append(child.value)
-        # sort phone number lists
-        for number_list in phone_dict.values():
-            number_list.sort()
-        return phone_dict
-
-    def _add_phone_number(self, type, number):
-        standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), number, self.phone_types_v4 if
-            self.version == "4.0" else self.phone_types_v3)
-        if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for phone number " + number +
-                             " is missing.")
-        elif len(custom_types) > 1:
-            raise ValueError("Error: phone number " + number + " got more "
-                             "than one custom label: " +
-                             helpers.list_to_string(custom_types, ", "))
-        else:
-            phone_obj = self.vcard.add('tel')
-            if self.version == "4.0":
-                phone_obj.value = "tel:%s" % convert_to_vcard(
-                    "phone number", number, ObjectType.string)
-                phone_obj.params['VALUE'] = ["uri"]
-                if pref > 0:
-                    phone_obj.params['PREF'] = str(pref)
-            else:
-                phone_obj.value = convert_to_vcard("phone number", number,
-                                                   ObjectType.string)
-                if pref > 0:
-                    standard_types.append("pref")
-            if standard_types:
-                phone_obj.params['TYPE'] = standard_types
-            if custom_types:
-                number_of_custom_phone_number_labels = 0
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" \
-                            and label.group.startswith("itemtel"):
-                        number_of_custom_phone_number_labels += 1
-                group_name = "itemtel%d" % (
-                    number_of_custom_phone_number_labels + 1)
-                phone_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = custom_types[0]
-
-    def get_email_addresses(self):
-        """
-        : returns: dict of type and email address list
-        :rtype: dict(str, list(str))
-        """
-        email_dict = {}
-        for child in self.vcard.getChildren():
-            if child.name == "EMAIL":
-                type = helpers.list_to_string(
-                    self._get_types_for_vcard_object(child, "internet"), ", ")
-                if type not in email_dict:
-                    email_dict[type] = []
-                email_dict[type].append(child.value)
-        # sort email address lists
-        for email_list in email_dict.values():
-            email_list.sort()
-        return email_dict
-
-    def add_email_address(self, type, address):
-        standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), address, self.email_types_v4 if
-            self.version == "4.0" else self.email_types_v3)
-        if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for email address " + address +
-                             " is missing.")
-        elif len(custom_types) > 1:
-            raise ValueError("Error: email address " + address + " got more "
-                             "than one custom label: " +
-                             helpers.list_to_string(custom_types, ", "))
-        else:
-            email_obj = self.vcard.add('email')
-            email_obj.value = convert_to_vcard("email address", address,
-                                               ObjectType.string)
-            if self.version == "4.0":
-                if pref > 0:
-                    email_obj.params['PREF'] = str(pref)
-            else:
-                if pref > 0:
-                    standard_types.append("pref")
-            if standard_types:
-                email_obj.params['TYPE'] = standard_types
-            if custom_types:
-                number_of_custom_email_labels = 0
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" \
-                            and label.group.startswith("itememail"):
-                        number_of_custom_email_labels += 1
-                group_name = "itememail%d" % (
-                    number_of_custom_email_labels + 1)
-                email_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = custom_types[0]
-
-    def get_post_addresses(self):
-        """
-        : returns: dict of type and post address list
-        :rtype: dict(str, list(dict(str,list|str)))
-        """
-        post_adr_dict = {}
-        for child in self.vcard.getChildren():
-            if child.name == "ADR":
-                type = helpers.list_to_string(
-                    self._get_types_for_vcard_object(child, "home"), ", ")
-                if type not in post_adr_dict:
-                    post_adr_dict[type] = []
-                post_adr_dict[type].append(
-                    {
-                        "box": child.value.box,
-                        "extended": child.value.extended,
-                        "street": child.value.street,
-                        "code": child.value.code,
-                        "city": child.value.city,
-                        "region": child.value.region,
-                        "country": child.value.country
-                    })
-        # sort post address lists
-        for post_adr_list in post_adr_dict.values():
-            post_adr_list.sort(key=lambda x: (
-                helpers.list_to_string(x['city'], " ").lower(),
-                helpers.list_to_string(x['street'], " ").lower()))
-        return post_adr_dict
-
-    def get_formatted_post_addresses(self):
+    def _get_formatted_post_addresses(self):
         formatted_post_adr_dict = {}
-        for type, post_adr_list in self.get_post_addresses().items():
+        for type, post_adr_list in self.post_addresses.items():
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
                 strings = []
-                if post_adr.get("street"):
+                if "street" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("street"), "\n"))
-                if post_adr.get("box") and post_adr.get("extended"):
+                if "box" in post_adr and "extended" in post_adr:
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("box"), " "),
                         helpers.list_to_string(post_adr.get("extended"), " ")))
-                elif post_adr.get("box"):
+                elif "box" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("box"), " "))
-                elif post_adr.get("extended"):
+                elif "extended" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("extended"), " "))
-                if post_adr.get("code") and post_adr.get("city"):
+                if "code" in post_adr and "city" in post_adr:
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("code"), " "),
                         helpers.list_to_string(post_adr.get("city"), " ")))
-                elif post_adr.get("code"):
+                elif "code" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("code"), " "))
-                elif post_adr.get("city"):
+                elif "city" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("city"), " "))
-                if post_adr.get("region") and post_adr.get("country"):
+                if "region" in post_adr and "country" in post_adr:
                     strings.append("{}, {}".format(
                         helpers.list_to_string(post_adr.get("region"), " "),
                         helpers.list_to_string(post_adr.get("country"), " ")))
-                elif post_adr.get("region"):
+                elif "region" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("region"), " "))
-                elif post_adr.get("country"):
+                elif "country" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("country"), " "))
                 formatted_post_adr_dict[type].append('\n'.join(strings))
         return formatted_post_adr_dict
-
-    def _add_post_address(self, type, box, extended, street, code, city,
-                          region, country):
-        standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), "{}, {}".format(street, city),
-            self.address_types_v4 if self.version == "4.0" else
-            self.address_types_v3)
-        if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for post address " + street +
-                             " is missing.")
-        elif len(custom_types) > 1:
-            raise ValueError("Error: post address " + street + " got more "
-                             "than one custom " "label: " +
-                             helpers.list_to_string(custom_types, ", "))
-        else:
-            adr_obj = self.vcard.add('adr')
-            adr_obj.value = vobject.vcard.Address(
-                box=convert_to_vcard("box address field", box,
-                                     ObjectType.string_or_list_with_strings),
-                extended=convert_to_vcard(
-                    "extended address field", extended,
-                    ObjectType.string_or_list_with_strings),
-                street=convert_to_vcard(
-                    "street", street, ObjectType.string_or_list_with_strings),
-                code=convert_to_vcard("post code", code,
-                                      ObjectType.string_or_list_with_strings),
-                city=convert_to_vcard("city", city,
-                                      ObjectType.string_or_list_with_strings),
-                region=convert_to_vcard(
-                    "region", region, ObjectType.string_or_list_with_strings),
-                country=convert_to_vcard(
-                    "country", country,
-                    ObjectType.string_or_list_with_strings))
-            if self.version == "4.0":
-                if pref > 0:
-                    adr_obj.params['PREF'] = str(pref)
-            else:
-                if pref > 0:
-                    standard_types.append("pref")
-            if standard_types:
-                adr_obj.params['TYPE'] = standard_types
-            if custom_types:
-                number_of_custom_post_address_labels = 0
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" \
-                            and label.group.startswith("itemadr"):
-                        number_of_custom_post_address_labels += 1
-                group_name = "itemadr%d" % (
-                    number_of_custom_post_address_labels + 1)
-                adr_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = custom_types[0]
 
     def _get_private_objects(self):
         """
@@ -1160,7 +1203,7 @@ class CarddavObject(VCardWrapper):
                     if isinstance(email_list, list):
                         for email in email_list:
                             if email:
-                                self.add_email_address(type, email)
+                                self.add_email(type, email)
                     else:
                         raise ValueError(
                             "Error: got no email or list of emails for the "
@@ -1408,34 +1451,32 @@ class CarddavObject(VCardWrapper):
 
             elif line.lower().startswith("phone"):
                 strings.append("Phone :")
-                if not self.get_phone_numbers().keys():
+                if not self.phone_numbers:
                     strings.append("    cell : ")
                     strings.append("    home : ")
                 else:
-                    longest_key = max(self.get_phone_numbers().keys(), key=len)
+                    longest_key = max(self.phone_numbers.keys(), key=len)
                     for type, number_list in sorted(
-                            self.get_phone_numbers().items(),
+                            self.phone_numbers.items(),
                             key=lambda k: k[0].lower()):
                         strings += helpers.convert_to_yaml(
                             type, number_list, 4, len(longest_key) + 1, True)
 
             elif line.lower().startswith("email"):
                 strings.append("Email :")
-                if not self.get_email_addresses().keys():
+                if not self.emails:
                     strings.append("    home : ")
                     strings.append("    work : ")
                 else:
-                    longest_key = max(self.get_email_addresses().keys(),
-                                      key=len)
-                    for type, email_list in sorted(
-                            self.get_email_addresses().items(),
-                            key=lambda k: k[0].lower()):
+                    longest_key = max(self.emails.keys(), key=len)
+                    for type, email_list in sorted(self.emails.items(),
+                                                   key=lambda k: k[0].lower()):
                         strings += helpers.convert_to_yaml(
                             type, email_list, 4, len(longest_key) + 1, True)
 
             elif line.lower().startswith("address"):
                 strings.append("Address :")
-                if not self.get_post_addresses().keys():
+                if not self.post_addresses:
                     strings.append("    home :")
                     strings.append("        Box      : ")
                     strings.append("        Extended : ")
@@ -1446,7 +1487,7 @@ class CarddavObject(VCardWrapper):
                     strings.append("        Country  : ")
                 else:
                     for type, post_adr_list in sorted(
-                            self.get_post_addresses().items(),
+                            self.post_addresses.items(),
                             key=lambda k: k[0].lower()):
                         strings.append("    %s:" % type)
                         for post_adr in post_adr_list:
@@ -1591,25 +1632,23 @@ class CarddavObject(VCardWrapper):
                     "Title", self.titles, 4, -1, False)
 
         # phone numbers
-        if self.get_phone_numbers().keys():
+        if self.phone_numbers:
             strings.append("Phone")
-            for type, number_list in sorted(
-                    self.get_phone_numbers().items(),
-                    key=lambda k: k[0].lower()):
+            for type, number_list in sorted(self.phone_numbers.items(),
+                                            key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                     type, number_list, 4, -1, False)
 
         # email addresses
-        if self.get_email_addresses().keys():
+        if self.emails:
             strings.append("E-Mail")
-            for type, email_list in sorted(
-                    self.get_email_addresses().items(),
-                    key=lambda k: k[0].lower()):
+            for type, email_list in sorted(self.emails.items(),
+                                           key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                     type, email_list, 4, -1, False)
 
         # post addresses
-        if self.get_post_addresses().keys():
+        if self.post_addresses:
             strings.append("Address")
             for type, post_adr_list in sorted(
                     self.get_formatted_post_addresses().items(),

@@ -321,18 +321,18 @@ def list_contacts(vcard_list):
                 row.append(vcard.get_first_name_last_name())
             else:
                 row.append(vcard.get_last_name_first_name())
-        if vcard.get_phone_numbers().keys():
-            phone_dict = vcard.get_phone_numbers()
+        if vcard.phone_numbers:
+            phone_dict = vcard.phone_numbers
             # filter out preferred phone type if set in config file
             phone_keys = []
             for pref_type in config.preferred_phone_number_type():
-                for phone_type in phone_dict.keys():
+                for phone_type in phone_dict:
                     if pref_type.lower() in phone_type.lower():
                         phone_keys.append(phone_type)
                 if phone_keys:
                     break
             if not phone_keys:
-                phone_keys = [x for x in phone_dict.keys() if "pref" in x.lower()] \
+                phone_keys = [x for x in phone_dict if "pref" in x.lower()] \
                              or phone_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(phone_keys, key=lambda k: k[0].lower())[0]
@@ -340,18 +340,18 @@ def list_contacts(vcard_list):
                                    sorted(phone_dict.get(first_type))[0]))
         else:
             row.append("")
-        if vcard.get_email_addresses().keys():
-            email_dict = vcard.get_email_addresses()
+        if vcard.emails:
+            email_dict = vcard.emails
             # filter out preferred email type if set in config file
             email_keys = []
             for pref_type in config.preferred_email_address_type():
-                for email_type in email_dict.keys():
+                for email_type in email_dict:
                     if pref_type.lower() in email_type.lower():
                         email_keys.append(email_type)
                 if email_keys:
                     break
             if not email_keys:
-                email_keys = [x for x in email_dict.keys() if "pref" in x.lower()] \
+                email_keys = [x for x in email_dict if "pref" in x.lower()] \
                              or email_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(email_keys, key=lambda k: k[0].lower())[0]
@@ -819,9 +819,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
             config.localize_dates())
 
     # check if the contact already contains the email address
-    for type, email_list in sorted(
-            selected_vcard.get_email_addresses().items(),
-            key=lambda k: k[0].lower()):
+    for type, email_list in sorted(selected_vcard.emails.items(),
+                                   key=lambda k: k[0].lower()):
         for email in email_list:
             if email == email_address:
                 print("The contact %s already contains the email address %s" %
@@ -849,7 +848,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     while True:
         label = input("email label [internet]: ") or "internet"
         try:
-            selected_vcard.add_email_address(label, email_address)
+            selected_vcard.add_email(label, email_address)
         except ValueError as err:
             print(err)
         else:
@@ -931,7 +930,7 @@ def phone_subcommand(search_terms, vcard_list, parsable):
     all_phone_numbers_list = []
     matching_phone_number_list = []
     for vcard in vcard_list:
-        for type, number_list in sorted(vcard.get_phone_numbers().items(),
+        for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
                 if config.display_by_name() == "first_name":
@@ -1064,7 +1063,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
     matching_email_address_list = []
     all_email_address_list = []
     for vcard in vcard_list:
-        for type, email_list in sorted(vcard.get_email_addresses().items(),
+        for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
                 if config.display_by_name() == "first_name":
