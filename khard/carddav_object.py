@@ -99,6 +99,24 @@ class VCardWrapper:
         except AttributeError:
             return ""
 
+    def _get_multi_property(self, name):
+        """Get a vCard property that can exist more than once.
+
+        It does not matter what the individual vcard properties store as their
+        value.  This function returnes them untouched inside an agregating
+        list.
+
+        :param name: the name of the property (should be UPPER case)
+        :type name: str
+        :returns: the values from all occurences of the named property
+        :rtype: list
+        """
+        values = []
+        for child in self.vcard.getChildren():
+            if child.name == name:
+                values.append(child.value)
+        return sorted(values)
+
     def delete_vcard_object(self, name):
         """Delete all fields with the given name from the underlying vCard.
 
@@ -391,11 +409,7 @@ class VCardWrapper:
         :returns: list of organisations, sorted alphabetically
         :rtype: list(list(str))
         """
-        organisations = []
-        for child in self.vcard.getChildren():
-            if child.name == "ORG":
-                organisations.append(child.value)
-        return sorted(organisations)
+        return self._get_multi_property("ORG")
 
     def _add_organisation(self, organisation):
         org_obj = self.vcard.add('org')
@@ -415,11 +429,7 @@ class VCardWrapper:
         """
         :rtype: list(list(str))
         """
-        titles = []
-        for child in self.vcard.getChildren():
-            if child.name == "TITLE":
-                titles.append(child.value)
-        return sorted(titles)
+        return self._get_multi_property("TITLE")
 
     def _add_title(self, title):
         title_obj = self.vcard.add('title')
@@ -429,11 +439,7 @@ class VCardWrapper:
         """
         :rtype: list(list(str))
         """
-        roles = []
-        for child in self.vcard.getChildren():
-            if child.name == "ROLE":
-                roles.append(child.value)
-        return sorted(roles)
+        return self._get_multi_property("ROLE")
 
     def _add_role(self, role):
         role_obj = self.vcard.add('role')
@@ -443,11 +449,7 @@ class VCardWrapper:
         """
         :rtype: list(list(str))
         """
-        nicknames = []
-        for child in self.vcard.getChildren():
-            if child.name == "NICKNAME":
-                nicknames.append(child.value)
-        return sorted(nicknames)
+        return self._get_multi_property("NICKNAME")
 
     def _add_nickname(self, nickname):
         nickname_obj = self.vcard.add('nickname')
@@ -458,11 +460,7 @@ class VCardWrapper:
         """
         :rtype: list(list(str))
         """
-        notes = []
-        for child in self.vcard.getChildren():
-            if child.name == "NOTE":
-                notes.append(child.value)
-        return sorted(notes)
+        return self._get_multi_property("NOTE")
 
     def _add_note(self, note):
         note_obj = self.vcard.add('note')
@@ -472,11 +470,7 @@ class VCardWrapper:
         """
         :rtype: list(list(str))
         """
-        urls = []
-        for child in self.vcard.getChildren():
-            if child.name == "URL":
-                urls.append(child.value)
-        return sorted(urls)
+        return self._get_multi_property("URL")
 
     def _add_webpage(self, webpage):
         webpage_obj = self.vcard.add('url')
