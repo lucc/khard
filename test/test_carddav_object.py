@@ -52,7 +52,7 @@ class DeleteVcardObject(unittest.TestCase):
         expected = vcard.serialize()
         vcard.add('FOO').value = 'bar'
         wrapper = carddav_object.VCardWrapper(vcard)
-        wrapper.delete_vcard_object('FOO')
+        wrapper._delete_vcard_object('FOO')
         self.assertEqual(wrapper.vcard.serialize(), expected)
 
     def test_deletes_all_field_occurences(self):
@@ -61,7 +61,7 @@ class DeleteVcardObject(unittest.TestCase):
         vcard.add('FOO').value = 'bar'
         vcard.add('FOO').value = 'baz'
         wrapper = carddav_object.VCardWrapper(vcard)
-        wrapper.delete_vcard_object('FOO')
+        wrapper._delete_vcard_object('FOO')
         self.assertEqual(wrapper.vcard.serialize(), expected)
 
     def test_deletes_grouped_ablabel_fields(self):
@@ -74,7 +74,7 @@ class DeleteVcardObject(unittest.TestCase):
         label.value = 'test label'
         label.group = foo.group
         wrapper = carddav_object.VCardWrapper(vcard)
-        wrapper.delete_vcard_object('FOO')
+        wrapper._delete_vcard_object('FOO')
         self.assertEqual(wrapper.vcard.serialize(), expected)
 
     def test_keeps_other_fields(self):
@@ -82,14 +82,14 @@ class DeleteVcardObject(unittest.TestCase):
         expected = vcard.serialize()
         vcard.add('BAR').value = 'baz'
         wrapper = carddav_object.VCardWrapper(vcard)
-        wrapper.delete_vcard_object('BAR')
+        wrapper._delete_vcard_object('BAR')
         self.assertEqual(wrapper.vcard.serialize(), expected)
 
     def test_does_not_fail_on_non_existing_field_name(self):
         vcard = _create_test_vcard(foo='bar')
         expected = vcard.serialize()
         wrapper = carddav_object.VCardWrapper(vcard)
-        wrapper.delete_vcard_object('BAR')
+        wrapper._delete_vcard_object('BAR')
         self.assertEqual(wrapper.vcard.serialize(), expected)
 
 

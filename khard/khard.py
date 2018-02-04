@@ -261,7 +261,6 @@ def copy_contact(contact, target_address_book, delete_source_contact):
     if not delete_source_contact or not contact.uid:
         # if copy contact or contact has no uid yet
         # create a new uid
-        contact.delete_vcard_object("UID")
         contact.uid = helpers.get_random_uid()
     # set destination file name
     contact.filename = os.path.join(target_address_book.path,

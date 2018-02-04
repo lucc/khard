@@ -117,7 +117,7 @@ class VCardWrapper:
                 values.append(child.value)
         return sorted(values)
 
-    def delete_vcard_object(self, name):
+    def _delete_vcard_object(self, name):
         """Delete all fields with the given name from the underlying vCard.
 
         If a field that will be deleted is in a group with an X-ABLABEL field,
@@ -153,7 +153,7 @@ class VCardWrapper:
                             value)
         # All vCards should only always have one version, this is a requirement
         # for version 4 but also makes sense for all other versions.
-        self.delete_vcard_object("VERSION")
+        self._delete_vcard_object("VERSION")
         version = self.vcard.add("version")
         version.value = convert_to_vcard("version", value, ObjectType.string)
 
@@ -165,7 +165,7 @@ class VCardWrapper:
     def uid(self, value):
         # All vCards should only always have one UID, this is a requirement
         # for version 4 but also makes sense for all other versions.
-        self.delete_vcard_object("UID")
+        self._delete_vcard_object("UID")
         uid = self.vcard.add('uid')
         uid.value = convert_to_vcard("uid", value, ObjectType.string)
 
@@ -173,7 +173,7 @@ class VCardWrapper:
         # All vCards should only always have one revision, this is a
         # requirement for version 4 but also makes sense for all other
         # versions.
-        self.delete_vcard_object("REV")
+        self._delete_vcard_object("REV")
         rev = self.vcard.add('rev')
         rev.value = datetime.datetime.now().strftime("%Y%mdT%H%M%SZ")
 
@@ -301,7 +301,7 @@ class VCardWrapper:
         :param value: the new formatted name
         :type value: str
         """
-        self.delete_vcard_object("FN")
+        self._delete_vcard_object("FN")
         self.vcard.add("FN").value = convert_to_vcard("FN", value,
                                                       ObjectType.string)
 
@@ -975,8 +975,8 @@ class CarddavObject(VCardWrapper):
         self._update_revision()
 
         # name
-        self.delete_vcard_object("FN")
-        self.delete_vcard_object("N")
+        self._delete_vcard_object("FN")
+        self._delete_vcard_object("N")
         # although the "n" attribute is not explisitely required by the vcard
         # specification,
         # the vobject library throws an exception, if it doesn't exist
@@ -986,7 +986,7 @@ class CarddavObject(VCardWrapper):
             contact_data.get("Additional", ""),
             contact_data.get("Last name", ""), contact_data.get("Suffix", ""))
         # nickname
-        self.delete_vcard_object("NICKNAME")
+        self._delete_vcard_object("NICKNAME")
         if contact_data.get("Nickname"):
             if isinstance(contact_data.get("Nickname"), str):
                 self._add_nickname(contact_data.get("Nickname"))
@@ -999,8 +999,8 @@ class CarddavObject(VCardWrapper):
                     "Error: nickname must be a string or a list of strings")
 
         # organisation
-        self.delete_vcard_object("ORG")
-        self.delete_vcard_object("X-ABSHOWAS")
+        self._delete_vcard_object("ORG")
+        self._delete_vcard_object("X-ABSHOWAS")
         if contact_data.get("Organisation"):
             if isinstance(contact_data.get("Organisation"), str):
                 self._add_organisation([contact_data.get("Organisation")])
@@ -1016,7 +1016,7 @@ class CarddavObject(VCardWrapper):
                                  "list of strings")
 
         # role
-        self.delete_vcard_object("ROLE")
+        self._delete_vcard_object("ROLE")
         if contact_data.get("Role"):
             if isinstance(contact_data.get("Role"), str):
                 self._add_role(contact_data.get("Role"))
@@ -1029,7 +1029,7 @@ class CarddavObject(VCardWrapper):
                     "Error: role must be a string or a list of strings")
 
         # title
-        self.delete_vcard_object("TITLE")
+        self._delete_vcard_object("TITLE")
         if contact_data.get("Title"):
             if isinstance(contact_data.get("Title"), str):
                 self._add_title(contact_data.get("Title"))
@@ -1042,7 +1042,7 @@ class CarddavObject(VCardWrapper):
                     "Error: title must be a string or a list of strings")
 
         # phone
-        self.delete_vcard_object("TEL")
+        self._delete_vcard_object("TEL")
         if contact_data.get("Phone"):
             if isinstance(contact_data.get("Phone"), dict):
                 for type, number_list in contact_data.get("Phone").items():
@@ -1061,7 +1061,7 @@ class CarddavObject(VCardWrapper):
                     "Error: missing type value for phone number field")
 
         # email
-        self.delete_vcard_object("EMAIL")
+        self._delete_vcard_object("EMAIL")
         if contact_data.get("Email"):
             if isinstance(contact_data.get("Email"), dict):
                 for type, email_list in contact_data.get("Email").items():
@@ -1080,7 +1080,7 @@ class CarddavObject(VCardWrapper):
                     "Error: missing type value for email address field")
 
         # post addresses
-        self.delete_vcard_object("ADR")
+        self._delete_vcard_object("ADR")
         if contact_data.get("Address"):
             if isinstance(contact_data.get("Address"), dict):
                 for type, post_adr_list in contact_data.get("Address").items():
@@ -1119,7 +1119,7 @@ class CarddavObject(VCardWrapper):
                     "Error: missing type value for post address field")
 
         # categories
-        self.delete_vcard_object("CATEGORIES")
+        self._delete_vcard_object("CATEGORIES")
         if contact_data.get("Categories"):
             if isinstance(contact_data.get("Categories"), str):
                 self._add_category([contact_data.get("Categories")])
@@ -1145,7 +1145,7 @@ class CarddavObject(VCardWrapper):
                     "Error: category must be a string or a list of strings")
 
         # urls
-        self.delete_vcard_object("URL")
+        self._delete_vcard_object("URL")
         if contact_data.get("Webpage"):
             if isinstance(contact_data.get("Webpage"), str):
                 self._add_webpage(contact_data.get("Webpage"))
@@ -1158,8 +1158,8 @@ class CarddavObject(VCardWrapper):
                     "Error: webpage must be a string or a list of strings")
 
         # anniversary
-        self.delete_vcard_object("ANNIVERSARY")
-        self.delete_vcard_object("X-ANNIVERSARY")
+        self._delete_vcard_object("ANNIVERSARY")
+        self._delete_vcard_object("X-ANNIVERSARY")
         if contact_data.get("Anniversary"):
             if isinstance(contact_data.get("Anniversary"), str):
                 if re.match(r"^text[\s]*=.*$",
@@ -1200,7 +1200,7 @@ class CarddavObject(VCardWrapper):
                 raise ValueError("Error: anniversary must be a string object.")
 
         # birthday
-        self.delete_vcard_object("BDAY")
+        self._delete_vcard_object("BDAY")
         if contact_data.get("Birthday"):
             if isinstance(contact_data.get("Birthday"), str):
                 if re.match(r"^text[\s]*=.*$", contact_data.get("Birthday")):
@@ -1241,7 +1241,7 @@ class CarddavObject(VCardWrapper):
 
         # private objects
         for supported in self.supported_private_objects:
-            self.delete_vcard_object("X-{}".format(supported.upper()))
+            self._delete_vcard_object("X-{}".format(supported.upper()))
         if contact_data.get("Private"):
             if isinstance(contact_data.get("Private"), dict):
                 for key, value_list in contact_data.get("Private").items():
@@ -1266,7 +1266,7 @@ class CarddavObject(VCardWrapper):
                                  "key : value pair.")
 
         # notes
-        self.delete_vcard_object("NOTE")
+        self._delete_vcard_object("NOTE")
         if contact_data.get("Note"):
             if isinstance(contact_data.get("Note"), str):
                 self._add_note(contact_data.get("Note"))
