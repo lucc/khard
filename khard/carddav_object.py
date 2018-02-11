@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Classes and logic to handle vCards in khard.
 
-# contact object class
-# vcard version 3.0: https://tools.ietf.org/html/rfc2426
-# vcard version 4.0: https://tools.ietf.org/html/rfc6350
+This module explicitly supports the vCard specifications version 3.0 and 4.0
+which can be found here:
+- version 3.0: https://tools.ietf.org/html/rfc2426
+- version 4.0: https://tools.ietf.org/html/rfc6350
+"""
 
 import datetime
 import locale
