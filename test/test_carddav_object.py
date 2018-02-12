@@ -2,6 +2,7 @@
 
 import datetime
 import unittest
+from unittest import mock
 
 import vobject
 
@@ -330,3 +331,29 @@ class OtherProperties(unittest.TestCase):
         self.assertListEqual(wrapper._get_categories(),
                              [["coding", "open source"],
                               ["rfc", "address book"]])
+
+
+class CarddavObjectFormatDateObject(unittest.TestCase):
+
+    def test_format_date_object_will_not_touch_strings(self):
+        expected = 'untouched string'
+        actual = carddav_object.CarddavObject._format_date_object(expected,
+                                                                  False)
+        self.assertEqual(actual, expected)
+
+    def test_format_date_object_with_simple_date_object(self):
+        d = datetime.datetime(2018, 2, 13)
+        actual = carddav_object.CarddavObject._format_date_object(d, False)
+        self.assertEqual(actual, '2018-02-13')
+
+    @unittest.expectedFailure
+    def test_format_date_object_with_simple_datetime_object(self):
+        d = datetime.datetime(2018, 2, 13, 0, 38, 31)
+        with mock.patch('time.timezone', -7200):
+            actual = carddav_object.CarddavObject._format_date_object(d, False)
+        self.assertEqual(actual, '2018-02-13T00:38:31+02:00')
+
+    def test_format_date_object_with_date_1900(self):
+        d = datetime.datetime(1900, 2, 13)
+        actual = carddav_object.CarddavObject._format_date_object(d, False)
+        self.assertEqual(actual, '--02-13')
