@@ -464,7 +464,6 @@ class CarddavObjectFormatDateObject(unittest.TestCase):
         actual = carddav_object.CarddavObject._format_date_object(d, False)
         self.assertEqual(actual, '2018-02-13')
 
-    @unittest.expectedFailure
     def test_format_date_object_with_simple_datetime_object(self):
         d = datetime.datetime(2018, 2, 13, 0, 38, 31)
         with mock.patch('time.timezone', -7200):
