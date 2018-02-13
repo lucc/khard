@@ -1300,7 +1300,7 @@ class CarddavObject(VCardWrapper):
                     if self.version == "4.0":
                         date = ', '.join(
                             x.strip() for x in re.split(
-                                "text[\s]*=", contact_data.get("Anniversary"))
+                                r"text[\s]*=", contact_data.get("Anniversary"))
                             if x.strip())
                     else:
                         raise ValueError(
@@ -1340,7 +1340,7 @@ class CarddavObject(VCardWrapper):
                     if self.version == "4.0":
                         date = ', '.join(
                             x.strip() for x in re.split(
-                                "text[\s]*=", contact_data.get("Birthday"))
+                                r"text[\s]*=", contact_data.get("Birthday"))
                             if x.strip())
                     else:
                         raise ValueError(
