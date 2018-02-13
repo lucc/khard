@@ -1344,45 +1344,43 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     if target_vcard is None:
         copy_contact(source_vcard, selected_target_address_book,
                      action == "move")
-    else:
-        if source_vcard == target_vcard:
-            # source and target contact are identical
-            print("Target contact: %s" % target_vcard)
-            if action == "move":
-                copy_contact(source_vcard, selected_target_address_book, True)
-            else:
-                print("The selected contacts are already identical")
+    elif source_vcard == target_vcard:
+        # source and target contact are identical
+        print("Target contact: %s" % target_vcard)
+        if action == "move":
+            copy_contact(source_vcard, selected_target_address_book, True)
         else:
-            # source and target contacts are different
-            # either overwrite the target one or merge into target contact
-            print("The address book %s already contains the contact %s\n\n"
-                  "Source\n\n%s\n\nTarget\n\n%s\n\n"
-                  "Possible actions:\n"
-                  "  a: %s anyway\n"
-                  "  m: Merge from source into target contact\n"
-                  "  o: Overwrite target contact\n"
-                  "  q: Quit" % (
-                      target_vcard.address_book, source_vcard,
-                      source_vcard.print_vcard(), target_vcard.print_vcard(),
-                      "Move" if action == "move" else "Copy"))
-            while True:
-                input_string = input("Your choice: ")
-                if input_string.lower() == "a":
-                    copy_contact(source_vcard, selected_target_address_book,
-                                 action == "move")
-                    break
-                if input_string.lower() == "o":
-                    copy_contact(source_vcard, selected_target_address_book,
-                                 action == "move")
-                    target_vcard.delete_vcard_file()
-                    break
-                if input_string.lower() == "m":
-                    merge_existing_contacts(source_vcard, target_vcard,
-                                            action == "move")
-                    break
-                if input_string.lower() in ["", "q"]:
-                    print("Canceled")
-                    break
+            print("The selected contacts are already identical")
+    else:
+        # source and target contacts are different
+        # either overwrite the target one or merge into target contact
+        print("The address book %s already contains the contact %s\n\n"
+              "Source\n\n%s\n\nTarget\n\n%s\n\nPossible actions:\n"
+              "  a: %s anyway\n"
+              "  m: Merge from source into target contact\n"
+              "  o: Overwrite target contact\n"
+              "  q: Quit" % (
+                  target_vcard.address_book, source_vcard,
+                  source_vcard.print_vcard(), target_vcard.print_vcard(),
+                  "Move" if action == "move" else "Copy"))
+        while True:
+            input_string = input("Your choice: ")
+            if input_string.lower() == "a":
+                copy_contact(source_vcard, selected_target_address_book,
+                             action == "move")
+                break
+            if input_string.lower() == "o":
+                copy_contact(source_vcard, selected_target_address_book,
+                             action == "move")
+                target_vcard.delete_vcard_file()
+                break
+            if input_string.lower() == "m":
+                merge_existing_contacts(source_vcard, target_vcard,
+                                        action == "move")
+                break
+            if input_string.lower() in ["", "q"]:
+                print("Canceled")
+                break
 
 
 def parse_args(argv):
