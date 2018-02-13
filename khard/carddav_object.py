@@ -158,14 +158,11 @@ class VCardWrapper:
             self.vcard.remove(item)
 
     @staticmethod
-    def _parse_type_value(types, value, supported_types):
+    def _parse_type_value(types, supported_types):
         """Parse type value of phone numbers, email and post addresses.
 
         :param types: list of type values
         :type types: list(str)
-        :param value: the corresponding label, required for more verbose
-            exceptions
-        :type value: str
         :param supported_types: all allowed standard types
         :type supported_types: list(str)
         :returns: tuple of standard and custom types and pref integer
@@ -634,7 +631,7 @@ class VCardWrapper:
 
     def _add_phone_number(self, type, number):
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), number, self.phone_types_v4 if
+            helpers.string_to_list(type, ","), self.phone_types_v4 if
             self.version == "4.0" else self.phone_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for phone number " + number +
@@ -691,7 +688,7 @@ class VCardWrapper:
 
     def add_email(self, type, address):
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), address, self.email_types_v4 if
+            helpers.string_to_list(type, ","), self.email_types_v4 if
             self.version == "4.0" else self.email_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for email address " + address +
@@ -796,7 +793,7 @@ class VCardWrapper:
     def _add_post_address(self, type, box, extended, street, code, city,
                           region, country):
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), "{}, {}".format(street, city),
+            helpers.string_to_list(type, ","),
             self.address_types_v4 if self.version == "4.0" else
             self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
