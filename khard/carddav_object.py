@@ -1533,15 +1533,15 @@ class CarddavObject(VCardWrapper):
                     if isinstance(anniversary, str):
                         strings.append("Anniversary : text= %s" % anniversary)
                     elif (anniversary.year == 1900 and anniversary.month != 0
-                            and anniversary.day != 0 and anniversary.hour == 0
-                            and anniversary.minute == 0
-                            and anniversary.second == 0
-                            and self.version == "4.0"):
+                          and anniversary.day != 0 and anniversary.hour == 0
+                          and anniversary.minute == 0
+                          and anniversary.second == 0
+                          and self.version == "4.0"):
                         strings.append("Anniversary : --%.2d-%.2d"
                                        % (anniversary.month, anniversary.day))
                     elif ((anniversary.tzname() and anniversary.tzname()[3:])
-                            or anniversary.hour != 0 or anniversary.minute != 0
-                            or anniversary.second != 0):
+                          or anniversary.hour != 0 or anniversary.minute != 0
+                          or anniversary.second != 0):
                         strings.append("Anniversary : %s" %
                                        anniversary.isoformat())
                     else:
