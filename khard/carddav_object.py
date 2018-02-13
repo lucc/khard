@@ -448,8 +448,7 @@ class VCardWrapper:
             names += self._get_last_names()
         if names:
             return helpers.list_to_string(names, " ")
-        else:
-            return self.formatted_name
+        return self.formatted_name
 
     def get_last_name_first_name(self):
         """
@@ -471,8 +470,7 @@ class VCardWrapper:
             return helpers.list_to_string(last_names, " ")
         elif first_and_additional_names:
             return helpers.list_to_string(first_and_additional_names, " ")
-        else:
-            return self.formatted_name
+        return self.formatted_name
 
     def _add_name(self, prefix, first_name, additional_name, last_name,
                   suffix):
@@ -1041,20 +1039,16 @@ class CarddavObject(VCardWrapper):
                     and date.hour == 0 and date.minute == 0 \
                     and date.second == 0:
                 return "--%.2d-%.2d" % (date.month, date.day)
-            elif (date.tzname() and date.tzname()[3:]) or \
-                    (date.hour != 0 or date.minute != 0 or date.second != 0):
+            elif (date.tzname() and date.tzname()[3:]) or (
+                    date.hour != 0 or date.minute != 0 or date.second != 0):
                 if localize:
                     return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
-                else:
-                    utc_offset = -time.timezone / 60 / 60
-                    return date.strftime(
-                        "%Y-%m-%dT%H:%M:%S+" + str(int(utc_offset)).zfill(2) +
-                        ":00")
-            else:
-                if localize:
-                    return date.strftime(locale.nl_langinfo(locale.D_FMT))
-                else:
-                    return date.strftime("%Y-%m-%d")
+                utc_offset = -time.timezone / 60 / 60
+                return date.strftime("%Y-%m-%dT%H:%M:%S+{}:00".format(
+                    str(int(utc_offset)).zfill(2)))
+            elif localize:
+                return date.strftime(locale.nl_langinfo(locale.D_FMT))
+            return date.strftime("%Y-%m-%d")
         return ""
 
     @staticmethod
