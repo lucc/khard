@@ -1258,7 +1258,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     if len(target_address_book_list) == 1 \
             and target_address_book_list[0] == source_vcard.address_book:
         print("The address book %s already contains the contact %s"
-              % (source_vcard, target_address_book_list[0]))
+              % (target_address_book_list[0], source_vcard))
         sys.exit(1)
     else:
         available_address_books = [abook for abook in target_address_book_list
