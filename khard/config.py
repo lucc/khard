@@ -131,6 +131,10 @@ class Config:
         # localize dates
         self._convert_boolean_config_value(self.config["contact table"],
                                            "localize_dates", True)
+        # preferred phone number type
+        if "preferred_phone_number_type" not in self.config['contact table']:
+            # default phone number type: pref
+            self.config['contact table']['preferred_phone_number_type'] = "pref"
 
         # vcard settings
         if "vcard" not in self.config:
@@ -263,3 +267,6 @@ class Config:
 
     def show_nicknames(self):
         return self.config['contact table']['show_nicknames']
+
+    def preferred_phone_number_type(self):
+        return self.config['contact table']['preferred_phone_number_type']

@@ -28,6 +28,8 @@ show_uids = yes
 sort = last_name
 # localize dates: yes / no
 localize_dates = yes
+# set preferred phone number type or nothing for non-filtered alphabetical order
+preferred_phone_number_type = home
 
 [vcard]
 # extend contacts with your own private objects

@@ -325,8 +325,13 @@ def list_contacts(vcard_list):
                 row.append(vcard.get_last_name_first_name())
         if vcard.get_phone_numbers().keys():
             phone_dict = vcard.get_phone_numbers()
-            first_type = sorted(phone_dict.keys(),
-                                key=lambda k: k[0].lower())[0]
+            # filter out preferred phone type if set in config file
+            phone_keys = [x for x in phone_dict.keys() \
+                            if config.preferred_phone_number_type() in x] \
+                         or [x for x in phone_dict.keys() if "pref" in x] \
+                         or phone_dict.keys()
+            # get first key in alphabetical order
+            first_type = sorted(phone_keys, key=lambda k: k[0].lower())[0]
             row.append("%s: %s" % (first_type,
                                    sorted(phone_dict.get(first_type))[0]))
         else:
