@@ -132,9 +132,13 @@ class Config:
         self._convert_boolean_config_value(self.config["contact table"],
                                            "localize_dates", True)
         # preferred phone number type
-        if "preferred_phone_number_type" not in self.config['contact table']:
+        if "preferred_phone_number_type" in self.config['contact table']:
+            if isinstance(self.config['contact table']['preferred_phone_number_type'], str):
+                self.config['contact table']['preferred_phone_number_type'] = \
+                        [self.config['contact table']['preferred_phone_number_type']]
+        else:
             # default phone number type: pref
-            self.config['contact table']['preferred_phone_number_type'] = "pref"
+            self.config['contact table']['preferred_phone_number_type'] = ["pref"]
 
         # vcard settings
         if "vcard" not in self.config:

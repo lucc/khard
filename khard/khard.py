@@ -326,10 +326,16 @@ def list_contacts(vcard_list):
         if vcard.get_phone_numbers().keys():
             phone_dict = vcard.get_phone_numbers()
             # filter out preferred phone type if set in config file
-            phone_keys = [x for x in phone_dict.keys() \
-                            if config.preferred_phone_number_type() in x] \
-                         or [x for x in phone_dict.keys() if "pref" in x] \
-                         or phone_dict.keys()
+            phone_keys = []
+            for pref_type in config.preferred_phone_number_type():
+                for phone_type in phone_dict.keys():
+                    if pref_type.lower() in phone_type.lower():
+                        phone_keys.append(phone_type)
+                if phone_keys:
+                    break
+            if not phone_keys:
+                phone_keys = [x for x in phone_dict.keys() if "pref" in x.lower()] \
+                             or phone_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(phone_keys, key=lambda k: k[0].lower())[0]
             row.append("%s: %s" % (first_type,
