@@ -131,7 +131,9 @@ class Config:
         # localize dates
         self._convert_boolean_config_value(self.config["contact table"],
                                            "localize_dates", True)
-        # preferred phone number type
+
+        # preferred phone number and email address types in contact table
+        # phone type
         if "preferred_phone_number_type" in self.config['contact table']:
             if isinstance(self.config['contact table']['preferred_phone_number_type'], str):
                 self.config['contact table']['preferred_phone_number_type'] = \
@@ -139,6 +141,14 @@ class Config:
         else:
             # default phone number type: pref
             self.config['contact table']['preferred_phone_number_type'] = ["pref"]
+        # email type
+        if "preferred_email_address_type" in self.config['contact table']:
+            if isinstance(self.config['contact table']['preferred_email_address_type'], str):
+                self.config['contact table']['preferred_email_address_type'] = \
+                        [self.config['contact table']['preferred_email_address_type']]
+        else:
+            # default email address  type: pref
+            self.config['contact table']['preferred_email_address_type'] = ["pref"]
 
         # vcard settings
         if "vcard" not in self.config:
@@ -274,3 +284,7 @@ class Config:
 
     def preferred_phone_number_type(self):
         return self.config['contact table']['preferred_phone_number_type']
+
+    def preferred_email_address_type(self):
+        return self.config['contact table']['preferred_email_address_type']
+

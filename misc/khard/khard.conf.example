@@ -31,6 +31,9 @@ localize_dates = yes
 # set a comma separated list of preferred phone number types in descending priority
 # or nothing for non-filtered alphabetical order
 preferred_phone_number_type = pref, cell, home
+# set a comma separated list of preferred email address types in descending priority
+# or nothing for non-filtered alphabetical order
+preferred_email_address_type = pref, work, home
 
 [vcard]
 # extend contacts with your own private objects

@@ -344,8 +344,19 @@ def list_contacts(vcard_list):
             row.append("")
         if vcard.get_email_addresses().keys():
             email_dict = vcard.get_email_addresses()
-            first_type = sorted(email_dict.keys(),
-                                key=lambda k: k[0].lower())[0]
+            # filter out preferred email type if set in config file
+            email_keys = []
+            for pref_type in config.preferred_email_address_type():
+                for email_type in email_dict.keys():
+                    if pref_type.lower() in email_type.lower():
+                        email_keys.append(email_type)
+                if email_keys:
+                    break
+            if not email_keys:
+                email_keys = [x for x in email_dict.keys() if "pref" in x.lower()] \
+                             or email_dict.keys()
+            # get first key in alphabetical order
+            first_type = sorted(email_keys, key=lambda k: k[0].lower())[0]
             row.append("%s: %s" % (first_type,
                                    sorted(email_dict.get(first_type))[0]))
         else:
