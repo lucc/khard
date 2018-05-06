@@ -1639,8 +1639,8 @@ def parse_args(argv):
         description="merge two contacts",
         help="merge two contacts")
     subparsers.add_parser(
-        "modify",
-        aliases=Actions.get_aliases("modify"),
+        "edit",
+        aliases=Actions.get_aliases("edit"),
         parents=[default_addressbook_parser, template_input_file_parser,
                  default_search_parser, sort_parser],
         description="edit the data of a contact",
@@ -1828,7 +1828,7 @@ def main(argv=sys.argv[1:]):
             "#   or with: cat template.yaml | khard new -a address_book\n"
             "\n%s" % (khard_version, helpers.get_new_contact_template(
                 config.get_supported_private_objects())))
-    elif args.action in ["details", "modify", "remove", "source", "export"]:
+    elif args.action in ["details", "edit", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(
             "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
@@ -1842,7 +1842,7 @@ def main(argv=sys.argv[1:]):
                 "# Name: %s\n# Vcard version: %s\n\n%s"
                 % (khard_version, selected_vcard, selected_vcard.version,
                    selected_vcard.get_template()))
-        elif args.action == "modify":
+        elif args.action == "edit":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
                               args.open_editor)
         elif args.action == "remove":
