@@ -1,0 +1,15 @@
+#autoload
+
+_email-khard(){
+  OLDIFS=${IFS}
+  IFS=$'\n'
+  local khard_output=($(khard email -p 2>/dev/null))
+  IFS=$'\t'
+  for i in {1..${#khard_output[@]}}; do
+    local line=($(echo ${khard_output[$i]}))
+    reply+=(${line[1]})
+  done
+  IFS=${OLDIFS}
+  return 300
+}
+
