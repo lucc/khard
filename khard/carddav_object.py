@@ -1354,6 +1354,7 @@ class CarddavObject:
 
     def print_vcard(self, show_address_book=True, show_uid=True):
         strings = []
+
         # name
         if self._get_first_names() or self._get_last_names():
             names = []
@@ -1372,6 +1373,10 @@ class CarddavObject:
         if self._get_organisations():
             strings += helpers.convert_to_yaml(
                 "Organisation", self._get_organisations(), 0, -1, False)
+        # fn as fallback
+        if not strings:
+            strings.append("Name: %s" % self.get_full_name())
+
         # address book name
         if show_address_book:
             strings.append("Address book: %s" % self.address_book.name)
