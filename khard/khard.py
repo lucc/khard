@@ -2,6 +2,8 @@
 
 import argparse
 from email.header import decode_header
+from email import message_from_string
+from email.policy import SMTP as SMTP_POLICY
 import logging
 import os
 import re
@@ -559,34 +561,19 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
 
     """
     # get name and email address
-    email_address = ""
-    name = ""
-    for line in input_from_stdin_or_file.splitlines():
-        if line.startswith("From:"):
-            try:
-                name = line[6:line.index("<")-1]
-                email_address = line[line.index("<")+1:line.index(">")]
-            except ValueError:
-                email_address = line[6:].strip()
-            break
+    message = message_from_string(input_from_stdin_or_file, policy=SMTP_POLICY)
+
     print("Khard: Add email address to contact")
-    if not email_address:
+    if not message['From'].addresses:
         print("Found no email address")
         sys.exit(1)
+
+    email_address = message['From'].addresses[0].addr_spec
+    name = message['From'].addresses[0].display_name
+
     print("Email address: %s" % email_address)
     if not name:
         name = input("Contact's name: ")
-    else:
-        # remove quotes from name string, otherwise decoding fails
-        name = name.replace("\"", "")
-        # fix encoding of senders name
-        name, encoding = decode_header(name)[0]
-        if encoding:
-            name = name.decode(encoding).replace("\"", "")
-        # query user input.
-        user_input = input("Contact's name [%s]: " % name)
-        # if empty, use the extracted name from above
-        name = user_input or name
 
     # search for an existing contact
     selected_vcard = choose_vcard_from_list(
