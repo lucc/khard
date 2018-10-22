@@ -324,7 +324,7 @@ Khard may be used as an external address book for the email client mutt. To acco
 following to your mutt config file (mostly ~/.mutt/muttrc):
 
 ```
-set query_command = "xargs khard email --parsable -- <<< %s"
+set query_command = "echo %s | xargs khard email --parsable --"
 bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
@@ -334,7 +334,7 @@ address books contain hundreds or even thousands of contacts and the query proce
 may try the --search-in-source-files option to speed up the search:
 
 ```
-set query_command = "xargs khard email --parsable --search-in-source-files -- <<< %s"
+set query_command = "echo %s | xargs khard email --parsable --search-in-source-files --"
 ```
 
 To add email addresses to khard's address book, you may also add the following lines to your muttrc file:
