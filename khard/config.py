@@ -52,7 +52,7 @@ class Config:
         # parse config file contents
         try:
             self.config = configobj.ConfigObj(config_file, interpolation=False)
-        except configobj.ParseError as err:
+        except configobj.ConfigObjError as err:
             exit(str(err))
 
         # general settings
