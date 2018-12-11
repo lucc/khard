@@ -587,7 +587,8 @@ def load_address_books(names, config, search_queries):
     # load address books which are defined in the configuration file
     for name in names:
         address_book = config.abook.get_abook(name)
-        address_book.load(search_queries[address_book.name])
+        address_book.load(search_queries[address_book.name],
+                search_in_source_files=config.search_in_source_files())
         yield address_book
 
 

@@ -251,7 +251,7 @@ class VdirAddressBook(AddressBook):
                                     " {} does not exist.".format(path, name))
         super().__init__(name, **kwargs)
 
-    def _find_vcard_files(self, search=None):
+    def _find_vcard_files(self, search=None, search_in_source_files=False):
         """Find all vcard files inside this address book.
 
         If a search string is given only files which contents match that will
@@ -259,12 +259,14 @@ class VdirAddressBook(AddressBook):
 
         :param search: a regular expression to limit the results
         :type search: str
+        :param search_in_source_files: apply search regexp directly on the .vcf files to speed up parsing (less accurate)
+        :type search_in_source_files: bool
         :returns: the paths of the vcard files
         :rtype: generator
 
         """
         files = glob.glob(os.path.join(self.path, "*.vcf"))
-        if search:
+        if search and search_in_source_files:
             for filename in files:
                 with open(filename, "r") as filehandle:
                     if re.search(search, filehandle.read(),
@@ -273,7 +275,7 @@ class VdirAddressBook(AddressBook):
         else:
             yield from files
 
-    def load(self, query=None):
+    def load(self, query=None, search_in_source_files=False):
         """Load all vcard files in this address book from disk.
 
         If a search string is given only files which contents match that will
@@ -281,6 +283,8 @@ class VdirAddressBook(AddressBook):
 
         :param query: a regular expression to limit the results
         :type query: str
+        :param search_in_source_files: apply search regexp directly on the .vcf files to speed up parsing (less accurate)
+        :type search_in_source_files: bool
         :returns: the number of successfully loaded cards and the number of
             errors
         :rtype: int, int
@@ -290,7 +294,8 @@ class VdirAddressBook(AddressBook):
             return
         logging.debug('Loading Vdir %s with query %s', self.name, query)
         errors = 0
-        for filename in self._find_vcard_files(search=query):
+        for filename in self._find_vcard_files(
+                search=query, search_in_source_files=search_in_source_files):
             try:
                 card = CarddavObject.from_file(self, filename,
                                                self._private_objects,
