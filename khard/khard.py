@@ -387,6 +387,13 @@ def list_phone_numbers(phone_number_list):
     print(helpers.pretty_print(table))
 
 
+def list_post_addresses(post_address_list):
+    table = [["Name", "Type", "Post address"]]
+    for row in post_address_list:
+        table.append(row.split("\t"))
+    print(helpers.pretty_print(table))
+
+
 def list_email_addresses(email_address_list):
     table = [["Name", "Type", "E-Mail"]]
     for row in email_address_list:
@@ -973,6 +980,67 @@ def phone_subcommand(search_terms, vcard_list, parsable):
         sys.exit(1)
 
 
+def post_address_subcommand(search_terms, vcard_list, parsable):
+    """Print a contact table. with all postal / mailing addresses
+
+    :param search_terms: used as search term to filter the contacts before
+        printing
+    :type search_terms: str
+    :param vcard_list: the vcards to search for matching entries which should
+        be printed
+    :type vcard_list: list of carddav_object.CarddavObject
+    :param parsable: machine readable output: columns devided by tabulator (\t)
+    :type parsable: bool
+    :returns: None
+    :rtype: None
+
+    """
+    all_post_address_list = []
+    matching_post_address_list = []
+    for vcard in vcard_list:
+        # vcard name
+        if config.display_by_name() == "first_name":
+            name = vcard.get_first_name_last_name()
+        else:
+            name = vcard.get_last_name_first_name()
+        # create post address line list
+        post_address_line_list = []
+        if parsable:
+            for type, post_address_list in sorted(vcard.get_post_addresses().items(),
+                                           key=lambda k: k[0].lower()):
+                for post_address in post_address_list:
+                    post_address_line_list.append(
+                            "\t".join([str(post_address), name, type]))
+        else:
+            for type, post_address_list in sorted(vcard.get_formatted_post_addresses().items(),
+                                           key=lambda k: k[0].lower()):
+                for post_address in sorted(post_address_list):
+                    post_address_line_list.append(
+                            "\t".join([name, type, post_address]))
+        # add to matching and all post address lists
+        for post_address_line in post_address_line_list:
+            if re.search(search_terms,
+                         "%s\n%s" % (post_address_line, post_address_line),
+                         re.IGNORECASE | re.DOTALL):
+                matching_post_address_list.append(post_address_line)
+            # collect all post addresses in a different list as fallback
+            all_post_address_list.append(post_address_line)
+    if matching_post_address_list:
+        if parsable:
+            print('\n'.join(matching_post_address_list))
+        else:
+            list_post_addresses(matching_post_address_list)
+    elif all_post_address_list:
+        if parsable:
+            print('\n'.join(all_post_address_list))
+        else:
+            list_post_addresses(all_post_address_list)
+    else:
+        if not parsable:
+            print("Found no post adresses")
+        sys.exit(1)
+
+
 def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
@@ -1531,6 +1599,16 @@ def parse_args(argv):
     phone_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: number\\tname\\ttype")
+    post_address_parser = subparsers.add_parser(
+        "postaddress",
+        aliases=Actions.get_aliases("postaddress"),
+        parents=[default_addressbook_parser, default_search_parser,
+                 sort_parser],
+        description="list postal addresses",
+        help="list postal addresses")
+    post_address_parser.add_argument(
+        "-p", "--parsable", action="store_true",
+        help="Machine readable format: address\\tname\\ttype")
     subparsers.add_parser(
         "source",
         aliases=Actions.get_aliases("source"),
@@ -1738,6 +1816,8 @@ def main(argv=sys.argv[1:]):
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
         phone_subcommand(args.search_terms, vcard_list, args.parsable)
+    elif args.action == "postaddress":
+        post_address_subcommand(args.search_terms, vcard_list, args.parsable)
     elif args.action == "email":
         email_subcommand(args.search_terms, vcard_list,
                          args.parsable, args.remove_first_line)

@@ -10,6 +10,26 @@ from .object_type import ObjectType
 
 
 def pretty_print(table, justify="L"):
+    # support for multiline columns
+    line_break_table = []
+    for row in table:
+        # get line break count
+        most_line_breaks_in_row = 0
+        for col in row:
+            if str(col).count("\n") > most_line_breaks_in_row:
+                most_line_breaks_in_row = col.count("\n")
+        # fill table rows
+        for index in range(0, most_line_breaks_in_row+1):
+            line_break_row = []
+            for col in row:
+                try:
+                    line_break_row.append(str(col).split("\n")[index])
+                except IndexError:
+                    line_break_row.append("")
+            line_break_table.append(line_break_row)
+    else:
+        # replace table variable
+        table = line_break_table
     # get width for every column
     column_widths = [0] * table[0].__len__()
     offset = 3

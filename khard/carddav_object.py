@@ -459,7 +459,7 @@ class CarddavObject:
                 label_obj.group = group_name
                 label_obj.value = custom_types[0]
 
-    def _get_post_addresses(self):
+    def get_post_addresses(self):
         """
         : returns: dict of type and post address list
         :rtype: dict(str, list(dict(str,list|str)))
@@ -488,43 +488,43 @@ class CarddavObject:
                 helpers.list_to_string(x['street'], " ").lower()))
         return post_adr_dict
 
-    def _get_formatted_post_addresses(self):
+    def get_formatted_post_addresses(self):
         formatted_post_adr_dict = {}
-        for type, post_adr_list in self._get_post_addresses().items():
+        for type, post_adr_list in self.get_post_addresses().items():
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
                 strings = []
-                if "street" in post_adr:
+                if post_adr.get("street"):
                     strings.append(
                         helpers.list_to_string(post_adr.get("street"), "\n"))
-                if "box" in post_adr and "extended" in post_adr:
+                if post_adr.get("box") and post_adr.get("extended"):
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("box"), " "),
                         helpers.list_to_string(post_adr.get("extended"), " ")))
-                elif "box" in post_adr:
+                elif post_adr.get("box"):
                     strings.append(
                         helpers.list_to_string(post_adr.get("box"), " "))
-                elif "extended" in post_adr:
+                elif post_adr.get("extended"):
                     strings.append(
                         helpers.list_to_string(post_adr.get("extended"), " "))
-                if "code" in post_adr and "city" in post_adr:
+                if post_adr.get("code") and post_adr.get("city"):
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("code"), " "),
                         helpers.list_to_string(post_adr.get("city"), " ")))
-                elif "code" in post_adr:
+                elif post_adr.get("code"):
                     strings.append(
                         helpers.list_to_string(post_adr.get("code"), " "))
-                elif "city" in post_adr:
+                elif post_adr.get("city"):
                     strings.append(
                         helpers.list_to_string(post_adr.get("city"), " "))
-                if "region" in post_adr and "country" in post_adr:
+                if post_adr.get("region") and post_adr.get("country"):
                     strings.append("{}, {}".format(
                         helpers.list_to_string(post_adr.get("region"), " "),
                         helpers.list_to_string(post_adr.get("country"), " ")))
-                elif "region" in post_adr:
+                elif post_adr.get("region"):
                     strings.append(
                         helpers.list_to_string(post_adr.get("region"), " "))
-                elif "country" in post_adr:
+                elif post_adr.get("country"):
                     strings.append(
                         helpers.list_to_string(post_adr.get("country"), " "))
                 formatted_post_adr_dict[type].append('\n'.join(strings))
@@ -1251,7 +1251,7 @@ class CarddavObject:
 
             elif line.lower().startswith("address"):
                 strings.append("Address :")
-                if not self._get_post_addresses().keys():
+                if not self.get_post_addresses().keys():
                     strings.append("    home :")
                     strings.append("        Box      : ")
                     strings.append("        Extended : ")
@@ -1262,7 +1262,7 @@ class CarddavObject:
                     strings.append("        Country  : ")
                 else:
                     for type, post_adr_list in sorted(
-                            self._get_post_addresses().items(),
+                            self.get_post_addresses().items(),
                             key=lambda k: k[0].lower()):
                         strings.append("    %s:" % type)
                         for post_adr in post_adr_list:
@@ -1420,10 +1420,10 @@ class CarddavObject:
                     type, email_list, 4, -1, False)
 
         # post addresses
-        if self._get_post_addresses().keys():
+        if self.get_post_addresses().keys():
             strings.append("Address")
             for type, post_adr_list in sorted(
-                    self._get_formatted_post_addresses().items(),
+                    self.get_formatted_post_addresses().items(),
                     key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                     type, post_adr_list, 4, -1, False)
