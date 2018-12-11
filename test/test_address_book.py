@@ -93,7 +93,7 @@ class VcardAdressBookLoad(unittest.TestCase):
 
     def test_search_in_source_files_only_loads_matching_cards(self):
         abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
-        abook.load(query='second')
+        abook.load(query='second', search_in_source_files=True)
         self.assertEqual(len(abook.contacts), 1)
 
     def test_loading_unparsable_vcard_fails(self):
