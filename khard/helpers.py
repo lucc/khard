@@ -255,24 +255,24 @@ def get_new_contact_template(supported_private_objects=[]):
         #       - name2
         #       - name3
         #   Last name  : name4
-        Prefix     :
-        First name :
-        Additional :
-        Last name  :
-        Suffix     :
+        Prefix     : 
+        First name : 
+        Additional : 
+        Last name  : 
+        Suffix     : 
 
         # nickname
         # may contain a string or a list of strings
-        Nickname :
+        Nickname : 
 
         # important dates
         # Formats:
         #   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
         #   vcard 4.0 only: --mm-dd or text= string value
         # anniversary
-        Anniversary :
+        Anniversary : 
         # birthday
-        Birthday :
+        Birthday : 
 
         # organisation
         # format:
@@ -286,17 +286,17 @@ def get_new_contact_template(supported_private_objects=[]):
         #       -
         #           - company
         #           - unit
-        Organisation :
+        Organisation : 
 
         # organisation title and role
         # every entry may contain a string or a list of strings
         #
         # title at organisation
         # example usage: research scientist
-        Title :
+        Title : 
         # role at organisation
         # example usage: project leader
-        Role  :
+        Role  : 
 
         # phone numbers
         # format:
@@ -314,8 +314,8 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Alternatively you may use a single custom label (only letters).
         #   But beware, that not all address book clients will support custom labels.
         Phone :
-            cell :
-            home :
+            cell : 
+            home : 
 
         # email addresses
         # format like phone numbers above
@@ -324,8 +324,8 @@ def get_new_contact_template(supported_private_objects=[]):
         #   vcard 4.0: At least one of home, internet, pref, work
         #   Alternatively you may use a single custom label (only letters).
         Email :
-            home :
-            work :
+            home : 
+            work : 
 
         # post addresses
         # allowed types:
@@ -334,13 +334,13 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Alternatively you may use a single custom label (only letters).
         Address :
             home :
-                Box      :
-                Extended :
-                Street   :
-                Code     :
-                City     :
-                Region   :
-                Country  :
+                Box      : 
+                Extended : 
+                Street   : 
+                Code     : 
+                City     : 
+                Region   : 
+                Country  : 
 
         # categories or tags
         # format:
@@ -349,11 +349,11 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Categories :
         #       - category1
         #       - category2
-        Categories :
+        Categories : 
 
         # web pages
         # may contain a string or a list of strings
-        Webpage :
+        Webpage : 
 
         # private objects
         # define your own private objects in the vcard section of your khard config file
@@ -371,6 +371,6 @@ def get_new_contact_template(supported_private_objects=[]):
         #   Note : |
         #       line one
         #       line two
-        Note :
+        Note : 
         """ % '\n'.join(formatted_private_objects))
 
