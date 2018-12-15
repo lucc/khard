@@ -352,15 +352,21 @@ class CarddavObject:
         phone_dict = {}
         for child in self.vcard.getChildren():
             if child.name == "TEL":
+                # phone types
                 type = helpers.list_to_string(
                     self._get_types_for_vcard_object(child, "voice"), ", ")
                 if type not in phone_dict:
                     phone_dict[type] = []
-                try:
-                    # detect uri
-                    if child.params.get("VALUE")[0] == "uri":
-                        phone_dict[type].append(child.value.split(":")[1])
-                except (IndexError, TypeError):
+                # phone value
+                #
+                # vcard version 4.0 allows URI scheme "tel" in phone attribute value
+                # Doc: https://tools.ietf.org/html/rfc6350#section-6.4.1
+                # example: TEL;VALUE=uri;PREF=1;TYPE="voice,home":tel:+1-555-555-5555;ext=5555
+                if child.value.lower().startswith("tel:"):
+                    # cut off the "tel:" uri prefix
+                    phone_dict[type].append(child.value[4:])
+                else:
+                    # free text field
                     phone_dict[type].append(child.value)
         # sort phone number lists
         for number_list in phone_dict.values():
