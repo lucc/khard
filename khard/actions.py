@@ -11,7 +11,6 @@ class Actions:
         "addressbooks": ["abooks"],
         "birthdays":    ["bdays"],
         "copy":         ["cp"],
-        "show":         ["details"],
         "email":        [],
         "export":       [],
         "filename":     ["file"],
@@ -23,7 +22,9 @@ class Actions:
         "phone":        [],
         "postaddress":  ["post", "postaddr"],
         "remove":       ["delete", "del", "rm"],
-        "source":       ["src"]
+        "show":         ["details"],
+        "source":       ["src"],
+        "template":     [],
     }
 
     @classmethod

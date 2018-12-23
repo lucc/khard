@@ -1541,6 +1541,10 @@ def parse_args(argv):
         "-o", "--output-file", default=sys.stdout,
         type=argparse.FileType("w"),
         help="Specify output template file name or use stdout by default")
+    subparsers.add_parser(
+        "template",
+        parents=[default_addressbook_parser],
+        help="print an empty yaml template")
     export_parser = subparsers.add_parser(
         "export",
         aliases=Actions.get_aliases("export"),
@@ -1550,9 +1554,6 @@ def parse_args(argv):
         "also used for editing and creating contacts",
         help="export a contact to the custom yaml format that is also "
         "used for editing and creating contacts")
-    export_parser.add_argument(
-        "--empty-contact-template", action="store_true",
-        help="Export an empty contact template")
     export_parser.add_argument(
         "-o", "--output-file", default=sys.stdout,
         type=argparse.FileType("w"),
@@ -1759,6 +1760,14 @@ def main(argv=sys.argv[1:]):
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.abooks))
         return
+    elif args.action == "template":
+        print("# Contact template for khard version %s\n#\n"
+              "# Use this yaml formatted template to create a new contact:\n"
+              "#   either with: khard new -a address_book -i template.yaml\n"
+              "#   or with: cat template.yaml | khard new -a address_book\n"
+              "\n%s" % (khard_version, helpers.get_new_contact_template(
+                        config.get_supported_private_objects())))
+        return
 
     merge_args_into_config(args, config)
     search_queries = prepare_search_queries(args)
@@ -1820,16 +1829,6 @@ def main(argv=sys.argv[1:]):
                          args.parsable, args.remove_first_line)
     elif args.action == "list":
         list_subcommand(vcard_list, args.parsable)
-    elif args.action == "export" and "empty_contact_template" in args \
-            and args.empty_contact_template:
-        # export empty template must work without selecting a contact first
-        args.output_file.write(
-            "# Contact template for khard version %s\n#\n"
-            "# Use this yaml formatted template to create a new contact:\n"
-            "#   either with: khard new -a address_book -i template.yaml\n"
-            "#   or with: cat template.yaml | khard new -a address_book\n"
-            "\n%s" % (khard_version, helpers.get_new_contact_template(
-                config.get_supported_private_objects())))
     elif args.action in ["show", "edit", "remove", "source", "export"]:
         if args.action == "export":
             args.action = "show"
