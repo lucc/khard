@@ -1528,8 +1528,8 @@ def parse_args(argv):
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     subparsers.add_parser(
-        "details",
-        aliases=Actions.get_aliases("details"),
+        "show",
+        aliases=Actions.get_aliases("show"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="display detailed information about one contact",
@@ -1823,13 +1823,13 @@ def main(argv=sys.argv[1:]):
             "#   or with: cat template.yaml | khard new -a address_book\n"
             "\n%s" % (khard_version, helpers.get_new_contact_template(
                 config.get_supported_private_objects())))
-    elif args.action in ["details", "edit", "remove", "source", "export"]:
+    elif args.action in ["show", "edit", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(
             "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
             print("Found no contact")
             sys.exit(1)
-        if args.action == "details":
+        if args.action == "show":
             print(selected_vcard.print_vcard())
         elif args.action == "export":
             args.output_file.write(

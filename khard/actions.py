@@ -11,7 +11,7 @@ class Actions:
         "addressbooks": ["abooks"],
         "birthdays":    ["bdays"],
         "copy":         ["cp"],
-        "details":      ["show"],
+        "show":         ["details"],
         "email":        [],
         "export":       [],
         "filename":     ["file"],
