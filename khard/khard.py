@@ -1541,10 +1541,7 @@ def parse_args(argv):
         "-o", "--output-file", default=sys.stdout,
         type=argparse.FileType("w"),
         help="Specify output template file name or use stdout by default")
-    subparsers.add_parser(
-        "template",
-        parents=[default_addressbook_parser],
-        help="print an empty yaml template")
+    subparsers.add_parser("template", help="print an empty yaml template")
     export_parser = subparsers.add_parser(
         "export",
         aliases=Actions.get_aliases("export"),
