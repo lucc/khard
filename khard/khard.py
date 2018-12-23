@@ -1550,10 +1550,8 @@ def parse_args(argv):
         aliases=Actions.get_aliases("export"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
-        description="export a contact to the custom yaml format that is "
-        "also used for editing and creating contacts",
-        help="export a contact to the custom yaml format that is also "
-        "used for editing and creating contacts")
+        description="DEPRECATED (an alias for 'show --format=yaml')",
+        help="DEPRECATED (an alias for 'show --format=yaml')")
     export_parser.add_argument(
         "-o", "--output-file", default=sys.stdout,
         type=argparse.FileType("w"),
@@ -1831,6 +1829,7 @@ def main(argv=sys.argv[1:]):
         list_subcommand(vcard_list, args.parsable)
     elif args.action in ["show", "edit", "remove", "source", "export"]:
         if args.action == "export":
+            logging.info("Deprecated subcommand: use 'show --format=yaml'.")
             args.action = "show"
             args.format = "yaml"
         selected_vcard = choose_vcard_from_list(
