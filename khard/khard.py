@@ -1840,15 +1840,16 @@ def main(argv=sys.argv[1:]):
             sys.exit(1)
         if args.action == "show":
             if args.format == "pretty":
-                args.output_file.write(selected_vcard.print_vcard())
+                output = selected_vcard.print_vcard()
             elif args.format == "vcard":
-                args.output_file.write(open(selected_vcard.filename).read())
+                output = open(selected_vcard.filename).read()
             else:
-                args.output_file.write(
-                    "# Contact template for khard version %s\n"
-                    "# Name: %s\n# Vcard version: %s\n\n%s"
-                    % (khard_version, selected_vcard, selected_vcard.version,
-                       selected_vcard.get_template()))
+                output = "# Contact template for khard version {}\n" \
+                         "# Name: {}\n# Vcard version: {}\n\n{}".format(
+                             khard_version, selected_vcard,
+                             selected_vcard.version,
+                             selected_vcard.get_template())
+            args.output_file.write(output)
         elif args.action == "edit":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
                               args.open_editor, args.format == 'vcard')
