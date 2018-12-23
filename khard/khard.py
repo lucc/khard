@@ -1535,7 +1535,7 @@ def parse_args(argv):
         description="display detailed information about one contact",
         help="display detailed information about one contact")
     show_parser.add_argument(
-        "--format", choices=("pretty", "yaml"), default="pretty",
+        "--format", choices=("pretty", "yaml", "vcard"), default="pretty",
         help="select the output format")
     show_parser.add_argument(
         "-o", "--output-file", default=sys.stdout,
@@ -1840,7 +1840,9 @@ def main(argv=sys.argv[1:]):
             sys.exit(1)
         if args.action == "show":
             if args.format == "pretty":
-                print(selected_vcard.print_vcard())
+                args.output_file.write(selected_vcard.print_vcard())
+            elif args.format == "vcard":
+                args.output_file.write(open(selected_vcard.filename).read())
             else:
                 args.output_file.write(
                     "# Contact template for khard version %s\n"
