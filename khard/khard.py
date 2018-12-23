@@ -1527,13 +1527,20 @@ def parse_args(argv):
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
-    subparsers.add_parser(
+    show_parser = subparsers.add_parser(
         "show",
         aliases=Actions.get_aliases("show"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="display detailed information about one contact",
         help="display detailed information about one contact")
+    show_parser.add_argument(
+        "--format", choices=("pretty", "yaml"), default="pretty",
+        help="select the output format")
+    show_parser.add_argument(
+        "-o", "--output-file", default=sys.stdout,
+        type=argparse.FileType("w"),
+        help="Specify output template file name or use stdout by default")
     export_parser = subparsers.add_parser(
         "export",
         aliases=Actions.get_aliases("export"),
@@ -1824,19 +1831,23 @@ def main(argv=sys.argv[1:]):
             "\n%s" % (khard_version, helpers.get_new_contact_template(
                 config.get_supported_private_objects())))
     elif args.action in ["show", "edit", "remove", "source", "export"]:
+        if args.action == "export":
+            args.action = "show"
+            args.format = "yaml"
         selected_vcard = choose_vcard_from_list(
             "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
             print("Found no contact")
             sys.exit(1)
         if args.action == "show":
-            print(selected_vcard.print_vcard())
-        elif args.action == "export":
-            args.output_file.write(
-                "# Contact template for khard version %s\n"
-                "# Name: %s\n# Vcard version: %s\n\n%s"
-                % (khard_version, selected_vcard, selected_vcard.version,
-                   selected_vcard.get_template()))
+            if args.format == "pretty":
+                print(selected_vcard.print_vcard())
+            else:
+                args.output_file.write(
+                    "# Contact template for khard version %s\n"
+                    "# Name: %s\n# Vcard version: %s\n\n%s"
+                    % (khard_version, selected_vcard, selected_vcard.version,
+                       selected_vcard.get_template()))
         elif args.action == "edit":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
                               args.open_editor, args.format == 'vcard')

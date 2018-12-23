@@ -21,7 +21,7 @@ class Actions:
         "move":         ["mv"],
         "new":          ["add"],
         "phone":        [],
-        "postaddress":        ["post", "postaddr"],
+        "postaddress":  ["post", "postaddr"],
         "remove":       ["delete", "del", "rm"],
         "source":       ["src"]
     }
