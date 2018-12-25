@@ -1,4 +1,4 @@
-# example configuration file for khard version >= 0.11.0
+# example configuration file for khard version >= 0.13.0
 # place it under $HOME/.config/khard/khard.conf
 
 [addressbooks]

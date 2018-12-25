@@ -1,118 +1,62 @@
-v0.1.0: 2014.09.18:
-- initial release.
+Change Log
+==========
 
-v0.2.0: 2014.10.01
-- new project structure
-- added twinkle plugin
-- extended readme file
 
-v0.2.1: 2015.01.14
-- created pypi package
-- missing attribute "fn" in VCard file is handled correctly now.
+v0.13.0: 2018-12-25
+- New action postaddress: lists all postal (addresses analog to email and phone actions, #196)
+- New zsh completion function for email addresses
+- New config variables for the contact table section in khard.conf: preferred_email_address_type and preferred_phone_number_type
+- Slight speed improvements
+- Test suite created
+- Several bug fixes
 
-v0.2.2: 2015.03.14
-- Added support for alot (MUA)
 
-v0.3.0: 2015.03.25
-- Added support for jabber, skype, twitter and webpage
-- Created a filter for malformed vcard attributes
+v0.12.2: 2018-01-21
+- Fixed: Found contact twice when the whole uid was used with -u (#161)
+- Fixed: A minor bug in the contact search function (#160)
 
-v0.3.1: 2015.03.26
-- Nickname attribute added
-- New parameter in config file: show_nicknames = yes / no
 
-v0.3.2: 2015.03.27
-- Read-only support for Categories attribute
+v0.12.1: 2018-01-14
+- Fix for issue #148: Config variable "sort" not longer mandatory in config file
 
-v0.3.3: 2015.05.07
-- twinkle option was renamed to phone: Now it prints all phone numbers like the mutt option does for
-  e-mail addresses (more general approach for external phone clients)
-- adapted twinkle plugin for use with the new phone option
 
-v0.4.0: 2015.06.15
-- new option "add-email": Get full email from stdin, filter senders mail address and add that
-  address to an existing contact or create a new one. Feature tested with email client mutt.
+v0.12.0: 2018-01-12
+- Vcard: Support for anniversary attribute (#138)
+- Config: New config parameter: localize_dates (#118)
+- Action list: -p / --parsable prints a tab separated contact list (#141)
+- Action remove: --force: Remove contact without confirmation (#140)
+- Mutt: You have to update the query command in mutt's config file: set query_command= "khard email --parsable '%s'"
+- Minor changes in khard example config, zsh completion function and twinkle scripts
+- Fix: Results of phone number search improved
+- Fix: Yaml parser switched from pyyaml to ruamel.yaml to allow special unicode characters in the contact template (#133)
+- Fix: Accentuated characters sorted wrong in contact list (#127)
 
-v0.4.1: 2015.07.16
-- improved search results for phone, mutt and alot
 
-v0.5.0: 2015.09.05
-- New option to merge two contacts
-- Support for XDG_CONFIG_HOME parameter
-- Post address: Added support for street and house number field with multiple lines
+v0.11.4: 2017-02-16
+- Unpinned vobject library version (base64 decoding/encoding bug was fixed upstream)
+- New option: -c / --config /path/to/config.file
+- Changed short option of --search-in-source-files from -c to -f to avoid confusion with the new -c / --config option
+- Minor bug fixes
 
-v0.6.0: 2015.09.20
-- New options copy contact and move contact
-- Changed behavior of merge command (have a look into the readme file for details)
-- Get path to editor and merge editor from the $PATH variable
-- Code cleanup: new object class AddressBook
 
-v0.6.1: 2015.10.06
-- Added title and role attribute
-- Removed input restrictions of name and post address fields
-- Parameter default_country in config file is not longer in use
+v0.11.3: 2016-09-20
+- Pinned version of vcard library vobject to version 0.9.2 due to bug https://github.com/eventable/vobject/issues/39
+- Added some new action aliases
+- Fix for birthday date processing (#95)
 
-v0.6.2: 2015.10.10
-- Added completion function for zsh
 
-v0.6.3: 2015.10.24
-- Added note attribute
+v0.11.2: 2016-08-31
+- Extended the photo parsing workaround from khard version 0.11.1 to all base64 encoded vcard attributes (#86 and #87)
+- Show additional/middle names in name column of contact table (#89)
+- Added khard-runner.py helper script to simplify source code launching
 
-v0.7.0: 2015.12.18
-- Support for vobject library version >= 0.8.2 from https://github.com/tBaxter/vobject
-- Contact template syntax switched to yaml
-- alot and mutt actions summarized to new email action (please have a look into the readme file for configuration changes)
-- Support for extended name attributes
-- Create and modify contact from stdin or from template file
-- New action "export" to export data of existing contact in yaml format
-- New argument --open-editor to open the preferred text editor after successful creation of new
-  contact from stdin or template file
-- New argument {-u, --uid} to select contact by uid
-- Added write support for categories attribute
-- Added wrapper script for sdiff
-- Fixed a bug, which prevented the creation of new contacts with the add-email action
 
-v0.7.1: 2016.01.01
-- Added support for multiple instances of one vcard attribute
+v0.11.1: 2016-07-31
+- Workaround for the photo attribute parsing issue of vobject library 0.9.2 (#80)
+- setup.py: try to convert readme file into restructured text format (pypi requirement) and specify encoding explicitly (#83)
 
-v0.7.2: 2016.01.03
-- Use of module atomicwrites to securely write vcards to disk
 
-v0.7.3: 2016.01.08
-- Cancel without further actions if the opened contacts editor is closed without saving (determined
-  by modification date of template file)
-
-v0.7.4: 2016.01.11
-- Fixed uid dictionary creation
-
-v0.8.0: 2016.01.15
-- Sort contact table by first or last name (take note of changed behaviour of "sort" option)
-- New option -g, --group-by-addressbook to group contact table by address book
-- Changes in config file:
-    - New group: contact table
-        - new option: sort to sort contact table by first or last name
-        - New option: group_by_addressbook to group contact table by address book
-    - Moved show_nicknames option from group "general" to group "contact table"
-
-v0.8.1: 2016.01.16
-- New option "show_uids" in config file to disable uid column in contact table
-
-v0.9.0: 2016.03.17
-- Fully restructured command line interface for better usability:
-    - general help with: khard -h
-    - help for a specific action: khard action -h
-- Updated zsh completion function
-- New Action addressbooks
-- New option -p|--pretty for email and phone actions to get pretty formatted output
-- Fix: Only delete contact after modify, copy or move action was completed successfully
-
-v0.10.0: 2016.05.02
-- New Action birthday: list birthdays, sorted by month and day
-- option -p, --pretty was renamed to -p, --parsable: So, the pretty formatted email or
-  phone number table is the default now. Please adapt the configuration files of potential email and
-  phone applications (e.g.: mutt email -p %s)
-
-v0.11.0: 2016.07.17
+v0.11.0: 2016-07-17
 - Made khard python3 compatible (#59)
 - Enhanced read and write support for vcard versions 3.0 and 4.0
 - user input parser:
@@ -129,41 +73,141 @@ v0.11.0: 2016.07.17
 - Removed davcontroler module due to the python3 incompatibility (script moved into the misc folder)
 - Updated zsh completion function and khards example config file
 
-v0.11.1: 2016.07.31
-- Workaround for the photo attribute parsing issue of vobject library 0.9.2 (#80)
-- setup.py: try to convert readme file into restructured text format (pypi requirement) and specify encoding explicitly (#83)
 
-v0.11.2: 2016.08.31
-- Extended the photo parsing workaround from khard version 0.11.1 to all base64 encoded vcard attributes (#86 and #87)
-- Show additional/middle names in name column of contact table (#89)
-- Added khard-runner.py helper script to simplify source code launching
+v0.10.0: 2016-05-02
+- New Action birthday: list birthdays, sorted by month and day
+- option -p, --pretty was renamed to -p, --parsable: So, the pretty formatted email or
+  phone number table is the default now. Please adapt the configuration files of potential email and
+  phone applications (e.g.: mutt email -p %s)
 
-v0.11.3: 2016.09.20
-- Pinned version of vcard library vobject to version 0.9.2 due to bug https://github.com/eventable/vobject/issues/39
-- Added some new action aliases
-- Fix for birthday date processing (#95)
 
-v0.11.4: 2017.02.16
-- Unpinned vobject library version (base64 decoding/encoding bug was fixed upstream)
-- New option: -c / --config /path/to/config.file
-- Changed short option of --search-in-source-files from -c to -f to avoid confusion with the new -c / --config option
-- Minor bug fixes
+v0.9.0: 2016-03-17
+- Fully restructured command line interface for better usability:
+    - general help with: khard -h
+    - help for a specific action: khard action -h
+- Updated zsh completion function
+- New Action addressbooks
+- New option -p|--pretty for email and phone actions to get pretty formatted output
+- Fix: Only delete contact after modify, copy or move action was completed successfully
 
-v0.12.0: 2018.01.12
-- Vcard: Support for anniversary attribute (#138)
-- Config: New config parameter: localize_dates (#118)
-- Action list: -p / --parsable prints a tab separated contact list (#141)
-- Action remove: --force: Remove contact without confirmation (#140)
-- Mutt: You have to update the query command in mutt's config file: set query_command= "khard email --parsable '%s'"
-- Minor changes in khard example config, zsh completion function and twinkle scripts
-- Fix: Results of phone number search improved
-- Fix: Yaml parser switched from pyyaml to ruamel.yaml to allow special unicode characters in the contact template (#133)
-- Fix: Accentuated characters sorted wrong in contact list (#127)
 
-v0.12.1: 2018.01.14
-- Fix for issue #148: Config variable "sort" not longer mandatory in config file
+v0.8.1: 2016-01-16
+- New option "show_uids" in config file to disable uid column in contact table
 
-v0.12.2: 2018.01.21
-- Fixed: Found contact twice when the whole uid was used with -u (#161)
-- Fixed: A minor bug in the contact search function (#160)
+
+v0.8.0: 2016-01-15
+- Sort contact table by first or last name (take note of changed behaviour of "sort" option)
+- New option -g, --group-by-addressbook to group contact table by address book
+- Changes in config file:
+    - New group: contact table
+        - new option: sort to sort contact table by first or last name
+        - New option: group_by_addressbook to group contact table by address book
+    - Moved show_nicknames option from group "general" to group "contact table"
+
+
+v0.7.4: 2016-01-11
+- Fixed uid dictionary creation
+
+
+v0.7.3: 2016-01-08
+- Cancel without further actions if the opened contacts editor is closed without saving (determined
+  by modification date of template file)
+
+
+v0.7.2: 2016-01-03
+- Use of module atomicwrites to securely write vcards to disk
+
+
+v0.7.1: 2016-01-01
+- Added support for multiple instances of one vcard attribute
+
+
+v0.7.0: 2015-12-18
+- Support for vobject library version >= 0.8.2 from https://github.com/tBaxter/vobject
+- Contact template syntax switched to yaml
+- alot and mutt actions summarized to new email action (please have a look into the readme file for configuration changes)
+- Support for extended name attributes
+- Create and modify contact from stdin or from template file
+- New action "export" to export data of existing contact in yaml format
+- New argument --open-editor to open the preferred text editor after successful creation of new
+  contact from stdin or template file
+- New argument {-u, --uid} to select contact by uid
+- Added write support for categories attribute
+- Added wrapper script for sdiff
+- Fixed a bug, which prevented the creation of new contacts with the add-email action
+
+
+v0.6.3: 2015-10-24
+- Added note attribute
+
+
+v0.6.2: 2015-10-10
+- Added completion function for zsh
+
+
+v0.6.1: 2015-10-06
+- Added title and role attribute
+- Removed input restrictions of name and post address fields
+- Parameter default_country in config file is not longer in use
+
+
+v0.6.0: 2015-09-20
+- New options copy contact and move contact
+- Changed behavior of merge command (have a look into the readme file for details)
+- Get path to editor and merge editor from the $PATH variable
+- Code cleanup: new object class AddressBook
+
+
+v0.5.0: 2015-09-05
+- New option to merge two contacts
+- Support for XDG_CONFIG_HOME parameter
+- Post address: Added support for street and house number field with multiple lines
+
+
+v0.4.1: 2015-07-16
+- improved search results for phone, mutt and alot
+
+
+v0.4.0: 2015-06-15
+- new option "add-email": Get full email from stdin, filter senders mail address and add that
+  address to an existing contact or create a new one. Feature tested with email client mutt.
+
+
+v0.3.3: 2015-05-07
+- twinkle option was renamed to phone: Now it prints all phone numbers like the mutt option does for
+  e-mail addresses (more general approach for external phone clients)
+- adapted twinkle plugin for use with the new phone option
+
+
+v0.3.2: 2015-03-27
+- Read-only support for Categories attribute
+
+
+v0.3.1: 2015-03-26
+- Nickname attribute added
+- New parameter in config file: show_nicknames = yes / no
+
+
+v0.3.0: 2015-03-25
+- Added support for jabber, skype, twitter and webpage
+- Created a filter for malformed vcard attributes
+
+
+v0.2.2: 2015-03-14
+- Added support for alot (MUA)
+
+
+v0.2.1: 2015-01-14
+- created pypi package
+- missing attribute "fn" in VCard file is handled correctly now.
+
+
+v0.2.0: 2014-10-01
+- new project structure
+- added twinkle plugin
+- extended readme file
+
+
+v0.1.0: 2014-09-18:
+- initial release.
 

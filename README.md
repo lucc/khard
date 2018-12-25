@@ -7,7 +7,7 @@ alot and the SIP client twinkle. You can find more information about khard and t
 synchronization process
 [here](http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/).
 
-Khard is developed and tested on Debian operating system, versions 7, 8 and testing but should run
+Khard is developed and tested on Debian operating system, versions 7, 8 and 9 but should run
 on all Unix-like systems.
 
 If you encounter bugs, please contact me via email: email (at) eric-scheibler (dot) de.
@@ -324,7 +324,7 @@ Khard may be used as an external address book for the email client mutt. To acco
 following to your mutt config file (mostly ~/.mutt/muttrc):
 
 ```
-set query_command= "khard email --parsable '%s'"
+set query_command= "khard email --parsable %s"
 bind editor <Tab> complete-query
 bind editor ^T    complete
 ```
@@ -334,7 +334,13 @@ address books contain hundreds or even thousands of contacts and the query proce
 may try the --search-in-source-files option to speed up the search:
 
 ```
-set query_command= "khard email --parsable --search-in-source-files '%s'"
+set query_command= "khard email --parsable --search-in-source-files %s"
+```
+
+If you want to complete multi-word search strings like "john smith" then you may try out the following instead:
+
+```
+set query_command = "echo %s | xargs khard email --parsable --"
 ```
 
 To add email addresses to khard's address book, you may also add the following lines to your muttrc file:
@@ -413,7 +419,8 @@ script_remote_release=/home/USERNAME/.twinkle/scripts/incoming_call_ended.py
 Zsh
 ---
 
-The file misc/zsh/_khard contains a zsh completion definition for khard.
+The file misc/zsh/_khard contains a khard cli completion function for the zsh and
+misc/zsh/_email-khard completes email addresses.
 
 Install by copying to a directory where zsh searches for completion functions (the $fpath array).
 If you, for example, put all completion functions into the folder ~/.zsh/completions you must add
