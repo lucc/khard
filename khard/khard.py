@@ -32,7 +32,8 @@ def write_temp_file(text=""):
     :rtype: str
 
     """
-    with NamedTemporaryFile(mode='w+t', delete=False) as tempfile:
+    with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) \
+         as tempfile:
         tempfile.write(text)
         return tempfile.name
 
