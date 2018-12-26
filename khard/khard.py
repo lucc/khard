@@ -98,7 +98,7 @@ def modify_existing_contact(old_contact):
     temp_file_name = write_temp_file(
         "# Edit contact: %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (old_contact, old_contact.address_book, old_contact.get_version(),
+        % (old_contact, old_contact.address_book, old_contact.version,
            old_contact.get_template()))
 
     temp_file_creation = helpers.file_modification_date(temp_file_name)
@@ -148,14 +148,13 @@ def modify_existing_contact(old_contact):
 def merge_existing_contacts(source_contact, target_contact,
                             delete_source_contact):
     # show warning, if target vcard version is not 3.0 or 4.0
-    if target_contact.get_version() not in config.supported_vcard_versions:
+    if target_contact.version not in config.supported_vcard_versions:
         print("Warning:\nThe target contact in which to merge is based on "
               "vcard version %s but khard only supports the modification of "
               "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
               "will be converted to vcard version %s but beware: This could "
               "corrupt the contact file or cause data loss."
-              % (target_contact.get_version(),
-                 config.get_preferred_vcard_version()))
+              % (target_contact.version, config.get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -168,14 +167,14 @@ def merge_existing_contacts(source_contact, target_contact,
     source_temp_file_name = write_temp_file(
         "# merge from %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (source_contact, source_contact.address_book,
-           source_contact.get_version(), source_contact.get_template()))
+        % (source_contact, source_contact.address_book, source_contact.version,
+           source_contact.get_template()))
     # target vcard
     target_temp_file_name = write_temp_file(
         "# merge into %s\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (target_contact, target_contact.address_book,
-           target_contact.get_version(), target_contact.get_template()))
+        % (target_contact, target_contact.address_book, target_contact.version,
+           target_contact.get_template()))
 
     target_temp_file_creation = helpers.file_modification_date(
         target_temp_file_name)
@@ -259,14 +258,13 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         # if source file should be moved, get its file location to delete after
         # successful movement
         source_contact_filename = contact.filename
-    if not delete_source_contact or not contact.get_uid():
+    if not delete_source_contact or not contact.uid:
         # if copy contact or contact has no uid yet
         # create a new uid
-        contact.delete_vcard_object("UID")
-        contact.add_uid(helpers.get_random_uid())
+        contact.uid = helpers.get_random_uid()
     # set destination file name
     contact.filename = os.path.join(target_address_book.path,
-                                    "%s.vcf" % contact.get_uid())
+                                    "%s.vcf" % contact.uid)
     # save
     contact.write_to_file()
     # delete old file
@@ -311,32 +309,30 @@ def list_contacts(vcard_list):
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index + 1)
-        if vcard.get_nicknames() and config.show_nicknames():
+        if vcard.nicknames and config.show_nicknames():
             if config.display_by_name() == "first_name":
                 row.append("%s (Nickname: %s)" % (
-                    vcard.get_first_name_last_name(),
-                    vcard.get_nicknames()[0]))
+                    vcard.get_first_name_last_name(), vcard.nicknames[0]))
             else:
                 row.append("%s (Nickname: %s)" % (
-                    vcard.get_last_name_first_name(),
-                    vcard.get_nicknames()[0]))
+                    vcard.get_last_name_first_name(), vcard.nicknames[0]))
         else:
             if config.display_by_name() == "first_name":
                 row.append(vcard.get_first_name_last_name())
             else:
                 row.append(vcard.get_last_name_first_name())
-        if vcard.get_phone_numbers().keys():
-            phone_dict = vcard.get_phone_numbers()
+        if vcard.phone_numbers:
+            phone_dict = vcard.phone_numbers
             # filter out preferred phone type if set in config file
             phone_keys = []
             for pref_type in config.preferred_phone_number_type():
-                for phone_type in phone_dict.keys():
+                for phone_type in phone_dict:
                     if pref_type.lower() in phone_type.lower():
                         phone_keys.append(phone_type)
                 if phone_keys:
                     break
             if not phone_keys:
-                phone_keys = [x for x in phone_dict.keys() if "pref" in x.lower()] \
+                phone_keys = [x for x in phone_dict if "pref" in x.lower()] \
                              or phone_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(phone_keys, key=lambda k: k[0].lower())[0]
@@ -344,18 +340,18 @@ def list_contacts(vcard_list):
                                    sorted(phone_dict.get(first_type))[0]))
         else:
             row.append("")
-        if vcard.get_email_addresses().keys():
-            email_dict = vcard.get_email_addresses()
+        if vcard.emails:
+            email_dict = vcard.emails
             # filter out preferred email type if set in config file
             email_keys = []
             for pref_type in config.preferred_email_address_type():
-                for email_type in email_dict.keys():
+                for email_type in email_dict:
                     if pref_type.lower() in email_type.lower():
                         email_keys.append(email_type)
                 if email_keys:
                     break
             if not email_keys:
-                email_keys = [x for x in email_dict.keys() if "pref" in x.lower()] \
+                email_keys = [x for x in email_dict if "pref" in x.lower()] \
                              or email_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(email_keys, key=lambda k: k[0].lower())[0]
@@ -366,8 +362,8 @@ def list_contacts(vcard_list):
         if len(selected_address_books) > 1:
             row.append(vcard.address_book.name)
         if config.has_uids():
-            if abook_collection.get_short_uid(vcard.get_uid()):
-                row.append(abook_collection.get_short_uid(vcard.get_uid()))
+            if abook_collection.get_short_uid(vcard.uid):
+                row.append(abook_collection.get_short_uid(vcard.uid))
             else:
                 row.append("")
         table.append(row)
@@ -685,7 +681,7 @@ def generate_contact_list(config, args):
             print("Found multiple contacts for {}uid {}".format(
                 "source " if args.action == "merge" else "", args.uid))
             for vcard in vcard_list:
-                print("    {}: {}".format(vcard, vcard.get_uid()))
+                print("    {}: {}".format(vcard, vcard.uid))
             sys.exit(1)
     else:
         # No uid was given so we try to use the search terms to select a
@@ -823,9 +819,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
             config.localize_dates())
 
     # check if the contact already contains the email address
-    for type, email_list in sorted(
-            selected_vcard.get_email_addresses().items(),
-            key=lambda k: k[0].lower()):
+    for type, email_list in sorted(selected_vcard.emails.items(),
+                                   key=lambda k: k[0].lower()):
         for email in email_list:
             if email == email_address:
                 print("The contact %s already contains the email address %s" %
@@ -853,7 +848,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     while True:
         label = input("email label [internet]: ") or "internet"
         try:
-            selected_vcard.add_email_address(label, email_address)
+            selected_vcard.add_email(label, email_address)
         except ValueError as err:
             print(err)
         else:
@@ -877,18 +872,17 @@ def birthdays_subcommand(vcard_list, parsable):
     """
     # filter out contacts without a birthday date
     vcard_list = [
-        vcard for vcard in vcard_list if vcard.get_birthday() is not None]
+        vcard for vcard in vcard_list if vcard.birthday is not None]
     # sort by date (month and day)
     # The sort function should work for strings and datetime objects.  All
     # strings will besorted before any datetime objects.
-    vcard_list.sort(
-        key=lambda x: (x.get_birthday().month, x.get_birthday().day)
-        if isinstance(x.get_birthday(), datetime.datetime)
-        else (0, 0, x.get_birthday()))
+    vcard_list.sort(key=lambda x: (x.birthday.month, x.birthday.day)
+                    if isinstance(x.birthday, datetime.datetime)
+                    else (0, 0, x.birthday))
     # add to string list
     birthday_list = []
     for vcard in vcard_list:
-        date = vcard.get_birthday()
+        date = vcard.birthday
         if parsable:
             if config.display_by_name() == "first_name":
                 birthday_list.append("%04d.%02d.%02d\t%s"
@@ -936,7 +930,7 @@ def phone_subcommand(search_terms, vcard_list, parsable):
     all_phone_numbers_list = []
     matching_phone_number_list = []
     for vcard in vcard_list:
-        for type, number_list in sorted(vcard.get_phone_numbers().items(),
+        for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
                 if config.display_by_name() == "first_name":
@@ -1069,7 +1063,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
     matching_email_address_list = []
     all_email_address_list = []
     for vcard in vcard_list:
-        for type, email_list in sorted(vcard.get_email_addresses().items(),
+        for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
                 if config.display_by_name() == "first_name":
@@ -1137,7 +1131,7 @@ def list_subcommand(vcard_list, parsable):
                 name = vcard.get_first_name_last_name()
             else:
                 name = vcard.get_last_name_first_name()
-            contact_line_list.append('\t'.join([vcard.get_uid(), name,
+            contact_line_list.append('\t'.join([vcard.uid, name,
                                                 vcard.address_book.name]))
         print('\n'.join(contact_line_list))
     else:
@@ -1161,14 +1155,13 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
 
     """
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
-    if selected_vcard.get_version() not in config.supported_vcard_versions:
+    if selected_vcard.version not in config.supported_vcard_versions:
         print("Warning:\nThe selected contact is based on vcard version %s "
               "but khard only supports the creation and modification of vcards"
               " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
               " converted to vcard version %s but beware: This could corrupt "
               "the contact file or cause data loss."
-              % (selected_vcard.get_version(),
-                 config.get_preferred_vcard_version()))
+              % (selected_vcard.version, config.get_preferred_vcard_version()))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -1229,7 +1222,7 @@ def remove_subcommand(selected_vcard, force):
             if input_string.lower() == "y":
                 break
     selected_vcard.delete_vcard_file()
-    print("Contact %s deleted successfully" % selected_vcard.get_full_name())
+    print("Contact %s deleted successfully" % selected_vcard.formatted_name)
 
 
 def source_subcommand(selected_vcard, editor):
@@ -1280,7 +1273,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
             else:
                 print("Found multiple contacts for target uid %s" % target_uid)
                 for vcard in target_vcards:
-                    print("    %s: %s" % (vcard, vcard.get_uid()))
+                    print("    %s: %s" % (vcard, vcard.uid))
             sys.exit(1)
     else:
         target_vcards = get_contact_list_by_user_selection(
@@ -1352,7 +1345,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     target_vcard = choose_vcard_from_list(
         "Select target contact which to overwrite",
         get_contact_list_by_user_selection([selected_target_address_book],
-                                           source_vcard.get_full_name(), True))
+                                           source_vcard.formatted_name, True))
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
@@ -1847,7 +1840,7 @@ def main(argv=sys.argv[1:]):
             args.output_file.write(
                 "# Contact template for khard version %s\n"
                 "# Name: %s\n# Vcard version: %s\n\n%s"
-                % (khard_version, selected_vcard, selected_vcard.get_version(),
+                % (khard_version, selected_vcard, selected_vcard.version,
                    selected_vcard.get_template()))
         elif args.action == "modify":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,

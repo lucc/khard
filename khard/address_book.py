@@ -110,7 +110,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contacts.values():
             # only search in contact name
-            if regexp.search(contact.get_full_name()) is not None:
+            if regexp.search(contact.formatted_name) is not None:
                 yield contact
 
     def _search_uid(self, query):
@@ -316,7 +316,7 @@ class VdirAddressBook(AddressBook):
                         "--skip-unparsable to proceed", filename, self.name)
                     sys.exit(2)
             else:
-                uid = card.get_uid()
+                uid = card.uid
                 if not uid:
                     logging.warning("Card %s from address book %s has no UID "
                                     "and will not be availbale.", card,
