@@ -227,7 +227,6 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: (int, int)
 
         """
-        pass
 
 
 class VdirAddressBook(AddressBook):
