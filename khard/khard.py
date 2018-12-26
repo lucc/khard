@@ -403,58 +403,56 @@ def list_email_addresses(email_address_list):
 def choose_address_book_from_list(header_string, address_book_list):
     if not address_book_list:
         return None
-    elif len(address_book_list) == 1:
+    if len(address_book_list) == 1:
         return address_book_list[0]
-    else:
-        print(header_string)
-        list_address_books(address_book_list)
-        while True:
-            try:
-                input_string = input("Enter Index: ")
-                if input_string in ["", "q", "Q"]:
-                    print("Canceled")
-                    sys.exit(0)
-                addr_index = int(input_string)
-                if addr_index > 0:
-                    # make sure the address book is loaded afterwards
-                    selected_address_book = address_book_list[addr_index - 1]
-                else:
-                    raise ValueError
-            except (EOFError, IndexError, ValueError):
-                print("Please enter an index value between 1 and %d or nothing"
-                      " to exit." % len(address_book_list))
+    print(header_string)
+    list_address_books(address_book_list)
+    while True:
+        try:
+            input_string = input("Enter Index: ")
+            if input_string in ["", "q", "Q"]:
+                print("Canceled")
+                sys.exit(0)
+            addr_index = int(input_string)
+            if addr_index > 0:
+                # make sure the address book is loaded afterwards
+                selected_address_book = address_book_list[addr_index - 1]
             else:
-                break
-        print("")
-        return selected_address_book
+                raise ValueError
+        except (EOFError, IndexError, ValueError):
+            print("Please enter an index value between 1 and %d or nothing"
+                  " to exit." % len(address_book_list))
+        else:
+            break
+    print("")
+    return selected_address_book
 
 
 def choose_vcard_from_list(header_string, vcard_list):
     if vcard_list.__len__() == 0:
         return None
-    elif vcard_list.__len__() == 1:
+    if vcard_list.__len__() == 1:
         return vcard_list[0]
-    else:
-        print(header_string)
-        list_contacts(vcard_list)
-        while True:
-            try:
-                input_string = input("Enter Index: ")
-                if input_string in ["", "q", "Q"]:
-                    print("Canceled")
-                    sys.exit(0)
-                addr_index = int(input_string)
-                if addr_index > 0:
-                    selected_vcard = vcard_list[addr_index - 1]
-                else:
-                    raise ValueError
-            except (EOFError, IndexError, ValueError):
-                print("Please enter an index value between 1 and %d or nothing"
-                      " to exit." % len(vcard_list))
+    print(header_string)
+    list_contacts(vcard_list)
+    while True:
+        try:
+            input_string = input("Enter Index: ")
+            if input_string in ["", "q", "Q"]:
+                print("Canceled")
+                sys.exit(0)
+            addr_index = int(input_string)
+            if addr_index > 0:
+                selected_vcard = vcard_list[addr_index - 1]
             else:
-                break
-        print("")
-        return selected_vcard
+                raise ValueError
+        except (EOFError, IndexError, ValueError):
+            print("Please enter an index value between 1 and %d or nothing"
+                  " to exit." % len(vcard_list))
+        else:
+            break
+    print("")
+    return selected_vcard
 
 
 def get_contact_list_by_user_selection(address_books, search, strict_search):
@@ -503,23 +501,21 @@ def get_contacts(address_books, query, method="all", reverse=False,
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
                 unidecode(x.get_first_name_last_name()).lower()))
-        elif sort == "last_name":
+        if sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
                 unidecode(x.get_last_name_first_name()).lower()))
-        else:
-            raise ValueError('sort must be "first_name" or "last_name" not '
-                             '{}.'.format(sort))
+        raise ValueError(
+            'sort must be "first_name" or "last_name" not {}.'.format(sort))
     else:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
                           unidecode(x.get_first_name_last_name()).lower())
-        elif sort == "last_name":
+        if sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
                           unidecode(x.get_last_name_first_name()).lower())
-        else:
-            raise ValueError('sort must be "first_name" or "last_name" not '
-                             '{}.'.format(sort))
+        raise ValueError(
+            'sort must be "first_name" or "last_name" not {}.'.format(sort))
 
 
 def merge_args_into_config(args, config):
