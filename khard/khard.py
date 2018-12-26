@@ -429,9 +429,9 @@ def choose_address_book_from_list(header_string, address_book_list):
 
 
 def choose_vcard_from_list(header_string, vcard_list):
-    if vcard_list.__len__() == 0:
+    if len(vcard_list) == 0:
         return None
-    if vcard_list.__len__() == 1:
+    if len(vcard_list) == 1:
         return vcard_list[0]
     print(header_string)
     list_contacts(vcard_list)
