@@ -95,7 +95,7 @@ class AddressBook(metaclass=abc.ABCMeta):
                 clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
                                                contact_details)
                 if regexp.search(clean_contact_details) is not None \
-                        and len(re.sub("\D", "", query)) >= 3:
+                        and len(re.sub(r"\D", "", query)) >= 3:
                     yield contact
 
     def _search_names(self, query):

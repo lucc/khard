@@ -950,13 +950,13 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                              "%s\n%s" % (line_formatted, line_parsable),
                              re.IGNORECASE | re.DOTALL):
                     matching_phone_number_list.append(phone_number_line)
-                elif len(re.sub("\D", "", search_terms)) >= 3:
+                elif len(re.sub(r"\D", "", search_terms)) >= 3:
                     # The user likely searches for a phone number cause the
                     # search string contains at least three digits.  So we
                     # remove all non-digit chars from the phone number field
                     # and match against that.
-                    if re.search(re.sub("\D", "", search_terms),
-                                 re.sub("\D", "", number), re.IGNORECASE):
+                    if re.search(re.sub(r"\D", "", search_terms),
+                                 re.sub(r"\D", "", number), re.IGNORECASE):
                         matching_phone_number_list.append(phone_number_line)
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
