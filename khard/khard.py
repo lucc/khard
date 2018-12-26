@@ -1527,25 +1527,28 @@ def parse_args(argv):
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
-    subparsers.add_parser(
-        "details",
-        aliases=Actions.get_aliases("details"),
+    show_parser = subparsers.add_parser(
+        "show",
+        aliases=Actions.get_aliases("show"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
         description="display detailed information about one contact",
         help="display detailed information about one contact")
+    show_parser.add_argument(
+        "--format", choices=("pretty", "yaml", "vcard"), default="pretty",
+        help="select the output format")
+    show_parser.add_argument(
+        "-o", "--output-file", default=sys.stdout,
+        type=argparse.FileType("w"),
+        help="Specify output template file name or use stdout by default")
+    subparsers.add_parser("template", help="print an empty yaml template")
     export_parser = subparsers.add_parser(
         "export",
         aliases=Actions.get_aliases("export"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
-        description="export a contact to the custom yaml format that is "
-        "also used for editing and creating contacts",
-        help="export a contact to the custom yaml format that is also "
-        "used for editing and creating contacts")
-    export_parser.add_argument(
-        "--empty-contact-template", action="store_true",
-        help="Export an empty contact template")
+        description="DEPRECATED (an alias for 'show --format=yaml')",
+        help="DEPRECATED (an alias for 'show --format=yaml')")
     export_parser.add_argument(
         "-o", "--output-file", default=sys.stdout,
         type=argparse.FileType("w"),
@@ -1752,6 +1755,14 @@ def main(argv=sys.argv[1:]):
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.abooks))
         return
+    elif args.action == "template":
+        print("# Contact template for khard version %s\n#\n"
+              "# Use this yaml formatted template to create a new contact:\n"
+              "#   either with: khard new -a address_book -i template.yaml\n"
+              "#   or with: cat template.yaml | khard new -a address_book\n"
+              "\n%s" % (khard_version, helpers.get_new_contact_template(
+                        config.get_supported_private_objects())))
+        return
 
     merge_args_into_config(args, config)
     search_queries = prepare_search_queries(args)
@@ -1813,30 +1824,28 @@ def main(argv=sys.argv[1:]):
                          args.parsable, args.remove_first_line)
     elif args.action == "list":
         list_subcommand(vcard_list, args.parsable)
-    elif args.action == "export" and "empty_contact_template" in args \
-            and args.empty_contact_template:
-        # export empty template must work without selecting a contact first
-        args.output_file.write(
-            "# Contact template for khard version %s\n#\n"
-            "# Use this yaml formatted template to create a new contact:\n"
-            "#   either with: khard new -a address_book -i template.yaml\n"
-            "#   or with: cat template.yaml | khard new -a address_book\n"
-            "\n%s" % (khard_version, helpers.get_new_contact_template(
-                config.get_supported_private_objects())))
-    elif args.action in ["details", "edit", "remove", "source", "export"]:
+    elif args.action in ["show", "edit", "remove", "source", "export"]:
+        if args.action == "export":
+            logging.info("Deprecated subcommand: use 'show --format=yaml'.")
+            args.action = "show"
+            args.format = "yaml"
         selected_vcard = choose_vcard_from_list(
             "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
             print("Found no contact")
             sys.exit(1)
-        if args.action == "details":
-            print(selected_vcard.print_vcard())
-        elif args.action == "export":
-            args.output_file.write(
-                "# Contact template for khard version %s\n"
-                "# Name: %s\n# Vcard version: %s\n\n%s"
-                % (khard_version, selected_vcard, selected_vcard.version,
-                   selected_vcard.get_template()))
+        if args.action == "show":
+            if args.format == "pretty":
+                output = selected_vcard.print_vcard()
+            elif args.format == "vcard":
+                output = open(selected_vcard.filename).read()
+            else:
+                output = "# Contact template for khard version {}\n" \
+                         "# Name: {}\n# Vcard version: {}\n\n{}".format(
+                             khard_version, selected_vcard,
+                             selected_vcard.version,
+                             selected_vcard.get_template())
+            args.output_file.write(output)
         elif args.action == "edit":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
                               args.open_editor, args.format == 'vcard')
