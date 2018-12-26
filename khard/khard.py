@@ -1138,7 +1138,8 @@ def list_subcommand(vcard_list, parsable):
         list_contacts(vcard_list)
 
 
-def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
+def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
+        source=False):
     """Modify a contact in an external editor.
 
     :param selected_vcard: the contact to modify
@@ -1150,10 +1151,16 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor):
     :param open_editor: whether to open the new contact in the edior after
         creation
     :type open_editor: bool
+    :param source: edit the source file or a yaml version?
+    :type source: bool
     :returns: None
     :rtype: None
 
     """
+    if source:
+        child = subprocess.Popen([config.editor, selected_vcard.filename])
+        child.communicate()
+        return
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
     if selected_vcard.version not in config.supported_vcard_versions:
         print("Warning:\nThe selected contact is based on vcard version %s "
@@ -1223,21 +1230,6 @@ def remove_subcommand(selected_vcard, force):
                 break
     selected_vcard.delete_vcard_file()
     print("Contact %s deleted successfully" % selected_vcard.formatted_name)
-
-
-def source_subcommand(selected_vcard, editor):
-    """Open the vcard file for a contact in an external editor.
-
-    :param selected_vcard: the contact to edit
-    :type selected_vcard: carddav_object.CarddavObject
-    :param editor: the eitor command to use
-    :type editor: str
-    :returns: None
-    :rtype: None
-
-    """
-    child = subprocess.Popen([editor, selected_vcard.filename])
-    child.communicate()
 
 
 def merge_subcommand(vcard_list, selected_address_books, search_terms,
@@ -1470,8 +1462,8 @@ def parse_args(argv):
         "-i", "--input-file", default="-",
         help="Specify input template file name or use stdin by default")
     template_input_file_parser.add_argument(
-        "--open-editor", action="store_true", help="Open the default text "
-        "editor after successful creation of new contact")
+        "--open-editor", "--edit", action="store_true", help="Open the "
+        "default text editor after successful creation of new contact")
 
     # create sort subparser
     sort_parser = argparse.ArgumentParser(add_help=False)
@@ -1609,8 +1601,8 @@ def parse_args(argv):
         aliases=Actions.get_aliases("source"),
         parents=[default_addressbook_parser, default_search_parser,
                  sort_parser],
-        description="edit the vcard file of a contact directly",
-        help="edit the vcard file of a contact directly")
+        description="DEPRECATED (an alias for 'edit --format=vcard')",
+        help="DEPRECATED (an alias for 'edit --format=vcard')")
     new_parser = subparsers.add_parser(
         "new",
         aliases=Actions.get_aliases("new"),
@@ -1638,13 +1630,16 @@ def parse_args(argv):
         parents=[merge_addressbook_parser, merge_search_parser, sort_parser],
         description="merge two contacts",
         help="merge two contacts")
-    subparsers.add_parser(
-        "modify",
-        aliases=Actions.get_aliases("modify"),
+    edit_parser = subparsers.add_parser(
+        "edit",
+        aliases=Actions.get_aliases("edit"),
         parents=[default_addressbook_parser, template_input_file_parser,
                  default_search_parser, sort_parser],
         description="edit the data of a contact",
         help="edit the data of a contact")
+    edit_parser.add_argument(
+        "--format", choices=("yaml", "vcard"), default="yaml",
+        help="specify the file format to use when editing")
     subparsers.add_parser(
         "copy",
         aliases=Actions.get_aliases("copy"),
@@ -1828,7 +1823,7 @@ def main(argv=sys.argv[1:]):
             "#   or with: cat template.yaml | khard new -a address_book\n"
             "\n%s" % (khard_version, helpers.get_new_contact_template(
                 config.get_supported_private_objects())))
-    elif args.action in ["details", "modify", "remove", "source", "export"]:
+    elif args.action in ["details", "edit", "remove", "source", "export"]:
         selected_vcard = choose_vcard_from_list(
             "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
@@ -1842,13 +1837,15 @@ def main(argv=sys.argv[1:]):
                 "# Name: %s\n# Vcard version: %s\n\n%s"
                 % (khard_version, selected_vcard, selected_vcard.version,
                    selected_vcard.get_template()))
-        elif args.action == "modify":
+        elif args.action == "edit":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,
-                              args.open_editor)
+                              args.open_editor, args.format == 'vcard')
         elif args.action == "remove":
             remove_subcommand(selected_vcard, args.force)
         elif args.action == "source":
-            source_subcommand(selected_vcard, config.editor)
+            logging.warning(
+                    "Deprecated subcommand: use 'edit --format=vcard'.")
+            modify_subcommand(selected_vcard, None, False, True)
     elif args.action == "merge":
         merge_subcommand(vcard_list, args.target_addressbook,
                          args.target_contact, args.target_uid)

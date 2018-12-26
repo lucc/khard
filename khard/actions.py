@@ -17,7 +17,7 @@ class Actions:
         "filename":     ["file"],
         "list":         ["ls"],
         "merge":        [],
-        "modify":       ["edit", "ed"],
+        "edit":         ["modify", "ed"],
         "move":         ["mv"],
         "new":          ["add"],
         "phone":        [],

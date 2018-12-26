@@ -235,7 +235,7 @@ class MiscCommands(unittest.TestCase):
         with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
             with mock.patch('sys.stdout'):
-                khard.main(["source", "uid1"])
+                khard.main(["edit", "--format=vcard", "uid1"])
         popen.assert_called_once_with(['editor',
                                        'test/fixture/foo.abook/contact1.vcf'])
 

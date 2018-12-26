@@ -64,7 +64,6 @@ case $state in
       phone:'list phone numbers'
       {postaddress,postaddr,post}:'list post addresses'
       {remove,rm,del,delete}:'delete a contact'
-      {source,src}:'edit the source vcard of a contact'
     )
     # Use this array to complete the subcommands.
     _describe -t subcommands 'khard subcommand' subcommands_array && ret=0
@@ -95,7 +94,7 @@ case $state in
     )
     template_file_input_options=(
       '(-i)'{-i+,--input-file=}'[specify input template file name or use stdin]:input file:_files'
-      '--open-editor[open text editor after successful creation of new contact from stdin or template]'
+      {--edit,--open-editor}'[open text editor after successful creation of new contact from stdin or template]'
     )
     # sort options
     local -a sort_options
@@ -182,6 +181,7 @@ case $state in
       modify|edit|ed)
         options+=(
           $default_addressbook_options $template_file_input_options $default_search_options $sort_options
+	  '--format=[file format to use when editing]:format:(yaml vcard)'
         );;
       merge)
         options+=(
