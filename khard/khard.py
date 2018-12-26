@@ -1737,6 +1737,17 @@ def parse_args(argv):
         # If an uid was given we require that no search terms where given.
         parser.error("You can not give arbitrary search terms and --uid at the"
                      " same time.")
+
+    # Normalize all deprecated subcommands and emit warnings.
+    if args.action == "export":
+        logging.warning("Deprecated subcommand: use 'show --format=yaml'.")
+        args.action = "show"
+        args.format = "yaml"
+    elif args.action == "source":
+        logging.warning("Deprecated subcommand: use 'edit --format=vcard'.")
+        args.action = "edit"
+        args.format = "vcard"
+
     return args
 
 
@@ -1824,11 +1835,7 @@ def main(argv=sys.argv[1:]):
                          args.parsable, args.remove_first_line)
     elif args.action == "list":
         list_subcommand(vcard_list, args.parsable)
-    elif args.action in ["show", "edit", "remove", "source", "export"]:
-        if args.action == "export":
-            logging.info("Deprecated subcommand: use 'show --format=yaml'.")
-            args.action = "show"
-            args.format = "yaml"
+    elif args.action in ["show", "edit", "remove"]:
         selected_vcard = choose_vcard_from_list(
             "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
@@ -1851,10 +1858,6 @@ def main(argv=sys.argv[1:]):
                               args.open_editor, args.format == 'vcard')
         elif args.action == "remove":
             remove_subcommand(selected_vcard, args.force)
-        elif args.action == "source":
-            logging.warning(
-                    "Deprecated subcommand: use 'edit --format=vcard'.")
-            modify_subcommand(selected_vcard, None, False, True)
     elif args.action == "merge":
         merge_subcommand(vcard_list, args.target_addressbook,
                          args.target_contact, args.target_uid)
