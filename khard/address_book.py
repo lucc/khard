@@ -259,7 +259,8 @@ class VdirAddressBook(AddressBook):
 
         :param search: a regular expression to limit the results
         :type search: str
-        :param search_in_source_files: apply search regexp directly on the .vcf files to speed up parsing (less accurate)
+        :param search_in_source_files: apply search regexp directly on the .vcf
+            files to speed up parsing (less accurate)
         :type search_in_source_files: bool
         :returns: the paths of the vcard files
         :rtype: generator
@@ -283,7 +284,8 @@ class VdirAddressBook(AddressBook):
 
         :param query: a regular expression to limit the results
         :type query: str
-        :param search_in_source_files: apply search regexp directly on the .vcf files to speed up parsing (less accurate)
+        :param search_in_source_files: apply search regexp directly on the .vcf
+            files to speed up parsing (less accurate)
         :type search_in_source_files: bool
         :returns: the number of successfully loaded cards and the number of
             errors
