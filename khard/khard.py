@@ -228,16 +228,18 @@ def merge_existing_contacts(source_contact, target_contact,
                 "Merge contact %s from address book %s into contact %s from "
                 "address book %s\n\nTo be removed\n\n%s\n\nMerged\n\n%s\n\n"
                 "Are you sure? (y/n): " % (
-                    source_contact, source_contact.address_book, merged_contact,
-                    merged_contact.address_book, source_contact.print_vcard(),
+                    source_contact, source_contact.address_book,
+                    merged_contact, merged_contact.address_book,
+                    source_contact.print_vcard(),
                     merged_contact.print_vcard()))
         else:
             input_string = input(
                 "Merge contact %s from address book %s into contact %s from "
                 "address book %s\n\nKeep unchanged\n\n%s\n\nMerged:\n\n%s\n\n"
                 "Are you sure? (y/n): " % (
-                    source_contact, source_contact.address_book, merged_contact,
-                    merged_contact.address_book, source_contact.print_vcard(),
+                    source_contact, source_contact.address_book,
+                    merged_contact, merged_contact.address_book,
+                    source_contact.print_vcard(),
                     merged_contact.print_vcard()))
         if input_string.lower() in ["", "n", "q"]:
             print("Canceled")
@@ -401,58 +403,56 @@ def list_email_addresses(email_address_list):
 def choose_address_book_from_list(header_string, address_book_list):
     if not address_book_list:
         return None
-    elif len(address_book_list) == 1:
+    if len(address_book_list) == 1:
         return address_book_list[0]
-    else:
-        print(header_string)
-        list_address_books(address_book_list)
-        while True:
-            try:
-                input_string = input("Enter Index: ")
-                if input_string in ["", "q", "Q"]:
-                    print("Canceled")
-                    sys.exit(0)
-                addr_index = int(input_string)
-                if addr_index > 0:
-                    # make sure the address book is loaded afterwards
-                    selected_address_book = address_book_list[addr_index - 1]
-                else:
-                    raise ValueError
-            except (EOFError, IndexError, ValueError):
-                print("Please enter an index value between 1 and %d or nothing"
-                      " to exit." % len(address_book_list))
+    print(header_string)
+    list_address_books(address_book_list)
+    while True:
+        try:
+            input_string = input("Enter Index: ")
+            if input_string in ["", "q", "Q"]:
+                print("Canceled")
+                sys.exit(0)
+            addr_index = int(input_string)
+            if addr_index > 0:
+                # make sure the address book is loaded afterwards
+                selected_address_book = address_book_list[addr_index - 1]
             else:
-                break
-        print("")
-        return selected_address_book
+                raise ValueError
+        except (EOFError, IndexError, ValueError):
+            print("Please enter an index value between 1 and %d or nothing"
+                  " to exit." % len(address_book_list))
+        else:
+            break
+    print("")
+    return selected_address_book
 
 
 def choose_vcard_from_list(header_string, vcard_list):
-    if vcard_list.__len__() == 0:
+    if len(vcard_list) == 0:
         return None
-    elif vcard_list.__len__() == 1:
+    if len(vcard_list) == 1:
         return vcard_list[0]
-    else:
-        print(header_string)
-        list_contacts(vcard_list)
-        while True:
-            try:
-                input_string = input("Enter Index: ")
-                if input_string in ["", "q", "Q"]:
-                    print("Canceled")
-                    sys.exit(0)
-                addr_index = int(input_string)
-                if addr_index > 0:
-                    selected_vcard = vcard_list[addr_index - 1]
-                else:
-                    raise ValueError
-            except (EOFError, IndexError, ValueError):
-                print("Please enter an index value between 1 and %d or nothing"
-                      " to exit." % len(vcard_list))
+    print(header_string)
+    list_contacts(vcard_list)
+    while True:
+        try:
+            input_string = input("Enter Index: ")
+            if input_string in ["", "q", "Q"]:
+                print("Canceled")
+                sys.exit(0)
+            addr_index = int(input_string)
+            if addr_index > 0:
+                selected_vcard = vcard_list[addr_index - 1]
             else:
-                break
-        print("")
-        return selected_vcard
+                raise ValueError
+        except (EOFError, IndexError, ValueError):
+            print("Please enter an index value between 1 and %d or nothing"
+                  " to exit." % len(vcard_list))
+        else:
+            break
+    print("")
+    return selected_vcard
 
 
 def get_contact_list_by_user_selection(address_books, search, strict_search):
@@ -501,23 +501,21 @@ def get_contacts(address_books, query, method="all", reverse=False,
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
                 unidecode(x.get_first_name_last_name()).lower()))
-        elif sort == "last_name":
+        if sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
                 unidecode(x.get_last_name_first_name()).lower()))
-        else:
-            raise ValueError('sort must be "first_name" or "last_name" not '
-                             '{}.'.format(sort))
+        raise ValueError(
+            'sort must be "first_name" or "last_name" not {}.'.format(sort))
     else:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
                           unidecode(x.get_first_name_last_name()).lower())
-        elif sort == "last_name":
+        if sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
                           unidecode(x.get_last_name_first_name()).lower())
-        else:
-            raise ValueError('sort must be "first_name" or "last_name" not '
-                             '{}.'.format(sort))
+        raise ValueError(
+            'sort must be "first_name" or "last_name" not {}.'.format(sort))
 
 
 def merge_args_into_config(args, config):
@@ -584,8 +582,9 @@ def load_address_books(names, config, search_queries):
     # load address books which are defined in the configuration file
     for name in names:
         address_book = config.abook.get_abook(name)
-        address_book.load(search_queries[address_book.name],
-                search_in_source_files=config.search_in_source_files())
+        address_book.load(
+            search_queries[address_book.name],
+            search_in_source_files=config.search_in_source_files())
         yield address_book
 
 
@@ -950,13 +949,13 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                              "%s\n%s" % (line_formatted, line_parsable),
                              re.IGNORECASE | re.DOTALL):
                     matching_phone_number_list.append(phone_number_line)
-                elif len(re.sub("\D", "", search_terms)) >= 3:
+                elif len(re.sub(r"\D", "", search_terms)) >= 3:
                     # The user likely searches for a phone number cause the
                     # search string contains at least three digits.  So we
                     # remove all non-digit chars from the phone number field
                     # and match against that.
-                    if re.search(re.sub("\D", "", search_terms),
-                                 re.sub("\D", "", number), re.IGNORECASE):
+                    if re.search(re.sub(r"\D", "", search_terms),
+                                 re.sub(r"\D", "", number), re.IGNORECASE):
                         matching_phone_number_list.append(phone_number_line)
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
@@ -1002,17 +1001,19 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
         # create post address line list
         post_address_line_list = []
         if parsable:
-            for type, post_address_list in sorted(vcard.get_post_addresses().items(),
-                                           key=lambda k: k[0].lower()):
+            for type, post_address_list in sorted(
+                    vcard.get_post_addresses().items(),
+                    key=lambda k: k[0].lower()):
                 for post_address in post_address_list:
                     post_address_line_list.append(
-                            "\t".join([str(post_address), name, type]))
+                        "\t".join([str(post_address), name, type]))
         else:
-            for type, post_address_list in sorted(vcard.get_formatted_post_addresses().items(),
-                                           key=lambda k: k[0].lower()):
+            for type, post_address_list in sorted(
+                    vcard.get_formatted_post_addresses().items(),
+                    key=lambda k: k[0].lower()):
                 for post_address in sorted(post_address_list):
                     post_address_line_list.append(
-                            "\t".join([name, type, post_address]))
+                        "\t".join([name, type, post_address]))
         # add to matching and all post address lists
         for post_address_line in post_address_line_list:
             if re.search(search_terms,

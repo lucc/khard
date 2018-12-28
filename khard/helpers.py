@@ -29,7 +29,7 @@ def pretty_print(table, justify="L"):
         # replace table variable
         table = line_break_table
     # get width for every column
-    column_widths = [0] * table[0].__len__()
+    column_widths = [0] * len(table[0])
     offset = 3
     for row in table:
         for index, col in enumerate(row):
@@ -330,4 +330,3 @@ def get_new_contact_template(supported_private_objects=[]):
         #       line two
         Note : 
         """ % '\n'.join(formatted_private_objects))
-
