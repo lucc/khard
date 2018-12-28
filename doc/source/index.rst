@@ -55,6 +55,11 @@ isolate the khard installation from other software on your system.
 Configuration
 =============
 
+The configuration file of khard is stored in the XDG conform config directory.
+If the environment variable ``$XDG_CONFIG_HOME`` is set, it is
+``$XDG_CONFIG_HOME/khard/khard.conf`` and it defaults to
+``~/.config/khard/khard.conf`` otherwise.
+
 A minimal configuration is provided in the source tree.  It looks like this:
 
 .. literalinclude :: ../../misc/khard/khard.conf.example
