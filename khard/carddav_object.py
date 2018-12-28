@@ -950,6 +950,8 @@ class CarddavObject(VCardWrapper):
             try:
                 vcard = vobject.readOne(contents)
             except Exception:
+                logging.warning("Filtering some problematic tags from %s",
+                                self.filename)
                 # if creation fails, try to repair some vcard attributes
                 vcard = vobject.readOne(self._filter_invalid_tags(contents))
             super().__init__(vcard)
