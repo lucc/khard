@@ -42,17 +42,17 @@ def convert_to_vcard(name, value, allowed_object_type):
             raise ValueError("Error: " + name +
                              " must not contain a single string.")
         return value.strip()
-    elif isinstance(value, list):
+    if isinstance(value, list):
         if allowed_object_type == ObjectType.string:
             raise ValueError("Error: " + name + " must not contain a list.")
-        elif not all(isinstance(entry, str) for entry in value):
+        if not all(isinstance(entry, str) for entry in value):
             raise ValueError("Error: " + name +
                              " must not contain a nested list")
         # filter out empty list items and strip leading and trailing space
         return [x.strip() for x in value if x]
     if allowed_object_type == ObjectType.string:
         raise ValueError("Error: " + name + " must be a string.")
-    elif allowed_object_type == ObjectType.list_with_strings:
+    if allowed_object_type == ObjectType.list_with_strings:
         raise ValueError("Error: " + name + " must be a list with strings.")
     raise ValueError("Error: " + name +
                      " must be a string or a list with strings.")
@@ -466,9 +466,9 @@ class VCardWrapper:
             return "{}, {}".format(
                 helpers.list_to_string(last_names, " "),
                 helpers.list_to_string(first_and_additional_names, " "))
-        elif last_names:
+        if last_names:
             return helpers.list_to_string(last_names, " ")
-        elif first_and_additional_names:
+        if first_and_additional_names:
             return helpers.list_to_string(first_and_additional_names, " ")
         return self.formatted_name
 
@@ -1032,24 +1032,23 @@ class CarddavObject(VCardWrapper):
 
     @staticmethod
     def _format_date_object(date, localize):
-        if date:
-            if isinstance(date, str):
-                return date
-            elif date.year == 1900 and date.month != 0 and date.day != 0 \
-                    and date.hour == 0 and date.minute == 0 \
-                    and date.second == 0:
-                return "--%.2d-%.2d" % (date.month, date.day)
-            elif (date.tzname() and date.tzname()[3:]) or (
-                    date.hour != 0 or date.minute != 0 or date.second != 0):
-                if localize:
-                    return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
-                utc_offset = -time.timezone / 60 / 60
-                return date.strftime("%Y-%m-%dT%H:%M:%S+{}:00".format(
-                    str(int(utc_offset)).zfill(2)))
-            elif localize:
-                return date.strftime(locale.nl_langinfo(locale.D_FMT))
-            return date.strftime("%Y-%m-%d")
-        return ""
+        if not date:
+            return ""
+        if isinstance(date, str):
+            return date
+        if date.year == 1900 and date.month != 0 and date.day != 0 \
+                and date.hour == 0 and date.minute == 0 and date.second == 0:
+            return "--%.2d-%.2d" % (date.month, date.day)
+        if (date.tzname() and date.tzname()[3:]) or (
+                date.hour != 0 or date.minute != 0 or date.second != 0):
+            if localize:
+                return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
+            utc_offset = -time.timezone / 60 / 60
+            return date.strftime("%Y-%m-%dT%H:%M:%S+{}:00".format(
+                str(int(utc_offset)).zfill(2)))
+        if localize:
+            return date.strftime(locale.nl_langinfo(locale.D_FMT))
+        return date.strftime("%Y-%m-%d")
 
     @staticmethod
     def _filter_invalid_tags(contents):
