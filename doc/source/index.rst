@@ -11,46 +11,24 @@ Welcome to khard's documentation!
    :caption: Contents:
 
 Khard is an address book for the Linux command line.  It can read, create,
-modify and delete carddav address book entries.  Khard works with an address
-book on your local machine, but you can use it together with other programs to
+modify and delete carddav address book entries.  Khard only works with a local
+store of VCARD files.  It is intended to be used in conjunction with other
+programs like an email client, text editor, vdir synchronizer or VOIP client.
 
 
 Installation
 ============
 
 Khard is available as a native package for some Linux distributions so you
-should check your package manager first.  If you want to actively develop khard
-or it is not available for your distribution you can use Python's native
-installation methods via ``pip`` or the ``setup.py`` script directly.
-
-The latest release should be available from `PyPi`_ or you can download a
-release tarball from `Github`_.  The development version is available on Github
-in the `develop`_ branch.
-
-This means you could install the latest release with:
+should check your package manager first.  If you want or need to install
+manually you can use the release from `PyPi`_:
 
 .. code-block:: shell
 
-  pip install khard
+  pip3 install khard
 
-If you want to help the development it might make sense to check out the git
-repository:
-
-.. code-block:: shell
-
-  git clone https://github.com/scheibler/khard
-  cd khard
-  git fetch --all
-  git checkout develop
-  pip install --editable .
-
-All of these command should also work inside a `virtualenv`_ in order to
-isolate the khard installation from other software on your system.
-
-.. _PyPi: https://pypi.python.org/pypi/khard/
-.. _Github: https://github.com/scheibler/khard
-.. _develop: https://github.com/scheibler/khard/tree/develop
-.. _virtualenv: https://virtualenv.pypa.io/en/stable/
+If you want to help the development or need more advanced installation
+instructions see the Development section below.
 
 Configuration
 =============
@@ -210,9 +188,42 @@ as your merge editor in khard's config file:
   merge_editor = /path/to/sdiff_khard_wrapper.sh
 
 
+Development
+===========
+
+Khard is developed on `Github`_ where you are welcome to post `bug reports`_,
+`feature requests`_ or join the discussion in general.
+
+The `develop`_ branch is used for active development so please open all pull
+requests for new features against that branch.  Only bug fixes should be opened
+against master.
+
+In order to start coding you need to fetch the develop branch:
+
+.. code-block:: shell
+
+  git clone https://github.com/scheibler/khard
+  cd khard
+  git fetch --all
+  git checkout develop
+  pip3 install --editable .
+
+Alternatively you can use the ``setup.py`` script directly.  If you want to
+isolate khard from your system Python environment you can use a `virtualenv`_
+to do so.
+
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. _PyPi: https://pypi.python.org/pypi/khard/
+.. _Github: https://github.com/scheibler/khard
+.. _develop: https://github.com/scheibler/khard/tree/develop
+.. _virtualenv: https://virtualenv.pypa.io/en/stable/
+.. _bug reports: https://github.com/scheibler/khard/issues
+.. _feature requests: https://github.com/scheibler/khard/pulls
+
