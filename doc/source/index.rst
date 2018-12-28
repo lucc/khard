@@ -148,8 +148,8 @@ following programs:
 sox and ffmpeg are used to cut and convert the new ring tone and espeak speaks
 the caller id.  mpc is a client for the music player daemon (mpd). It's
 required to stop music during an incoming call. Skip the last, if you don't use
-mpd. Don't forget to set the "stop_music"-parameter in the config.py file to
-False, too.
+mpd. Don't forget to set the "stop_music"-parameter in the ``config.py`` file
+to ``False``, too.
 
 After the installation, copy the scripts and sounds folders to your twinkle
 config folder:
@@ -187,8 +187,8 @@ The file ``misc/zsh/_khard`` contains a khard cli completion function for the
 zsh and ``misc/zsh/_email-khard`` completes email addresses.
 
 Install by copying to a directory where zsh searches for completion functions
-(the $fpath array). If you, for example, put all completion functions into the
-folder ``~/.zsh/completions`` you must add the following to your zsh main
+(the ``$fpath`` array). If you, for example, put all completion functions into
+the folder ``~/.zsh/completions`` you must add the following to your zsh main
 config file:
 
 .. code-block:: zsh
@@ -201,7 +201,7 @@ config file:
 sdiff
 ~~~~~
 
-Use the wrapper script misc/sdiff/sdiff_khard_wrapper.sh if you want to use
+Use the wrapper script ``misc/sdiff/sdiff_khard_wrapper.sh`` if you want to use
 sdiff as your contact merging tool. Just make the script executable and set it
 as your merge editor in khard's config file:
 
