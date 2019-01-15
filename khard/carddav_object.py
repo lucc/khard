@@ -656,7 +656,13 @@ class CarddavObject:
                     key = self.supported_private_objects[key_index]
                     if key not in private_objects:
                         private_objects[key] = []
-                    private_objects[key].append(child.value)
+                    group_name = ""
+                    if child.group:
+                        for label in self.vcard.getChildren():
+                            if label.name == "X-ABLABEL" \
+                                    and label.group == child.group:
+                                group_name = label.value + ": "
+                    private_objects[key].append(group_name + child.value)
         # sort private object lists
         for value in private_objects.values():
             value.sort()
@@ -669,12 +675,18 @@ class CarddavObject:
 
     def _get_webpages(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str)
         """
         urls = []
         for child in self.vcard.getChildren():
             if child.name == "URL":
-                urls.append(child.value)
+                if child.group:
+                    for label in self.vcard.getChildren():
+                        if label.name == "X-ABLABEL" \
+                                and label.group == child.group:
+                            urls.append("%s: %s" % (label.value, child.value))
+                else:
+                    urls.append(child.value)
         return sorted(urls)
 
     def _add_webpage(self, webpage):
