@@ -4,8 +4,24 @@ python:
   - "3.5"
   - "3.6"
   - "nightly" # currently points to 3.7-dev
+
 jobs:
+  include:
+    - python: "3.6"
+      env: TEST=1
   allow_failures:
     - python: "nightly"
-install: pip install .
-script: python -m unittest discover
+
+install: |
+  if [ -z "$TEST" ]; then
+    pip install .
+  else
+    pip install sphinx
+  fi
+
+script: |
+  if [ -z "$TEST" ]; then
+    python -m unittest discover
+  else
+    make -C doc html man
+  fi
