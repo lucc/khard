@@ -158,6 +158,53 @@ class CarddavObject:
         except AttributeError:
             return ""
 
+    def _get_ablabel(self, item):
+        """Get an ABLABEL for a specified item in the vCard.
+        Will return the ABLABEL only if the item is part of a group with exactly
+        two items, exactly one of which is an ABLABEL.
+
+        :param item: the item to be labelled
+        :type item: vobject.base.ContentLine
+        :returns: the ABLABEL in the circumstances above or an empty string
+        :rtype: str
+
+        """
+        label = ""
+        if item.group:
+            count = 0
+            for child in self.vcard.getChildren():
+                if child.group and child.group == item.group:
+                    count += 1
+                    if child.name == "X-ABLABEL":
+                        if label == "":
+                            label = child.value
+                        else:
+                            return ""
+            if count != 2:
+                label = ""
+        return label
+
+    def _get_new_group(self, group_type=""):
+        """Get an unused group name for adding new groups. Uses the form item123
+         or itemgroup_type123 if a grouptype is specified.
+
+        :param group_type: (Optional) a string to add between "item" and the
+                           number
+        :type item: str
+        :returns: the name of the first unused group of the specified form
+        :rtype: str
+
+        """
+        counter = 1
+        while True:
+            group_name = "item%s%d" % (group_type, counter)
+            for child in self.vcard.getChildren():
+                if child.group and child.group ==  group_name:
+                    counter += 1
+                    break
+            else:
+                return group_name
+
     def _get_rev(self):
         return self._get_string_field("rev")
 
@@ -656,7 +703,8 @@ class CarddavObject:
                     key = self.supported_private_objects[key_index]
                     if key not in private_objects:
                         private_objects[key] = []
-                    private_objects[key].append(child.value)
+                    ablabel = self._get_ablabel(child)
+                    private_objects[key].append(ablabel + (": " if ablabel else "") + child.value)
         # sort private object lists
         for value in private_objects.values():
             value.sort()
@@ -664,23 +712,48 @@ class CarddavObject:
 
     def _add_private_object(self, key, value):
         private_obj = self.vcard.add('X-' + key.upper())
-        private_obj.value = helpers.convert_to_vcard(key, value,
-                                                     ObjectType.string)
+        if isinstance(value, dict):
+            if len(value) > 1:
+                raise ValueError(
+                    "Error: " + key + " must be a string.")
+            label = [i for i in value][0]
+            group_name = self._get_new_group()
+            private_obj.group = group_name
+            private_obj.value = value[label]
+            ablabel_obj = self.vcard.add('X-ABLABEL')
+            ablabel_obj.group = group_name
+            ablabel_obj.value = label
+        else:
+            private_obj.value = helpers.convert_to_vcard(key, value,
+                                                         ObjectType.string)
 
     def _get_webpages(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str)
         """
         urls = []
         for child in self.vcard.getChildren():
             if child.name == "URL":
-                urls.append(child.value)
+                ablabel = self._get_ablabel(child)
+                urls.append(ablabel + (": " if ablabel else "") + child.value)
         return sorted(urls)
 
     def _add_webpage(self, webpage):
         webpage_obj = self.vcard.add('url')
-        webpage_obj.value = helpers.convert_to_vcard("webpage", webpage,
-                                                     ObjectType.string)
+        if isinstance(webpage, dict):
+            if len(webpage) > 1:
+                raise ValueError(
+                    "Error: webpage must be a string.")
+            label = [i for i in webpage][0]
+            group_name = self._get_new_group()
+            webpage_obj.group = group_name
+            webpage_obj.value = webpage[label]
+            ablabel_obj = self.vcard.add('X-ABLABEL')
+            ablabel_obj.group = group_name
+            ablabel_obj.value = label
+        else:
+            webpage_obj.value = helpers.convert_to_vcard("webpage", webpage,
+                                                         ObjectType.string)
 
     def get_anniversary(self):
         """:returns: contacts anniversary or None if not available
