@@ -57,7 +57,6 @@ def convert_to_vcard(name, value, allowed_object_type):
     raise ValueError("Error: " + name +
                      " must be a string or a list with strings.")
 
-
 class VCardWrapper:
     """Wrapper class around a vobject.vCard object.
 
@@ -133,7 +132,10 @@ class VCardWrapper:
         for child in self.vcard.getChildren():
             if child.name == name:
                 ablabel = self._get_ablabel(child)
-                values.append(ablabel + (": " if ablabel else "") + child.value)
+                if ablabel:
+                    values.append(ablabel + ": " + child.value)
+                else:
+                    values.append(child.value)
         return sorted(values)
 
     def _delete_vcard_object(self, name):
@@ -384,6 +386,24 @@ class VCardWrapper:
             else:
                 return group_name
 
+    def _add_labelled_object(self, obj_type, user_input, name_groups=False):
+        obj = self.vcard.add(obj_type)
+        if isinstance(user_input, dict):
+            if len(user_input) > 1:
+                raise ValueError("Error: %s must be a string or a dict " +\
+                                 "containing one key/value pair." % obj_type)
+            label = [i for i in user_input][0]
+            group_name = self._get_new_group(obj_type if name_groups else "")
+            obj.group = group_name
+            obj.value = convert_to_vcard(obj_type, user_input[label],
+                                                 ObjectType.string)
+            ablabel_obj = self.vcard.add('X-ABLABEL')
+            ablabel_obj.group = group_name
+            ablabel_obj.value = label
+        else:
+            obj.value = convert_to_vcard(obj_type, user_input,
+                                         ObjectType.string)
+
     @anniversary.setter
     def anniversary(self, date):
         value, text = self._prepare_birthday_value(date)
@@ -623,21 +643,7 @@ class VCardWrapper:
         return self._get_multi_property("URL")
 
     def _add_webpage(self, webpage):
-        webpage_obj = self.vcard.add('url')
-        if isinstance(webpage, dict):
-            if len(webpage) > 1:
-                raise ValueError(
-                    "Error: webpage must be a string.")
-            label = [i for i in webpage][0]
-            group_name = self._get_new_group()
-            webpage_obj.group = group_name
-            webpage_obj.value = webpage[label]
-            ablabel_obj = self.vcard.add('X-ABLABEL')
-            ablabel_obj.group = group_name
-            ablabel_obj.value = label
-        else:
-            webpage_obj.value = helpers.convert_to_vcard("webpage", webpage,
-                                                         ObjectType.string)
+        self._add_labelled_object("url", webpage, True)
 
     @property
     def categories(self):
@@ -1081,21 +1087,7 @@ class CarddavObject(VCardWrapper):
         return private_objects
 
     def _add_private_object(self, key, value):
-        private_obj = self.vcard.add('X-' + key.upper())
-        if isinstance(value, dict):
-            if len(value) > 1:
-                raise ValueError(
-                    "Error: " + key + " must be a string.")
-            label = [i for i in value][0]
-            group_name = self._get_new_group()
-            private_obj.group = group_name
-            private_obj.value = value[label]
-            ablabel_obj = self.vcard.add('X-ABLABEL')
-            ablabel_obj.group = group_name
-            ablabel_obj.value = label
-        else:
-            private_obj.value = helpers.convert_to_vcard(key, value,
-                                                         ObjectType.string)
+        self._add_labelled_object('X-' + key.upper(), value)
 
     def get_formatted_anniversary(self):
         return self._format_date_object(self.anniversary, self.localize_dates)
