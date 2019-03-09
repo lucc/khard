@@ -88,7 +88,8 @@ class Config:
             exit("Invalid merge editor path or executable not found.")
 
         # default action
-        self.default_action = self.config["general"].get("default_action", "list")
+        self.default_action = self.config["general"].get("default_action",
+                                                         "list")
         if self.default_action is None:
             exit("Missing default action parameter.")
         elif self.default_action not in Actions.get_actions():
@@ -137,7 +138,7 @@ class Config:
         if "preferred_phone_number_type" in self.config['contact table']:
             if isinstance(self.config['contact table']['preferred_phone_number_type'], str):
                 self.config['contact table']['preferred_phone_number_type'] = \
-                        [self.config['contact table']['preferred_phone_number_type']]
+                    [self.config['contact table']['preferred_phone_number_type']]
         else:
             # default phone number type: pref
             self.config['contact table']['preferred_phone_number_type'] = ["pref"]
@@ -145,7 +146,7 @@ class Config:
         if "preferred_email_address_type" in self.config['contact table']:
             if isinstance(self.config['contact table']['preferred_email_address_type'], str):
                 self.config['contact table']['preferred_email_address_type'] = \
-                        [self.config['contact table']['preferred_email_address_type']]
+                    [self.config['contact table']['preferred_email_address_type']]
         else:
             # default email address  type: pref
             self.config['contact table']['preferred_email_address_type'] = ["pref"]
@@ -287,4 +288,3 @@ class Config:
 
     def preferred_email_address_type(self):
         return self.config['contact table']['preferred_email_address_type']
-
