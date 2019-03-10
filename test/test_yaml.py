@@ -93,7 +93,7 @@ class yaml_ablabel(unittest.TestCase):
                 localize_dates=False)
 
     def test_ablabelled_url_in_yaml_input(self):
-        ablabel_url = "First name: foo\nWebpage:\n - http://example.com\n" +\
+        ablabel_url = "First name: foo\nWebpage:\n - http://example.com\n" \
                       " - github: https://github.com/scheibler/khard"
         x = self._parse_yaml(ablabel_url)
         self.assertListEqual(x.webpages, [

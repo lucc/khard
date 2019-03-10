@@ -57,6 +57,7 @@ def convert_to_vcard(name, value, allowed_object_type):
     raise ValueError("Error: " + name +
                      " must be a string or a list with strings.")
 
+
 class VCardWrapper:
     """Wrapper class around a vobject.vCard object.
 
@@ -392,7 +393,7 @@ class VCardWrapper:
             if len(user_input) > 1:
                 raise ValueError("Error: %s must be a string or a dict " +\
                                  "containing one key/value pair." % obj_type)
-            label = [i for i in user_input][0]
+            label = list(user_input)[0]
             group_name = self._get_new_group(obj_type if name_groups else "")
             obj.group = group_name
             obj.value = convert_to_vcard(obj_type, user_input[label],
