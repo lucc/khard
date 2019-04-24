@@ -420,21 +420,25 @@ def choose_address_book_from_list(header_string, address_book_list):
     return selected_address_book
 
 
-def choose_vcard_from_list(header_string, vcard_list):
+def choose_vcard_from_list(header_string, vcard_list, include_none=False):
     if len(vcard_list) == 0:
         return None
-    if len(vcard_list) == 1:
+    if len(vcard_list) == 1 and not include_none:
         return vcard_list[0]
     print(header_string)
     list_contacts(vcard_list)
     while True:
         try:
-            input_string = input("Enter Index: ")
+            prompt_string = "Enter Index" + \
+                           (" (0 for None)" if include_none else "") + ": "
+            input_string = input(prompt_string)
             if input_string in ["", "q", "Q"]:
                 print("Canceled")
                 sys.exit(0)
             addr_index = int(input_string)
-            if addr_index > 0:
+            if addr_index == 0 and include_none:
+                return None
+            elif addr_index > 0:
                 selected_vcard = vcard_list[addr_index - 1]
             else:
                 raise ValueError
@@ -1336,9 +1340,10 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
-        "Select target contact which to overwrite",
+        "Select target contact to overwrite (or None to add a new entry)",
         get_contact_list_by_user_selection([selected_target_address_book],
-                                           source_vcard.formatted_name, True))
+                                           source_vcard.formatted_name, True),
+        True)
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
