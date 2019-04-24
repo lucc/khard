@@ -429,8 +429,9 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
     list_contacts(vcard_list)
     while True:
         try:
-            prompt_string = "Enter Index" + \
-                           (" (0 for None)" if include_none else "") + ": "
+            prompt_string = "Enter Index (" + \
+                            ("0 for None, " if include_none else "") + \
+                            "q to quit): "
             input_string = input(prompt_string)
             if input_string in ["", "q", "Q"]:
                 print("Canceled")
