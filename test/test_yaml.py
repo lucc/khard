@@ -73,3 +73,28 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
         empty_note = "First name: foo\nNote:"
         x = self._parse_yaml(empty_note)
         self.assertListEqual(x.notes, [])
+
+class yaml_ablabel(unittest.TestCase):
+
+    @staticmethod
+    def _parse_yaml(yaml=''):
+        """Parse some yaml string into a CarddavObject
+
+        :param yaml: the yaml input string to parse
+        :type yaml: str
+        :returns: the parsed CarddavObject
+        :rtype: CarddavObject
+        """
+        # Careful, this function doesn't actually support named arguments so
+        # they have to be kept in this order!
+        return CarddavObject.from_user_input(
+                address_book=mock.Mock(path='foo-path'), user_input=yaml,
+                supported_private_objects=[], version='3.0',
+                localize_dates=False)
+
+    def test_ablabelled_url_in_yaml_input(self):
+        ablabel_url = "First name: foo\nWebpage:\n - http://example.com\n" \
+                      " - github: https://github.com/scheibler/khard"
+        x = self._parse_yaml(ablabel_url)
+        self.assertListEqual(x.webpages, [
+            'github: https://github.com/scheibler/khard', 'http://example.com'])

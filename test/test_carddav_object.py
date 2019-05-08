@@ -474,3 +474,13 @@ class CarddavObjectFormatDateObject(unittest.TestCase):
         d = datetime.datetime(1900, 2, 13)
         actual = carddav_object.CarddavObject._format_date_object(d, False)
         self.assertEqual(actual, '--02-13')
+
+class ABLabels(unittest.TestCase):
+
+    def test_setting_and_getting_webpage_ablabel(self):
+        vcard = _create_test_vcard()
+        wrapper = carddav_object.VCardWrapper(vcard)
+        wrapper._add_webpage({'github':'https://github.com/scheibler/khard'})
+        wrapper._add_webpage('http://example.com')
+        self.assertListEqual(wrapper.webpages, [
+            'github: https://github.com/scheibler/khard', 'http://example.com'])
