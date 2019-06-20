@@ -64,7 +64,6 @@ case $state in
       phone:'list phone numbers'
       {postaddress,postaddr,post}:'list post addresses'
       {remove,rm,del,delete}:'delete a contact'
-      {source,src}:'edit the source vcard of a contact'
     )
     # Use this array to complete the subcommands.
     _describe -t subcommands 'khard subcommand' subcommands_array && ret=0
@@ -95,7 +94,7 @@ case $state in
     )
     template_file_input_options=(
       '(-i)'{-i+,--input-file=}'[specify input template file name or use stdin]:input file:_files'
-      '--open-editor[open text editor after successful creation of new contact from stdin or template]'
+      {--edit,--open-editor}'[open text editor after successful creation of new contact from stdin or template]'
     )
     # sort options
     local -a sort_options
@@ -126,9 +125,9 @@ case $state in
     # Add the correct options for the subcommand to $options, depending on the
     # subcommand found in $word[1].
     case $words[1] in
-      addressbooks|abooks)
+      addressbooks|abooks|template)
         options+=();;
-      list|ls|details|show|source|src|remove|delete|del|rm|filename|file)
+      source|src|remove|delete|del|rm|filename|file)
         options+=(
           $default_addressbook_options $default_search_options $sort_options
         );;
@@ -137,6 +136,12 @@ case $state in
           $default_addressbook_options $default_search_options $sort_options
           '(-p)'{-p,--parsable}'[machine readable contact table]'
         );;
+      details|show)
+	options+=(
+          $default_addressbook_options $default_search_options $sort_options
+          '(-o)'{-o+,--output-file=}'[specify output template file name or use stdout]:output file:_files'
+	  '--format=[output format]:format:(pretty yaml vcard)'
+	);;
       birthdays|bdays)
         options+=(
           $default_addressbook_options $default_search_options
@@ -159,12 +164,6 @@ case $state in
           $default_addressbook_options $default_search_options $sort_options
           '(-p)'{-p,--parsable}'[machine readable post address table]'
         );;
-      export)
-	    options+=(
-          $default_addressbook_options $default_search_options $sort_options
-          '--empty-contact-template[export empty contact template]'
-          '(-o)'{-o+,--output-file=}'[specify output template file name or use stdout]:output file:_files'
-        );;
       new|add)
     	options+=(
           $new_addressbook_options $template_file_input_options
@@ -182,6 +181,7 @@ case $state in
       modify|edit|ed)
         options+=(
           $default_addressbook_options $template_file_input_options $default_search_options $sort_options
+	  '--format=[file format to use when editing]:format:(yaml vcard)'
         );;
       merge)
         options+=(
