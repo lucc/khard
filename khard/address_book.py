@@ -67,13 +67,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :returns: the length of the shortes unequal initial substrings
         :rtype: int
         """
-        sum = 0
-        for char1, char2 in zip(uid1, uid2):
-            if char1 == char2:
-                sum += 1
-            else:
-                break
-        return sum
+        return len(os.path.commonprefix((uid1, uid2)))
 
     def _search_all(self, query):
         """Search in all fields for contacts matching query.
