@@ -31,22 +31,9 @@ found in the [documentation](doc/source/index.rst#installation).
 
 ### Configuration ###
 
-To get the example config file and the other extra data, you can clone from git (see above) or
-download package from pypi:
-
-```
-pip install --download /tmp --no-deps --no-use-wheel khard
-tar xfz /tmp/khard-x.x.x.tar.gz
-rm /tmp/khard-x.x.x.tar.gz
-cd khard-x.x.x/
-```
-
-Now copy the example config file and adapt it's contents to your needs:
-
-```
-mkdir ~/.config/khard/
-cp misc/khard/khard.conf.example ~/.config/khard/khard.conf
-```
+There is an [example config file](misc/khard/khard.conf.example) which you can
+copy to the default config file location: `~/.config/khard/khard.conf`.  See
+[the docs](doc/source/index.rst#configuration) for more.
 
 ### Davcontroller ###
 
