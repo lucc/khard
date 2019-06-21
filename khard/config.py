@@ -66,10 +66,10 @@ class Config:
 
         # editor
         self.editor = self.config["general"].get("editor") \
-            or os.environ.get("EDITOR")
+            or os.environ.get("EDITOR", "vim")
         # merge editor
         self.merge_editor = self.config['general'].get("merge_editor") \
-            or os.environ.get("MERGE_EDITOR")
+            or os.environ.get("MERGE_EDITOR", "vimdiff")
 
         # default action
         self.default_action = self.config["general"].get("default_action")
