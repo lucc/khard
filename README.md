@@ -41,36 +41,19 @@ sudo aptitude install python-setuptools
 sudo easy_install pip
 ```
 
-
-
 Installation
 ------------
 
-### From pypi ###
+[![Packaging
+status](https://repology.org/badge/tiny-repos/khard.svg)](https://repology.org/project/khard/versions)
+Khard is already packaged for quite some distributions.  Chances are you can
+install it with your default package manager.
 
-Khard is installable via pip. I recommend virtualenv to create a separate python3 environment. So
-your system stays clean. Additionally you don't have to struggle with different python instances,
-especially if your operating system still defaults to python2.
+You can also install khard via [`pip`](https://pip.pypa.io/en/stable/),
+preferably inside a
+[virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/):
 
-```
-# install virtualenv package
-sudo pip install virtualenv
-# create folder for all virtualenv's and put ~/.virtualenvs/bin in your shell's executable path
-mkdir ~/.virtualenvs
-# create new python3 virtual environment with the name "khard"
-virtualenv -p python3 ~/.virtualenvs/khard
-# to install khard, use the pip command from that newly created environment
-# otherwise it would be installed in the users home directory
-~/.virtualenvs/khard/bin/pip install khard
-# create subfolder for symlinks of local binaries
-# and don't forget to add it to your shell's executable path too
-mkdir ~/.virtualenvs/bin
-# create a symlink to the local binary folder
-ln -s ~/.virtualenvs/khard/bin/khard ~/.virtualenvs/bin
-```
-
-More information about virtualenv at http://docs.python-guide.org/en/latest/dev/virtualenvs/
-
+    pip install khard
 
 ### From source ###
 
@@ -104,7 +87,6 @@ mkdir ~/.config/khard/
 cp misc/khard/khard.conf.example ~/.config/khard/khard.conf
 ```
 
-
 ### Davcontroller ###
 
 Khard also contains a helper script called davcontroller. It's designed to create and remove address
@@ -131,8 +113,6 @@ cd CalDAVClientLibrary
 ~/.virtualenvs/davcontroller/bin/python /path/to/khard-x.x.x/misc/davcontroller/davcontroller.py
 ```
 
-
-
 Usage
 -----
 
@@ -151,7 +131,6 @@ khard action --help
 ```
 
 Beware, that the order of the command line parameters matters.
-
 
 ### Show contacts ###
 
