@@ -29,7 +29,7 @@ Prerequisites
 -------------
 
 You have to install and configure a caldav and carddav server. I recommend
-[Baïkal](http://baikal-server.com).
+[Baïkal](https://github.com/sabre-io/Baikal).
 
 Then you must synchronize the calendars and address books to your local machine with
 [vdirsyncer](https://github.com/untitaker/vdirsyncer).
