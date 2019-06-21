@@ -47,26 +47,8 @@ Installation
 [![Packaging
 status](https://repology.org/badge/tiny-repos/khard.svg)](https://repology.org/project/khard/versions)
 Khard is already packaged for quite some distributions.  Chances are you can
-install it with your default package manager.
-
-You can also install khard via [`pip`](https://pip.pypa.io/en/stable/),
-preferably inside a
-[virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/):
-
-    pip install khard
-
-### From source ###
-
-If you instead want to run the source code directly, you may install required python modules by
-hand, clone from git and run the khard-runner.py script:
-
-~~~
-pip install --user atomicwrites configobj ruamel.yaml unidecode vobject
-git clone https://github.com/scheibler/khard.git
-cd khard/
-./khard-runner.py [action [options]]
-~~~
-
+install it with your default package manager.  Further instructions can be
+found in the [documentation](doc/source/index.rst#installation).
 
 ### Configuration ###
 

@@ -19,6 +19,10 @@ programs like an email client, text editor, vdir synchronizer or VOIP client.
 Installation
 ============
 
+.. image:: https://repology.org/badge/tiny-repos/khard.svg
+   :target: https://repology.org/project/khard/versions
+   :alt: Packaging status
+
 Khard is available as a native package for some Linux distributions so you
 should check your package manager first.  If you want or need to install
 manually you can use the release from `PyPi`_:
@@ -28,7 +32,7 @@ manually you can use the release from `PyPi`_:
   pip3 install khard
 
 If you want to help the development or need more advanced installation
-instructions see the Development section below.
+instructions see the :ref:`development` section below.
 
 Configuration
 =============
@@ -187,6 +191,7 @@ as your merge editor in khard's config file:
 
   merge_editor = /path/to/sdiff_khard_wrapper.sh
 
+.. _development:
 
 Development
 ===========
@@ -203,6 +208,7 @@ In order to start coding you need to fetch the develop branch:
   git fetch --all
   git checkout develop
   pip3 install --editable .
+  ./khard-runner.py --help
 
 Alternatively you can use the ``setup.py`` script directly.  If you want to
 isolate khard from your system Python environment you can use a `virtualenv`_
