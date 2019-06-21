@@ -17,7 +17,7 @@ from .actions import Actions
 from .address_book import AddressBookCollection
 from .carddav_object import CarddavObject
 from .config import Config
-from .version import khard_version
+from .version import version as khard_version
 
 
 config = None

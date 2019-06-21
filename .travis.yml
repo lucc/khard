@@ -23,6 +23,6 @@ install: |
 
 script: |
   case $JOB in
-    tests) python -m unittest discover;;
+    tests) python setup.py test;;
     docs) make -C doc html man;;
   esac

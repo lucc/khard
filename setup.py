@@ -23,7 +23,6 @@ except ImportError:
 
 setup(
     name='khard',
-    version=re.sub("[^0-9.]", "", open('khard/version.py').read()),
     author='Eric Scheibler',
     author_email='email@eric-scheibler.de',
     url='https://github.com/scheibler/khard/',
@@ -48,6 +47,8 @@ setup(
         'unidecode',
         'vobject'
     ],
+    use_scm_version={'write_to': 'khard/version.py'},
+    setup_requires=['setuptools_scm'],
     packages=['khard'],
     entry_points={
         'console_scripts': ['khard = khard.khard:main']
