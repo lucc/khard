@@ -44,8 +44,11 @@ sudo easy_install pip
 Installation
 ------------
 
-[![Packaging
-status](https://repology.org/badge/tiny-repos/khard.svg)](https://repology.org/project/khard/versions)
+<a href="https://repology.org/project/khard/versions">
+    <img src="https://repology.org/badge/tiny-repos/khard.svg"
+        alt="Packaging status" align="right">
+</a>
+
 Khard is already packaged for quite some distributions.  Chances are you can
 install it with your default package manager.  Further instructions can be
 found in the [documentation](doc/source/index.rst#installation).

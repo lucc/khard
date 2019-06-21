@@ -22,6 +22,7 @@ Installation
 .. image:: https://repology.org/badge/tiny-repos/khard.svg
    :target: https://repology.org/project/khard/versions
    :alt: Packaging status
+   :align: right
 
 Khard is available as a native package for some Linux distributions so you
 should check your package manager first.  If you want or need to install
