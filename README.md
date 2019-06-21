@@ -1,45 +1,21 @@
 khard
 =====
 
-Khard is an address book for the Linux console. It creates, reads, modifies and removes carddav
-address book entries at your local machine. Khard is also compatible to the email clients mutt and
-alot and the SIP client twinkle. You can find more information about khard and the whole
-synchronization process
+Khard is an address book for the Linux console. It creates, reads, modifies and
+removes carddav address book entries at your local machine. Khard is also
+compatible to the email clients mutt and alot and the SIP client twinkle. You
+can find more information about khard and the whole synchronization process
 [here](http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/).
 
-Khard is developed and tested on Debian operating system, versions 7, 8 and 9 but should run
-on all Unix-like systems.
-
-If you encounter bugs, please contact me via email: email (at) eric-scheibler (dot) de.
-
-Warning: If you want to create or modify contacts with khard, beware that the vcard standard is very
-inconsistent and lacks interoperability. Different actors in that sector have defined their own
-extensions and even produce non-standard output. A good example is the type value, which is tied to
-phone numbers, email and post addresses. Khard tries to avoid such incompatibilities but if you sync
-your contacts with an Android or iOS device, expect problems. You are on the safe side, if you only
-use khard to read contacts. For further information about the vcard compatibility issues have a look
-into [this blog post](http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/).
-
-With version 0.11.0, khard changed from python2 to python3.  So if you come from a prior khard
-version, it may be necessary to reinstall in a newly created python3 virtual environment.
-
-
-
-Prerequisites
--------------
-
-You have to install and configure a caldav and carddav server. I recommend
-[Baïkal](https://github.com/sabre-io/Baikal).
-
-Then you must synchronize the calendars and address books to your local machine with
-[vdirsyncer](https://github.com/untitaker/vdirsyncer).
-
-And you need pip to install python modules:
-
-```
-sudo aptitude install python-setuptools
-sudo easy_install pip
-```
+Warning: If you want to create or modify contacts with khard, beware that the
+vcard standard is very inconsistent and lacks interoperability. Different
+actors in that sector have defined their own extensions and even produce
+non-standard output. A good example is the type value, which is tied to phone
+numbers, email and post addresses. Khard tries to avoid such incompatibilities
+but if you sync your contacts with an Android or iOS device, expect problems.
+You are on the safe side, if you only use khard to read contacts. For further
+information about the vcard compatibility issues have a look into [this blog
+post](http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/).
 
 Installation
 ------------
