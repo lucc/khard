@@ -38,6 +38,15 @@ def write_temp_file(text=""):
         return tempfile.name
 
 
+def edit(*filenames, merge=False):
+    """Edit the given files with the configured editor or merge editor"""
+    editor = config.merge_editor if merge else config.editor
+    editor = [editor] if type(editor) == str else editor
+    editor.extend(filenames)
+    child = subprocess.Popen(editor)
+    child.communicate()
+
+
 def create_new_contact(address_book):
     # create temp file
     template = (
@@ -50,9 +59,7 @@ def create_new_contact(address_book):
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
     while True:
-        # start vim to edit contact template
-        child = subprocess.Popen([config.editor, temp_file_name])
-        child.communicate()
+        edit(temp_file_name)
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
             new_contact = None
@@ -104,9 +111,7 @@ def modify_existing_contact(old_contact):
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
     while True:
-        # start editor to edit contact template
-        child = subprocess.Popen([config.editor, temp_file_name])
-        child.communicate()
+        edit(temp_file_name)
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
             new_contact = None
@@ -179,10 +184,7 @@ def merge_existing_contacts(source_contact, target_contact,
     target_temp_file_creation = helpers.file_modification_date(
         target_temp_file_name)
     while True:
-        # start editor to edit contact template
-        child = subprocess.Popen([config.merge_editor, source_temp_file_name,
-                                  target_temp_file_name])
-        child.communicate()
+        edit(source_temp_file_name, target_temp_file_name, merge=True)
         if target_temp_file_creation == helpers.file_modification_date(
                 target_temp_file_name):
             merged_contact = None
@@ -1159,8 +1161,7 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
 
     """
     if source:
-        child = subprocess.Popen([config.editor, selected_vcard.filename])
-        child.communicate()
+        edit(selected_vcard.filename)
         return
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
     if selected_vcard.version not in config.supported_vcard_versions:
