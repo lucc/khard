@@ -725,8 +725,7 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
     selected_address_book = choose_address_book_from_list(
         "Select address book for new contact", selected_address_books)
     if selected_address_book is None:
-        print("Error: address book list is empty")
-        sys.exit(1)
+        sys.exit("Error: address book list is empty")
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
@@ -737,8 +736,7 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
                 config.get_preferred_vcard_version(),
                 config.localize_dates())
         except ValueError as err:
-            print(err)
-            sys.exit(1)
+            sys.exit(err)
         else:
             new_contact.write_to_file()
         if open_editor:
@@ -765,10 +763,8 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     message = message_from_string(input_from_stdin_or_file, policy=SMTP_POLICY)
 
     print("Khard: Add email address to contact")
-    if not message['From'] \
-            or not message['From'].addresses:
-        print("Found no email address")
-        sys.exit(1)
+    if not message['From'] or not message['From'].addresses:
+        sys.exit("Found no email address")
 
     email_address = message['From'].addresses[0].addr_spec
     name = message['From'].addresses[0].display_name
@@ -795,8 +791,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
         selected_address_book = choose_address_book_from_list(
             "Select address book for new contact", config.abooks)
         if selected_address_book is None:
-            print("Error: address book list is empty")
-            sys.exit(1)
+            sys.exit("Error: address book list is empty")
         # ask for name and organisation of new contact
         while True:
             first_name = input("First name: ")
@@ -1183,8 +1178,7 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
                     selected_vcard, input_from_stdin_or_file,
                     config.localize_dates())
         except ValueError as err:
-            print(err)
-            sys.exit(1)
+            sys.exit(err)
         if selected_vcard == new_contact:
             print("Nothing changed\n\n%s" % new_contact.print_vcard())
         else:
@@ -1249,9 +1243,8 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     """
     # Check arguments.
     if target_uid != "" and search_terms != "":
-        print("You can not specify a target uid and target search terms for a "
-              "merge.")
-        sys.exit(1)
+        sys.exit("You can not specify a target uid and target search terms "
+                 "for a merge.")
     # Find possible target contacts.
     if target_uid != "":
         target_vcards = get_contacts(selected_address_books, target_uid,
@@ -1272,8 +1265,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     source_vcard = choose_vcard_from_list("Select contact from which to merge",
                                           vcard_list)
     if source_vcard is None:
-        print("Found no source contact for merging")
-        sys.exit(1)
+        sys.exit("Found no source contact for merging")
     else:
         print("Merge from %s from address book %s\n\n"
               % (source_vcard, source_vcard.address_book))
@@ -1281,8 +1273,7 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     target_vcard = choose_vcard_from_list("Select contact into which to merge",
                                           target_vcards)
     if target_vcard is None:
-        print("Found no target contact for merging")
-        sys.exit(1)
+        sys.exit("Found no target contact for merging")
     else:
         print("Merge into %s from address book %s\n\n"
               % (target_vcard, target_vcard.address_book))
@@ -1310,8 +1301,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     source_vcard = choose_vcard_from_list(
         "Select contact to %s" % action.title(), vcard_list)
     if source_vcard is None:
-        print("Found no contact")
-        sys.exit(1)
+        sys.exit("Found no contact")
     else:
         print("%s contact %s from address book %s"
               % (action.title(), source_vcard, source_vcard.address_book))
@@ -1319,17 +1309,15 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     # get target address book
     if len(target_address_book_list) == 1 \
             and target_address_book_list[0] == source_vcard.address_book:
-        print("The address book %s already contains the contact %s"
-              % (target_address_book_list[0], source_vcard))
-        sys.exit(1)
+        sys.exit("The address book %s already contains the contact %s"
+                 % (target_address_book_list[0], source_vcard))
     else:
         available_address_books = [abook for abook in target_address_book_list
                                    if abook != source_vcard.address_book]
         selected_target_address_book = choose_address_book_from_list(
             "Select target address book", available_address_books)
         if selected_target_address_book is None:
-            print("Error: address book list is empty")
-            sys.exit(1)
+            sys.exit("Error: address book list is empty")
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
@@ -1798,16 +1786,14 @@ def main(argv=sys.argv[1:]):
                 with open(args.input_file, "r") as f:
                     input_from_stdin_or_file = f.read()
             except IOError as err:
-                print("Error: %s\n       File: %s" % (err.strerror,
-                                                      err.filename))
-                sys.exit(1)
+                sys.exit("Error: %s\n       File: %s" % (err.strerror,
+                                                         err.filename))
         elif not sys.stdin.isatty():
             # try to read from stdin
             try:
                 input_from_stdin_or_file = sys.stdin.read()
             except IOError:
-                print("Error: Can't read from stdin")
-                sys.exit(1)
+                sys.exit("Error: Can't read from stdin")
             # try to reopen console
             # otherwise further user interaction is not possible (for example
             # selecting a contact from the contact table)
@@ -1836,8 +1822,7 @@ def main(argv=sys.argv[1:]):
         selected_vcard = choose_vcard_from_list(
             "Select contact for %s action" % args.action.title(), vcard_list)
         if selected_vcard is None:
-            print("Found no contact")
-            sys.exit(1)
+            sys.exit("Found no contact")
         if args.action == "show":
             if args.format == "pretty":
                 output = selected_vcard.print_vcard()
