@@ -151,8 +151,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('manpage', 'khard', 'khard Documentation',
-     [author], 1)
+    ('man/khard', 'khard', 'khard Documentation', '', 1),
+    #('man/khard.conf', 'khard.conf', 'khard.conf Documentation', '', 5),
 ]
 
 
@@ -166,6 +166,3 @@ texinfo_documents = [
      author, 'khard', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
