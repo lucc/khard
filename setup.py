@@ -6,14 +6,7 @@
 #   - https://gehrcke.de/2014/02/distributing-a-python-command-line-application/
 
 import re
-import sys
 from setuptools import setup
-
-if sys.version_info.major < 3:
-    print("Error: khard runs under python3 only. Please upgrade your system "
-            "wide python installation or create a python3 virtual environment "
-            "first.")
-    sys.exit(1)
 
 # get long description of package (either rst or markdown)
 # see https://gist.github.com/aubricus/9184003#gistcomment-1488025
@@ -53,4 +46,6 @@ setup(
         'console_scripts': [ 'khard = khard.khard:main' ]
     },
     test_suite = "test",
+    # the dependency ruamel.yaml requires >=3.5
+    python_requires = ">=3.5",
 )
