@@ -194,10 +194,6 @@ Development
 Khard is developed on `Github`_ where you are welcome to post `bug reports`_,
 `feature requests`_ or join the discussion in general.
 
-The `develop`_ branch is used for active development so please open all pull
-requests for new features against that branch.  Only bug fixes should be opened
-against master.
-
 In order to start coding you need to fetch the develop branch:
 
 .. code-block:: shell
@@ -212,6 +208,7 @@ Alternatively you can use the ``setup.py`` script directly.  If you want to
 isolate khard from your system Python environment you can use a `virtualenv`_
 to do so.
 
+.. include:: contributing.rst
 
 Indices and tables
 ==================
@@ -222,7 +219,6 @@ Indices and tables
 
 .. _PyPi: https://pypi.python.org/pypi/khard/
 .. _Github: https://github.com/scheibler/khard
-.. _develop: https://github.com/scheibler/khard/tree/develop
 .. _virtualenv: https://virtualenv.pypa.io/en/stable/
 .. _bug reports: https://github.com/scheibler/khard/issues
 .. _feature requests: https://github.com/scheibler/khard/pulls
