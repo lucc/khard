@@ -2,6 +2,17 @@ Change Log
 ==========
 
 
+v0.14.0: 2019-06-21
+- Display ABLABELs for URLs and Private Objects
+- Allow vcard selections to be aborted explicitly
+- Unify edit and source subcommands
+- Merge export and show subcommands
+- Turn template export into a seperate command
+- Require python >= 3.5
+- Add html documentation (generated with sphinx)
+- Add man page (generated with sphinx)
+
+
 v0.13.0: 2018-12-25
 - New action postaddress: lists all postal (addresses analog to email and phone actions, #196)
 - New zsh completion function for email addresses
