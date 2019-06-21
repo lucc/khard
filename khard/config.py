@@ -60,8 +60,7 @@ class Config:
             self.config['general'] = {}
 
         # debug
-        self._convert_boolean_config_value(self.config["general"],
-                                           "debug", False)
+        self._convert_boolean_config_value(self.config["general"], "debug")
         self.debug = self.config["general"]["debug"]
 
         # editor
@@ -119,13 +118,13 @@ class Config:
 
         # reverse contact table
         self._convert_boolean_config_value(self.config["contact table"],
-                                           "reverse", False)
+                                           "reverse")
         # group contact table by address book
         self._convert_boolean_config_value(self.config["contact table"],
-                                           "group_by_addressbook", False)
+                                           "group_by_addressbook")
         # nickname
         self._convert_boolean_config_value(self.config["contact table"],
-                                           "show_nicknames", False)
+                                           "show_nicknames")
         # show uids
         self._convert_boolean_config_value(self.config["contact table"],
                                            "show_uids", True)
@@ -183,10 +182,10 @@ class Config:
 
         # speed up program by pre-searching in the vcard source files
         self._convert_boolean_config_value(self.config["vcard"],
-                                           "search_in_source_files", False)
+                                           "search_in_source_files")
         # skip unparsable vcards
         self._convert_boolean_config_value(self.config["vcard"],
-                                           "skip_unparsable", False)
+                                           "skip_unparsable")
 
         # load address books
         if "addressbooks" not in self.config:
@@ -208,7 +207,7 @@ class Config:
         self.abooks = [self.abook.get_abook(name) for name in section]
 
     @staticmethod
-    def _convert_boolean_config_value(config, name, default=True):
+    def _convert_boolean_config_value(config, name, default=False):
         """Convert the named field to bool.
 
         The current value should be one of the strings "yes" or "no".  It will
