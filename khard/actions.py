@@ -11,19 +11,20 @@ class Actions:
         "addressbooks": ["abooks"],
         "birthdays":    ["bdays"],
         "copy":         ["cp"],
-        "details":      ["show"],
         "email":        [],
         "export":       [],
         "filename":     ["file"],
         "list":         ["ls"],
         "merge":        [],
-        "modify":       ["edit", "ed"],
+        "edit":         ["modify", "ed"],
         "move":         ["mv"],
         "new":          ["add"],
         "phone":        [],
-        "postaddress":        ["post", "postaddr"],
+        "postaddress":  ["post", "postaddr"],
         "remove":       ["delete", "del", "rm"],
-        "source":       ["src"]
+        "show":         ["details"],
+        "source":       ["src"],
+        "template":     [],
     }
 
     @classmethod

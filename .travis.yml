@@ -1,11 +1,28 @@
+dist: xenial # required for Python >= 3.7
 language: python
 python:
-  - "3.4"
   - "3.5"
   - "3.6"
-  - "nightly" # currently points to 3.7-dev
+  - "3.7"
+  - "nightly"
+  - "pypy3.5"
+env:
+  - JOB=tests
+  - JOB=docs
+
 jobs:
   allow_failures:
     - python: "nightly"
-install: pip install .
-script: python -m unittest discover
+    - python: "pypy3.5"
+
+install: |
+  case $JOB in
+    tests) pip install .;;
+    docs) pip install sphinx;;
+  esac
+
+script: |
+  case $JOB in
+    tests) python -m unittest discover;;
+    docs) make -C doc html man;;
+  esac

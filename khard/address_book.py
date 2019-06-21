@@ -67,13 +67,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :returns: the length of the shortes unequal initial substrings
         :rtype: int
         """
-        sum = 0
-        for char1, char2 in zip(uid1, uid2):
-            if char1 == char2:
-                sum += 1
-            else:
-                break
-        return sum
+        return len(os.path.commonprefix((uid1, uid2)))
 
     def _search_all(self, query):
         """Search in all fields for contacts matching query.
@@ -95,7 +89,7 @@ class AddressBook(metaclass=abc.ABCMeta):
                 clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
                                                contact_details)
                 if regexp.search(clean_contact_details) is not None \
-                        and len(re.sub("\D", "", query)) >= 3:
+                        and len(re.sub(r"\D", "", query)) >= 3:
                     yield contact
 
     def _search_names(self, query):
@@ -110,7 +104,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contacts.values():
             # only search in contact name
-            if regexp.search(contact.get_full_name()) is not None:
+            if regexp.search(contact.formatted_name) is not None:
                 yield contact
 
     def _search_uid(self, query):
@@ -227,7 +221,6 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: (int, int)
 
         """
-        pass
 
 
 class VdirAddressBook(AddressBook):
@@ -259,7 +252,8 @@ class VdirAddressBook(AddressBook):
 
         :param search: a regular expression to limit the results
         :type search: str
-        :param search_in_source_files: apply search regexp directly on the .vcf files to speed up parsing (less accurate)
+        :param search_in_source_files: apply search regexp directly on the .vcf
+            files to speed up parsing (less accurate)
         :type search_in_source_files: bool
         :returns: the paths of the vcard files
         :rtype: generator
@@ -283,7 +277,8 @@ class VdirAddressBook(AddressBook):
 
         :param query: a regular expression to limit the results
         :type query: str
-        :param search_in_source_files: apply search regexp directly on the .vcf files to speed up parsing (less accurate)
+        :param search_in_source_files: apply search regexp directly on the .vcf
+            files to speed up parsing (less accurate)
         :type search_in_source_files: bool
         :returns: the number of successfully loaded cards and the number of
             errors
@@ -316,7 +311,7 @@ class VdirAddressBook(AddressBook):
                         "--skip-unparsable to proceed", filename, self.name)
                     sys.exit(2)
             else:
-                uid = card.get_uid()
+                uid = card.uid
                 if not uid:
                     logging.warning("Card %s from address book %s has no UID "
                                     "and will not be availbale.", card,
