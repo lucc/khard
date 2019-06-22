@@ -27,8 +27,8 @@ from .object_type import ObjectType
 
 def convert_to_vcard(name, value, allowed_object_type):
     """converts user input into vcard compatible data structures
-    :param name: object name, only required for error messages
-    :type name: str
+
+    :param str name: object name, only required for error messages
     :param value: user input
     :type value: str or list(str)
     :param allowed_object_type: set the accepted return type for vcard
