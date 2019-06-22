@@ -7,8 +7,10 @@ Welcome to khard's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+
+   index
+   api/khard
 
 Khard is an address book for the Linux command line.  It can read, create,
 modify and delete carddav address book entries.  Khard only works with a local
@@ -22,7 +24,6 @@ Installation
 .. image:: https://repology.org/badge/tiny-repos/khard.svg
    :target: https://repology.org/project/khard/versions
    :alt: Packaging status
-   :align: right
 
 Khard is available as a native package for some Linux distributions so you
 should check your package manager first.  If you want or need to install
@@ -45,7 +46,7 @@ If the environment variable ``$XDG_CONFIG_HOME`` is set, it is
 
 A minimal configuration is provided in the source tree.  It looks like this:
 
-.. literalinclude :: ../../misc/khard/khard.conf.example
+.. literalinclude:: ../../misc/khard/khard.conf.example
    :language: ini
 
 
