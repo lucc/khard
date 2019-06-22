@@ -1,1 +1,3 @@
-doc/build/
+build
+dist/
+khard/version.py
