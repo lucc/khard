@@ -10,7 +10,8 @@ Welcome to khard's documentation!
    :maxdepth: 1
 
    index
-   api/khard
+   commandline
+   API documentation for developers <api/modules.rst>
 
 Khard is an address book for the Linux command line.  It can read, create,
 modify and delete carddav address book entries.  Khard only works with a local
