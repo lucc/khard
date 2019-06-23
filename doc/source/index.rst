@@ -11,6 +11,7 @@ Welcome to khard's documentation!
 
    index
    commandline
+   davcontroller
    API documentation for developers <api/modules.rst>
    indices
 
