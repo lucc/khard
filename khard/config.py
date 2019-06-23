@@ -187,11 +187,12 @@ class Config:
         self._convert_boolean_config_value(self.config["vcard"],
                                            "skip_unparsable")
 
-        # load address books
         if "addressbooks" not in self.config:
             exit('Missing main section "[addressbooks]".')
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
+
+    def load_address_books(self):
         section = self.config['addressbooks']
         kwargs = {'private_objects': self.get_supported_private_objects(),
                   'localize_dates': self.localize_dates(),

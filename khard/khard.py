@@ -547,6 +547,9 @@ def merge_args_into_config(args, config):
     # skip unparsable vcards
     if "skip_unparsable" in args and args.skip_unparsable:
         config.set_skip_unparsable(True)
+    # Now we can savely initialize the address books as all command line
+    # options have been incorporated into the config object.
+    config.load_address_books()
     # If the user could but did not specify address books on the command line
     # it means they want to use all address books in that place.
     if "addressbook" in args and not args.addressbook:
@@ -1749,9 +1752,10 @@ def main(argv=sys.argv[1:]):
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
+    merge_args_into_config(args, config)
+
     # Check some of the simpler subcommands first.  These don't have any
-    # options and can directly be run.  That is much faster than checking all
-    # options first and getting default values.
+    # options and can directly be run.
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.abooks))
         return
@@ -1764,7 +1768,6 @@ def main(argv=sys.argv[1:]):
                         config.get_supported_private_objects())))
         return
 
-    merge_args_into_config(args, config)
     search_queries = prepare_search_queries(args)
 
     # load address books
