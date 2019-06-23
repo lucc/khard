@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from distutils.spawn import find_executable
 import locale
 import logging
 import os

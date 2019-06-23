@@ -7,8 +7,6 @@ import unittest.mock as mock
 from khard import config
 
 
-# Find executables without looking at the users $PATH.
-@mock.patch('khard.config.find_executable', lambda x: x)
 class LoadingConfigFile(unittest.TestCase):
 
     def test_load_non_existing_file_fails(self):
@@ -71,7 +69,6 @@ class TestConvertBooleanConfigValue(unittest.TestCase):
                                                         'realfalse')
 
 
-@mock.patch('khard.config.find_executable', lambda x: x)
 class ConfigPreferredVcardVersion(unittest.TestCase):
 
     def test_default_value_is_3(self):
