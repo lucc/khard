@@ -2,6 +2,7 @@
 
 from distutils.spawn import find_executable
 import locale
+import logging
 import os
 import re
 import sys
@@ -87,10 +88,17 @@ class Config:
             exit("Invalid merge editor path or executable not found.")
 
         # default action
-        self.default_action = self.config["general"].get("default_action",
-                                                         "list")
+        self.default_action = self.config["general"].get("default_action")
         if self.default_action is None:
-            exit("Missing default action parameter.")
+            # When these two lines are replaced with "pass" khard requires a
+            # subcommand on the command line as long as no default_action is
+            # explicitly given in the config file.
+            logging.warning(
+                "No default_action was set in the config.  Currently this "
+                "will default to default_action='list' but will require the "
+                "use of a subcommand on the command line in a future version "
+                "of khard.")
+            self.default_action = "list"
         elif self.default_action not in Actions.get_actions():
             exit("Invalid value for default_action parameter\n"
                  "Possible values: %s" % ', '.join(

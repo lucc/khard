@@ -1696,6 +1696,7 @@ def parse_args(argv):
     # Create the global config instance.
     global config
     config = Config(args.config)
+    logging.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with
     # the config file.
@@ -1707,6 +1708,9 @@ def parse_args(argv):
     # Set the default command from the config file if none was given on the
     # command line.
     if not remainder or remainder[0] not in Actions.get_all():
+        if config.default_action is None:
+            exit("Missing subcommand on command line or default action "
+                 "parameter in config.")
         remainder.insert(0, config.default_action)
         logging.debug("updated remainder=%s", remainder)
 
