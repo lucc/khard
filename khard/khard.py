@@ -60,8 +60,8 @@ def create_new_contact(address_book):
             break
 
         # read temp file contents after editing
-        with open(temp_file_name, "r") as tf:
-            new_contact_yaml = tf.read()
+        with open(temp_file_name, "r") as tmp:
+            new_contact_yaml = tmp.read()
 
         # try to create new contact
         try:
@@ -114,8 +114,8 @@ def modify_existing_contact(old_contact):
             break
 
         # read temp file contents after editing
-        with open(temp_file_name, "r") as tf:
-            new_contact_template = tf.read()
+        with open(temp_file_name, "r") as tmp:
+            new_contact_template = tmp.read()
 
         # try to create contact from user input
         try:
@@ -421,7 +421,7 @@ def choose_address_book_from_list(header_string, address_book_list):
 
 
 def choose_vcard_from_list(header_string, vcard_list, include_none=False):
-    if len(vcard_list) == 0:
+    if not vcard_list:
         return None
     if len(vcard_list) == 1 and not include_none:
         return vcard_list[0]
@@ -439,7 +439,7 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
             addr_index = int(input_string)
             if addr_index == 0 and include_none:
                 return None
-            elif addr_index > 0:
+            if addr_index > 0:
                 selected_vcard = vcard_list[addr_index - 1]
             else:
                 raise ValueError
@@ -1139,7 +1139,7 @@ def list_subcommand(vcard_list, parsable):
 
 
 def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
-        source=False):
+                      source=False):
     """Modify a contact in an external editor.
 
     :param selected_vcard: the contact to modify
@@ -1763,13 +1763,13 @@ def main(argv=sys.argv[1:]):
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.abooks))
         return
-    elif args.action == "template":
+    if args.action == "template":
         print("# Contact template for khard version %s\n#\n"
               "# Use this yaml formatted template to create a new contact:\n"
               "#   either with: khard new -a address_book -i template.yaml\n"
               "#   or with: cat template.yaml | khard new -a address_book\n"
               "\n%s" % (khard_version, helpers.get_new_contact_template(
-                        config.get_supported_private_objects())))
+                  config.get_supported_private_objects())))
         return
 
     search_queries = prepare_search_queries(args)
@@ -1794,8 +1794,8 @@ def main(argv=sys.argv[1:]):
         if args.input_file != "-":
             # try to read from specified input file
             try:
-                with open(args.input_file, "r") as f:
-                    input_from_stdin_or_file = f.read()
+                with open(args.input_file, "r") as infile:
+                    input_from_stdin_or_file = infile.read()
             except IOError as err:
                 sys.exit("Error: %s\n       File: %s" % (err.strerror,
                                                          err.filename))

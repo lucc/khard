@@ -25,9 +25,8 @@ def pretty_print(table, justify="L"):
                 except IndexError:
                     line_break_row.append("")
             line_break_table.append(line_break_row)
-    else:
-        # replace table variable
-        table = line_break_table
+    # replace table variable
+    table = line_break_table
     # get width for every column
     column_widths = [0] * len(table[0])
     offset = 3
@@ -111,12 +110,11 @@ def get_random_uid():
 
 
 def file_modification_date(filename):
-    t = os.path.getmtime(filename)
-    return datetime.fromtimestamp(t)
+    return datetime.fromtimestamp(os.path.getmtime(filename))
 
 
-def convert_to_yaml(
-        name, value, indentation, indexOfColon, show_multi_line_character):
+def convert_to_yaml(name, value, indentation, index_of_colon,
+                    show_multi_line_character):
     """converts a value list into yaml syntax
     :param name: name of object (example: phone)
     :type name: str
@@ -124,8 +122,8 @@ def convert_to_yaml(
     :type value: str, list(str), list(list(str))
     :param indentation: indent all by number of spaces
     :type indentation: int
-    :param indexOfColon: use to position : at the name string (-1 for no space)
-    :type indexOfColon: int
+    :param index_of_colon: use to position : at the name string (-1 for no space)
+    :type index_of_colon: int
     :param show_multi_line_character: option to hide "|"
     :type show_multi_line_character: boolean
     :returns: yaml formatted string array of name, value pair
@@ -149,12 +147,12 @@ def convert_to_yaml(
             value = value[0][0]
     if isinstance(value, str):
         strings.append("%s%s%s: %s" % (
-            ' ' * indentation, name, ' ' * (indexOfColon-len(name)),
+            ' ' * indentation, name, ' ' * (index_of_colon-len(name)),
             indent_multiline_string(value, indentation+4,
                                     show_multi_line_character)))
     elif isinstance(value, list):
         strings.append("%s%s%s: " % (
-            ' ' * indentation, name, ' ' * (indexOfColon-len(name))))
+            ' ' * indentation, name, ' ' * (index_of_colon-len(name))))
         for outer in value:
             # special case for single item sublists
             if isinstance(outer, list) \
@@ -193,7 +191,7 @@ def indent_multiline_string(input, indentation, show_multi_line_character):
     return input.strip()
 
 
-def get_new_contact_template(supported_private_objects=[]):
+def get_new_contact_template(supported_private_objects=None):
     formatted_private_objects = []
     if supported_private_objects:
         formatted_private_objects.append("")

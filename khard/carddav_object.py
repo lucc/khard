@@ -235,8 +235,8 @@ class VCardWrapper:
         except (IndexError, TypeError, ValueError):
             # else try to determine, if type params contain pref attribute
             try:
-                for x in object.params.get("TYPE"):
-                    if x.lower() == "pref" and "pref" not in type_list:
+                for type in object.params.get("TYPE"):
+                    if type.lower() == "pref" and "pref" not in type_list:
                         type_list.append("pref")
             except TypeError:
                 pass
@@ -381,7 +381,7 @@ class VCardWrapper:
         while True:
             group_name = "item%s%d" % (group_type, counter)
             for child in self.vcard.getChildren():
-                if child.group and child.group ==  group_name:
+                if child.group and child.group == group_name:
                     counter += 1
                     break
             else:
@@ -397,7 +397,7 @@ class VCardWrapper:
             group_name = self._get_new_group(obj_type if name_groups else "")
             obj.group = group_name
             obj.value = convert_to_vcard(obj_type, user_input[label],
-                                                 ObjectType.string)
+                                         ObjectType.string)
             ablabel_obj = self.vcard.add('X-ABLABEL')
             ablabel_obj.group = group_name
             ablabel_obj.value = label
@@ -433,7 +433,7 @@ class VCardWrapper:
             if self.version == "4.0":
                 return date.strip(), True
             return None, False
-        elif date.year == 1900 and date.month != 0 and date.day != 0 \
+        if date.year == 1900 and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0 \
                 and self.version == "4.0":
             fmt = '--%m%d'
@@ -704,36 +704,35 @@ class VCardWrapper:
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for phone number " + number +
                              " is missing.")
-        elif len(custom_types) > 1:
+        if len(custom_types) > 1:
             raise ValueError("Error: phone number " + number + " got more "
                              "than one custom label: " +
                              helpers.list_to_string(custom_types, ", "))
+        phone_obj = self.vcard.add('tel')
+        if self.version == "4.0":
+            phone_obj.value = "tel:%s" % convert_to_vcard(
+                "phone number", number, ObjectType.string)
+            phone_obj.params['VALUE'] = ["uri"]
+            if pref > 0:
+                phone_obj.params['PREF'] = str(pref)
         else:
-            phone_obj = self.vcard.add('tel')
-            if self.version == "4.0":
-                phone_obj.value = "tel:%s" % convert_to_vcard(
-                    "phone number", number, ObjectType.string)
-                phone_obj.params['VALUE'] = ["uri"]
-                if pref > 0:
-                    phone_obj.params['PREF'] = str(pref)
-            else:
-                phone_obj.value = convert_to_vcard("phone number", number,
-                                                   ObjectType.string)
-                if pref > 0:
-                    standard_types.append("pref")
-            if standard_types:
-                phone_obj.params['TYPE'] = standard_types
-            if custom_types:
-                custom_label_count = 0
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" and label.group.startswith(
-                            "itemtel"):
-                        custom_label_count += 1
-                group_name = "itemtel%d" % (custom_label_count + 1)
-                phone_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = custom_types[0]
+            phone_obj.value = convert_to_vcard("phone number", number,
+                                               ObjectType.string)
+            if pref > 0:
+                standard_types.append("pref")
+        if standard_types:
+            phone_obj.params['TYPE'] = standard_types
+        if custom_types:
+            custom_label_count = 0
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group.startswith(
+                        "itemtel"):
+                    custom_label_count += 1
+            group_name = "itemtel%d" % (custom_label_count + 1)
+            phone_obj.group = group_name
+            label_obj = self.vcard.add('x-ablabel')
+            label_obj.group = group_name
+            label_obj.value = custom_types[0]
 
     @property
     def emails(self):
@@ -761,33 +760,32 @@ class VCardWrapper:
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for email address " + address +
                              " is missing.")
-        elif len(custom_types) > 1:
+        if len(custom_types) > 1:
             raise ValueError("Error: email address " + address + " got more "
                              "than one custom label: " +
                              helpers.list_to_string(custom_types, ", "))
+        email_obj = self.vcard.add('email')
+        email_obj.value = convert_to_vcard("email address", address,
+                                           ObjectType.string)
+        if self.version == "4.0":
+            if pref > 0:
+                email_obj.params['PREF'] = str(pref)
         else:
-            email_obj = self.vcard.add('email')
-            email_obj.value = convert_to_vcard("email address", address,
-                                               ObjectType.string)
-            if self.version == "4.0":
-                if pref > 0:
-                    email_obj.params['PREF'] = str(pref)
-            else:
-                if pref > 0:
-                    standard_types.append("pref")
-            if standard_types:
-                email_obj.params['TYPE'] = standard_types
-            if custom_types:
-                custom_label_count = 0
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" and label.group.startswith(
-                            "itememail"):
-                        custom_label_count += 1
-                group_name = "itememail%d" % (custom_label_count + 1)
-                email_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = custom_types[0]
+            if pref > 0:
+                standard_types.append("pref")
+        if standard_types:
+            email_obj.params['TYPE'] = standard_types
+        if custom_types:
+            custom_label_count = 0
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group.startswith(
+                        "itememail"):
+                    custom_label_count += 1
+            group_name = "itememail%d" % (custom_label_count + 1)
+            email_obj.group = group_name
+            label_obj = self.vcard.add('x-ablabel')
+            label_obj.group = group_name
+            label_obj.value = custom_types[0]
 
     @property
     def post_addresses(self):
@@ -867,48 +865,45 @@ class VCardWrapper:
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for post address " + street +
                              " is missing.")
-        elif len(custom_types) > 1:
+        if len(custom_types) > 1:
             raise ValueError("Error: post address " + street + " got more "
                              "than one custom " "label: " +
                              helpers.list_to_string(custom_types, ", "))
+        adr_obj = self.vcard.add('adr')
+        adr_obj.value = vobject.vcard.Address(
+            box=convert_to_vcard("box address field", box,
+                                 ObjectType.string_or_list_with_strings),
+            extended=convert_to_vcard("extended address field", extended,
+                                      ObjectType.string_or_list_with_strings),
+            street=convert_to_vcard("street", street,
+                                    ObjectType.string_or_list_with_strings),
+            code=convert_to_vcard("post code", code,
+                                  ObjectType.string_or_list_with_strings),
+            city=convert_to_vcard("city", city,
+                                  ObjectType.string_or_list_with_strings),
+            region=convert_to_vcard("region", region,
+                                    ObjectType.string_or_list_with_strings),
+            country=convert_to_vcard("country", country,
+                                     ObjectType.string_or_list_with_strings))
+        if self.version == "4.0":
+            if pref > 0:
+                adr_obj.params['PREF'] = str(pref)
         else:
-            adr_obj = self.vcard.add('adr')
-            adr_obj.value = vobject.vcard.Address(
-                box=convert_to_vcard("box address field", box,
-                                     ObjectType.string_or_list_with_strings),
-                extended=convert_to_vcard(
-                    "extended address field", extended,
-                    ObjectType.string_or_list_with_strings),
-                street=convert_to_vcard(
-                    "street", street, ObjectType.string_or_list_with_strings),
-                code=convert_to_vcard("post code", code,
-                                      ObjectType.string_or_list_with_strings),
-                city=convert_to_vcard("city", city,
-                                      ObjectType.string_or_list_with_strings),
-                region=convert_to_vcard(
-                    "region", region, ObjectType.string_or_list_with_strings),
-                country=convert_to_vcard(
-                    "country", country,
-                    ObjectType.string_or_list_with_strings))
-            if self.version == "4.0":
-                if pref > 0:
-                    adr_obj.params['PREF'] = str(pref)
-            else:
-                if pref > 0:
-                    standard_types.append("pref")
-            if standard_types:
-                adr_obj.params['TYPE'] = standard_types
-            if custom_types:
-                custom_label_count = 0
-                for label in self.vcard.getChildren():
-                    if label.name == "X-ABLABEL" and label.group.startswith(
-                            "itemadr"):
-                        custom_label_count += 1
-                group_name = "itemadr%d" % (custom_label_count + 1)
-                adr_obj.group = group_name
-                label_obj = self.vcard.add('x-ablabel')
-                label_obj.group = group_name
-                label_obj.value = custom_types[0]
+            if pref > 0:
+                standard_types.append("pref")
+        if standard_types:
+            adr_obj.params['TYPE'] = standard_types
+        if custom_types:
+            custom_label_count = 0
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group.startswith(
+                        "itemadr"):
+                    custom_label_count += 1
+            group_name = "itemadr%d" % (custom_label_count + 1)
+            adr_obj.group = group_name
+            label_obj = self.vcard.add('x-ablabel')
+            label_obj.group = group_name
+            label_obj.value = custom_types[0]
 
 
 class CarddavObject(VCardWrapper):
