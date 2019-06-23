@@ -99,7 +99,7 @@ class VcardAdressBookLoad(unittest.TestCase):
     def test_loading_unparsable_vcard_fails(self):
         abook = address_book.VdirAddressBook('test',
                                              'test/fixture/broken.abook')
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(address_book.AddressBookParseError):
             with self.assertLogs(level='ERROR'):
                 abook.load()
 

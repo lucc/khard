@@ -14,7 +14,7 @@ from unidecode import unidecode
 
 from . import helpers
 from .actions import Actions
-from .address_book import AddressBookCollection
+from .address_book import AddressBookCollection, AddressBookParseError
 from .carddav_object import CarddavObject
 from .config import Config
 from .version import version as khard_version
@@ -579,9 +579,13 @@ def load_address_books(names, config, search_queries):
     # load address books which are defined in the configuration file
     for name in names:
         address_book = config.abook.get_abook(name)
-        address_book.load(
-            search_queries[address_book.name],
-            search_in_source_files=config.search_in_source_files())
+        try:
+            address_book.load(
+                search_queries[address_book.name],
+                search_in_source_files=config.search_in_source_files())
+        except AddressBookParseError as err:
+            sys.exit("{}\nUse --debug for more information or "
+                     "--skip-unparsable to proceed".format(err))
         yield address_book
 
 

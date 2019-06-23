@@ -6,7 +6,6 @@ import glob
 import logging
 import os
 import re
-import sys
 
 import vobject.base
 
@@ -16,10 +15,16 @@ from .carddav_object import CarddavObject
 class AddressBookParseError(Exception):
     """Indicate an error while parsing data from an address book backend."""
 
-    def __init__(self, filename, *args, **kwargs):
+    def __init__(self, filename, abook, reason, *args, **kwargs):
         """Store the filename that caused the error."""
         super().__init__(*args, **kwargs)
         self.filename = filename
+        self.abook = abook
+        self.reason = reason
+
+    def __str__(self):
+        return "Error when parsing {} in address book {}: {}".format(
+            self.filename, self.abook, self.reason)
 
 
 class AddressBook(metaclass=abc.ABCMeta):
@@ -302,14 +307,7 @@ class VdirAddressBook(AddressBook):
                 if self._skip:
                     errors += 1
                 else:
-                    # FIXME: This should throw an apropriate exception and the
-                    # sys.exit should be called somewhere closer to the command
-                    # line parsing.
-                    logging.error(
-                        "The vcard file %s of address book %s could not be "
-                        "parsed\nUse --debug for more information or "
-                        "--skip-unparsable to proceed", filename, self.name)
-                    sys.exit(2)
+                    raise AddressBookParseError(filename, self.name, err)
             else:
                 uid = card.uid
                 if not uid:
