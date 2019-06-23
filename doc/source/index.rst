@@ -12,6 +12,7 @@ Welcome to khard's documentation!
    index
    commandline
    API documentation for developers <api/modules.rst>
+   indices
 
 Khard is an address book for the Linux command line.  It can read, create,
 modify and delete carddav address book entries.  Khard only works with a local
@@ -218,13 +219,6 @@ isolate khard from your system Python environment you can use a `virtualenv`_
 to do so.
 
 .. include:: contributing.rst
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 .. _PyPi: https://pypi.python.org/pypi/khard/
 .. _Github: https://github.com/scheibler/khard
