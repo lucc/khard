@@ -10,6 +10,7 @@ Please stick to the following standards when you open pull requests:
 - Format your python code according to `PEP 8`_.
 
 - Write tests for new features, they will automatically be run on travis:
+
 .. image:: https://travis-ci.org/scheibler/khard.svg?branch=develop
    :target: https://travis-ci.org/scheibler/khard
 
