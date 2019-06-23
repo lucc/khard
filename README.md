@@ -29,12 +29,28 @@ Khard is already packaged for quite some distributions.  Chances are you can
 install it with your default package manager.  Further instructions can be
 found in the [documentation](doc/source/index.rst#installation).
 
-Configuration
--------------
+Usage
+-----
 
 There is an [example config file](misc/khard/khard.conf.example) which you can
-copy to the default config file location: `~/.config/khard/khard.conf`.  See
-[the docs](doc/source/index.rst#configuration) for more.
+copy to the default config file location: `~/.config/khard/khard.conf`. `khard`
+has several subcommands which are all documented by their `--help` option.
+[The docs](doc/source/index.rst) also have a chapter on [command line
+usage](doc/source/commandline.rst) and
+[configuration](doc/source/index.rst#configuration).
+
+Development
+-----------
+
+<a href="https://travis-ci.org/scheibler/khard">
+    <img src="https://travis-ci.org/scheibler/khard.svg?branch=develop"
+        alt="Build status" align="right">
+</a>
+
+Khard is developed [on GitHub](https://github.com/scheibler/khard) where you
+are welcome to post [bug reports](https://github.com/scheibler/khard/issues)
+and [feature requests](https://github.com/scheibler/khard/pulls).  Also see the
+[notes for contributors](doc/source/contributing.rst).
 
 Related projects
 ----------------
