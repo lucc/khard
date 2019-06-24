@@ -152,7 +152,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('man/khard', 'khard', 'khard Documentation', '', 1),
-    #('man/khard.conf', 'khard.conf', 'khard.conf Documentation', '', 5),
+    ('man/khard.conf', 'khard.conf', 'khard.conf Documentation', '', 5),
 ]
 
 
