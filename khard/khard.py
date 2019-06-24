@@ -754,20 +754,18 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
         create_new_contact(selected_address_book)
 
 
-def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
+def add_email_subcommand(text, abooks):
     """Add a new email address to contacts, creating new contacts if necessary.
 
-    :param input_from_stdin_or_file: the input text to search for the new email
-    :type input_from_stdin_or_file: str
-    :param selected_address_books: the addressbooks that were selected on the
-        command line
-    :type selected_address_books: list of address_book.AddressBook
+    :param str text: the input text to search for the new email
+    :param abooks: the addressbooks that were selected on the command line
+    :type abooks: list of address_book.AddressBook
     :returns: None
     :rtype: None
 
     """
     # get name and email address
-    message = message_from_string(input_from_stdin_or_file, policy=SMTP_POLICY)
+    message = message_from_string(text, policy=SMTP_POLICY)
 
     print("Khard: Add email address to contact")
     if not message['From'] or not message['From'].addresses:
@@ -783,7 +781,7 @@ def add_email_subcommand(input_from_stdin_or_file, selected_address_books):
     # search for an existing contact
     selected_vcard = choose_vcard_from_list(
         "Select contact for the found e-mail address",
-        get_contact_list_by_user_selection(selected_address_books, name, True))
+        get_contact_list_by_user_selection(abooks, name, True))
     if selected_vcard is None:
         # create new contact
         while True:
@@ -1041,6 +1039,9 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
     Output format:
+
+    .. code-block:: text
+
         single line of text
         email_address\tname\ttype
         email_address\tname\ttype
