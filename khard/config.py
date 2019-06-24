@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from distutils.spawn import find_executable
 import locale
 import logging
 import os
@@ -66,26 +65,10 @@ class Config:
 
         # editor
         self.editor = self.config["general"].get("editor") \
-            or os.environ.get("EDITOR")
-        if self.editor is None:
-            exit("Set path to your preferred text editor in khard's config "
-                 "file or the $EDITOR shell variable\n"
-                 "Example for khard.conf: editor = vim")
-        self.editor = find_executable(os.path.expanduser(self.editor))
-        if self.editor is None:
-            exit("Invalid editor path or executable not found.")
-
+            or os.environ.get("EDITOR", "vim")
         # merge editor
         self.merge_editor = self.config['general'].get("merge_editor") \
-            or os.environ.get("MERGE_EDITOR")
-        if self.merge_editor is None:
-            exit("Set path to your preferred text merge editor in khard's "
-                 "config file or the $MERGE_EDITOR shell variable\n"
-                 "Example for khard.conf: merge_editor = vimdiff")
-        self.merge_editor = find_executable(os.path.expanduser(
-            self.merge_editor))
-        if self.merge_editor is None:
-            exit("Invalid merge editor path or executable not found.")
+            or os.environ.get("MERGE_EDITOR", "vimdiff")
 
         # default action
         self.default_action = self.config["general"].get("default_action")

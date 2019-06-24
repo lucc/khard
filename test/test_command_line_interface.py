@@ -44,7 +44,6 @@ class HelpOption(unittest.TestCase):
         self._test(['-h'], 'usage: TESTSUITE [-h]')
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
-    @mock.patch('khard.config.find_executable', lambda x: x)
     def test_subcommand_help(self):
         self._test(['list', '-h'], 'usage: TESTSUITE list [-h]')
 
@@ -52,7 +51,6 @@ class HelpOption(unittest.TestCase):
         self._test(['-h', 'list'], 'usage: TESTSUITE [-h]')
 
 
-@mock.patch('khard.config.find_executable', lambda x: x)
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
 class ListingCommands(unittest.TestCase):
     """Tests for subcommands that simply list stuff."""
@@ -124,7 +122,6 @@ class ListingCommands(unittest.TestCase):
         self.assertIn('UID: testuid1', text)
 
 
-@mock.patch('khard.config.find_executable', lambda x: x)
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""
 
@@ -201,7 +198,6 @@ class FileSystemCommands(unittest.TestCase):
         self.assertEqual(new, old + 1)
 
 
-@mock.patch('khard.config.find_executable', lambda x: x)
 class MiscCommands(unittest.TestCase):
     """Tests for other subcommands."""
 

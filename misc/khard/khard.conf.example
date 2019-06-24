@@ -1,5 +1,5 @@
-# example configuration file for khard version >= 0.13.0
-# place it under $HOME/.config/khard/khard.conf
+# example configuration file for khard version > 0.14.0
+# place it under ~/.config/khard/khard.conf
 
 [addressbooks]
 [[family]]
@@ -10,7 +10,8 @@ path = ~/.contacts/friends/
 [general]
 debug = no
 default_action = list
-editor = vim
+# These are either strings or comma seperated lists
+editor = vim, -i, NONE
 merge_editor = vimdiff
 
 [contact table]
