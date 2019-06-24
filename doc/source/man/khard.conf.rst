@@ -19,8 +19,71 @@ used in its stead.
 The location can be changed with the environment variable :file:`$KHARD_CONFIG`
 or the command line option :option:`-c` (which takes precedence).
 
-Description
------------
+Syntax
+------
+
+The syntax of the config file is ini-style dialect.  It is parsed with
+the configobj library.  The precise definition of the corresponding ini syntax
+can be found at
+https://configobj.readthedocs.io/en/latest/configobj.html#the-config-file-format
+.
+
+It supports sections marked with square brackets and nested sections with more
+square brackets.  Each section contains several keys with values delimited by
+equal signs.  The values are typed and type checked.
+
+Options
+-------
+
+The config file consists of these four sections:
+
+adressbooks
+  This section contains several subsections, but at least one. Each subsection
+  can have an arbitrary name which will be the name of an addressbook known to
+  khard.  Each of these subsections **must** have a *path* key with the path to
+  the folder containing the vcard files for that addressbook.
+
+general
+  This section allows one to configure some general features about khard.  The
+  following keys are available in this section:
+
+  - *debug*: a boolean indication weather the logging level should be set to
+    *debug* by default (same effect as the :option:`--debug` option on the
+    command line)
+  - *default_action*: the default action/subcommand to use if the first non
+    option argument does not match any of the available subcommands
+  - *editor*: the text editor to use to edit address book entries, if not given
+    :file:`$EDITOR` will be used
+  - *merge_editor*: a command used to merge two cards interactively, if not
+    given, :file:`$MERGE_EDITOR` will be used
+
+contact table
+  This section is used to configure the behaviour of different output listings
+  of khard.  The following keys are available:
+
+  - *display*: which part of the name to use in listings; this can be one of
+    ``first_name``, ``last_name`` or ``formatted_name``
+  - *group_by_addressbook*: weather or not to group contacts by address book in
+    listings
+  - *localize_dates*: weather to localize dates or to use ISO date formats
+  - *preferred_email_address_type*: labels of email addresses to prefer
+  - *preferred_phone_number_type*: labels of telephone numbers to prefer
+  - *reverse*: weather to reverse the order of contact listings or not
+  - *show_nicknames*: weather to show nick names
+  - *show_uids*: weather to show uids
+  - *sort*: field by which to sort contact listings
+
+vcard
+  - *private_objects*: a list of strings, these are the names of private vCard
+    fields (starting with ``X-``)  that will be loaded and displayed by khard
+  - *search_in_source_files*: weather to search in the vcard files before
+    parsing them in order to speed up searches
+  - *skip_unparsable*: weather to skip unparsable vcards, otherwise khard exits
+    on the first unparsable card it encounters
+  - *preferred_version*: the preferred vcard version to use for new cards
+
+Example
+-------
 
 This is the example config file:
 
