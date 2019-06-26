@@ -3,6 +3,12 @@ Contributing
 
 **Thank you for considering contributing to khard!**
 
+.. toctree::
+   :maxdepth: 1
+
+   self
+   bench
+
 Khard is developed on `Github`_ where you are welcome to post `bug reports`_,
 `feature requests`_ or join the discussion in general.
 
