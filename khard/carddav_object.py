@@ -1062,24 +1062,22 @@ class CarddavObject(VCardWrapper):
         """
         :rtype: dict(str, list(str))
         """
+        supported = [x.lower() for x in self.supported_private_objects]
         private_objects = {}
         for child in self.vcard.getChildren():
-            if child.name.lower().startswith("x-"):
-                try:
-                    key_index = [
-                        x.lower() for x in self.supported_private_objects
-                    ].index(child.name[2:].lower())
-                except ValueError:
-                    pass
-                else:
-                    key = self.supported_private_objects[key_index]
-                    if key not in private_objects:
-                        private_objects[key] = []
-                    ablabel = self._get_ablabel(child)
-                    private_objects[key].append(ablabel + (": " if ablabel else "") + child.value)
+            lower = child.name.lower()
+            if lower.startswith("x-") and lower[2:] in supported:
+                key_index = supported.index(lower[2:])
+                key = self.supported_private_objects[key_index]
+                if key not in private_objects:
+                    private_objects[key] = []
+                ablabel = self._get_ablabel(child)
+                private_objects[key].append(
+                    ablabel + (": " if ablabel else "") + child.value)
         # sort private object lists
         for value in private_objects.values():
             value.sort()
+        logging.debug("Returning private objects %s", private_objects)
         return private_objects
 
     def _add_private_object(self, key, value):
