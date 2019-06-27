@@ -131,4 +131,4 @@ class ReportedBugs(unittest.TestCase):
         # This was the first half of bug report #159.
         abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
         c = abook.search('testuid1', method='uid')
-        self.assertEqual(len(c), 1)
+        self.assertEqual(len(list(c)), 1)

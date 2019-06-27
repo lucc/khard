@@ -150,15 +150,13 @@ class AddressBook(metaclass=abc.ABCMeta):
         if not self._loaded:
             self.load(query)
         if method == "all":
-            search_function = self._search_all
+            return self._search_all(query)
         elif method == "name":
-            search_function = self._search_names
+            return self._search_names(query)
         elif method == "uid":
-            search_function = self._search_uid
-        else:
-            raise ValueError('Only the search methods "all", "name" and "uid" '
-                             'are supported.')
-        return list(search_function(query))
+            return self._search_uid(query)
+        raise ValueError(
+            'Only the search methods "all", "name" and "uid" are supported.')
 
     def get_short_uid_dict(self, query=None):
         """Create a dictionary of shortend UIDs for all contacts.
