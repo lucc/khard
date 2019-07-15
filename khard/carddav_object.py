@@ -670,7 +670,7 @@ class VCardWrapper:
     @property
     def phone_numbers(self):
         """
-        : returns: dict of type and phone number list
+        :returns: dict of type and phone number list
         :rtype: dict(str, list(str))
         """
         phone_dict = {}
@@ -737,7 +737,7 @@ class VCardWrapper:
     @property
     def emails(self):
         """
-        : returns: dict of type and email address list
+        :returns: dict of type and email address list
         :rtype: dict(str, list(str))
         """
         email_dict = {}
@@ -790,7 +790,7 @@ class VCardWrapper:
     @property
     def post_addresses(self):
         """
-        : returns: dict of type and post address list
+        :returns: dict of type and post address list
         :rtype: dict(str, list(dict(str,list|str)))
         """
         post_adr_dict = {}
