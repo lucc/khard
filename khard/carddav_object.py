@@ -134,7 +134,7 @@ class VCardWrapper:
             if child.name == name:
                 ablabel = self._get_ablabel(child)
                 if ablabel:
-                    values.append(ablabel + ": " + child.value)
+                    values.append(ablabel + ": " + "".join(child.value))
                 else:
                     values.append(child.value)
         return sorted(values)
