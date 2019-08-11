@@ -310,12 +310,12 @@ class VdirAddressBook(AddressBook):
                 uid = card.uid
                 if not uid:
                     logging.warning("Card %s from address book %s has no UID "
-                                    "and will not be availbale.", card,
+                                    "and will not be available.", card,
                                     self.name)
                 elif uid in self.contacts:
                     logging.warning(
                         "Card %s and %s from address book %s have the same "
-                        "UID. The former will not be availbale.", card,
+                        "UID. The former will not be available.", card,
                         self.contacts[uid], self.name)
                 else:
                     self.contacts[uid] = card
@@ -357,7 +357,7 @@ class AddressBookCollection(AddressBook):
             for uid in abook.contacts:
                 if uid in self.contacts:
                     logging.warning(
-                        "Card %s from address book %s will not be availbale "
+                        "Card %s from address book %s will not be available "
                         "because there is already another card with the same "
                         "UID: %s", abook.contacts[uid], abook, uid)
                 else:

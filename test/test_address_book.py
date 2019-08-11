@@ -80,7 +80,7 @@ class VcardAdressBookLoad(unittest.TestCase):
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
         messages = ['WARNING:root:Card minimal contact from address book test '
-                    'has no UID and will not be availbale.']
+                    'has no UID and will not be available.']
         self.assertListEqual(cm.output, messages)
 
     def test_loading_vcards_from_disk(self):
