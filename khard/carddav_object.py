@@ -469,8 +469,19 @@ class VCardWrapper:
         :type value: str
         """
         self._delete_vcard_object("FN")
-        self.vcard.add("FN").value = convert_to_vcard("FN", value,
-                                                      ObjectType.string)
+        if value:
+            value = convert_to_vcard("FN", value, ObjectType.string)
+        elif self._get_first_names() or self._get_last_names():
+            # autofill the FN field from the N field
+            names = [self._get_name_prefixes(),
+                     self._get_first_names(),
+                     self._get_last_names(),
+                     self._get_name_suffixes()]
+            name = [x for x in names if x]
+            value = helpers.list_to_string(names, " ")
+        else:  # add an empty FN
+            value = ""
+        self.vcard.add("FN").value = value
 
     def _get_names_part(self, part):
         """Get some part of the "N" entry in the vCard as a list
@@ -545,7 +556,6 @@ class VCardWrapper:
 
     def _add_name(self, prefix, first_name, additional_name, last_name,
                   suffix):
-        # n
         name_obj = self.vcard.add('n')
         stringlist = ObjectType.string_or_list_with_strings
         name_obj.value = vobject.vcard.Name(
@@ -555,19 +565,6 @@ class VCardWrapper:
                                         stringlist),
             family=convert_to_vcard("last name", last_name, stringlist),
             suffix=convert_to_vcard("name suffix", suffix, stringlist))
-        # fn
-        if not self.vcard.getChildValue("fn") and (self._get_first_names() or
-                                                   self._get_last_names()):
-            names = []
-            if self._get_name_prefixes():
-                names += self._get_name_prefixes()
-            if self._get_first_names():
-                names += self._get_first_names()
-            if self._get_last_names():
-                names += self._get_last_names()
-            if self._get_name_suffixes():
-                names += self._get_name_suffixes()
-            self.formatted_name = helpers.list_to_string(names, " ")
 
     @property
     def organisations(self):
@@ -1148,7 +1145,6 @@ class CarddavObject(VCardWrapper):
         self._update_revision()
 
         # name
-        self._delete_vcard_object("FN")
         self._delete_vcard_object("N")
         # although the "n" attribute is not explisitely required by the vcard
         # specification,
@@ -1158,6 +1154,10 @@ class CarddavObject(VCardWrapper):
             contact_data.get("Prefix", ""), contact_data.get("First name", ""),
             contact_data.get("Additional", ""),
             contact_data.get("Last name", ""), contact_data.get("Suffix", ""))
+        if "Formatted name" in contact_data:
+            self.formatted_name = contact_data.get("Formatted name")
+        if not self.formatted_name:
+            self.formatted_name = ""
 
         def helper(setter, key):
             new_value = contact_data.get(key)
@@ -1375,6 +1375,9 @@ class CarddavObject(VCardWrapper):
             elif line == "":
                 strings.append(line)
 
+            elif line.lower().startswith("formatted name"):
+                strings += helpers.convert_to_yaml(
+                    "Formatted name", self.formatted_name, 0, 15, True)
             elif line.lower().startswith("prefix"):
                 strings += helpers.convert_to_yaml(
                     "Prefix", self._get_name_prefixes(), 0, 11, True)
