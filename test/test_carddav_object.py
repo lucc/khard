@@ -21,6 +21,12 @@ def _create_test_vcard(**kwargs):
     return vcard
 
 
+def _from_file(path):
+    """Read a VCARD from a file"""
+    with open(path) as fp:
+        return vobject.readOne(fp)
+
+
 class VcardWrapperInit(unittest.TestCase):
 
     def test_stores_vcard_object_unmodified(self):
@@ -475,12 +481,21 @@ class CarddavObjectFormatDateObject(unittest.TestCase):
         actual = carddav_object.CarddavObject._format_date_object(d, False)
         self.assertEqual(actual, '--02-13')
 
+
 class ABLabels(unittest.TestCase):
 
     def test_setting_and_getting_webpage_ablabel(self):
         vcard = _create_test_vcard()
         wrapper = carddav_object.VCardWrapper(vcard)
-        wrapper._add_webpage({'github':'https://github.com/scheibler/khard'})
+        wrapper._add_webpage({'github': 'https://github.com/scheibler/khard'})
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper.webpages, [
-            'github: https://github.com/scheibler/khard', 'http://example.com'])
+            'github: https://github.com/scheibler/khard',
+            'http://example.com'])
+
+    @unittest.expectedFailure
+    def test_labels_on_structured_values(self):
+        vcard = carddav_object.VCardWrapper(
+            _from_file('test/fixture/vcards/labels.vcf'))
+        # TODO find a solution for issue #221
+        self.assertListEqual(vcard.organisations, ['Test Inc'])
