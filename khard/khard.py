@@ -309,12 +309,17 @@ def list_contacts(vcard_list):
             if config.display_by_name() == "first_name":
                 row.append("%s (Nickname: %s)" % (
                     vcard.get_first_name_last_name(), vcard.nicknames[0]))
+            elif config.display_by_name() == "formatted_name":
+                row.append("{} (Nickname: {})".format(vcard.formatted_name,
+                                                      vcard.nicknames[0]))
             else:
                 row.append("%s (Nickname: %s)" % (
                     vcard.get_last_name_first_name(), vcard.nicknames[0]))
         else:
             if config.display_by_name() == "first_name":
                 row.append(vcard.get_first_name_last_name())
+            elif config.display_by_name() == "formatted_name":
+                row.append(vcard.formatted_name)
             else:
                 row.append(vcard.get_last_name_first_name())
         if vcard.phone_numbers:
@@ -476,16 +481,12 @@ def get_contacts(address_books, query, method="all", reverse=False,
 
     :param address_books: the address books to search
     :type address_books: list(address_book.AddressBook)
-    :param query: a search query to select contacts
-    :type quer: str
-    :param method: the search method, one of "all", "name" or "uid"
-    :type method: str
-    :param reverse: reverse the order of the returned contacts
-    :type reverse: bool
-    :param group: group results by address book
-    :type group: bool
-    :param sort: the field to use for sorting, one of "first_name", "last_name"
-    :type sort: str
+    :param str query: a search query to select contacts
+    :param str method: the search method, one of "all", "name" or "uid"
+    :param bool reverse: reverse the order of the returned contacts
+    :param bool group: group results by address book
+    :param str sort: the field to use for sorting, one of "first_name",
+        "last_name", "formatted_name"
     :returns: contacts from the address_books that match the query
     :rtype: list(CarddavObject)
 
@@ -504,8 +505,10 @@ def get_contacts(address_books, query, method="all", reverse=False,
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
                 unidecode(x.get_last_name_first_name()).lower()))
-        raise ValueError(
-            'sort must be "first_name" or "last_name" not {}.'.format(sort))
+        if sort == "formatted_name":
+            return sorted(contacts, reverse=reverse, key=lambda x: (
+                unidecode(x.address_book.name).lower(),
+                unidecode(x.formatted_name.lower())))
     else:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
@@ -513,8 +516,11 @@ def get_contacts(address_books, query, method="all", reverse=False,
         if sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
                           unidecode(x.get_last_name_first_name()).lower())
-        raise ValueError(
-            'sort must be "first_name" or "last_name" not {}.'.format(sort))
+        if sort == "formatted_name":
+            return sorted(contacts, reverse=reverse, key=lambda x:
+                          unidecode(x.formatted_name.lower()))
+    raise ValueError('sort must be "first_name", "last_name" or '
+                     '"formatted_name" not {}.'.format(sort))
 
 
 def merge_args_into_config(args, config):
@@ -882,23 +888,27 @@ def birthdays_subcommand(vcard_list, parsable):
     for vcard in vcard_list:
         date = vcard.birthday
         if parsable:
+            date = "%04d.%02d.%02d" % (date.year, date.month, date.day)
             if config.display_by_name() == "first_name":
-                birthday_list.append("%04d.%02d.%02d\t%s"
-                                     % (date.year, date.month, date.day,
-                                        vcard.get_first_name_last_name()))
+                birthday_list.append("{}\t{}".format(
+                    date, vcard.get_first_name_last_name()))
+            elif config.display_by_name() == "formatted_name":
+                birthday_list.append("{}\t{}".format(date,
+                                                     vcard.formatted_name))
             else:
-                birthday_list.append("%04d.%02d.%02d\t%s"
-                                     % (date.year, date.month, date.day,
-                                        vcard.get_last_name_first_name()))
+                birthday_list.append("{}\t{}".format(
+                    date, vcard.get_last_name_first_name()))
         else:
+            date = vcard.get_formatted_birthday()
             if config.display_by_name() == "first_name":
-                birthday_list.append("%s\t%s"
-                                     % (vcard.get_first_name_last_name(),
-                                        vcard.get_formatted_birthday()))
+                birthday_list.append("{}\t{}".format(
+                    vcard.get_first_name_last_name(), date))
+            elif config.display_by_name() == "formatted_name":
+                birthday_list.append("{}\t{}".format(vcard.formatted_name,
+                                                     date))
             else:
-                birthday_list.append("%s\t%s"
-                                     % (vcard.get_last_name_first_name(),
-                                        vcard.get_formatted_birthday()))
+                birthday_list.append("{}\t{}".format(
+                    vcard.get_last_name_first_name(), date))
     if birthday_list:
         if parsable:
             print('\n'.join(birthday_list))
@@ -933,8 +943,10 @@ def phone_subcommand(search_terms, vcard_list, parsable):
             for number in sorted(number_list):
                 if config.display_by_name() == "first_name":
                     name = vcard.get_first_name_last_name()
-                else:
+                elif config.display_by_name() == "last_name":
                     name = vcard.get_last_name_first_name()
+                else:
+                    name = vcard.formatted_name
                 # create output lines
                 line_formatted = "\t".join([name, type, number])
                 line_parsable = "\t".join([number, name, type])
@@ -995,8 +1007,10 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
         # vcard name
         if config.display_by_name() == "first_name":
             name = vcard.get_first_name_last_name()
-        else:
+        elif config.display_by_name() == "last_name":
             name = vcard.get_last_name_first_name()
+        else:
+            name = vcard.formatted_name
         # create post address line list
         post_address_line_list = []
         if parsable:
@@ -1071,8 +1085,10 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
             for email in sorted(email_list):
                 if config.display_by_name() == "first_name":
                     name = vcard.get_first_name_last_name()
-                else:
+                elif config.display_by_name() == "last_name":
                     name = vcard.get_last_name_first_name()
+                else:
+                    name = vcard.formatted_name
                 # create output lines
                 line_formatted = "\t".join([name, type, email])
                 line_parsable = "\t".join([email, name, type])
@@ -1132,8 +1148,10 @@ def list_subcommand(vcard_list, parsable):
         for vcard in vcard_list:
             if config.display_by_name() == "first_name":
                 name = vcard.get_first_name_last_name()
-            else:
+            elif config.display_by_name() == "last_name":
                 name = vcard.get_last_name_first_name()
+            else:
+                name = vcard.formatted_name
             contact_line_list.append('\t'.join([vcard.uid, name,
                                                 vcard.address_book.name]))
         print('\n'.join(contact_line_list))
@@ -1462,7 +1480,8 @@ def parse_args(argv):
     # create sort subparser
     sort_parser = argparse.ArgumentParser(add_help=False)
     sort_parser.add_argument(
-        "-d", "--display", choices=("first_name", "last_name"),
+        "-d", "--display",
+        choices=("first_name", "last_name", "formatted_name"),
         help="Display names in contact table by first or last name")
     sort_parser.add_argument(
         "-g", "--group-by-addressbook", action="store_true",
@@ -1471,7 +1490,7 @@ def parse_args(argv):
         "-r", "--reverse", action="store_true",
         help="Reverse order of contact table")
     sort_parser.add_argument(
-        "-s", "--sort", choices=("first_name", "last_name"),
+        "-s", "--sort", choices=("first_name", "last_name", "formatted_name"),
         help="Sort contact table by first or last name")
 
     # create search subparsers
@@ -1554,7 +1573,8 @@ def parse_args(argv):
         description="list birthdays (sorted by month and day)",
         help="list birthdays (sorted by month and day)")
     birthdays_parser.add_argument(
-        "-d", "--display", choices=("first_name", "last_name"),
+        "-d", "--display",
+        choices=("first_name", "last_name", "formatted_name"),
         help="Display names in birthdays table by first or last name")
     birthdays_parser.add_argument(
         "-p", "--parsable", action="store_true",

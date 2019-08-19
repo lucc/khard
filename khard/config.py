@@ -93,19 +93,19 @@ class Config:
 
         # sort contact table by first or last name
         self.sort = self.config["contact table"].get("sort", "first_name")
-        if self.sort not in ["first_name", "last_name"]:
+        if self.sort not in ["first_name", "last_name", "formatted_name"]:
             exit("Invalid value for sort parameter\n"
-                 "Possible values: first_name, last_name")
+                 "Possible values: first_name, last_name, formatted_name")
 
         # display names in contact table by first or last name
         if "display" not in self.config['contact table']:
             # if display by name attribute is not present in the config file
             # use the sort attribute value for backwards compatibility
             self.config['contact table']['display'] = self.sort
-        elif self.config['contact table']['display'] not in ["first_name",
-                                                             "last_name"]:
+        elif self.config['contact table']['display'] not in [
+                "first_name", "last_name", "formatted_name"]:
             exit("Invalid value for display parameter\n"
-                 "Possible values: first_name, last_name")
+                 "Possible values: first_name, last_name, formatted_name")
 
         # reverse contact table
         self._convert_boolean_config_value(self.config["contact table"],
