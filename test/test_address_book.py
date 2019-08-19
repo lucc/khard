@@ -84,7 +84,7 @@ class VcardAdressBookLoad(unittest.TestCase):
         self.assertListEqual(cm.output, messages)
 
     def test_loading_vcards_from_disk(self):
-        abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
+        abook = address_book.VdirAddressBook('test', 'test/fixture/test.abook')
         # At this point we do not really care about the type of abook.contacts,
         # it could be a list or dict or set or whatever.
         self.assertEqual(len(abook.contacts), 0)
@@ -92,7 +92,7 @@ class VcardAdressBookLoad(unittest.TestCase):
         self.assertEqual(len(abook.contacts), 3)
 
     def test_search_in_source_files_only_loads_matching_cards(self):
-        abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
+        abook = address_book.VdirAddressBook('test', 'test/fixture/test.abook')
         abook.load(query='second', search_in_source_files=True)
         self.assertEqual(len(abook.contacts), 1)
 
@@ -129,6 +129,6 @@ class ReportedBugs(unittest.TestCase):
 
     def test_issue_159_uid_search_doesnt_return_items_twice(self):
         # This was the first half of bug report #159.
-        abook = address_book.VdirAddressBook('test', 'test/fixture/foo.abook')
+        abook = address_book.VdirAddressBook('test', 'test/fixture/test.abook')
         c = abook.search('testuid1', method='uid')
         self.assertEqual(len(list(c)), 1)
