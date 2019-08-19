@@ -125,7 +125,6 @@ class ListingCommands(unittest.TestCase):
         self.assertIn('Address book: foo', text)
         self.assertIn('UID: testuid1', text)
 
-    @unittest.expectedFailure
     def test_order_of_search_term_does_not_matter(self):
         with mock_stdout() as stdout1:
             khard.main(['list', 'second', 'contact'])
