@@ -1540,6 +1540,8 @@ class CarddavObject(VCardWrapper):
     def print_vcard(self, show_address_book=True, show_uid=True):
         strings = []
 
+        # Every vcard must have an FN field per the RFC.
+        strings.append("Name: {}".format(self.formatted_name))
         # name
         if self._get_first_names() or self._get_last_names():
             names = []
@@ -1553,14 +1555,12 @@ class CarddavObject(VCardWrapper):
                 names += self._get_last_names()
             if self._get_name_suffixes():
                 names += self._get_name_suffixes()
-            strings.append("Name: %s" % helpers.list_to_string(names, " "))
+            strings.append("Full name: {}".format(
+                helpers.list_to_string(names, " ")))
         # organisation
         if self.organisations:
             strings += helpers.convert_to_yaml(
                 "Organisation", self.organisations, 0, -1, False)
-        # fn as fallback
-        if not strings:
-            strings.append("Name: %s" % self.formatted_name)
 
         # address book name
         if show_address_book:
