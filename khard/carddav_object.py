@@ -1157,6 +1157,7 @@ class CarddavObject(VCardWrapper):
         if "Formatted name" in contact_data:
             self.formatted_name = contact_data.get("Formatted name")
         if not self.formatted_name:
+            # Trigger the auto filling code in the setter.
             self.formatted_name = ""
 
         def helper(setter, key):
