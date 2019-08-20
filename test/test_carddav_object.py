@@ -410,6 +410,15 @@ class OtherProperties(unittest.TestCase):
         wrapper._add_organisation(org3)
         self.assertListEqual(wrapper.organisations, [org3, org1, org2])
 
+    def test_setting_org_in_different_ways_for_refactoring(self):
+        vcard1 = _create_test_vcard()
+        vcard2 = _create_test_vcard()
+        wrapper1 = carddav_object.VCardWrapper(vcard1)
+        wrapper2 = carddav_object.VCardWrapper(vcard2)
+        wrapper1._add_organisation('foo')
+        wrapper2._add_organisation(['foo'])
+        self.assertEqual(wrapper1.organisations, wrapper2.organisations)
+
     def test_setting_and_getting_titles(self):
         vcard = _create_test_vcard()
         wrapper = carddav_object.VCardWrapper(vcard)

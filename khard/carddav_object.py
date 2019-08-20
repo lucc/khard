@@ -39,8 +39,7 @@ def convert_to_vcard(name, value, allowed_object_type):
     """
     if isinstance(value, str):
         if allowed_object_type == ObjectType.list_with_strings:
-            raise ValueError("Error: " + name +
-                             " must not contain a single string.")
+            return [value.strip()]
         return value.strip()
     if isinstance(value, list):
         if allowed_object_type == ObjectType.string:
