@@ -1171,61 +1171,36 @@ class CarddavObject(VCardWrapper):
             contact_data.get("Prefix", ""), contact_data.get("First name", ""),
             contact_data.get("Additional", ""),
             contact_data.get("Last name", ""), contact_data.get("Suffix", ""))
+
+        def helper(setter, key):
+            new_value = contact_data.get(key)
+            if new_value:
+                if isinstance(new_value, str):
+                    setter(new_value)
+                elif isinstance(new_value, list):
+                    for v in new_value:
+                        if v:
+                            setter(v)
+                else:
+                    raise ValueError(
+                        "{} must be a string or a list of strings".format(key))
+
         # nickname
         self._delete_vcard_object("NICKNAME")
-        if contact_data.get("Nickname"):
-            if isinstance(contact_data.get("Nickname"), str):
-                self._add_nickname(contact_data.get("Nickname"))
-            elif isinstance(contact_data.get("Nickname"), list):
-                for nickname in contact_data.get("Nickname"):
-                    if nickname:
-                        self._add_nickname(nickname)
-            else:
-                raise ValueError(
-                    "Error: nickname must be a string or a list of strings")
+        helper(self._add_nickname, "Nickname")
 
         # organisation
         self._delete_vcard_object("ORG")
         self._delete_vcard_object("X-ABSHOWAS")
-        if contact_data.get("Organisation"):
-            if isinstance(contact_data.get("Organisation"), str):
-                self._add_organisation([contact_data.get("Organisation")])
-            elif isinstance(contact_data.get("Organisation"), list):
-                for organisation in contact_data.get("Organisation"):
-                    if organisation:
-                        if isinstance(organisation, str):
-                            self._add_organisation([organisation])
-                        else:
-                            self._add_organisation(organisation)
-            else:
-                raise ValueError("Error: organisation must be a string or a "
-                                 "list of strings")
+        helper(self._add_organisation, "Organisation")
 
         # role
         self._delete_vcard_object("ROLE")
-        if contact_data.get("Role"):
-            if isinstance(contact_data.get("Role"), str):
-                self._add_role(contact_data.get("Role"))
-            elif isinstance(contact_data.get("Role"), list):
-                for role in contact_data.get("Role"):
-                    if role:
-                        self._add_role(role)
-            else:
-                raise ValueError(
-                    "Error: role must be a string or a list of strings")
+        helper(self._add_role, "Role")
 
         # title
         self._delete_vcard_object("TITLE")
-        if contact_data.get("Title"):
-            if isinstance(contact_data.get("Title"), str):
-                self._add_title(contact_data.get("Title"))
-            elif isinstance(contact_data.get("Title"), list):
-                for title in contact_data.get("Title"):
-                    if title:
-                        self._add_title(title)
-            else:
-                raise ValueError(
-                    "Error: title must be a string or a list of strings")
+        helper(self._add_title, "Title")
 
         # phone
         self._delete_vcard_object("TEL")
@@ -1332,16 +1307,7 @@ class CarddavObject(VCardWrapper):
 
         # urls
         self._delete_vcard_object("URL")
-        if contact_data.get("Webpage"):
-            if isinstance(contact_data.get("Webpage"), str):
-                self._add_webpage(contact_data.get("Webpage"))
-            elif isinstance(contact_data.get("Webpage"), list):
-                for webpage in contact_data.get("Webpage"):
-                    if webpage:
-                        self._add_webpage(webpage)
-            else:
-                raise ValueError(
-                    "Error: webpage must be a string or a list of strings")
+        helper(self._add_webpage, "Webpage")
 
         # anniversary
         self._delete_vcard_object("ANNIVERSARY")
@@ -1453,17 +1419,7 @@ class CarddavObject(VCardWrapper):
 
         # notes
         self._delete_vcard_object("NOTE")
-        if contact_data.get("Note"):
-            if isinstance(contact_data.get("Note"), str):
-                self._add_note(contact_data.get("Note"))
-            elif isinstance(contact_data.get("Note"), list):
-                for note in contact_data.get("Note"):
-                    if note:
-                        self._add_note(note)
-            else:
-                raise ValueError(
-                    "Error: note must be a string or a list of strings\n"
-                    "Use the | character to create a multi-line note.")
+        helper(self._add_note, "Note")
 
     def get_template(self):
         strings = []
