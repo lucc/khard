@@ -43,12 +43,12 @@ def convert_to_vcard(name, value, allowed_object_type):
         return value.strip()
     if isinstance(value, list):
         if allowed_object_type == ObjectType.string:
-            raise ValueError("Error: " + name + " must not contain a list.")
+            raise ValueError("Error: " + name + " must contain a string.")
         if not all(isinstance(entry, str) for entry in value):
             raise ValueError("Error: " + name +
                              " must not contain a nested list")
         # filter out empty list items and strip leading and trailing space
-        return [x.strip() for x in value if x]
+        return [x.strip() for x in value if x.strip()]
     if allowed_object_type == ObjectType.string:
         raise ValueError("Error: " + name + " must be a string.")
     if allowed_object_type == ObjectType.list_with_strings:
