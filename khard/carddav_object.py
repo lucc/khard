@@ -1115,26 +1115,13 @@ class CarddavObject(VCardWrapper):
 
     @staticmethod
     def _filter_invalid_tags(contents):
-        contents = re.sub('(?i)' + re.escape('X-messaging/aim-All'), 'X-AIM',
-                          contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/gadu-All'),
-                          'X-GADUGADU', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/groupwise-All'),
-                          'X-GROUPWISE', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/icq-All'), 'X-ICQ',
-                          contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/xmpp-All'),
-                          'X-JABBER', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/msn-All'), 'X-MSN',
-                          contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/yahoo-All'),
-                          'X-YAHOO', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/skype-All'),
-                          'X-SKYPE', contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/irc-All'), 'X-IRC',
-                          contents)
-        contents = re.sub('(?i)' + re.escape('X-messaging/sip-All'), 'X-SIP',
-                          contents)
+        for pat, repl in [('aim', 'AIM'), ('gadu', 'GADUGADU'),
+                          ('groupwise', 'GROUPWISE'), ('icq', 'ICQ'),
+                          ('xmpp', 'JABBER'), ('msn', 'MSN'),
+                          ('yahoo', 'YAHOO'), ('skype', 'SKYPE'),
+                          ('irc', 'IRC'), ('sip', 'SIP')]:
+            contents = re.sub('X-messaging/'+pat+'-All', 'X-'+repl, contents,
+                              flags=re.IGNORECASE)
         return contents
 
     def _process_user_input(self, input):
