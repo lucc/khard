@@ -132,17 +132,14 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
     strings = []
     if isinstance(value, list):
         # special case for single item lists:
-        if len(value) == 1 \
-                and isinstance(value[0], str):
+        if len(value) == 1 and isinstance(value[0], str):
             # value = ["string"] should not be converted to
             # name:
             #   - string
             # but to "name: string" instead
             value = value[0]
-        elif len(value) == 1 \
-                and isinstance(value[0], list) \
-                and len(value[0]) == 1 \
-                and isinstance(value[0][0], str):
+        elif len(value) == 1 and isinstance(value[0], list) \
+                and len(value[0]) == 1 and isinstance(value[0][0], str):
             # same applies to value = [["string"]]
             value = value[0][0]
     if isinstance(value, str):
@@ -155,8 +152,7 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
             ' ' * indentation, name, ' ' * (index_of_colon-len(name))))
         for outer in value:
             # special case for single item sublists
-            if isinstance(outer, list) \
-                    and len(outer) == 1 \
+            if isinstance(outer, list) and len(outer) == 1 \
                     and isinstance(outer[0], str):
                 # outer = ["string"] should not be converted to
                 # -
