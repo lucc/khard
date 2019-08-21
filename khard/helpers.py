@@ -116,16 +116,13 @@ def file_modification_date(filename):
 def convert_to_yaml(name, value, indentation, index_of_colon,
                     show_multi_line_character):
     """converts a value list into yaml syntax
-    :param name: name of object (example: phone)
-    :type name: str
+    :param str name: name of object (example: phone)
     :param value: object contents
     :type value: str, list(str), list(list(str))
-    :param indentation: indent all by number of spaces
-    :type indentation: int
-    :param index_of_colon: use to position : at the name string (-1 for no space)
-    :type index_of_colon: int
-    :param show_multi_line_character: option to hide "|"
-    :type show_multi_line_character: boolean
+    :param str indentation: indent all by number of spaces
+    :param int index_of_colon: use to position : at the name string (-1 for no
+        space)
+    :param bool show_multi_line_character: option to hide "|"
     :returns: yaml formatted string array of name, value pair
     :rtype: list(str)
     """
