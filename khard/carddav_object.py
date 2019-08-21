@@ -87,7 +87,7 @@ class VCardWrapper:
         :type vcard: vobject.vCard
         """
         self.vcard = vcard
-        if self.version == "":
+        if not self.version:
             logging.warning("Wrapping unversioned vCard object, setting "
                             "version to %s.", self._default_version)
             self.version = self._default_version
@@ -907,8 +907,8 @@ class VCardWrapper:
 
 class CarddavObject(VCardWrapper):
 
-    def __init__(self, address_book, filename, supported_private_objects,
-                 vcard_version, localize_dates):
+    def __init__(self, address_book, filename, supported_private_objects=None,
+                 vcard_version=None, localize_dates=False):
         """Initialize the vcard object.
 
         :param address_book: a reference to the address book where this vcard
@@ -920,7 +920,7 @@ class CarddavObject(VCardWrapper):
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
-        :type supported_private_objects: list(str)
+        :type supported_private_objects: list(str) or NoneType
         :param vcard_version: str or None
         :type vcard_version: str
         :param localize_dates: should the formatted output of anniversary and
@@ -931,7 +931,7 @@ class CarddavObject(VCardWrapper):
         self.vcard = None
         self.address_book = address_book
         self.filename = filename
-        self.supported_private_objects = supported_private_objects
+        self.supported_private_objects = supported_private_objects or []
         self.localize_dates = localize_dates
 
         # load vcard
@@ -943,7 +943,7 @@ class CarddavObject(VCardWrapper):
             # use uid for vcard filename
             self.filename = os.path.join(address_book.path, self.uid + ".vcf")
             # add preferred vcard version
-            self.version = vcard_version
+            self.version = vcard_version or VCardWrapper._default_version
 
         else:
             # create vcard from .vcf file
@@ -962,15 +962,15 @@ class CarddavObject(VCardWrapper):
     #######################################
 
     @classmethod
-    def new_contact(cls, address_book, supported_private_objects, version,
-                    localize_dates):
+    def new_contact(cls, address_book, supported_private_objects=None,
+                    version=None, localize_dates=False):
         """Use this to create a new and empty contact."""
         return cls(address_book, None, supported_private_objects, version,
                    localize_dates)
 
     @classmethod
-    def from_file(cls, address_book, filename, supported_private_objects,
-                  localize_dates):
+    def from_file(cls, address_book, filename, supported_private_objects=None,
+                  localize_dates=False):
         """
         Use this if you want to create a new contact from an existing .vcf
         file.
@@ -980,7 +980,8 @@ class CarddavObject(VCardWrapper):
 
     @classmethod
     def from_user_input(cls, address_book, user_input,
-                        supported_private_objects, version, localize_dates):
+                        supported_private_objects=None, version=None,
+                        localize_dates=False):
         """Use this if you want to create a new contact from user input."""
         contact = cls(address_book, None, supported_private_objects, version,
                       localize_dates)
@@ -989,9 +990,9 @@ class CarddavObject(VCardWrapper):
 
     @classmethod
     def from_existing_contact_with_new_user_input(cls, contact, user_input,
-                                                  localize_dates):
+                                                  localize_dates=False):
         """
-        Use this if you want to clone an existing contact and  replace its data
+        Use this if you want to clone an existing contact and replace its data
         with new user input in one step.
         """
         contact = cls(contact.address_book, contact.filename,
