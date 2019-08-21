@@ -1309,87 +1309,46 @@ class CarddavObject(VCardWrapper):
         self._delete_vcard_object("URL")
         helper(self._add_webpage, "Webpage")
 
+        def anniversary_helper(key):
+            new = contact_data.get(key)
+            if not new:
+                return
+            if not isinstance(new, str):
+                raise ValueError("Error: {} must be a string object.".format(
+                    key))
+            if re.match(r"^text[\s]*=.*$", new):
+                if self.version == "4.0":
+                    return ', '.join(
+                        x.strip() for x in re.split(r"text[\s]*=", new)
+                        if x.strip())
+                raise ValueError(
+                    "Error: Free text format for {} only usable with vcard "
+                    "version 4.0.".format(key.lower()))
+            if re.match(r"^--\d\d-?\d\d$", new) and self.version != "4.0":
+                raise ValueError(
+                    "Error: {} format --mm-dd and --mmdd only usable with "
+                    "vcard version 4.0. You may use 1900 as placeholder, if "
+                    "the year is unknown.".format(key))
+            try:
+                return helpers.string_to_date(new)
+            except ValueError:
+                pass
+            raise ValueError("Error: Wrong {} format or invalid date\n"
+                             "Use format yyyy-mm-dd or "
+                             "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
+
         # anniversary
         self._delete_vcard_object("ANNIVERSARY")
         self._delete_vcard_object("X-ANNIVERSARY")
-        if contact_data.get("Anniversary"):
-            if isinstance(contact_data.get("Anniversary"), str):
-                if re.match(r"^text[\s]*=.*$",
-                            contact_data.get("Anniversary")):
-                    if self.version == "4.0":
-                        date = ', '.join(
-                            x.strip() for x in re.split(
-                                r"text[\s]*=", contact_data.get("Anniversary"))
-                            if x.strip())
-                    else:
-                        raise ValueError(
-                            "Error: Free text format for anniversary only "
-                            "usable with vcard version 4.0.")
-                elif re.match(r"^--\d{4}$", contact_data.get("Anniversary")) \
-                        and self.version != "4.0":
-                    raise ValueError(
-                        "Error: Anniversary format --mmdd only usable with "
-                        "vcard version 4.0. You may use 1900 as placeholder, "
-                        "if the year of the anniversary is unknown.")
-                elif re.match(
-                        r"^--\d{2}-\d{2}$", contact_data.get("Anniversary")) \
-                        and self.version != "4.0":
-                    raise ValueError(
-                        "Error: Anniversary format --mm-dd only usable with "
-                        "vcard version 4.0. You may use 1900 as placeholder, "
-                        "if the year of the anniversary is unknown.")
-                else:
-                    try:
-                        date = helpers.string_to_date(
-                            contact_data.get("Anniversary"))
-                    except ValueError:
-                        raise ValueError(
-                            "Error: Wrong anniversary format or invalid date\n"
-                            "Use format yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
-                if date:
-                    self.anniversary = date
-            else:
-                raise ValueError("Error: anniversary must be a string object.")
+        anniversary = anniversary_helper("Anniversary")
+        if anniversary:
+            self.anniversary = anniversary
 
         # birthday
         self._delete_vcard_object("BDAY")
-        if contact_data.get("Birthday"):
-            if isinstance(contact_data.get("Birthday"), str):
-                if re.match(r"^text[\s]*=.*$", contact_data.get("Birthday")):
-                    if self.version == "4.0":
-                        date = ', '.join(
-                            x.strip() for x in re.split(
-                                r"text[\s]*=", contact_data.get("Birthday"))
-                            if x.strip())
-                    else:
-                        raise ValueError(
-                            "Error: Free text format for birthday only usable "
-                            "with vcard version 4.0.")
-                elif re.match(r"^--\d{4}$", contact_data.get("Birthday")) \
-                        and self.version != "4.0":
-                    raise ValueError(
-                        "Error: Birthday format --mmdd only usable with "
-                        "vcard version 4.0. You may use 1900 as placeholder, "
-                        "if the year of birth is unknown.")
-                elif re.match(
-                        r"^--\d{2}-\d{2}$", contact_data.get("Birthday")) \
-                        and self.version != "4.0":
-                    raise ValueError(
-                        "Error: Birthday format --mm-dd only usable with "
-                        "vcard version 4.0. You may use 1900 as placeholder, "
-                        "if the year of birth is unknown.")
-                else:
-                    try:
-                        date = helpers.string_to_date(
-                            contact_data.get("Birthday"))
-                    except ValueError:
-                        raise ValueError(
-                            "Error: Wrong birthday format or invalid date\n"
-                            "Use format yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS")
-                if date:
-                    self.birthday = date
-            else:
-                raise ValueError("Error: birthday must be a string object.")
+        birthday = anniversary_helper("Birthday")
+        if birthday:
+            self.birthday = birthday
 
         # private objects
         for supported in self.supported_private_objects:
