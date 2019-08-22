@@ -52,6 +52,8 @@ class CarddavObjectFormatDateObject(unittest.TestCase):
 
 class UpdateVcardWithYamlUserInput(unittest.TestCase):
 
+    _date = datetime.datetime(2000, 1, 1)
+
     def test_update_org_simple(self):
         card = create_test_card()
         data = {'Organisation': 'Foo'}
@@ -95,16 +97,14 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         data = {'Birthday': '2000-01-01'}
         data = to_yaml(data)
         card._process_user_input(data)
-        self.assertEqual(card.birthday,
-                         datetime.datetime.fromisoformat('2000-01-01'))
+        self.assertEqual(card.birthday, self._date)
 
     def test_update_anniverary(self):
         card = create_test_card()
         data = {'Anniversary': '2000-01-01'}
         data = to_yaml(data)
         card._process_user_input(data)
-        self.assertEqual(card.anniversary,
-                         datetime.datetime.fromisoformat('2000-01-01'))
+        self.assertEqual(card.anniversary, self._date)
 
     def test_update_name_simple(self):
         card = create_test_card()
