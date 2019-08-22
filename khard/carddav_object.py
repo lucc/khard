@@ -1121,7 +1121,14 @@ class CarddavObject(VCardWrapper):
                               flags=re.IGNORECASE)
         return contents
 
-    def _process_user_input(self, input):
+    @staticmethod
+    def _parse_yaml(input):
+        """Parse a YAML document into a dictinary and validate the data to some
+        degree.
+
+        :param str input: the YAML document to parse
+        :returns dict: the parsed datastructure
+        """
         yaml_parser = YAML(typ='base')
         # parse user input string
         try:
@@ -1130,7 +1137,7 @@ class CarddavObject(VCardWrapper):
                 ruamel.yaml.scanner.ScannerError) as err:
             raise ValueError(err)
         else:
-            if contact_data is None:
+            if not contact_data:
                 raise ValueError("Error: Found no contact information")
 
         # check for available data
@@ -1140,7 +1147,10 @@ class CarddavObject(VCardWrapper):
                 and not contact_data.get("Organisation"):
             raise ValueError(
                 "Error: You must either enter a name or an organisation")
+        return contact_data
 
+    def _process_user_input(self, input):
+        contact_data = self._parse_yaml(input)
         # update rev
         self._update_revision()
 
