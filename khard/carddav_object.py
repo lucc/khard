@@ -1149,6 +1149,58 @@ class CarddavObject(VCardWrapper):
                 "Error: You must either enter a name or an organisation")
         return contact_data
 
+    @staticmethod
+    def _set_string_list(setter, key, data):
+        """Prepocess a string or list and set each value with the given setter
+
+        :param callable setter: the setter method to add a value to a card
+        :param value: the new value to set
+        :type value: str or list(str)
+        :returns: None
+        """
+        value = data.get(key)
+        if value:
+            if isinstance(value, str):
+                setter(value)
+            elif isinstance(value, list):
+                for v in value:
+                    if v:
+                        setter(v)
+            else:
+                raise ValueError(
+                    "{} must be a string or a list of strings".format(key))
+
+    def _set_date(self, target, key, data):
+        new = data.get(key)
+        if not new:
+            return
+        if not isinstance(new, str):
+            raise ValueError("Error: {} must be a string object.".format(key))
+        if re.match(r"^text[\s]*=.*$", new):
+            if self.version == "4.0":
+                v = ', '.join(x.strip() for x in re.split(r"text[\s]*=", new)
+                              if x.strip())
+                if v:
+                    setattr(self, target, v)
+                return
+            raise ValueError("Error: Free text format for {} only usable with "
+                             "vcard version 4.0.".format(key.lower()))
+        if re.match(r"^--\d\d-?\d\d$", new) and self.version != "4.0":
+            raise ValueError(
+                "Error: {} format --mm-dd and --mmdd only usable with "
+                "vcard version 4.0. You may use 1900 as placeholder, if "
+                "the year is unknown.".format(key))
+        try:
+            v = helpers.string_to_date(new)
+            if v:
+                setattr(self, target, v)
+            return
+        except ValueError:
+            pass
+        raise ValueError("Error: Wrong {} format or invalid date\n"
+                         "Use format yyyy-mm-dd or "
+                         "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
+
     def _process_user_input(self, input):
         contact_data = self._parse_yaml(input)
         # update rev
@@ -1170,35 +1222,23 @@ class CarddavObject(VCardWrapper):
             # Trigger the auto filling code in the setter.
             self.formatted_name = ""
 
-        def helper(setter, key):
-            new_value = contact_data.get(key)
-            if new_value:
-                if isinstance(new_value, str):
-                    setter(new_value)
-                elif isinstance(new_value, list):
-                    for v in new_value:
-                        if v:
-                            setter(v)
-                else:
-                    raise ValueError(
-                        "{} must be a string or a list of strings".format(key))
-
         # nickname
         self._delete_vcard_object("NICKNAME")
-        helper(self._add_nickname, "Nickname")
+        self._set_string_list(self._add_nickname, "Nickname", contact_data)
 
         # organisation
         self._delete_vcard_object("ORG")
         self._delete_vcard_object("X-ABSHOWAS")
-        helper(self._add_organisation, "Organisation")
+        self._set_string_list(self._add_organisation, "Organisation",
+                              contact_data)
 
         # role
         self._delete_vcard_object("ROLE")
-        helper(self._add_role, "Role")
+        self._set_string_list(self._add_role, "Role", contact_data)
 
         # title
         self._delete_vcard_object("TITLE")
-        helper(self._add_title, "Title")
+        self._set_string_list(self._add_title, "Title", contact_data)
 
         # phone
         self._delete_vcard_object("TEL")
@@ -1305,48 +1345,16 @@ class CarddavObject(VCardWrapper):
 
         # urls
         self._delete_vcard_object("URL")
-        helper(self._add_webpage, "Webpage")
-
-        def anniversary_helper(key):
-            new = contact_data.get(key)
-            if not new:
-                return
-            if not isinstance(new, str):
-                raise ValueError("Error: {} must be a string object.".format(
-                    key))
-            if re.match(r"^text[\s]*=.*$", new):
-                if self.version == "4.0":
-                    return ', '.join(
-                        x.strip() for x in re.split(r"text[\s]*=", new)
-                        if x.strip())
-                raise ValueError(
-                    "Error: Free text format for {} only usable with vcard "
-                    "version 4.0.".format(key.lower()))
-            if re.match(r"^--\d\d-?\d\d$", new) and self.version != "4.0":
-                raise ValueError(
-                    "Error: {} format --mm-dd and --mmdd only usable with "
-                    "vcard version 4.0. You may use 1900 as placeholder, if "
-                    "the year is unknown.".format(key))
-            try:
-                return helpers.string_to_date(new)
-            except ValueError:
-                pass
-            raise ValueError("Error: Wrong {} format or invalid date\n"
-                             "Use format yyyy-mm-dd or "
-                             "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
+        self._set_string_list(self._add_webpage, "Webpage", contact_data)
 
         # anniversary
         self._delete_vcard_object("ANNIVERSARY")
         self._delete_vcard_object("X-ANNIVERSARY")
-        anniversary = anniversary_helper("Anniversary")
-        if anniversary:
-            self.anniversary = anniversary
+        self._set_date('anniversary', 'Anniversary', contact_data)
 
         # birthday
         self._delete_vcard_object("BDAY")
-        birthday = anniversary_helper("Birthday")
-        if birthday:
-            self.birthday = birthday
+        self._set_date('birthday', 'Birthday', contact_data)
 
         # private objects
         for supported in self.supported_private_objects:
@@ -1376,7 +1384,7 @@ class CarddavObject(VCardWrapper):
 
         # notes
         self._delete_vcard_object("NOTE")
-        helper(self._add_note, "Note")
+        self._set_string_list(self._add_note, "Note", contact_data)
 
     def get_template(self):
         strings = []
