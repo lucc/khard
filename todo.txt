@@ -5,12 +5,5 @@ ToDo list for khard
     - option to filter contact table (--kind)
     - member action to list all members of an organisation
 
-2. Structure of fn attribute should be customizable in contact editor
-    - For example (vars in {} are placeholder):
-        [...]
-        full name : {last}, {first} {additional}
-        [...]
-    - additional parameter for --display option "full_name"
-
-3. Implement impp attribute, see #105 for more information
+2. Implement impp attribute, see #105 for more information
 

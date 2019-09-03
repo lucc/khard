@@ -195,6 +195,10 @@ def get_new_contact_template(supported_private_objects=None):
 
     # create template
     return dedent("""
+        # Every contact must contain a formatted name, it will be autofilled
+        # from the full name below if not given.
+        Formatted name : 
+
         # name components
         # every entry may contain a string or a list of strings
         # format:

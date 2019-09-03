@@ -112,3 +112,12 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         data = to_yaml(data)
         card._process_user_input(data)
         self.assertEqual(card.get_first_name_last_name(), 'first last')
+
+    def test_update_fn(self):
+        card = create_test_card()
+        fn = 'me myself and i'
+        data = {'Formatted name': fn}
+        data = to_yaml(data)
+        card._process_user_input(data)
+        self.assertEqual(card.formatted_name, fn)
+
