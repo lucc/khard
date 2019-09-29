@@ -1375,7 +1375,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
               "  q: Quit" % (
                   target_vcard.address_book, source_vcard,
                   source_vcard.print_vcard(), target_vcard.print_vcard(),
-                  "Move" if action == "move" else "Copy"))
+                  action.title()))
         while True:
             input_string = input("Your choice: ")
             if input_string.lower() == "a":
