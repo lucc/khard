@@ -19,7 +19,7 @@ from ruamel.yaml import YAML
 
 from khard import khard
 
-from .helpers import expectedFailureForVersion
+from .helpers import expectedFailureForVersion, with_vcards
 
 
 def mock_stdout():
@@ -120,6 +120,21 @@ class ListingCommands(unittest.TestCase):
         # Currently the FN field is not shown with "details".
         self.assertIn('Address book: foo', text)
         self.assertIn('UID: testuid1', text)
+
+
+class ListingCommands2(unittest.TestCase):
+
+    def test_list_bug_195(self):
+        with with_vcards(['test/fixture/vcards/tel-value-uri.vcf']):
+            with mock_stdout() as stdout:
+                khard.main(['list'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = [
+            "Address book: tmp",
+            "Index    Name       Phone             E-Mail    UID",
+            "1        bug 195    cell: 67545678              b"]
+        self.assertListEqual(text, expect)
+
 
 
 class FileSystemCommands(unittest.TestCase):
