@@ -8,14 +8,14 @@ module or a command line utility like `hyperfine`_:
 .. code-block:: shell
 
    python -m timeit -s 'from khard.khard import main' 'main(["list"])'
-   hyperfine './khard-runner.py list'
+   hyperfine 'python -m khard list'
 
 For profiling the ``cProfile`` python module works well.  With the help of
 `gprof2dot`_ one can generate quite useful graphs:
 
 .. code-block:: shell
 
-   python -m cProfile -o output.file ./khard-runner.py list
+   python -m cProfile -o output.file -m khard list
    gprof2dot -f pstats --show-samples output.file | dot -T png > graph.png
    xdg-open graph.png
 

@@ -51,8 +51,10 @@ In order to start coding you need to fetch the develop branch:
   cd khard
   git fetch --all
   git checkout develop
+  python -m kard --help
+  # or
   pip3 install --editable .
-  ./khard-runner.py --help
+  khard --help
 
 Alternatively you can use the ``setup.py`` script directly.  If you want to
 isolate khard from your system Python environment you can use a `virtualenv`_
