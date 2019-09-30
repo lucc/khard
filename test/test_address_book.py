@@ -108,8 +108,11 @@ class VcardAdressBookLoad(unittest.TestCase):
             'test', 'test/fixture/broken.abook', skip=True)
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
-        self.assertEqual(cm.output, ['WARNING:root:1 of 1 vCard files of '
-                                     'address book test could not be parsed.'])
+        self.assertEqual(
+            cm.output, ['WARNING:root:Filtering some problematic tags from '
+                        'test/fixture/broken.abook/unparsable.vcf',
+                        'WARNING:root:1 of 1 vCard files of address book test '
+                        'could not be parsed.'])
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):
