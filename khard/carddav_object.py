@@ -521,13 +521,8 @@ class VCardWrapper:
         """
         :rtype: str
         """
-        names = []
-        if self._get_first_names():
-            names += self._get_first_names()
-        if self._get_additional_names():
-            names += self._get_additional_names()
-        if self._get_last_names():
-            names += self._get_last_names()
+        names = self._get_first_names() + self._get_additional_names() + \
+            self._get_last_names()
         if names:
             return helpers.list_to_string(names, " ")
         return self.formatted_name
@@ -539,11 +534,8 @@ class VCardWrapper:
         last_names = []
         if self._get_last_names():
             last_names += self._get_last_names()
-        first_and_additional_names = []
-        if self._get_first_names():
-            first_and_additional_names += self._get_first_names()
-        if self._get_additional_names():
-            first_and_additional_names += self._get_additional_names()
+        first_and_additional_names = self._get_first_names() + \
+            self._get_additional_names()
         if last_names and first_and_additional_names:
             return "{}, {}".format(
                 helpers.list_to_string(last_names, " "),
@@ -1568,17 +1560,9 @@ class CarddavObject(VCardWrapper):
         strings.append("Name: {}".format(self.formatted_name))
         # name
         if self._get_first_names() or self._get_last_names():
-            names = []
-            if self._get_name_prefixes():
-                names += self._get_name_prefixes()
-            if self._get_first_names():
-                names += self._get_first_names()
-            if self._get_additional_names():
-                names += self._get_additional_names()
-            if self._get_last_names():
-                names += self._get_last_names()
-            if self._get_name_suffixes():
-                names += self._get_name_suffixes()
+            names = self._get_name_prefixes() + self._get_first_names() + \
+                self._get_additional_names() + self._get_last_names() + \
+                self._get_name_suffixes()
             strings.append("Full name: {}".format(
                 helpers.list_to_string(names, " ")))
         # organisation
