@@ -84,19 +84,19 @@ class VCardWrapper:
         """Initialize the wrapper around the given vcard.
 
         :param vobject.vCard vcard: the vCard to wrap
-        :param version: the version of the RFC to use in this card
+        :param version: the version of the RFC to use (if the card has none)
         :type version: str or None
         """
         self.vcard = vcard
-        if not version:
+        if not self.version:
+            version = version or self._default_version
             logging.warning("Wrapping unversioned vCard object, setting "
-                            "version to %s.", self._default_version)
-            version = self._default_version
-        elif version not in self._supported_versions:
+                            "version to %s.", version)
+            self.version = version
+        elif self.version not in self._supported_versions:
             logging.warning("Wrapping vCard with unsupported version %s, this "
                             "might change any incompatible attributes.",
                             version)
-        self.version = version
 
     def __str__(self):
         return self.formatted_name
