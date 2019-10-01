@@ -114,6 +114,7 @@ def file_modification_date(filename):
 def convert_to_yaml(name, value, indentation, index_of_colon,
                     show_multi_line_character):
     """converts a value list into yaml syntax
+
     :param str name: name of object (example: phone)
     :param value: object contents
     :type value: str, list(str), list(list(str))

@@ -7,6 +7,7 @@ which can be found here:
 - version 4.0: https://tools.ietf.org/html/rfc6350
 """
 
+import copy
 import datetime
 import locale
 import logging
@@ -1426,15 +1427,15 @@ class YAMLEditable(VCardWrapper):
 
 class CarddavObject(YAMLEditable):
 
-    def __init__(self, address_book, filename, supported_private_objects=None,
-                 vcard_version=None, localize_dates=False):
+    def __init__(self, vcard, address_book, filename,
+                 supported_private_objects=None, vcard_version=None,
+                 localize_dates=False):
         """Initialize the vcard object.
 
+        :param vobject.vCard vcard: the vCard to wrap
         :param address_book.AddressBook address_book: a reference to the
             address book where this vcard is stored
-        :param filename: the path to the file where this vcard is stored or
-            None
-        :type filename: str or NoneType
+        :param str filename: the path to the file where this vcard is stored
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
@@ -1448,35 +1449,24 @@ class CarddavObject(YAMLEditable):
         """
         self.address_book = address_book
         self.filename = filename
-
-        # load vcard
-        if self.filename is None:
-            # create new vcard object
-            super().__init__(vobject.vCard(), supported_private_objects,
-                             vcard_version, localize_dates)
-            # add uid
-            self.uid = helpers.get_random_uid()
-            # use uid for vcard filename
-            self.filename = os.path.join(address_book.path, self.uid + ".vcf")
-
-        else:
-            # create vcard from .vcf file
-            with open(self.filename, "r") as file:
-                contents = file.read()
-            # create vcard object
-            try:
-                vcard = vobject.readOne(contents)
-            except Exception:
-                logging.warning("Filtering some problematic tags from %s",
-                                self.filename)
-                # if creation fails, try to repair some vcard attributes
-                vcard = vobject.readOne(self._filter_invalid_tags(contents))
-            super().__init__(vcard, supported_private_objects, vcard_version,
-                             localize_dates)
+        super().__init__(vcard, supported_private_objects, vcard_version,
+                         localize_dates)
 
     #######################################
     # factory methods to create new contact
     #######################################
+
+    @classmethod
+    def new(cls, address_book, supported_private_objects=None, version=None,
+            localize_dates=False):
+        """Create a new CarddavObject from scratch"""
+        vcard = vobject.vCard()
+        uid = helpers.get_random_uid()
+        filename = os.path.join(address_book.path, uid + ".vcf")
+        card = cls(vcard, address_book, filename, supported_private_objects,
+                   version, localize_dates)
+        card.uid = uid
+        return card
 
     @classmethod
     def from_file(cls, address_book, filename, supported_private_objects=None,
@@ -1485,15 +1475,25 @@ class CarddavObject(YAMLEditable):
         Use this if you want to create a new contact from an existing .vcf
         file.
         """
-        return cls(address_book, filename, supported_private_objects, None,
-                   localize_dates)
+        with open(filename, "r") as file:
+            contents = file.read()
+        # create vcard object
+        try:
+            vcard = vobject.readOne(contents)
+        except Exception:
+            logging.warning("Filtering some problematic tags from %s",
+                            filename)
+            # if creation fails, try to repair some vcard attributes
+            vcard = vobject.readOne(cls._filter_invalid_tags(contents))
+        return cls(vcard, address_book, filename, supported_private_objects,
+                   None, localize_dates)
 
     @classmethod
     def from_yaml(cls, address_book, yaml, supported_private_objects=None,
                   version=None, localize_dates=False):
         """Use this if you want to create a new contact from user input."""
-        contact = cls(address_book, None, supported_private_objects, version,
-                      localize_dates)
+        contact = cls.new(address_book, supported_private_objects, version,
+                          localize_dates=localize_dates)
         contact._process_user_input(yaml)
         return contact
 
@@ -1503,8 +1503,11 @@ class CarddavObject(YAMLEditable):
         Use this if you want to clone an existing contact and replace its data
         with new user input in one step.
         """
-        contact = cls(contact.address_book, contact.filename,
-                      contact.supported_private_objects, None, localize_dates)
+        contact = cls(
+            copy.deepcopy(contact.vcard), address_book=contact.address_book,
+            filename=contact.filename,
+            supported_private_objects=contact.supported_private_objects,
+            localize_dates=localize_dates)
         contact._process_user_input(yaml)
         return contact
 
