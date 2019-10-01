@@ -79,7 +79,9 @@ class VcardAdressBookLoad(unittest.TestCase):
                                              'test/fixture/minimal.abook')
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
-        messages = ['WARNING:root:Card minimal contact from address book test '
+        messages = ['WARNING:root:Wrapping unversioned vCard object, setting '
+                    'version to 3.0.',
+                    'WARNING:root:Card minimal contact from address book test '
                     'has no UID and will not be available.']
         self.assertListEqual(cm.output, messages)
 

@@ -118,7 +118,7 @@ class BirthdayLikeAttributes(unittest.TestCase):
 
     def test_birthday_supports_setting_text_values_for_v4(self):
         vcard = _create_test_vcard(version="4.0")
-        wrapper = VCardWrapper(vcard)
+        wrapper = VCardWrapper(vcard, "4.0")
         date = 'some time yesterday'
         wrapper.birthday = date
         wrapper.vcard.validate()
@@ -150,7 +150,7 @@ class BirthdayLikeAttributes(unittest.TestCase):
 
     def test_anniversary_supports_setting_text_values_for_v4(self):
         vcard = _create_test_vcard(version="4.0")
-        wrapper = VCardWrapper(vcard)
+        wrapper = VCardWrapper(vcard, "4.0")
         date = 'some time yesterday'
         wrapper.anniversary = date
         wrapper.vcard.validate()
