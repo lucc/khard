@@ -810,37 +810,37 @@ class VCardWrapper:
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
                 strings = []
-                if post_adr.get("street"):
+                if "street" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("street"), "\n"))
-                if post_adr.get("box") and post_adr.get("extended"):
+                if "box" in post_adr and "extended" in post_adr:
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("box"), " "),
                         helpers.list_to_string(post_adr.get("extended"), " ")))
-                elif post_adr.get("box"):
+                elif "box" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("box"), " "))
-                elif post_adr.get("extended"):
+                elif "extended" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("extended"), " "))
-                if post_adr.get("code") and post_adr.get("city"):
+                if "code" in post_adr and "city" in post_adr:
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("code"), " "),
                         helpers.list_to_string(post_adr.get("city"), " ")))
-                elif post_adr.get("code"):
+                elif "code" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("code"), " "))
-                elif post_adr.get("city"):
+                elif "city" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("city"), " "))
-                if post_adr.get("region") and post_adr.get("country"):
+                if "region" in post_adr and "country" in post_adr:
                     strings.append("{}, {}".format(
                         helpers.list_to_string(post_adr.get("region"), " "),
                         helpers.list_to_string(post_adr.get("country"), " ")))
-                elif post_adr.get("region"):
+                elif "region" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("region"), " "))
-                elif post_adr.get("country"):
+                elif "country" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("country"), " "))
                 formatted_post_adr_dict[type].append('\n'.join(strings))
@@ -1006,48 +1006,6 @@ class CarddavObject(VCardWrapper):
     #####################
     # getters and setters
     #####################
-
-    def _get_formatted_post_addresses(self):
-        formatted_post_adr_dict = {}
-        for type, post_adr_list in self.post_addresses.items():
-            formatted_post_adr_dict[type] = []
-            for post_adr in post_adr_list:
-                strings = []
-                if "street" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("street"), "\n"))
-                if "box" in post_adr and "extended" in post_adr:
-                    strings.append("{} {}".format(
-                        helpers.list_to_string(post_adr.get("box"), " "),
-                        helpers.list_to_string(post_adr.get("extended"), " ")))
-                elif "box" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("box"), " "))
-                elif "extended" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("extended"), " "))
-                if "code" in post_adr and "city" in post_adr:
-                    strings.append("{} {}".format(
-                        helpers.list_to_string(post_adr.get("code"), " "),
-                        helpers.list_to_string(post_adr.get("city"), " ")))
-                elif "code" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("code"), " "))
-                elif "city" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("city"), " "))
-                if "region" in post_adr and "country" in post_adr:
-                    strings.append("{}, {}".format(
-                        helpers.list_to_string(post_adr.get("region"), " "),
-                        helpers.list_to_string(post_adr.get("country"), " ")))
-                elif "region" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("region"), " "))
-                elif "country" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("country"), " "))
-                formatted_post_adr_dict[type].append('\n'.join(strings))
-        return formatted_post_adr_dict
 
     def _get_private_objects(self):
         """
