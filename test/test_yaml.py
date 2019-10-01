@@ -126,7 +126,7 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         card = create_test_card()
         data = {'Organisation': 'Foo'}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertListEqual(card.organisations, [['Foo']])
 
     def test_update_org_multi(self):
@@ -134,7 +134,7 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         orgs = ['foo', 'bar', 'baz']
         data = {'Organisation': orgs}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertListEqual(card.organisations, sorted([[x] for x in orgs]))
 
     def test_update_org_complex(self):
@@ -142,14 +142,14 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         org = ['org.', 'dep.', 'office']
         data = {'Organisation': [org]}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertListEqual(card.organisations, [org])
 
     def test_update_categories_simple(self):
         card = create_test_card()
         data = {'Categories': 'foo'}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertListEqual(card.categories, ['foo'])
 
     def test_update_categories_multi(self):
@@ -157,28 +157,28 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         cat = ['foo', 'bar', 'baz']
         data = {'Categories': cat}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertListEqual(card.categories, cat)
 
     def test_update_bday_date(self):
         card = create_test_card()
         data = {'Birthday': '2000-01-01'}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertEqual(card.birthday, self._date)
 
     def test_update_anniverary(self):
         card = create_test_card()
         data = {'Anniversary': '2000-01-01'}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertEqual(card.anniversary, self._date)
 
     def test_update_name_simple(self):
         card = create_test_card()
         data = {'First name': 'first', 'Last name': 'last'}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertEqual(card.get_first_name_last_name(), 'first last')
 
     def test_update_fn(self):
@@ -186,5 +186,5 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         fn = 'me myself and i'
         data = {'Formatted name': fn}
         data = to_yaml(data)
-        card._process_user_input(data)
+        card.update(data)
         self.assertEqual(card.formatted_name, fn)

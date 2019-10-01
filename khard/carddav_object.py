@@ -1066,7 +1066,12 @@ class YAMLEditable(VCardWrapper):
                          "Use format yyyy-mm-dd or "
                          "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
 
-    def _process_user_input(self, input):
+    def update(self, input):
+        """Update this vcard with some yaml input
+
+        :param str input: a yaml string to parse and then use to update self
+        :returns: None
+        """
         contact_data = self._parse_yaml(input)
         # update rev
         self._update_revision()
@@ -1494,7 +1499,7 @@ class CarddavObject(YAMLEditable):
         """Use this if you want to create a new contact from user input."""
         contact = cls.new(address_book, supported_private_objects, version,
                           localize_dates=localize_dates)
-        contact._process_user_input(yaml)
+        contact.update(yaml)
         return contact
 
     @classmethod
@@ -1508,7 +1513,7 @@ class CarddavObject(YAMLEditable):
             filename=contact.filename,
             supported_private_objects=contact.supported_private_objects,
             localize_dates=localize_dates)
-        contact._process_user_input(yaml)
+        contact.update(yaml)
         return contact
 
     ######################################
