@@ -7,6 +7,8 @@ import sys
 import tempfile
 import unittest
 
+import vobject
+
 
 def expectedFailureForVersion(major, minor):
     "A decorator to mark a test as an expected failure for one python version."
@@ -14,6 +16,18 @@ def expectedFailureForVersion(major, minor):
         return unittest.expectedFailure
     else:
         return lambda x: x
+
+
+def create_test_vcard(**kwargs):
+    """Create a simple vcard for tests."""
+    vcard = vobject.vCard()
+    if 'fn' not in kwargs:
+        kwargs['fn'] = 'Test vCard'
+    if 'version' not in kwargs:
+        kwargs['version'] = '3.0'
+    for key, value in kwargs.items():
+        vcard.add(key.upper()).value = value
+    return vcard
 
 
 class with_vcards(contextlib.ContextDecorator):
