@@ -896,112 +896,24 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
 
-class CarddavObject(VCardWrapper):
+class YAMLEditable(VCardWrapper):
 
-    def __init__(self, address_book, filename, supported_private_objects=None,
-                 vcard_version=None, localize_dates=False):
-        """Initialize the vcard object.
+    def __init__(self, vcard, supported_private_objects=None, version=None,
+                 localize_dates=False):
+        """Initialize atributes needed for yaml conversions
 
-        :param address_book: a reference to the address book where this vcard
-            is stored
-        :type address_book: khard.address_book.AddressBook
-        :param filename: the path to the file where this vcard is stored or
-            None
-        :type filename: str or NoneType
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
         :type supported_private_objects: list(str) or NoneType
-        :param vcard_version: str or None
-        :type vcard_version: str
-        :param localize_dates: should the formatted output of anniversary and
-            birthday be localized or should the isoformat be used instead
-        :type localize_dates: bool
-
+        :param version: the version of the RFC to use in this card
+        :type version: str or None
+        :param bool localize_dates: should the formatted output of anniversary
+            and birthday be localized or should the isoformat be used instead
         """
-        self.vcard = None
-        self.address_book = address_book
-        self.filename = filename
         self.supported_private_objects = supported_private_objects or []
         self.localize_dates = localize_dates
-
-        # load vcard
-        if self.filename is None:
-            # create new vcard object
-            super().__init__(vobject.vCard(), vcard_version)
-            # add uid
-            self.uid = helpers.get_random_uid()
-            # use uid for vcard filename
-            self.filename = os.path.join(address_book.path, self.uid + ".vcf")
-
-        else:
-            # create vcard from .vcf file
-            with open(self.filename, "r") as file:
-                contents = file.read()
-            # create vcard object
-            try:
-                vcard = vobject.readOne(contents)
-            except Exception:
-                logging.warning("Filtering some problematic tags from %s",
-                                self.filename)
-                # if creation fails, try to repair some vcard attributes
-                vcard = vobject.readOne(self._filter_invalid_tags(contents))
-            super().__init__(vcard, vcard_version)
-
-    #######################################
-    # factory methods to create new contact
-    #######################################
-
-    @classmethod
-    def new_contact(cls, address_book, supported_private_objects=None,
-                    version=None, localize_dates=False):
-        """Use this to create a new and empty contact."""
-        return cls(address_book, None, supported_private_objects, version,
-                   localize_dates)
-
-    @classmethod
-    def from_file(cls, address_book, filename, supported_private_objects=None,
-                  localize_dates=False):
-        """
-        Use this if you want to create a new contact from an existing .vcf
-        file.
-        """
-        return cls(address_book, filename, supported_private_objects, None,
-                   localize_dates)
-
-    @classmethod
-    def from_user_input(cls, address_book, user_input,
-                        supported_private_objects=None, version=None,
-                        localize_dates=False):
-        """Use this if you want to create a new contact from user input."""
-        contact = cls(address_book, None, supported_private_objects, version,
-                      localize_dates)
-        contact._process_user_input(user_input)
-        return contact
-
-    @classmethod
-    def from_existing_contact_with_new_user_input(cls, contact, user_input,
-                                                  localize_dates=False):
-        """
-        Use this if you want to clone an existing contact and replace its data
-        with new user input in one step.
-        """
-        contact = cls(contact.address_book, contact.filename,
-                      contact.supported_private_objects, None, localize_dates)
-        contact._process_user_input(user_input)
-        return contact
-
-    ######################################
-    # overwrite some default class methods
-    ######################################
-
-    def __eq__(self, other):
-        return isinstance(other, CarddavObject) and \
-            self.print_vcard(show_address_book=False, show_uid=False) == \
-            other.print_vcard(show_address_book=False, show_uid=False)
-
-    def __ne__(self, other):
-        return not self == other
+        super().__init__(vcard, version)
 
     #####################
     # getters and setters
@@ -1510,6 +1422,114 @@ class CarddavObject(VCardWrapper):
                     "Webpage", self.webpages, 0, 8, True)
         # posix standard: eof char must be \n
         return '\n'.join(strings) + "\n"
+
+
+class CarddavObject(YAMLEditable):
+
+    def __init__(self, address_book, filename, supported_private_objects=None,
+                 vcard_version=None, localize_dates=False):
+        """Initialize the vcard object.
+
+        :param address_book: a reference to the address book where this vcard
+            is stored
+        :type address_book: khard.address_book.AddressBook
+        :param filename: the path to the file where this vcard is stored or
+            None
+        :type filename: str or NoneType
+        :param supported_private_objects: the list of private property names
+            that will be loaded from the actual vcard and represented in this
+            pobject
+        :type supported_private_objects: list(str) or NoneType
+        :param vcard_version: str or None
+        :type vcard_version: str
+        :param localize_dates: should the formatted output of anniversary and
+            birthday be localized or should the isoformat be used instead
+        :type localize_dates: bool
+
+        """
+        self.vcard = None
+        self.address_book = address_book
+        self.filename = filename
+
+        # load vcard
+        if self.filename is None:
+            # create new vcard object
+            super().__init__(vobject.vCard(), supported_private_objects,
+                             vcard_version, localize_dates)
+            # add uid
+            self.uid = helpers.get_random_uid()
+            # use uid for vcard filename
+            self.filename = os.path.join(address_book.path, self.uid + ".vcf")
+
+        else:
+            # create vcard from .vcf file
+            with open(self.filename, "r") as file:
+                contents = file.read()
+            # create vcard object
+            try:
+                vcard = vobject.readOne(contents)
+            except Exception:
+                logging.warning("Filtering some problematic tags from %s",
+                                self.filename)
+                # if creation fails, try to repair some vcard attributes
+                vcard = vobject.readOne(self._filter_invalid_tags(contents))
+            super().__init__(vcard, supported_private_objects, vcard_version,
+                             localize_dates)
+
+    #######################################
+    # factory methods to create new contact
+    #######################################
+
+    @classmethod
+    def new_contact(cls, address_book, supported_private_objects=None,
+                    version=None, localize_dates=False):
+        """Use this to create a new and empty contact."""
+        return cls(address_book, None, supported_private_objects, version,
+                   localize_dates)
+
+    @classmethod
+    def from_file(cls, address_book, filename, supported_private_objects=None,
+                  localize_dates=False):
+        """
+        Use this if you want to create a new contact from an existing .vcf
+        file.
+        """
+        return cls(address_book, filename, supported_private_objects, None,
+                   localize_dates)
+
+    @classmethod
+    def from_user_input(cls, address_book, user_input,
+                        supported_private_objects=None, version=None,
+                        localize_dates=False):
+        """Use this if you want to create a new contact from user input."""
+        contact = cls(address_book, None, supported_private_objects, version,
+                      localize_dates)
+        contact._process_user_input(user_input)
+        return contact
+
+    @classmethod
+    def from_existing_contact_with_new_user_input(cls, contact, user_input,
+                                                  localize_dates=False):
+        """
+        Use this if you want to clone an existing contact and replace its data
+        with new user input in one step.
+        """
+        contact = cls(contact.address_book, contact.filename,
+                      contact.supported_private_objects, None, localize_dates)
+        contact._process_user_input(user_input)
+        return contact
+
+    ######################################
+    # overwrite some default class methods
+    ######################################
+
+    def __eq__(self, other):
+        return isinstance(other, CarddavObject) and \
+            self.print_vcard(show_address_book=False, show_uid=False) == \
+            other.print_vcard(show_address_book=False, show_uid=False)
+
+    def __ne__(self, other):
+        return not self == other
 
     def print_vcard(self, show_address_book=True, show_uid=True):
         strings = []
