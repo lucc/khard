@@ -80,21 +80,23 @@ class VCardWrapper:
     email_types_v4 = ("home", "internet", "work")
     address_types_v4 = ("home", "work")
 
-    def __init__(self, vcard):
+    def __init__(self, vcard, version=None):
         """Initialize the wrapper around the given vcard.
 
-        :param vcard: the vCard to wrap
-        :type vcard: vobject.vCard
+        :param vobject.vCard vcard: the vCard to wrap
+        :param version: the version of the RFC to use in this card
+        :type version: str or None
         """
         self.vcard = vcard
-        if not self.version:
+        if not version:
             logging.warning("Wrapping unversioned vCard object, setting "
                             "version to %s.", self._default_version)
-            self.version = self._default_version
-        elif self.version not in self._supported_versions:
+            version = self._default_version
+        elif version not in self._supported_versions:
             logging.warning("Wrapping vCard with unsupported version %s, this "
                             "might change any incompatible attributes.",
-                            self.version)
+                            version)
+        self.version = version
 
     def __str__(self):
         return self.formatted_name
@@ -926,13 +928,11 @@ class CarddavObject(VCardWrapper):
         # load vcard
         if self.filename is None:
             # create new vcard object
-            super().__init__(vobject.vCard())
+            super().__init__(vobject.vCard(), vcard_version)
             # add uid
             self.uid = helpers.get_random_uid()
             # use uid for vcard filename
             self.filename = os.path.join(address_book.path, self.uid + ".vcf")
-            # add preferred vcard version
-            self.version = vcard_version or VCardWrapper._default_version
 
         else:
             # create vcard from .vcf file
@@ -946,7 +946,7 @@ class CarddavObject(VCardWrapper):
                                 self.filename)
                 # if creation fails, try to repair some vcard attributes
                 vcard = vobject.readOne(self._filter_invalid_tags(contents))
-            super().__init__(vcard)
+            super().__init__(vcard, vcard_version)
 
     #######################################
     # factory methods to create new contact
