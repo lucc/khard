@@ -1430,9 +1430,8 @@ class CarddavObject(YAMLEditable):
                  vcard_version=None, localize_dates=False):
         """Initialize the vcard object.
 
-        :param address_book: a reference to the address book where this vcard
-            is stored
-        :type address_book: khard.address_book.AddressBook
+        :param address_book.AddressBook address_book: a reference to the
+            address book where this vcard is stored
         :param filename: the path to the file where this vcard is stored or
             None
         :type filename: str or NoneType
@@ -1440,14 +1439,13 @@ class CarddavObject(YAMLEditable):
             that will be loaded from the actual vcard and represented in this
             pobject
         :type supported_private_objects: list(str) or NoneType
-        :param vcard_version: str or None
-        :type vcard_version: str
+        :param vcard_version: the version of the RFC to use
+        :type vcard_version: str or None
         :param localize_dates: should the formatted output of anniversary and
             birthday be localized or should the isoformat be used instead
         :type localize_dates: bool
 
         """
-        self.vcard = None
         self.address_book = address_book
         self.filename = filename
 
@@ -1479,13 +1477,6 @@ class CarddavObject(YAMLEditable):
     #######################################
     # factory methods to create new contact
     #######################################
-
-    @classmethod
-    def new_contact(cls, address_book, supported_private_objects=None,
-                    version=None, localize_dates=False):
-        """Use this to create a new and empty contact."""
-        return cls(address_book, None, supported_private_objects, version,
-                   localize_dates)
 
     @classmethod
     def from_file(cls, address_book, filename, supported_private_objects=None,
