@@ -38,10 +38,9 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
         """
         # Careful, this function doesn't actually support named arguments so
         # they have to be kept in this order!
-        return CarddavObject.from_user_input(
-                address_book=mock.Mock(path='foo-path'), user_input=yaml,
-                supported_private_objects=[], version='3.0',
-                localize_dates=False)
+        return CarddavObject.from_yaml(address_book=mock.Mock(path='foo-path'),
+                                       yaml=yaml, supported_private_objects=[],
+                                       version='3.0', localize_dates=False)
 
     def test_empty_birthday_in_yaml_input(self):
         empty_birthday = "First name: foo\nBirthday:"
@@ -107,10 +106,9 @@ class yaml_ablabel(unittest.TestCase):
         """
         # Careful, this function doesn't actually support named arguments so
         # they have to be kept in this order!
-        return CarddavObject.from_user_input(
-                address_book=mock.Mock(path='foo-path'), user_input=yaml,
-                supported_private_objects=[], version='3.0',
-                localize_dates=False)
+        return CarddavObject.from_yaml(address_book=mock.Mock(path='foo-path'),
+                                       yaml=yaml, supported_private_objects=[],
+                                       version='3.0', localize_dates=False)
 
     def test_ablabelled_url_in_yaml_input(self):
         ablabel_url = "First name: foo\nWebpage:\n - http://example.com\n" \

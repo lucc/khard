@@ -72,7 +72,7 @@ def create_new_contact(address_book):
 
         # try to create new contact
         try:
-            new_contact = CarddavObject.from_user_input(
+            new_contact = CarddavObject.from_yaml(
                 address_book, new_contact_yaml,
                 config.get_supported_private_objects(),
                 config.get_preferred_vcard_version(),
@@ -125,7 +125,7 @@ def modify_existing_contact(old_contact):
         # try to create contact from user input
         try:
             new_contact = \
-                CarddavObject.from_existing_contact_with_new_user_input(
+                CarddavObject.clone_with_yaml_update(
                     old_contact, new_contact_template, config.localize_dates())
         except ValueError as err:
             print("\n%s\n" % err)
@@ -199,7 +199,7 @@ def merge_existing_contacts(source_contact, target_contact,
         # try to create contact from user input
         try:
             merged_contact = \
-                CarddavObject.from_existing_contact_with_new_user_input(
+                CarddavObject.clone_with_yaml_update(
                     target_contact, merged_contact_template,
                     config.localize_dates())
         except ValueError as err:
@@ -745,7 +745,7 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
     if input_from_stdin_or_file:
         # create new contact from stdin
         try:
-            new_contact = CarddavObject.from_user_input(
+            new_contact = CarddavObject.from_yaml(
                 selected_address_book, input_from_stdin_or_file,
                 config.get_supported_private_objects(),
                 config.get_preferred_vcard_version(),
@@ -814,7 +814,7 @@ def add_email_subcommand(text, abooks):
                 print("Error: All fields are empty.")
             else:
                 break
-        selected_vcard = CarddavObject.from_user_input(
+        selected_vcard = CarddavObject.from_yaml(
             selected_address_book,
             "First name : %s\nLast name : %s\nOrganisation : %s" % (
                 first_name, last_name, organisation),
@@ -1201,7 +1201,7 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
         # create new contact from stdin
         try:
             new_contact = \
-                CarddavObject.from_existing_contact_with_new_user_input(
+                CarddavObject.clone_with_yaml_update(
                     selected_vcard, input_from_stdin_or_file,
                     config.localize_dates())
         except ValueError as err:

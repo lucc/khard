@@ -1489,25 +1489,23 @@ class CarddavObject(YAMLEditable):
                    localize_dates)
 
     @classmethod
-    def from_user_input(cls, address_book, user_input,
-                        supported_private_objects=None, version=None,
-                        localize_dates=False):
+    def from_yaml(cls, address_book, yaml, supported_private_objects=None,
+                  version=None, localize_dates=False):
         """Use this if you want to create a new contact from user input."""
         contact = cls(address_book, None, supported_private_objects, version,
                       localize_dates)
-        contact._process_user_input(user_input)
+        contact._process_user_input(yaml)
         return contact
 
     @classmethod
-    def from_existing_contact_with_new_user_input(cls, contact, user_input,
-                                                  localize_dates=False):
+    def clone_with_yaml_update(cls, contact, yaml, localize_dates=False):
         """
         Use this if you want to clone an existing contact and replace its data
         with new user input in one step.
         """
         contact = cls(contact.address_book, contact.filename,
                       contact.supported_private_objects, None, localize_dates)
-        contact._process_user_input(user_input)
+        contact._process_user_input(yaml)
         return contact
 
     ######################################
