@@ -1,9 +1,28 @@
 """Tests for the custom YAML format."""
 
+import datetime
+from io import StringIO
 import unittest
 from unittest import mock
 
-from khard.carddav_object import CarddavObject
+from ruamel.yaml import YAML
+
+from khard.carddav_object import CarddavObject, YAMLEditable
+
+from . import helpers
+
+
+def create_test_card():
+    with mock.patch('__main__.open', mock.mock_open()):
+        return YAMLEditable(helpers.create_test_vcard())
+
+
+def to_yaml(data):
+    if 'First name' not in data:
+        data['First name'] = 'Nobody'
+    stream = StringIO()
+    YAML().dump(data, stream)
+    return stream.getvalue()
 
 
 class EmptyFieldsAndSpaces(unittest.TestCase):
@@ -19,10 +38,9 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
         """
         # Careful, this function doesn't actually support named arguments so
         # they have to be kept in this order!
-        return CarddavObject.from_user_input(
-                address_book=mock.Mock(path='foo-path'), user_input=yaml,
-                supported_private_objects=[], version='3.0',
-                localize_dates=False)
+        return CarddavObject.from_yaml(address_book=mock.Mock(path='foo-path'),
+                                       yaml=yaml, supported_private_objects=[],
+                                       version='3.0', localize_dates=False)
 
     def test_empty_birthday_in_yaml_input(self):
         empty_birthday = "First name: foo\nBirthday:"
@@ -74,6 +92,7 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
         x = self._parse_yaml(empty_note)
         self.assertListEqual(x.notes, [])
 
+
 class yaml_ablabel(unittest.TestCase):
 
     @staticmethod
@@ -87,10 +106,9 @@ class yaml_ablabel(unittest.TestCase):
         """
         # Careful, this function doesn't actually support named arguments so
         # they have to be kept in this order!
-        return CarddavObject.from_user_input(
-                address_book=mock.Mock(path='foo-path'), user_input=yaml,
-                supported_private_objects=[], version='3.0',
-                localize_dates=False)
+        return CarddavObject.from_yaml(address_book=mock.Mock(path='foo-path'),
+                                       yaml=yaml, supported_private_objects=[],
+                                       version='3.0', localize_dates=False)
 
     def test_ablabelled_url_in_yaml_input(self):
         ablabel_url = "First name: foo\nWebpage:\n - http://example.com\n" \
@@ -98,3 +116,75 @@ class yaml_ablabel(unittest.TestCase):
         x = self._parse_yaml(ablabel_url)
         self.assertListEqual(x.webpages, [
             'github: https://github.com/scheibler/khard', 'http://example.com'])
+
+
+class UpdateVcardWithYamlUserInput(unittest.TestCase):
+
+    _date = datetime.datetime(2000, 1, 1)
+
+    def test_update_org_simple(self):
+        card = create_test_card()
+        data = {'Organisation': 'Foo'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertListEqual(card.organisations, [['Foo']])
+
+    def test_update_org_multi(self):
+        card = create_test_card()
+        orgs = ['foo', 'bar', 'baz']
+        data = {'Organisation': orgs}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertListEqual(card.organisations, sorted([[x] for x in orgs]))
+
+    def test_update_org_complex(self):
+        card = create_test_card()
+        org = ['org.', 'dep.', 'office']
+        data = {'Organisation': [org]}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertListEqual(card.organisations, [org])
+
+    def test_update_categories_simple(self):
+        card = create_test_card()
+        data = {'Categories': 'foo'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertListEqual(card.categories, ['foo'])
+
+    def test_update_categories_multi(self):
+        card = create_test_card()
+        cat = ['foo', 'bar', 'baz']
+        data = {'Categories': cat}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertListEqual(card.categories, cat)
+
+    def test_update_bday_date(self):
+        card = create_test_card()
+        data = {'Birthday': '2000-01-01'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.birthday, self._date)
+
+    def test_update_anniverary(self):
+        card = create_test_card()
+        data = {'Anniversary': '2000-01-01'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.anniversary, self._date)
+
+    def test_update_name_simple(self):
+        card = create_test_card()
+        data = {'First name': 'first', 'Last name': 'last'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.get_first_name_last_name(), 'first last')
+
+    def test_update_fn(self):
+        card = create_test_card()
+        fn = 'me myself and i'
+        data = {'Formatted name': fn}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.formatted_name, fn)

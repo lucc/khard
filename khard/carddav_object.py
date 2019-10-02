@@ -7,6 +7,7 @@ which can be found here:
 - version 4.0: https://tools.ietf.org/html/rfc6350
 """
 
+import copy
 import datetime
 import locale
 import logging
@@ -80,21 +81,23 @@ class VCardWrapper:
     email_types_v4 = ("home", "internet", "work")
     address_types_v4 = ("home", "work")
 
-    def __init__(self, vcard):
+    def __init__(self, vcard, version=None):
         """Initialize the wrapper around the given vcard.
 
-        :param vcard: the vCard to wrap
-        :type vcard: vobject.vCard
+        :param vobject.vCard vcard: the vCard to wrap
+        :param version: the version of the RFC to use (if the card has none)
+        :type version: str or None
         """
         self.vcard = vcard
         if not self.version:
+            version = version or self._default_version
             logging.warning("Wrapping unversioned vCard object, setting "
-                            "version to %s.", self._default_version)
-            self.version = self._default_version
+                            "version to %s.", version)
+            self.version = version
         elif self.version not in self._supported_versions:
             logging.warning("Wrapping vCard with unsupported version %s, this "
                             "might change any incompatible attributes.",
-                            self.version)
+                            version)
 
     def __str__(self):
         return self.formatted_name
@@ -808,37 +811,37 @@ class VCardWrapper:
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
                 strings = []
-                if post_adr.get("street"):
+                if "street" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("street"), "\n"))
-                if post_adr.get("box") and post_adr.get("extended"):
+                if "box" in post_adr and "extended" in post_adr:
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("box"), " "),
                         helpers.list_to_string(post_adr.get("extended"), " ")))
-                elif post_adr.get("box"):
+                elif "box" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("box"), " "))
-                elif post_adr.get("extended"):
+                elif "extended" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("extended"), " "))
-                if post_adr.get("code") and post_adr.get("city"):
+                if "code" in post_adr and "city" in post_adr:
                     strings.append("{} {}".format(
                         helpers.list_to_string(post_adr.get("code"), " "),
                         helpers.list_to_string(post_adr.get("city"), " ")))
-                elif post_adr.get("code"):
+                elif "code" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("code"), " "))
-                elif post_adr.get("city"):
+                elif "city" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("city"), " "))
-                if post_adr.get("region") and post_adr.get("country"):
+                if "region" in post_adr and "country" in post_adr:
                     strings.append("{}, {}".format(
                         helpers.list_to_string(post_adr.get("region"), " "),
                         helpers.list_to_string(post_adr.get("country"), " ")))
-                elif post_adr.get("region"):
+                elif "region" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("region"), " "))
-                elif post_adr.get("country"):
+                elif "country" in post_adr:
                     strings.append(
                         helpers.list_to_string(post_adr.get("country"), " "))
                 formatted_post_adr_dict[type].append('\n'.join(strings))
@@ -894,160 +897,28 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
 
-class CarddavObject(VCardWrapper):
+class YAMLEditable(VCardWrapper):
 
-    def __init__(self, address_book, filename, supported_private_objects=None,
-                 vcard_version=None, localize_dates=False):
-        """Initialize the vcard object.
+    def __init__(self, vcard, supported_private_objects=None, version=None,
+                 localize_dates=False):
+        """Initialize atributes needed for yaml conversions
 
-        :param address_book: a reference to the address book where this vcard
-            is stored
-        :type address_book: khard.address_book.AddressBook
-        :param filename: the path to the file where this vcard is stored or
-            None
-        :type filename: str or NoneType
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
         :type supported_private_objects: list(str) or NoneType
-        :param vcard_version: str or None
-        :type vcard_version: str
-        :param localize_dates: should the formatted output of anniversary and
-            birthday be localized or should the isoformat be used instead
-        :type localize_dates: bool
-
+        :param version: the version of the RFC to use in this card
+        :type version: str or None
+        :param bool localize_dates: should the formatted output of anniversary
+            and birthday be localized or should the isoformat be used instead
         """
-        self.vcard = None
-        self.address_book = address_book
-        self.filename = filename
         self.supported_private_objects = supported_private_objects or []
         self.localize_dates = localize_dates
-
-        # load vcard
-        if self.filename is None:
-            # create new vcard object
-            super().__init__(vobject.vCard())
-            # add uid
-            self.uid = helpers.get_random_uid()
-            # use uid for vcard filename
-            self.filename = os.path.join(address_book.path, self.uid + ".vcf")
-            # add preferred vcard version
-            self.version = vcard_version or VCardWrapper._default_version
-
-        else:
-            # create vcard from .vcf file
-            with open(self.filename, "r") as file:
-                contents = file.read()
-            # create vcard object
-            try:
-                vcard = vobject.readOne(contents)
-            except Exception:
-                logging.warning("Filtering some problematic tags from %s",
-                                self.filename)
-                # if creation fails, try to repair some vcard attributes
-                vcard = vobject.readOne(self._filter_invalid_tags(contents))
-            super().__init__(vcard)
-
-    #######################################
-    # factory methods to create new contact
-    #######################################
-
-    @classmethod
-    def new_contact(cls, address_book, supported_private_objects=None,
-                    version=None, localize_dates=False):
-        """Use this to create a new and empty contact."""
-        return cls(address_book, None, supported_private_objects, version,
-                   localize_dates)
-
-    @classmethod
-    def from_file(cls, address_book, filename, supported_private_objects=None,
-                  localize_dates=False):
-        """
-        Use this if you want to create a new contact from an existing .vcf
-        file.
-        """
-        return cls(address_book, filename, supported_private_objects, None,
-                   localize_dates)
-
-    @classmethod
-    def from_user_input(cls, address_book, user_input,
-                        supported_private_objects=None, version=None,
-                        localize_dates=False):
-        """Use this if you want to create a new contact from user input."""
-        contact = cls(address_book, None, supported_private_objects, version,
-                      localize_dates)
-        contact._process_user_input(user_input)
-        return contact
-
-    @classmethod
-    def from_existing_contact_with_new_user_input(cls, contact, user_input,
-                                                  localize_dates=False):
-        """
-        Use this if you want to clone an existing contact and replace its data
-        with new user input in one step.
-        """
-        contact = cls(contact.address_book, contact.filename,
-                      contact.supported_private_objects, None, localize_dates)
-        contact._process_user_input(user_input)
-        return contact
-
-    ######################################
-    # overwrite some default class methods
-    ######################################
-
-    def __eq__(self, other):
-        return isinstance(other, CarddavObject) and \
-            self.print_vcard(show_address_book=False, show_uid=False) == \
-            other.print_vcard(show_address_book=False, show_uid=False)
-
-    def __ne__(self, other):
-        return not self == other
+        super().__init__(vcard, version)
 
     #####################
     # getters and setters
     #####################
-
-    def _get_formatted_post_addresses(self):
-        formatted_post_adr_dict = {}
-        for type, post_adr_list in self.post_addresses.items():
-            formatted_post_adr_dict[type] = []
-            for post_adr in post_adr_list:
-                strings = []
-                if "street" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("street"), "\n"))
-                if "box" in post_adr and "extended" in post_adr:
-                    strings.append("{} {}".format(
-                        helpers.list_to_string(post_adr.get("box"), " "),
-                        helpers.list_to_string(post_adr.get("extended"), " ")))
-                elif "box" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("box"), " "))
-                elif "extended" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("extended"), " "))
-                if "code" in post_adr and "city" in post_adr:
-                    strings.append("{} {}".format(
-                        helpers.list_to_string(post_adr.get("code"), " "),
-                        helpers.list_to_string(post_adr.get("city"), " ")))
-                elif "code" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("code"), " "))
-                elif "city" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("city"), " "))
-                if "region" in post_adr and "country" in post_adr:
-                    strings.append("{}, {}".format(
-                        helpers.list_to_string(post_adr.get("region"), " "),
-                        helpers.list_to_string(post_adr.get("country"), " ")))
-                elif "region" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("region"), " "))
-                elif "country" in post_adr:
-                    strings.append(
-                        helpers.list_to_string(post_adr.get("country"), " "))
-                formatted_post_adr_dict[type].append('\n'.join(strings))
-        return formatted_post_adr_dict
 
     def _get_private_objects(self):
         """
@@ -1195,7 +1066,12 @@ class CarddavObject(VCardWrapper):
                          "Use format yyyy-mm-dd or "
                          "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
 
-    def _process_user_input(self, input):
+    def update(self, input):
+        """Update this vcard with some yaml input
+
+        :param str input: a yaml string to parse and then use to update self
+        :returns: None
+        """
         contact_data = self._parse_yaml(input)
         # update rev
         self._update_revision()
@@ -1552,6 +1428,119 @@ class CarddavObject(VCardWrapper):
                     "Webpage", self.webpages, 0, 8, True)
         # posix standard: eof char must be \n
         return '\n'.join(strings) + "\n"
+
+
+class CarddavObject(YAMLEditable):
+
+    def __init__(self, vcard, address_book, filename,
+                 supported_private_objects=None, vcard_version=None,
+                 localize_dates=False):
+        """Initialize the vcard object.
+
+        :param vobject.vCard vcard: the vCard to wrap
+        :param address_book.AddressBook address_book: a reference to the
+            address book where this vcard is stored
+        :param str filename: the path to the file where this vcard is stored
+        :param supported_private_objects: the list of private property names
+            that will be loaded from the actual vcard and represented in this
+            pobject
+        :type supported_private_objects: list(str) or NoneType
+        :param vcard_version: the version of the RFC to use
+        :type vcard_version: str or None
+        :param localize_dates: should the formatted output of anniversary and
+            birthday be localized or should the isoformat be used instead
+        :type localize_dates: bool
+
+        """
+        self.address_book = address_book
+        self.filename = filename
+        super().__init__(vcard, supported_private_objects, vcard_version,
+                         localize_dates)
+
+    #######################################
+    # factory methods to create new contact
+    #######################################
+
+    @classmethod
+    def new(cls, address_book, supported_private_objects=None, version=None,
+            localize_dates=False):
+        """Create a new CarddavObject from scratch"""
+        vcard = vobject.vCard()
+        uid = helpers.get_random_uid()
+        filename = os.path.join(address_book.path, uid + ".vcf")
+        card = cls(vcard, address_book, filename, supported_private_objects,
+                   version, localize_dates)
+        card.uid = uid
+        return card
+
+    @classmethod
+    def from_file(cls, address_book, filename, query,
+                  supported_private_objects=None, localize_dates=False):
+        """Load a CarddavObject object from a .vcf file if the plain file
+        matches the query.
+
+        :param address_book.AddressBook address_book: the address book where
+            this contact is stored
+        :param str filename: the file name of the .vcf file
+        :param re.Pattern|str|NoneType query: the regex to search in the source
+            file or None to load the file unconditionally
+        :param list(str)|NoneType supported_private_objects: the list of
+            private property names that will be loaded from the actual vcard
+            and represented in this pobject
+        :param str|NoneType vcard_version: the version of the RFC to use
+        :param bool localize_dates: should the formatted output of anniversary
+            and birthday be localized or should the isoformat be used instead
+        :returns: the loaded CarddavObject or None if the file didn't match
+        :rtype: CarddavObject or NoneType
+        """
+        with open(filename, "r") as file:
+            contents = file.read()
+        if query is None or \
+                re.search(query, contents, re.IGNORECASE | re.DOTALL):
+            try:
+                vcard = vobject.readOne(contents)
+            except Exception:
+                logging.warning("Filtering some problematic tags from %s",
+                                filename)
+                # if creation fails, try to repair some vcard attributes
+                vcard = vobject.readOne(cls._filter_invalid_tags(contents))
+            return cls(vcard, address_book, filename, supported_private_objects,
+                       None, localize_dates)
+
+    @classmethod
+    def from_yaml(cls, address_book, yaml, supported_private_objects=None,
+                  version=None, localize_dates=False):
+        """Use this if you want to create a new contact from user input."""
+        contact = cls.new(address_book, supported_private_objects, version,
+                          localize_dates=localize_dates)
+        contact.update(yaml)
+        return contact
+
+    @classmethod
+    def clone_with_yaml_update(cls, contact, yaml, localize_dates=False):
+        """
+        Use this if you want to clone an existing contact and replace its data
+        with new user input in one step.
+        """
+        contact = cls(
+            copy.deepcopy(contact.vcard), address_book=contact.address_book,
+            filename=contact.filename,
+            supported_private_objects=contact.supported_private_objects,
+            localize_dates=localize_dates)
+        contact.update(yaml)
+        return contact
+
+    ######################################
+    # overwrite some default class methods
+    ######################################
+
+    def __eq__(self, other):
+        return isinstance(other, CarddavObject) and \
+            self.print_vcard(show_address_book=False, show_uid=False) == \
+            other.print_vcard(show_address_book=False, show_uid=False)
+
+    def __ne__(self, other):
+        return not self == other
 
     def print_vcard(self, show_address_book=True, show_uid=True):
         strings = []
