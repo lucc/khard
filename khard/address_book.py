@@ -247,31 +247,6 @@ class VdirAddressBook(AddressBook):
                                     " {} does not exist.".format(path, name))
         super().__init__(name, **kwargs)
 
-    def _find_vcard_files(self, search=None, search_in_source_files=False):
-        """Find all vcard files inside this address book.
-
-        If a search string is given only files which contents match that will
-        be returned.
-
-        :param search: a regular expression to limit the results
-        :type search: str
-        :param search_in_source_files: apply search regexp directly on the .vcf
-            files to speed up parsing (less accurate)
-        :type search_in_source_files: bool
-        :returns: the paths of the vcard files
-        :rtype: generator
-
-        """
-        files = glob.glob(os.path.join(self.path, "*.vcf"))
-        if search and search_in_source_files:
-            for filename in files:
-                with open(filename, "r") as filehandle:
-                    if re.search(search, filehandle.read(),
-                                 re.IGNORECASE | re.DOTALL):
-                        yield filename
-        else:
-            yield from files
-
     def load(self, query=None, search_in_source_files=False):
         """Load all vcard files in this address book from disk.
 
@@ -292,12 +267,13 @@ class VdirAddressBook(AddressBook):
             return
         logging.debug('Loading Vdir %s with query %s', self.name, query)
         errors = 0
-        for filename in self._find_vcard_files(
-                search=query, search_in_source_files=search_in_source_files):
+        for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
-                card = CarddavObject.from_file(self, filename,
-                                               self._private_objects,
-                                               self._localize_dates)
+                card = CarddavObject.from_file(
+                    self, filename, query if search_in_source_files else None,
+                    self._private_objects, self._localize_dates)
+                if card is None:
+                    continue
             except (IOError, vobject.base.ParseError) as err:
                 verb = "open" if isinstance(err, IOError) else "parse"
                 logging.debug("Error: Could not %s file %s\n%s", verb,

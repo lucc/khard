@@ -1474,24 +1474,38 @@ class CarddavObject(YAMLEditable):
         return card
 
     @classmethod
-    def from_file(cls, address_book, filename, supported_private_objects=None,
-                  localize_dates=False):
-        """
-        Use this if you want to create a new contact from an existing .vcf
-        file.
+    def from_file(cls, address_book, filename, query,
+                  supported_private_objects=None, localize_dates=False):
+        """Load a CarddavObject object from a .vcf file if the plain file
+        matches the query.
+
+        :param address_book.AddressBook address_book: the address book where
+            this contact is stored
+        :param str filename: the file name of the .vcf file
+        :param re.Pattern|str|NoneType query: the regex to search in the source
+            file or None to load the file unconditionally
+        :param list(str)|NoneType supported_private_objects: the list of
+            private property names that will be loaded from the actual vcard
+            and represented in this pobject
+        :param str|NoneType vcard_version: the version of the RFC to use
+        :param bool localize_dates: should the formatted output of anniversary
+            and birthday be localized or should the isoformat be used instead
+        :returns: the loaded CarddavObject or None if the file didn't match
+        :rtype: CarddavObject or NoneType
         """
         with open(filename, "r") as file:
             contents = file.read()
-        # create vcard object
-        try:
-            vcard = vobject.readOne(contents)
-        except Exception:
-            logging.warning("Filtering some problematic tags from %s",
-                            filename)
-            # if creation fails, try to repair some vcard attributes
-            vcard = vobject.readOne(cls._filter_invalid_tags(contents))
-        return cls(vcard, address_book, filename, supported_private_objects,
-                   None, localize_dates)
+        if query is None or \
+                re.search(query, contents, re.IGNORECASE | re.DOTALL):
+            try:
+                vcard = vobject.readOne(contents)
+            except Exception:
+                logging.warning("Filtering some problematic tags from %s",
+                                filename)
+                # if creation fails, try to repair some vcard attributes
+                vcard = vobject.readOne(cls._filter_invalid_tags(contents))
+            return cls(vcard, address_book, filename, supported_private_objects,
+                       None, localize_dates)
 
     @classmethod
     def from_yaml(cls, address_book, yaml, supported_private_objects=None,
