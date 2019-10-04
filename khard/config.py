@@ -161,8 +161,6 @@ class Config:
             self.abook = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
                         for name in section], **kwargs)
-        except KeyError as err:
-            exit('Missing path to the "{}" address book.'.format(err.args[0]))
         except IOError as err:
             exit(str(err))
         self.abooks = [self.abook.get_abook(name) for name in section]
