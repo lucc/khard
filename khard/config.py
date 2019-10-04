@@ -40,20 +40,7 @@ class Config:
         # set locale
         locale.setlocale(locale.LC_ALL, '')
 
-        # load config file
-        if config_file == "":
-            xdg_config_home = os.getenv("XDG_CONFIG_HOME",
-                                        os.path.expanduser("~/.config"))
-            config_file = os.getenv("KHARD_CONFIG", os.path.join(
-                xdg_config_home, "khard", "khard.conf"))
-        if not os.path.exists(config_file):
-            exit("Config file %s not available" % config_file, prefix="")
-
-        # parse config file contents
-        try:
-            self.config = configobj.ConfigObj(config_file, interpolation=False)
-        except configobj.ConfigObjError as err:
-            exit(str(err))
+        self.config = self._load_config_file(config_file)
 
         # general settings
         if "general" not in self.config:
@@ -182,6 +169,27 @@ class Config:
             exit('Missing main section "[addressbooks]".')
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
+
+    def _load_config_file(self, config_file):
+        """Find, load and validate the config file.
+
+        :param str config_file: the path to the config file to load
+        :returns: the validated config file
+        """
+        # load config file
+        if config_file == "":
+            xdg_config_home = os.getenv("XDG_CONFIG_HOME",
+                                        os.path.expanduser("~/.config"))
+            config_file = os.getenv("KHARD_CONFIG", os.path.join(
+                xdg_config_home, "khard", "khard.conf"))
+        if not os.path.exists(config_file):
+            exit("Config file %s not available" % config_file, prefix="")
+
+        # parse config file contents
+        try:
+            return configobj.ConfigObj(config_file, interpolation=False)
+        except configobj.ConfigObjError as err:
+            exit(str(err))
 
     def load_address_books(self):
         section = self.config['addressbooks']
