@@ -1,7 +1,7 @@
 [general]
 debug = boolean(default=False)
-editor = string(default='vim')
-merge_editor = string(default='vimdiff')
+editor = string
+merge_editor = string
 default_action = string(default='list')
 
 [contact table]
