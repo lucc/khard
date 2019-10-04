@@ -150,7 +150,9 @@ class Config:
                 infile=config_file, configspec=spec_file, interpolation=False)
         except configobj.ConfigObjError as err:
             exit(str(err))
-        config.validate(validate.Validator())
+        success = config.validate(validate.Validator())
+        if success is not True:
+            exit(str(success))
         return config
 
     def load_address_books(self):
