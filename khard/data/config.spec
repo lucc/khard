@@ -11,7 +11,7 @@ show_nicknames = boolean(default=False)
 show_uids = boolean(default=True)
 sort = option('first_name', 'last_name', default='first_name')
 display = option('first_name', 'last_name', default='first_name')
-localize_dates = boolean
+localize_dates = boolean(default=True)
 preferred_phone_number_type = string_list
 preferred_email_address_type = string_list
 
