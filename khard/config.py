@@ -81,13 +81,13 @@ class Config:
         self.config = self._load_config_file(config_file)
 
         self.debug = self.config["general"]["debug"]
-        self.editor = self.config["general"].get("editor") \
+        self.editor = self.config["general"]["editor"] \
             or os.environ.get("EDITOR", "vim")
-        self.merge_editor = self.config['general'].get("merge_editor") \
+        self.merge_editor = self.config['general']["merge_editor"] \
             or os.environ.get("MERGE_EDITOR", "vimdiff")
 
         # default action
-        self.default_action = self.config["general"].get("default_action")
+        self.default_action = self.config["general"]["default_action"]
         if self.default_action is None:
             # When these two lines are replaced with "pass" khard requires a
             # subcommand on the command line as long as no default_action is
@@ -103,64 +103,22 @@ class Config:
                  "Possible values: %s" % ', '.join(
                      sorted(Actions.get_actions())))
 
-        self.sort = self.config["contact table"].get("sort", "first_name")
-
-        # display names in contact table by first or last name
+        self.sort = self.config["contact table"]["sort"]
         if "display" not in self.config['contact table']:
             # if display by name attribute is not present in the config file
             # use the sort attribute value for backwards compatibility
             self.config['contact table']['display'] = self.sort
-        elif self.config['contact table']['display'] not in [
-                "first_name", "last_name", "formatted_name"]:
-            exit("Invalid value for display parameter\n"
-                 "Possible values: first_name, last_name, formatted_name")
 
-        # preferred phone number and email address types in contact table
-        # phone type
-        if "preferred_phone_number_type" in self.config['contact table']:
-            if isinstance(self.config['contact table']['preferred_phone_number_type'], str):
-                self.config['contact table']['preferred_phone_number_type'] = \
-                    [self.config['contact table']['preferred_phone_number_type']]
-        else:
-            # default phone number type: pref
-            self.config['contact table']['preferred_phone_number_type'] = ["pref"]
-        # email type
-        if "preferred_email_address_type" in self.config['contact table']:
-            if isinstance(self.config['contact table']['preferred_email_address_type'], str):
-                self.config['contact table']['preferred_email_address_type'] = \
-                    [self.config['contact table']['preferred_email_address_type']]
-        else:
-            # default email address  type: pref
-            self.config['contact table']['preferred_email_address_type'] = ["pref"]
+        # check if object only contains letters, digits or -
+        for object in self.config['vcard']['private_objects']:
+            if object != re.sub("[^a-zA-Z0-9-]", "", object):
+                exit("private object %s may only contain letters, digits and "
+                     "the \"-\" character." % object)
+            if object == re.sub("[^-]", "", object) or object.startswith("-") \
+                    or object.endswith("-"):
+                exit("A \"-\" in a private object label must be at least "
+                     "surrounded by one letter or digit.")
 
-        # get supported private objects
-        if "private_objects" not in self.config['vcard'] \
-                or not self.config['vcard']['private_objects']:
-            self.config['vcard']['private_objects'] = []
-        else:
-            if not isinstance(self.config['vcard']['private_objects'], list):
-                self.config['vcard']['private_objects'] = [
-                    self.config['vcard']['private_objects']]
-            # check if object only contains letters, digits or -
-            for object in self.config['vcard']['private_objects']:
-                if object != re.sub("[^a-zA-Z0-9-]", "", object):
-                    exit("private object %s may only contain letters, digits "
-                         "and the \"-\" character." % object)
-                if object == re.sub("[^-]", "", object) \
-                        or object.startswith("-") or object.endswith("-"):
-                    exit("A \"-\" in a private object label must be at least "
-                         "surrounded by one letter or digit.")
-
-        # preferred vcard version
-        if "preferred_version" not in self.config['vcard']:
-            self.config['vcard']['preferred_version'] = "3.0"
-        elif self.config['vcard']['preferred_version'] not in \
-                self.supported_vcard_versions:
-            exit("Invalid value for preferred_version parameter\n"
-                 "Possible values: %s" % self.supported_vcard_versions)
-
-        if "addressbooks" not in self.config:
-            exit('Missing main section "[addressbooks]".')
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
 
