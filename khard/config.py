@@ -176,7 +176,7 @@ class Config:
         :param str config_file: the path to the config file to load
         :returns: the validated config file
         """
-        # load config file
+        # find config file
         if config_file == "":
             xdg_config_home = os.getenv("XDG_CONFIG_HOME",
                                         os.path.expanduser("~/.config"))
@@ -185,9 +185,12 @@ class Config:
         if not os.path.exists(config_file):
             exit("Config file %s not available" % config_file, prefix="")
 
+        spec_file = os.path.join(os.path.dirname(__file__), 'data',
+                                 'config.spec')
         # parse config file contents
         try:
-            return configobj.ConfigObj(config_file, interpolation=False)
+            return configobj.ConfigObj(
+                infile=config_file, configspec=spec_file, interpolation=False)
         except configobj.ConfigObjError as err:
             exit(str(err))
 
