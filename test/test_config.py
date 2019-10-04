@@ -25,6 +25,7 @@ class LoadingConfigFile(unittest.TestCase):
                 config.Config("/dev/null")
         self.assertTrue(stdout.getvalue().startswith('Error in config file\n'))
 
+    @mock.patch.dict('os.environ', EDITOR='editor', MERGE_EDITOR='meditor')
     def test_load_minimal_file_by_name(self):
         cfg = config.Config("test/fixture/minimal.conf")
         self.assertEqual(cfg.editor, "editor")
