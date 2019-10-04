@@ -144,6 +144,16 @@ class Defaults(unittest.TestCase):
         c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.get_preferred_vcard_version(), '3.0')
 
+    @mock.patch.dict('os.environ', clear=True)
+    def test_editor_defaults_to_vim(self):
+        c = config.Config("test/fixture/minimal.conf")
+        self.assertEqual(c.editor, 'vim')
+
+    @mock.patch.dict('os.environ', clear=True)
+    def test_merge_editor_defaults_to_vimdiff(self):
+        c = config.Config("test/fixture/minimal.conf")
+        self.assertEqual(c.merge_editor, 'vimdiff')
+
 
 if __name__ == "__main__":
     unittest.main()
