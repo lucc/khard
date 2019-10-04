@@ -7,6 +7,7 @@ import re
 import sys
 
 import configobj
+import validate
 
 from .actions import Actions
 from .address_book import AddressBookCollection, VdirAddressBook
@@ -47,7 +48,6 @@ class Config:
             self.config['general'] = {}
 
         # debug
-        self._convert_boolean_config_value(self.config["general"], "debug")
         self.debug = self.config["general"]["debug"]
 
         # editor
@@ -93,22 +93,6 @@ class Config:
                 "first_name", "last_name", "formatted_name"]:
             exit("Invalid value for display parameter\n"
                  "Possible values: first_name, last_name, formatted_name")
-
-        # reverse contact table
-        self._convert_boolean_config_value(self.config["contact table"],
-                                           "reverse")
-        # group contact table by address book
-        self._convert_boolean_config_value(self.config["contact table"],
-                                           "group_by_addressbook")
-        # nickname
-        self._convert_boolean_config_value(self.config["contact table"],
-                                           "show_nicknames")
-        # show uids
-        self._convert_boolean_config_value(self.config["contact table"],
-                                           "show_uids", True)
-        # localize dates
-        self._convert_boolean_config_value(self.config["contact table"],
-                                           "localize_dates", True)
 
         # preferred phone number and email address types in contact table
         # phone type
@@ -158,13 +142,6 @@ class Config:
             exit("Invalid value for preferred_version parameter\n"
                  "Possible values: %s" % self.supported_vcard_versions)
 
-        # speed up program by pre-searching in the vcard source files
-        self._convert_boolean_config_value(self.config["vcard"],
-                                           "search_in_source_files")
-        # skip unparsable vcards
-        self._convert_boolean_config_value(self.config["vcard"],
-                                           "skip_unparsable")
-
         if "addressbooks" not in self.config:
             exit('Missing main section "[addressbooks]".')
         if not self.config['addressbooks'].keys():
@@ -189,10 +166,12 @@ class Config:
                                  'config.spec')
         # parse config file contents
         try:
-            return configobj.ConfigObj(
+            config = configobj.ConfigObj(
                 infile=config_file, configspec=spec_file, interpolation=False)
         except configobj.ConfigObjError as err:
             exit(str(err))
+        config.validate(validate.Validator())
+        return config
 
     def load_address_books(self):
         section = self.config['addressbooks']
