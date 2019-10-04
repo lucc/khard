@@ -2,7 +2,7 @@
 debug = boolean(default=False)
 editor = command(default=None)
 merge_editor = command(default=None)
-default_action = string(default='list')
+default_action = string(default=None)
 
 [contact table]
 reverse = boolean(default=False)
