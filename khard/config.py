@@ -43,17 +43,9 @@ class Config:
 
         self.config = self._load_config_file(config_file)
 
-        # general settings
-        if "general" not in self.config:
-            self.config['general'] = {}
-
-        # debug
         self.debug = self.config["general"]["debug"]
-
-        # editor
         self.editor = self.config["general"].get("editor") \
             or os.environ.get("EDITOR", "vim")
-        # merge editor
         self.merge_editor = self.config['general'].get("merge_editor") \
             or os.environ.get("MERGE_EDITOR", "vimdiff")
 
@@ -74,15 +66,7 @@ class Config:
                  "Possible values: %s" % ', '.join(
                      sorted(Actions.get_actions())))
 
-        # contact table settings
-        if "contact table" not in self.config:
-            self.config['contact table'] = {}
-
-        # sort contact table by first or last name
         self.sort = self.config["contact table"].get("sort", "first_name")
-        if self.sort not in ["first_name", "last_name", "formatted_name"]:
-            exit("Invalid value for sort parameter\n"
-                 "Possible values: first_name, last_name, formatted_name")
 
         # display names in contact table by first or last name
         if "display" not in self.config['contact table']:
@@ -111,10 +95,6 @@ class Config:
         else:
             # default email address  type: pref
             self.config['contact table']['preferred_email_address_type'] = ["pref"]
-
-        # vcard settings
-        if "vcard" not in self.config:
-            self.config['vcard'] = {}
 
         # get supported private objects
         if "private_objects" not in self.config['vcard'] \
