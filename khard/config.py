@@ -168,34 +168,6 @@ class Config:
             exit(str(err))
         self.abooks = [self.abook.get_abook(name) for name in section]
 
-    @staticmethod
-    def _convert_boolean_config_value(config, name, default=False):
-        """Convert the named field to bool.
-
-        The current value should be one of the strings "yes" or "no".  It will
-        be replaced with its boolean counterpart.  If the field is not present
-        in the config object, the default value is used.
-
-        :param config: the config section where to set the option
-        :type config: configobj.ConfigObj
-        :param name: the name of the option to convert
-        :type name: str
-        :param default: the default value to use if the option was not
-            previously set
-        :type default: bool
-        :returns: None
-
-        """
-        if name not in config:
-            config[name] = default
-        elif config[name] == "yes":
-            config[name] = True
-        elif config[name] == "no":
-            config[name] = False
-        else:
-            raise ValueError("Error in config file\nInvalid value for %s "
-                             "parameter\nPossible values: yes, no" % name)
-
     def has_uids(self):
         return self.config['contact table']['show_uids']
 

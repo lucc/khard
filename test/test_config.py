@@ -32,44 +32,6 @@ class LoadingConfigFile(unittest.TestCase):
         self.assertEqual(cfg.merge_editor, "meditor")
 
 
-class TestConvertBooleanConfigValue(unittest.TestCase):
-
-    config = {'some key': 'some value',
-              'trueish': 'yes',
-              'falseish': 'no',
-              'realtrue': True,
-              'realfalse': False}
-
-    def test_if_name_not_available_return_default(self):
-        key = 'this key does not exists'
-        expected = default = 'my default object'
-        config.Config._convert_boolean_config_value(self.config, key, default)
-        self.assertEqual(self.config[key], expected)
-
-    def test_yes_is_converted_to_true(self):
-        key = 'trueish'
-        expected = True
-        config.Config._convert_boolean_config_value(self.config, key)
-        self.assertEqual(self.config[key], expected)
-
-    def test_no_is_converted_to_false(self):
-        key = 'falseish'
-        expected = False
-        config.Config._convert_boolean_config_value(self.config, key)
-        self.assertEqual(self.config[key], expected)
-
-    def test_other_values_raise_value_error(self):
-        with self.assertRaises(ValueError):
-            config.Config._convert_boolean_config_value(self.config,
-                                                        'some key')
-        with self.assertRaises(ValueError):
-            config.Config._convert_boolean_config_value(self.config,
-                                                        'realtrue')
-        with self.assertRaises(ValueError):
-            config.Config._convert_boolean_config_value(self.config,
-                                                        'realfalse')
-
-
 class ConfigPreferredVcardVersion(unittest.TestCase):
 
     def test_default_value_is_3(self):
