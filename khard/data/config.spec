@@ -1,7 +1,7 @@
 [general]
 debug = boolean(default=False)
-editor = string(default=None)
-merge_editor = string(default=None)
+editor = command(default=None)
+merge_editor = command(default=None)
 default_action = string(default='list')
 
 [contact table]

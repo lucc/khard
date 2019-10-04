@@ -4,6 +4,7 @@ import locale
 import logging
 import os
 import re
+import shlex
 import sys
 
 import configobj
@@ -28,6 +29,42 @@ def exit(message, prefix="Error in config file\n"):
     """
     print(prefix + message)
     sys.exit(3)
+
+
+def validate_command(value):
+    """Special validator to check shell commands
+
+    The input must either be a list of strings or a string that shlex.split can
+    parse into such.
+
+    :param value: the config value to validate
+    :returns: the command after validation
+    :rtype: list(str)
+    :raises: validate.ValidateError
+    """
+    logging.debug("validating %s", value)
+    try:
+        return validate.is_string_list(value)
+    except validate.VdtTypeError:
+        logging.debug('continue with %s', value)
+        if isinstance(value, str):
+            try:
+                return shlex.split(value)
+            except ValueError as err:
+                raise validate.ValidateError(
+                    'Error when parsing shell command {}\n{}'.format(
+                        value, err))
+        raise
+
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    if isinstance(value, str):
+        try:
+            return shlex.split(value)
+        except ValueError as err:
+            raise validate.ValidateError(
+                'Error when parsing shell command {}\n{}'.format(value, err))
+    raise validate.ValidateError('Commands must be given as string or list')
 
 
 class Config:
@@ -150,7 +187,9 @@ class Config:
                 infile=config_file, configspec=spec_file, interpolation=False)
         except configobj.ConfigObjError as err:
             exit(str(err))
-        success = config.validate(validate.Validator())
+        vdr = validate.Validator()
+        vdr.functions.update({'command': validate_command})
+        success = config.validate(vdr)
         if success is not True:
             exit(str(success))
         return config
