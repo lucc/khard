@@ -939,7 +939,6 @@ class YAMLEditable(VCardWrapper):
         # sort private object lists
         for value in private_objects.values():
             value.sort()
-        logging.debug("Returning private objects %s", private_objects)
         return private_objects
 
     def _add_private_object(self, key, value):
