@@ -145,6 +145,9 @@ class Config:
                 infile=config_file, configspec=spec_file, interpolation=False)
         except configobj.ConfigObjError as err:
             exit(str(err))
+        return self._validate(config)
+
+    def _validate(self, config):
         vdr = validate.Validator()
         vdr.functions.update({'command': validate_command})
         success = config.validate(vdr)
@@ -164,6 +167,15 @@ class Config:
         except IOError as err:
             exit(str(err))
         self.abooks = [self.abook.get_abook(name) for name in section]
+
+    def merge(self, other):
+        """Merge the config with some other dict or ConfigObj
+
+        :param other: the other dict or ConfigObj to merge into self
+        :returns: None
+        """
+        self.config.merge(other)
+        self._validate(self.config)
 
     def has_uids(self):
         return self.config['contact table']['show_uids']
