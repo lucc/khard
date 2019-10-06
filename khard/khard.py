@@ -534,27 +534,17 @@ def merge_args_into_config(args, config):
     :rtype: config.Config
 
     """
-    # display by name: first or last name
-    if "display" in args and args.display:
-        config.set_display_by_name(args.display)
-    # group by address book
-    if "group_by_addressbook" in args and args.group_by_addressbook:
-        config.set_group_by_addressbook(True)
-    # reverse contact list
-    if "reverse" in args and args.reverse:
-        config.set_reverse(True)
-    # sort criteria: first or last name
-    if "sort" in args and args.sort:
-        config.sort = args.sort
-    # preferred vcard version
-    if "vcard_version" in args and args.vcard_version:
-        config.set_preferred_vcard_version(args.vcard_version)
-    # search in source files
-    if "search_in_source_files" in args and args.search_in_source_files:
-        config.set_search_in_source_files(True)
-    # skip unparsable vcards
-    if "skip_unparsable" in args and args.skip_unparsable:
-        config.set_skip_unparsable(True)
+    merge = {'general': ['debug'],
+             'contact table': ['reverse', 'group_by_addressbook', 'display',
+                               'sort'],
+             'vcard': ['search_in_source_files', 'skip_unparsable',
+                       'preferred_version'],
+            }
+    merge = {k1: {k2: getattr(args, k2) for k2 in v1 if k2 in args} for k1, v1 in merge.items()}
+    logging.debug('Merging in %s', merge)
+    config.merge(merge)
+    logging.debug('Merged: %s', vars(config))
+
     # Now we can savely initialize the address books as all command line
     # options have been incorporated into the config object.
     config.load_address_books()
@@ -1627,7 +1617,7 @@ def parse_args(argv):
         description="create a new contact",
         help="create a new contact")
     new_parser.add_argument(
-        "--vcard-version", choices=("3.0", "4.0"),
+        "--vcard-version", choices=("3.0", "4.0"), dest='preferred_version',
         help="Select preferred vcard version for new contact")
     add_email_parser = subparsers.add_parser(
         "add-email",
@@ -1639,7 +1629,7 @@ def parse_args(argv):
         help="Extract email address from the \"From:\" field of an email "
         "header and add to an existing contact or create a new one")
     add_email_parser.add_argument(
-        "--vcard-version", choices=("3.0", "4.0"),
+        "--vcard-version", choices=("3.0", "4.0"), dest='preferred_version',
         help="Select preferred vcard version for new contact")
     subparsers.add_parser(
         "merge",
