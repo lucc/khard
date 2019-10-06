@@ -150,9 +150,13 @@ class Config:
     def _validate(self, config):
         vdr = validate.Validator()
         vdr.functions.update({'command': validate_command})
-        success = config.validate(vdr)
-        if success is not True:
-            exit(str(success))
+        result = config.validate(vdr, preserve_errors=True)
+        result = configobj.flatten_errors(config, result)
+        for path, key, exception in result:
+            logging.error("Error in config file, %s: %s",
+                          ".".join([*path, key]), exception)
+        if result:
+            sys.exit(3)
         return config
 
     def load_address_books(self):
