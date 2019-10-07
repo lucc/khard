@@ -1,6 +1,7 @@
 """Tests for the config module."""
 
 import io
+import os.path
 import unittest
 import unittest.mock as mock
 
@@ -14,9 +15,35 @@ class LoadingConfigFile(unittest.TestCase):
         stdout = io.StringIO()
         with mock.patch("sys.stdout", stdout):
             with self.assertRaises(SystemExit):
-                config.Config(filename)
+                config.Config._load_config_file(filename)
         self.assertEqual(stdout.getvalue(),
                          "Config file " + filename + " not available\n")
+
+    def test_uses_khard_config_environment_variable(self):
+        filename = "this is some very random string"
+        with mock.patch.dict("os.environ", clear=True, KHARD_CONFIG=filename):
+            with mock.patch("os.path.exists", return_value=True):
+                with mock.patch("configobj.ConfigObj", dict):
+                    ret = config.Config._load_config_file("")
+        self.assertEqual(ret['infile'], filename)
+
+    def test_uses_xdg_config_home_environment_variable(self):
+        prefix = "this is some very random string"
+        with mock.patch.dict("os.environ", clear=True, XDG_CONFIG_HOME=prefix):
+            with mock.patch("os.path.exists", return_value=True):
+                with mock.patch("configobj.ConfigObj", dict):
+                    ret = config.Config._load_config_file("")
+        expected = os.path.join(prefix, 'khard', 'khard.conf')
+        self.assertEqual(ret['infile'], expected)
+
+    def test_uses_config_dir_if_environment_unset(self):
+        prefix = "this is some very random string"
+        with mock.patch.dict("os.environ", clear=True, HOME=prefix):
+            with mock.patch("os.path.exists", return_value=True):
+                with mock.patch("configobj.ConfigObj", dict):
+                    ret = config.Config._load_config_file("")
+        expected = os.path.join(prefix, '.config', 'khard', 'khard.conf')
+        self.assertEqual(ret['infile'], expected)
 
     def test_load_empty_file_fails(self):
         stdout = io.StringIO()

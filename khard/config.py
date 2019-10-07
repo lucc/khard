@@ -68,7 +68,8 @@ class Config:
         # set locale
         locale.setlocale(locale.LC_ALL, '')
 
-        self.config = self._load_config_file(config_file)
+        config = self._load_config_file(config_file)
+        self.config = self._validate(config)
 
         self.debug = self.config["general"]["debug"]
         self.editor = self.config["general"]["editor"] \
@@ -112,14 +113,15 @@ class Config:
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
 
-    def _load_config_file(self, config_file):
+    @staticmethod
+    def _load_config_file(config_file):
         """Find, load and validate the config file.
 
         :param str config_file: the path to the config file to load
         :returns: the validated config file
         """
         # find config file
-        if config_file == "":
+        if not config_file:
             xdg_config_home = os.getenv("XDG_CONFIG_HOME",
                                         os.path.expanduser("~/.config"))
             config_file = os.getenv("KHARD_CONFIG", os.path.join(
@@ -131,11 +133,10 @@ class Config:
                                  'config.spec')
         # parse config file contents
         try:
-            config = configobj.ConfigObj(
+            return configobj.ConfigObj(
                 infile=config_file, configspec=spec_file, interpolation=False)
         except configobj.ConfigObjError as err:
             exit(str(err))
-        return self._validate(config)
 
     def _validate(self, config):
         vdr = validate.Validator()
