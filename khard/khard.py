@@ -539,8 +539,10 @@ def merge_args_into_config(args, config):
                                'sort'],
              'vcard': ['search_in_source_files', 'skip_unparsable',
                        'preferred_version'],
-            }
-    merge = {k1: {k2: getattr(args, k2) for k2 in v1 if k2 in args} for k1, v1 in merge.items()}
+             }
+    merge = {k1: {k2: getattr(args, k2)
+                  for k2 in v1 if k2 in args and getattr(args, k2) is not None}
+             for k1, v1 in merge.items()}
     logging.debug('Merging in %s', merge)
     config.merge(merge)
     logging.debug('Merged: %s', vars(config))
