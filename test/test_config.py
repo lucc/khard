@@ -2,6 +2,7 @@
 
 import io
 import os.path
+import tempfile
 import unittest
 import unittest.mock as mock
 
@@ -13,43 +14,39 @@ class LoadingConfigFile(unittest.TestCase):
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
         stdout = io.StringIO()
-        with mock.patch("sys.stdout", stdout):
-            with self.assertRaises(SystemExit):
-                config.Config._load_config_file(filename)
-        self.assertEqual(stdout.getvalue(),
-                         "Config file " + filename + " not available\n")
+        with self.assertRaises(IOError) as cm:
+            config.Config._load_config_file(filename)
+        self.assertTrue(str(cm.exception).startswith('Config file not found:'))
 
     def test_uses_khard_config_environment_variable(self):
         filename = "this is some very random string"
         with mock.patch.dict("os.environ", clear=True, KHARD_CONFIG=filename):
-            with mock.patch("os.path.exists", return_value=True):
-                with mock.patch("configobj.ConfigObj", dict):
-                    ret = config.Config._load_config_file("")
+            with mock.patch("configobj.ConfigObj", dict):
+                ret = config.Config._load_config_file("")
         self.assertEqual(ret['infile'], filename)
 
     def test_uses_xdg_config_home_environment_variable(self):
         prefix = "this is some very random string"
         with mock.patch.dict("os.environ", clear=True, XDG_CONFIG_HOME=prefix):
-            with mock.patch("os.path.exists", return_value=True):
-                with mock.patch("configobj.ConfigObj", dict):
-                    ret = config.Config._load_config_file("")
+            with mock.patch("configobj.ConfigObj", dict):
+                ret = config.Config._load_config_file("")
         expected = os.path.join(prefix, 'khard', 'khard.conf')
         self.assertEqual(ret['infile'], expected)
 
     def test_uses_config_dir_if_environment_unset(self):
         prefix = "this is some very random string"
         with mock.patch.dict("os.environ", clear=True, HOME=prefix):
-            with mock.patch("os.path.exists", return_value=True):
-                with mock.patch("configobj.ConfigObj", dict):
-                    ret = config.Config._load_config_file("")
+            with mock.patch("configobj.ConfigObj", dict):
+                ret = config.Config._load_config_file("")
         expected = os.path.join(prefix, '.config', 'khard', 'khard.conf')
         self.assertEqual(ret['infile'], expected)
 
     def test_load_empty_file_fails(self):
         stdout = io.StringIO()
-        with mock.patch("sys.stdout", stdout):
-            with self.assertRaises(SystemExit):
-                config.Config("/dev/null")
+        with tempfile.NamedTemporaryFile() as name:
+            with mock.patch("sys.stdout", stdout):
+                with self.assertRaises(SystemExit):
+                    config.Config(name)
         self.assertTrue(stdout.getvalue().startswith('Error in config file\n'))
 
     @mock.patch.dict('os.environ', EDITOR='editor', MERGE_EDITOR='meditor')

@@ -115,26 +115,22 @@ class Config:
 
     @staticmethod
     def _load_config_file(config_file):
-        """Find, load and validate the config file.
+        """Find and load the config file.
 
         :param str config_file: the path to the config file to load
-        :returns: the validated config file
+        :returns: the loaded config file
         """
-        # find config file
         if not config_file:
             xdg_config_home = os.getenv("XDG_CONFIG_HOME",
                                         os.path.expanduser("~/.config"))
             config_file = os.getenv("KHARD_CONFIG", os.path.join(
                 xdg_config_home, "khard", "khard.conf"))
-        if not os.path.exists(config_file):
-            exit("Config file %s not available" % config_file, prefix="")
-
         spec_file = os.path.join(os.path.dirname(__file__), 'data',
                                  'config.spec')
-        # parse config file contents
         try:
             return configobj.ConfigObj(
-                infile=config_file, configspec=spec_file, interpolation=False)
+                infile=config_file, configspec=spec_file, interpolation=False,
+                file_error=True)
         except configobj.ConfigObjError as err:
             exit(str(err))
 
