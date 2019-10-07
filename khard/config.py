@@ -51,8 +51,8 @@ def validate_command(value):
             try:
                 return shlex.split(value)
             except ValueError as err:
-                raise validate.VdtValueError(
-                    'Error when parsing shell command {}\n{}'.format(
+                raise validate.ValidateError(
+                    'Error when parsing shell command "{}": {}'.format(
                         value, err))
         raise
 
@@ -66,6 +66,27 @@ def validate_action(value):
     :raises: validate.ValidateError
     """
     return validate.is_option(value, *Actions.get_actions())
+
+
+def validate_private_objects(value):
+    """Check that the private objects are reasonable
+
+    :param value: the config value to check
+    :returns: the list of private objects
+    :rtype: list(str)
+    :raises: validate.ValidateError
+    """
+    value = validate.is_string_list(value)
+    for obj in value:
+        if re.search("[^a-z0-9-]", obj, re.IGNORECASE):
+            raise validate.ValidateError(
+                'Private objects may only contain letters, digits and the'
+                ' \"-\" character.')
+        if obj.startswith("-") or obj.endswith("-"):
+            raise validate.ValidateError(
+                "A \"-\" in a private object label must be at least "
+                "surrounded by one letter or digit.")
+    return value
 
 
 class Config:
@@ -108,16 +129,6 @@ class Config:
             # use the sort attribute value for backwards compatibility
             self.config['contact table']['display'] = self.sort
 
-        # check if object only contains letters, digits or -
-        for object in self.config['vcard']['private_objects']:
-            if object != re.sub("[^a-zA-Z0-9-]", "", object):
-                exit("private object %s may only contain letters, digits and "
-                     "the \"-\" character." % object)
-            if object == re.sub("[^-]", "", object) or object.startswith("-") \
-                    or object.endswith("-"):
-                exit("A \"-\" in a private object label must be at least "
-                     "surrounded by one letter or digit.")
-
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
 
@@ -144,7 +155,8 @@ class Config:
     def _validate(config):
         vdr = validate.Validator()
         vdr.functions.update({'command': validate_command,
-                              'action': validate_action})
+                              'action': validate_action,
+                              'private_objects': validate_private_objects})
         result = config.validate(vdr, preserve_errors=True)
         result = configobj.flatten_errors(config, result)
         for path, key, exception in result:

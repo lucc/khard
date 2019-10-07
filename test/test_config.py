@@ -163,6 +163,27 @@ class Validation(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 config.Config._validate(conf)
 
+    def test_rejects_unparsable_editor_commands(self):
+        editor = 'editor --option "unparsable because quotes are missing'
+        conf = self._template('general', 'editor', editor)
+        with self.assertLogs(level=logging.ERROR):
+            with self.assertRaises(SystemExit):
+                config.Config._validate(conf)
+
+    def test_rejects_private_objects_with_strange_chars(self):
+        obj = 'X-VCÄRD-EXTENSIÖN'
+        conf = self._template('vcard', 'private_objects', obj)
+        with self.assertLogs(level=logging.ERROR):
+            with self.assertRaises(SystemExit):
+                config.Config._validate(conf)
+
+    def test_rejects_private_objects_starting_with_minus(self):
+        obj = '-INVALID-'
+        conf = self._template('vcard', 'private_objects', obj)
+        with self.assertLogs(level=logging.ERROR):
+            with self.assertRaises(SystemExit):
+                config.Config._validate(conf)
+
 
 if __name__ == "__main__":
     unittest.main()

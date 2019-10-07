@@ -16,7 +16,7 @@ preferred_phone_number_type = string_list(default=list('pref'))
 preferred_email_address_type = string_list(default=list('pref'))
 
 [vcard]
-private_objects = string_list(default=list()))
+private_objects = private_objects(default=list()))
 search_in_source_files = boolean(default=False)
 skip_unparsable = boolean(default=False)
 preferred_version = option('3.0', '4.0', default='3.0')
