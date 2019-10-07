@@ -56,16 +56,6 @@ def validate_command(value):
                         value, err))
         raise
 
-    if isinstance(value, (list, tuple)):
-        return list(value)
-    if isinstance(value, str):
-        try:
-            return shlex.split(value)
-        except ValueError as err:
-            raise validate.ValidateError(
-                'Error when parsing shell command {}\n{}'.format(value, err))
-    raise validate.ValidateError('Commands must be given as string or list')
-
 
 class Config:
 
