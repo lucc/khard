@@ -60,6 +60,7 @@ def validate_command(value):
 class Config:
 
     supported_vcard_versions = ("3.0", "4.0")
+    SPEC_FILE = os.path.join(os.path.dirname(__file__), 'data', 'config.spec')
 
     def __init__(self, config_file=""):
         self.config = None
@@ -113,8 +114,8 @@ class Config:
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
 
-    @staticmethod
-    def _load_config_file(config_file):
+    @classmethod
+    def _load_config_file(cls, config_file):
         """Find and load the config file.
 
         :param str config_file: the path to the config file to load
@@ -125,12 +126,10 @@ class Config:
                                         os.path.expanduser("~/.config"))
             config_file = os.getenv("KHARD_CONFIG", os.path.join(
                 xdg_config_home, "khard", "khard.conf"))
-        spec_file = os.path.join(os.path.dirname(__file__), 'data',
-                                 'config.spec')
         try:
             return configobj.ConfigObj(
-                infile=config_file, configspec=spec_file, interpolation=False,
-                file_error=True)
+                infile=config_file, configspec=cls.SPEC_FILE,
+                interpolation=False, file_error=True)
         except configobj.ConfigObjError as err:
             exit(str(err))
 

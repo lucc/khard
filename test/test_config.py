@@ -8,6 +8,8 @@ import unittest.mock as mock
 
 from khard import config
 
+import configobj
+
 
 class LoadingConfigFile(unittest.TestCase):
 
@@ -139,6 +141,27 @@ class Defaults(unittest.TestCase):
     def test_merge_editor_defaults_to_vimdiff(self):
         c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.merge_editor, 'vimdiff')
+
+
+class Validation(unittest.TestCase):
+
+    @staticmethod
+    def _template(section, key, value):
+        c = configobj.ConfigObj(configspec=config.Config.SPEC_FILE)
+        c['general'] = {}
+        c['vcard'] = {}
+        c['contact table'] = {}
+        c['addressbooks'] = {'test': {'path': '/tmp'}}
+        c[section][key] = value
+        return c
+
+    @unittest.expectedFailure
+    def test_rejects_invalid_default_actions(self):
+        action = 'this is not a valid action'
+        conf = self._template('general', 'default_action', action)
+        with self.assertLogs(level=logging.ERROR):
+            with self.assertRaises(SystemExit):
+                config.Config._validate(conf)
 
 
 if __name__ == "__main__":
