@@ -138,7 +138,8 @@ class Config:
         except configobj.ConfigObjError as err:
             exit(str(err))
 
-    def _validate(self, config):
+    @staticmethod
+    def _validate(config):
         vdr = validate.Validator()
         vdr.functions.update({'command': validate_command})
         result = config.validate(vdr, preserve_errors=True)
