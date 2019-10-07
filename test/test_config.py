@@ -1,6 +1,7 @@
 """Tests for the config module."""
 
 import io
+import logging
 import os.path
 import tempfile
 import unittest
@@ -155,7 +156,6 @@ class Validation(unittest.TestCase):
         c[section][key] = value
         return c
 
-    @unittest.expectedFailure
     def test_rejects_invalid_default_actions(self):
         action = 'this is not a valid action'
         conf = self._template('general', 'default_action', action)

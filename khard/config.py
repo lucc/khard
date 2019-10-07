@@ -51,10 +51,21 @@ def validate_command(value):
             try:
                 return shlex.split(value)
             except ValueError as err:
-                raise validate.ValidateError(
+                raise validate.VdtValueError(
                     'Error when parsing shell command {}\n{}'.format(
                         value, err))
         raise
+
+
+def validate_action(value):
+    """Check that the given value is a valid action.
+
+    :param value: the config value to check
+    :returns: the same value
+    :rtype: str
+    :raises: validate.ValidateError
+    """
+    return validate.is_option(value, *Actions.get_actions())
 
 
 class Config:
@@ -90,10 +101,6 @@ class Config:
                 "use of a subcommand on the command line in a future version "
                 "of khard.")
             self.default_action = "list"
-        elif self.default_action not in Actions.get_actions():
-            exit("Invalid value for default_action parameter\n"
-                 "Possible values: %s" % ', '.join(
-                     sorted(Actions.get_actions())))
 
         self.sort = self.config["contact table"]["sort"]
         if "display" not in self.config['contact table']:
@@ -136,7 +143,8 @@ class Config:
     @staticmethod
     def _validate(config):
         vdr = validate.Validator()
-        vdr.functions.update({'command': validate_command})
+        vdr.functions.update({'command': validate_command,
+                              'action': validate_action})
         result = config.validate(vdr, preserve_errors=True)
         result = configobj.flatten_errors(config, result)
         for path, key, exception in result:
