@@ -1,6 +1,7 @@
 """Some helper functions for khard"""
 
 import os
+import pathlib
 import random
 import string
 from datetime import datetime
@@ -191,136 +192,6 @@ def get_new_contact_template(supported_private_objects=None):
         for object in supported_private_objects:
             formatted_private_objects += convert_to_yaml(
                 object, "", 12, len(longest_key)+1, True)
-
-    # create template
-    return dedent("""
-        # Every contact must contain a formatted name, it will be autofilled
-        # from the full name below if not given.
-        Formatted name : 
-
-        # name components
-        # every entry may contain a string or a list of strings
-        # format:
-        #   First name : name1
-        #   Additional :
-        #       - name2
-        #       - name3
-        #   Last name  : name4
-        Prefix     : 
-        First name : 
-        Additional : 
-        Last name  : 
-        Suffix     : 
-
-        # nickname
-        # may contain a string or a list of strings
-        Nickname : 
-
-        # important dates
-        # Formats:
-        #   vcard 3.0 and 4.0: yyyy-mm-dd or yyyy-mm-ddTHH:MM:SS
-        #   vcard 4.0 only: --mm-dd or text= string value
-        # anniversary
-        Anniversary : 
-        # birthday
-        Birthday : 
-
-        # organisation
-        # format:
-        #   Organisation : company
-        # or
-        #   Organisation :
-        #       - company1
-        #       - company2
-        # or
-        #   Organisation :
-        #       -
-        #           - company
-        #           - unit
-        Organisation : 
-
-        # organisation title and role
-        # every entry may contain a string or a list of strings
-        #
-        # title at organisation
-        # example usage: research scientist
-        Title : 
-        # role at organisation
-        # example usage: project leader
-        Role  : 
-
-        # phone numbers
-        # format:
-        #   Phone:
-        #       type1, type2: number
-        #       type3:
-        #           - number1
-        #           - number2
-        #       custom: number
-        # allowed types:
-        #   vcard 3.0: At least one of bbs, car, cell, fax, home, isdn, msg, modem,
-        #                              pager, pcs, pref, video, voice, work
-        #   vcard 4.0: At least one of home, work, pref, text, voice, fax, cell, video,
-        #                              pager, textphone
-        #   Alternatively you may use a single custom label (only letters).
-        #   But beware, that not all address book clients will support custom labels.
-        Phone :
-            cell : 
-            home : 
-
-        # email addresses
-        # format like phone numbers above
-        # allowed types:
-        #   vcard 3.0: At least one of home, internet, pref, work, x400
-        #   vcard 4.0: At least one of home, internet, pref, work
-        #   Alternatively you may use a single custom label (only letters).
-        Email :
-            home : 
-            work : 
-
-        # post addresses
-        # allowed types:
-        #   vcard 3.0: At least one of dom, intl, home, parcel, postal, pref, work
-        #   vcard 4.0: At least one of home, pref, work
-        #   Alternatively you may use a single custom label (only letters).
-        Address :
-            home :
-                Box      : 
-                Extended : 
-                Street   : 
-                Code     : 
-                City     : 
-                Region   : 
-                Country  : 
-
-        # categories or tags
-        # format:
-        #   Categories : single category
-        # or
-        #   Categories :
-        #       - category1
-        #       - category2
-        Categories : 
-
-        # web pages
-        # may contain a string or a list of strings
-        Webpage : 
-
-        # private objects
-        # define your own private objects in the vcard section of your khard config file
-        # example:
-        #   [vcard]
-        #   private_objects = Jabber, Skype, Twitter
-        # these objects are stored with a leading "X-" before the object name in the
-        # vcard files.
-        # every entry may contain a string or a list of strings
-        Private :%s
-
-        # notes
-        # may contain a string or a list of strings
-        # for multi-line notes use:
-        #   Note : |
-        #       line one
-        #       line two
-        Note : 
-        """ % '\n'.join(formatted_private_objects))
+    template = pathlib.Path(__file__).parent / 'data' / 'template.yaml'
+    with template.open() as template:
+        return template.read().format('\n'.join(formatted_private_objects))
