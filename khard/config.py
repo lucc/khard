@@ -97,6 +97,7 @@ class Config:
     def __init__(self, config_file=""):
         self.config = None
         self.abooks = []
+        self.abook = None
         locale.setlocale(locale.LC_ALL, '')
         config = self._load_config_file(config_file)
         self.config = self._validate(config)
