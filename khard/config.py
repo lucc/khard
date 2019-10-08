@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Loading and validation of the configuration file"""
 
 import locale
 import logging

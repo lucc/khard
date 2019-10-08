@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Some helper functions for khard"""
 
 import os
 import random

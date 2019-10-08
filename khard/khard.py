@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Main application logic of khard includeing command line handling"""
 
 import argparse
 import datetime

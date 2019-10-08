@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classes and logic to handle vCards in khard.
 
 This module explicitly supports the vCard specifications version 3.0 and 4.0

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A simple class to load and manage the vcard files from disk."""
 
 import abc
