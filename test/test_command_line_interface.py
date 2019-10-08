@@ -241,7 +241,8 @@ class MiscCommands(unittest.TestCase):
         # precisely?
         popen.assert_called_once()
 
-    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf',
+                     EDITOR='editor')
     def test_edit_source_file_without_modifications(self):
         with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
