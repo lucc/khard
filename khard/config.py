@@ -97,38 +97,10 @@ class Config:
     def __init__(self, config_file=""):
         self.config = None
         self.abooks = []
-
-        # set locale
         locale.setlocale(locale.LC_ALL, '')
-
         config = self._load_config_file(config_file)
         self.config = self._validate(config)
-
-        self.debug = self.config["general"]["debug"]
-        self.editor = self.config["general"]["editor"] \
-            or os.environ.get("EDITOR", "vim")
-        self.merge_editor = self.config['general']["merge_editor"] \
-            or os.environ.get("MERGE_EDITOR", "vimdiff")
-
-        # default action
-        self.default_action = self.config["general"]["default_action"]
-        if self.default_action is None:
-            # When these two lines are replaced with "pass" khard requires a
-            # subcommand on the command line as long as no default_action is
-            # explicitly given in the config file.
-            logging.warning(
-                "No default_action was set in the config.  Currently this "
-                "will default to default_action='list' but will require the "
-                "use of a subcommand on the command line in a future version "
-                "of khard.")
-            self.default_action = "list"
-
-        self.sort = self.config["contact table"]["sort"]
-        if "display" not in self.config['contact table']:
-            # if display by name attribute is not present in the config file
-            # use the sort attribute value for backwards compatibility
-            self.config['contact table']['display'] = self.sort
-
+        self._set_attributes()
         if not self.config['addressbooks'].keys():
             exit("No address book entries available.")
 
@@ -166,11 +138,50 @@ class Config:
             sys.exit(3)
         return config
 
+    def _set_attributes(self):
+        """Set the attributes from the internal config instance on self.
+
+        :returns: None
+        """
+        general = self.config["general"]
+        self.debug = general["debug"]
+        self.editor = general["editor"] or os.environ.get("EDITOR", "vim")
+        self.merge_editor = general["merge_editor"] \
+            or os.environ.get("MERGE_EDITOR", "vimdiff")
+        self.default_action = general["default_action"]
+        if self.default_action is None:
+            # When these two lines are replaced with "pass" khard requires a
+            # subcommand on the command line as long as no default_action is
+            # explicitly given in the config file.
+            logging.warning(
+                "No default_action was set in the config.  Currently this "
+                "will default to default_action='list' but will require the "
+                "use of a subcommand on the command line in a future version "
+                "of khard.")
+            self.default_action = "list"
+        table = self.config["contact table"]
+        vcard = self.config["vcard"]
+        self.sort = table["sort"]
+        # if display by name attribute is not present in the config file use
+        # the sort attribute value for backwards compatibility
+        self.display = table.get("display", self.sort)
+        self.localize_dates = table['localize_dates']
+        self.private_objects = vcard['private_objects']
+        self.preferred_vcard_version = vcard['preferred_version']
+        self.search_in_source_files = vcard['search_in_source_files']
+        self.skip_unparsable = vcard['skip_unparsable']
+        self.group_by_addressbook = table['group_by_addressbook']
+        self.reverse = table['reverse']
+        self.show_nicknames = table['show_nicknames']
+        self.preferred_email_address_type = table['preferred_email_address_type']
+        self.preferred_phone_number_type = table['preferred_phone_number_type']
+        self.show_uids = table['show_uids']
+
     def load_address_books(self):
         section = self.config['addressbooks']
-        kwargs = {'private_objects': self.get_supported_private_objects(),
-                  'localize_dates': self.localize_dates(),
-                  'skip': self.skip_unparsable()}
+        kwargs = {'private_objects': self.private_objects,
+                  'localize_dates': self.localize_dates,
+                  'skip': self.skip_unparsable}
         try:
             self.abook = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
@@ -187,57 +198,4 @@ class Config:
         """
         self.config.merge(other)
         self._validate(self.config)
-
-    def has_uids(self):
-        return self.config['contact table']['show_uids']
-
-    def localize_dates(self):
-        return self.config['contact table']['localize_dates']
-
-    def get_supported_private_objects(self):
-        return self.config['vcard']['private_objects']
-
-    def get_preferred_vcard_version(self):
-        return self.config['vcard']['preferred_version']
-
-    def set_preferred_vcard_version(self, vcard_version):
-        self.config['vcard']['preferred_version'] = vcard_version
-
-    def search_in_source_files(self):
-        return self.config['vcard']['search_in_source_files']
-
-    def set_search_in_source_files(self, bool):
-        self.config['vcard']['search_in_source_files'] = bool
-
-    def skip_unparsable(self):
-        return self.config['vcard']['skip_unparsable']
-
-    def set_skip_unparsable(self, bool):
-        self.config['vcard']['skip_unparsable'] = bool
-
-    def display_by_name(self):
-        return self.config['contact table']['display']
-
-    def set_display_by_name(self, criteria):
-        self.config['contact table']['display'] = criteria
-
-    def group_by_addressbook(self):
-        return self.config['contact table']['group_by_addressbook']
-
-    def set_group_by_addressbook(self, bool):
-        self.config['contact table']['group_by_addressbook'] = bool
-
-    def reverse(self):
-        return self.config['contact table']['reverse']
-
-    def set_reverse(self, bool):
-        self.config['contact table']['reverse'] = bool
-
-    def show_nicknames(self):
-        return self.config['contact table']['show_nicknames']
-
-    def preferred_phone_number_type(self):
-        return self.config['contact table']['preferred_phone_number_type']
-
-    def preferred_email_address_type(self):
-        return self.config['contact table']['preferred_email_address_type']
+        self._set_attributes()

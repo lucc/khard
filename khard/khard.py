@@ -52,9 +52,8 @@ def create_new_contact(address_book):
     template = (
         "# create new contact\n# Address book: %s\n# Vcard version: %s\n"
         "# if you want to cancel, exit without saving\n\n%s"
-        % (address_book, config.get_preferred_vcard_version(),
-           helpers.get_new_contact_template(
-               config.get_supported_private_objects())))
+        % (address_book, config.preferred_vcard_version,
+           helpers.get_new_contact_template(config.private_objects)))
     temp_file_name = write_temp_file(template)
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
@@ -73,10 +72,8 @@ def create_new_contact(address_book):
         # try to create new contact
         try:
             new_contact = CarddavObject.from_yaml(
-                address_book, new_contact_yaml,
-                config.get_supported_private_objects(),
-                config.get_preferred_vcard_version(),
-                config.localize_dates())
+                address_book, new_contact_yaml, config.private_objects,
+                config.preferred_vcard_version, config.localize_dates)
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -124,9 +121,8 @@ def modify_existing_contact(old_contact):
 
         # try to create contact from user input
         try:
-            new_contact = \
-                CarddavObject.clone_with_yaml_update(
-                    old_contact, new_contact_template, config.localize_dates())
+            new_contact = CarddavObject.clone_with_yaml_update(
+                old_contact, new_contact_template, config.localize_dates)
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -159,7 +155,7 @@ def merge_existing_contacts(source_contact, target_contact,
               "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
               "will be converted to vcard version %s but beware: This could "
               "corrupt the contact file or cause data loss."
-              % (target_contact.version, config.get_preferred_vcard_version()))
+              % (target_contact.version, config.preferred_vcard_version))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -198,10 +194,8 @@ def merge_existing_contacts(source_contact, target_contact,
 
         # try to create contact from user input
         try:
-            merged_contact = \
-                CarddavObject.clone_with_yaml_update(
-                    target_contact, merged_contact_template,
-                    config.localize_dates())
+            merged_contact = CarddavObject.clone_with_yaml_update(
+                target_contact, merged_contact_template, config.localize_dates)
         except ValueError as err:
             print("\n%s\n" % err)
             while True:
@@ -292,33 +286,32 @@ def list_contacts(vcard_list):
         print("Address books: %s" % ', '.join(
             [str(book) for book in selected_address_books]))
         table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
-    if config.has_uids():
+    if config.show_uids:
         table_header.append("UID")
         abook_collection = AddressBookCollection(
             'short uids collection', selected_address_books,
-            private_objects=config.get_supported_private_objects(),
-            localize_dates=config.localize_dates(),
-            skip=config.skip_unparsable())
+            private_objects=config.private_objects,
+            localize_dates=config.localize_dates, skip=config.skip_unparsable)
 
     table.append(table_header)
     # table body
     for index, vcard in enumerate(vcard_list):
         row = []
         row.append(index + 1)
-        if vcard.nicknames and config.show_nicknames():
-            if config.display_by_name() == "first_name":
+        if vcard.nicknames and config.show_nicknames:
+            if config.display == "first_name":
                 row.append("%s (Nickname: %s)" % (
                     vcard.get_first_name_last_name(), vcard.nicknames[0]))
-            elif config.display_by_name() == "formatted_name":
+            elif config.display == "formatted_name":
                 row.append("{} (Nickname: {})".format(vcard.formatted_name,
                                                       vcard.nicknames[0]))
             else:
                 row.append("%s (Nickname: %s)" % (
                     vcard.get_last_name_first_name(), vcard.nicknames[0]))
         else:
-            if config.display_by_name() == "first_name":
+            if config.display == "first_name":
                 row.append(vcard.get_first_name_last_name())
-            elif config.display_by_name() == "formatted_name":
+            elif config.display == "formatted_name":
                 row.append(vcard.formatted_name)
             else:
                 row.append(vcard.get_last_name_first_name())
@@ -326,7 +319,7 @@ def list_contacts(vcard_list):
             phone_dict = vcard.phone_numbers
             # filter out preferred phone type if set in config file
             phone_keys = []
-            for pref_type in config.preferred_phone_number_type():
+            for pref_type in config.preferred_phone_number_type:
                 for phone_type in phone_dict:
                     if pref_type.lower() in phone_type.lower():
                         phone_keys.append(phone_type)
@@ -345,7 +338,7 @@ def list_contacts(vcard_list):
             email_dict = vcard.emails
             # filter out preferred email type if set in config file
             email_keys = []
-            for pref_type in config.preferred_email_address_type():
+            for pref_type in config.preferred_email_address_type:
                 for email_type in email_dict:
                     if pref_type.lower() in email_type.lower():
                         email_keys.append(email_type)
@@ -362,7 +355,7 @@ def list_contacts(vcard_list):
             row.append("")
         if len(selected_address_books) > 1:
             row.append(vcard.address_book.name)
-        if config.has_uids():
+        if config.show_uids:
             if abook_collection.get_short_uid(vcard.uid):
                 row.append(abook_collection.get_short_uid(vcard.uid))
             else:
@@ -470,9 +463,9 @@ def get_contact_list_by_user_selection(address_books, search, strict_search):
     :returns: list of CarddavObject objects
     :rtype: list(CarddavObject)
     """
-    return get_contacts(
-        address_books, search, "name" if strict_search else "all",
-        config.reverse(), config.group_by_addressbook(), config.sort)
+    return get_contacts(address_books, search,
+                        "name" if strict_search else "all", config.reverse,
+                        config.group_by_addressbook, config.sort)
 
 
 def get_contacts(address_books, query, method="all", reverse=False,
@@ -585,7 +578,7 @@ def load_address_books(names, config, search_queries):
         try:
             address_book.load(
                 search_queries[address_book.name],
-                search_in_source_files=config.search_in_source_files())
+                search_in_source_files=config.search_in_source_files)
         except AddressBookParseError as err:
             sys.exit("{}\nUse --debug for more information or "
                      "--skip-unparsable to proceed".format(err))
@@ -739,9 +732,8 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
         try:
             new_contact = CarddavObject.from_yaml(
                 selected_address_book, input_from_stdin_or_file,
-                config.get_supported_private_objects(),
-                config.get_preferred_vcard_version(),
-                config.localize_dates())
+                config.private_objects, config.preferred_vcard_version,
+                config.localize_dates)
         except ValueError as err:
             sys.exit(err)
         else:
@@ -810,9 +802,8 @@ def add_email_subcommand(text, abooks):
             selected_address_book,
             "First name : %s\nLast name : %s\nOrganisation : %s" % (
                 first_name, last_name, organisation),
-            config.get_supported_private_objects(),
-            config.get_preferred_vcard_version(),
-            config.localize_dates())
+            config.private_objects, config.preferred_vcard_version,
+            config.localize_dates)
 
     # check if the contact already contains the email address
     for type, email_list in sorted(selected_vcard.emails.items(),
@@ -881,10 +872,10 @@ def birthdays_subcommand(vcard_list, parsable):
         date = vcard.birthday
         if parsable:
             date = "%04d.%02d.%02d" % (date.year, date.month, date.day)
-            if config.display_by_name() == "first_name":
+            if config.display == "first_name":
                 birthday_list.append("{}\t{}".format(
                     date, vcard.get_first_name_last_name()))
-            elif config.display_by_name() == "formatted_name":
+            elif config.display == "formatted_name":
                 birthday_list.append("{}\t{}".format(date,
                                                      vcard.formatted_name))
             else:
@@ -892,10 +883,10 @@ def birthdays_subcommand(vcard_list, parsable):
                     date, vcard.get_last_name_first_name()))
         else:
             date = vcard.get_formatted_birthday()
-            if config.display_by_name() == "first_name":
+            if config.display == "first_name":
                 birthday_list.append("{}\t{}".format(
                     vcard.get_first_name_last_name(), date))
-            elif config.display_by_name() == "formatted_name":
+            elif config.display == "formatted_name":
                 birthday_list.append("{}\t{}".format(vcard.formatted_name,
                                                      date))
             else:
@@ -933,9 +924,9 @@ def phone_subcommand(search_terms, vcard_list, parsable):
         for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
-                if config.display_by_name() == "first_name":
+                if config.display == "first_name":
                     name = vcard.get_first_name_last_name()
-                elif config.display_by_name() == "last_name":
+                elif config.display == "last_name":
                     name = vcard.get_last_name_first_name()
                 else:
                     name = vcard.formatted_name
@@ -997,9 +988,9 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
     matching_post_address_list = []
     for vcard in vcard_list:
         # vcard name
-        if config.display_by_name() == "first_name":
+        if config.display == "first_name":
             name = vcard.get_first_name_last_name()
-        elif config.display_by_name() == "last_name":
+        elif config.display == "last_name":
             name = vcard.get_last_name_first_name()
         else:
             name = vcard.formatted_name
@@ -1075,9 +1066,9 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
         for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
-                if config.display_by_name() == "first_name":
+                if config.display == "first_name":
                     name = vcard.get_first_name_last_name()
-                elif config.display_by_name() == "last_name":
+                elif config.display == "last_name":
                     name = vcard.get_last_name_first_name()
                 else:
                     name = vcard.formatted_name
@@ -1138,9 +1129,9 @@ def list_subcommand(vcard_list, parsable):
     elif parsable:
         contact_line_list = []
         for vcard in vcard_list:
-            if config.display_by_name() == "first_name":
+            if config.display == "first_name":
                 name = vcard.get_first_name_last_name()
-            elif config.display_by_name() == "last_name":
+            elif config.display == "last_name":
                 name = vcard.get_last_name_first_name()
             else:
                 name = vcard.formatted_name
@@ -1180,7 +1171,7 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
               " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
               " converted to vcard version %s but beware: This could corrupt "
               "the contact file or cause data loss."
-              % (selected_vcard.version, config.get_preferred_vcard_version()))
+              % (selected_vcard.version, config.preferred_vcard_version))
         while True:
             input_string = input("Do you want to proceed anyway (y/n)? ")
             if input_string.lower() in ["", "n", "q"]:
@@ -1192,10 +1183,9 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
     if input_from_stdin_or_file:
         # create new contact from stdin
         try:
-            new_contact = \
-                CarddavObject.clone_with_yaml_update(
-                    selected_vcard, input_from_stdin_or_file,
-                    config.localize_dates())
+            new_contact = CarddavObject.clone_with_yaml_update(
+                selected_vcard, input_from_stdin_or_file,
+                config.localize_dates)
         except ValueError as err:
             sys.exit(err)
         if selected_vcard == new_contact:
@@ -1783,7 +1773,7 @@ def main(argv=sys.argv[1:]):
               "#   either with: khard new -a address_book -i template.yaml\n"
               "#   or with: cat template.yaml | khard new -a address_book\n"
               "\n%s" % (khard_version, helpers.get_new_contact_template(
-                  config.get_supported_private_objects())))
+                  config.private_objects)))
         return
 
     search_queries = prepare_search_queries(args)

@@ -63,12 +63,12 @@ class ConfigPreferredVcardVersion(unittest.TestCase):
 
     def test_default_value_is_3(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(c.get_preferred_vcard_version(), "3.0")
+        self.assertEqual(c.preferred_vcard_version, "3.0")
 
     def test_set_preferred_version(self):
         c = config.Config("test/fixture/minimal.conf")
-        c.set_preferred_vcard_version("11")
-        self.assertEqual(c.get_preferred_vcard_version(), "11")
+        c.preferred_vcard_version = "11"
+        self.assertEqual(c.preferred_vcard_version, "11")
 
 
 class Defaults(unittest.TestCase):
@@ -83,19 +83,19 @@ class Defaults(unittest.TestCase):
 
     def test_reverse_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertFalse(c.reverse())
+        self.assertFalse(c.reverse)
 
     def test_group_by_addressbook_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertFalse(c.group_by_addressbook())
+        self.assertFalse(c.group_by_addressbook)
 
     def test_show_nicknames_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertFalse(c.show_nicknames())
+        self.assertFalse(c.show_nicknames)
 
     def test_show_uids_defaults_to_true(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertTrue(c.has_uids())
+        self.assertTrue(c.show_uids)
 
     def test_sort_defaults_to_first_name(self):
         c = config.Config("test/fixture/minimal.conf")
@@ -103,35 +103,35 @@ class Defaults(unittest.TestCase):
 
     def test_display_defaults_to_first_name(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(c.display_by_name(), 'first_name')
+        self.assertEqual(c.display, 'first_name')
 
     def test_localize_dates_defaults_to_true(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertTrue(c.localize_dates())
+        self.assertTrue(c.localize_dates)
 
     def test_preferred_phone_number_type_defaults_to_pref(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertListEqual(c.preferred_phone_number_type(), ['pref'])
+        self.assertListEqual(c.preferred_phone_number_type, ['pref'])
 
     def test_preferred_email_address_type_defaults_to_pref(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertListEqual(c.preferred_email_address_type(), ['pref'])
+        self.assertListEqual(c.preferred_email_address_type, ['pref'])
 
     def test_private_objects_defaults_to_empty(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertListEqual(c.get_supported_private_objects(), [])
+        self.assertListEqual(c.private_objects, [])
 
     def search_in_source_files_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertFalse(c.search_in_source_files())
+        self.assertFalse(c.search_in_source_files)
 
     def skip_unparsable_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertFalse(c.skip_unparsable())
+        self.assertFalse(c.skip_unparsable)
 
     def preferred_version_defaults_to_3(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(c.get_preferred_vcard_version(), '3.0')
+        self.assertEqual(c.preferred_vcard_version, '3.0')
 
     @mock.patch.dict('os.environ', clear=True)
     def test_editor_defaults_to_vim(self):
