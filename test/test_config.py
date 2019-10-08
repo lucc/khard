@@ -47,10 +47,9 @@ class LoadingConfigFile(unittest.TestCase):
     def test_load_empty_file_fails(self):
         stdout = io.StringIO()
         with tempfile.NamedTemporaryFile() as name:
-            with mock.patch("sys.stdout", stdout):
+            with self.assertLogs(level=logging.ERROR) as cm:
                 with self.assertRaises(SystemExit):
                     config.Config(name)
-        self.assertTrue(stdout.getvalue().startswith('Error in config file\n'))
 
     @mock.patch.dict('os.environ', EDITOR='editor', MERGE_EDITOR='meditor')
     def test_load_minimal_file_by_name(self):

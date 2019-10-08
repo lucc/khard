@@ -101,8 +101,6 @@ class Config:
         config = self._load_config_file(config_file)
         self.config = self._validate(config)
         self._set_attributes()
-        if not self.config['addressbooks'].keys():
-            exit("No address book entries available.")
 
     @classmethod
     def _load_config_file(cls, config_file):
@@ -131,6 +129,9 @@ class Config:
                               'private_objects': validate_private_objects})
         result = config.validate(vdr, preserve_errors=True)
         result = configobj.flatten_errors(config, result)
+        if not config['addressbooks'].keys():
+            result.append((['addressbooks'], '__any__',
+                           'No address book entries available'))
         for path, key, exception in result:
             logging.error("Error in config file, %s: %s",
                           ".".join([*path, key]), exception)
