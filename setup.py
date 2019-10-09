@@ -5,7 +5,6 @@
 #  - https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
 #  - https://gehrcke.de/2014/02/distributing-a-python-command-line-application/
 
-import re
 from setuptools import setup
 
 # get long description of package (either rst or markdown)
@@ -50,10 +49,9 @@ setup(
     use_scm_version={'write_to': 'khard/version.py'},
     setup_requires=['setuptools_scm'],
     packages=['khard'],
-    entry_points={
-        'console_scripts': ['khard = khard.khard:main']
-    },
+    entry_points={'console_scripts': ['khard = khard.khard:main']},
     test_suite="test",
     # the dependency ruamel.yaml requires >=3.5
     python_requires=">=3.5",
+    include_package_data=True,
 )
