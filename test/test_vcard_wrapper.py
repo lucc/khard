@@ -464,7 +464,7 @@ class ABLabels(unittest.TestCase):
         wrapper._add_webpage({'github': 'https://github.com/scheibler/khard'})
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper.webpages, [
-            'github: https://github.com/scheibler/khard',
+            {'github': 'https://github.com/scheibler/khard'},
             'http://example.com'])
 
     @unittest.expectedFailure
