@@ -171,7 +171,8 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
             elif isinstance(outer, dict):
                 # ABLABEL'd lists
                 for k in outer:
-                    strings += convert_to_yaml("- " + k, outer[k], indentation+4, index_of_colon, show_multi_line_character)
+                    strings += convert_to_yaml("- " + k, outer[k], indentation+4,
+                        index_of_colon, show_multi_line_character)
     return strings
 
 

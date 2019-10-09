@@ -57,6 +57,13 @@ def convert_to_vcard(name, value, allowed_object_type):
                      " must be a string or a list with strings.")
 
 
+def multi_property_key(item):
+    if isinstance(item, dict) or isinstance(item, list):
+        return list(item)[0]
+    else:
+        return item
+
+
 class VCardWrapper:
     """Wrapper class around a vobject.vCard object.
 
@@ -136,8 +143,7 @@ class VCardWrapper:
                     values.append({ablabel: child.value})
                 else:
                     values.append(child.value)
-        #return sorted(values)
-        return values
+        return sorted(values, key=multi_property_key)
 
     def _delete_vcard_object(self, name):
         """Delete all fields with the given name from the underlying vCard.
