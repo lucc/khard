@@ -133,10 +133,11 @@ class VCardWrapper:
             if child.name == name:
                 ablabel = self._get_ablabel(child)
                 if ablabel:
-                    values.append(ablabel + ": " + child.value)
+                    values.append({ablabel: child.value})
                 else:
                     values.append(child.value)
-        return sorted(values)
+        #return sorted(values)
+        return values
 
     def _delete_vcard_object(self, name):
         """Delete all fields with the given name from the underlying vCard.
@@ -377,7 +378,8 @@ class VCardWrapper:
             else:
                 return group_name
 
-    def _add_labelled_object(self, obj_type, user_input, name_groups=False):
+    def _add_labelled_object(self, obj_type, user_input, name_groups=False,
+                             allowed_object_type=ObjectType.string):
         obj = self.vcard.add(obj_type)
         if isinstance(user_input, dict):
             if len(user_input) > 1:
@@ -387,13 +389,13 @@ class VCardWrapper:
             group_name = self._get_new_group(obj_type if name_groups else "")
             obj.group = group_name
             obj.value = convert_to_vcard(obj_type, user_input[label],
-                                         ObjectType.string)
+                                         allowed_object_type)
             ablabel_obj = self.vcard.add('X-ABLABEL')
             ablabel_obj.group = group_name
             ablabel_obj.value = label
         else:
             obj.value = convert_to_vcard(obj_type, user_input,
-                                         ObjectType.string)
+                                         allowed_object_type)
 
     @anniversary.setter
     def anniversary(self, date):
@@ -562,9 +564,7 @@ class VCardWrapper:
         :param str|list(str) organisation: the value to add
         :returns: None
         """
-        org_obj = self.vcard.add('org')
-        org_obj.value = convert_to_vcard("organisation", organisation,
-                                         ObjectType.list_with_strings)
+        self._add_labelled_object("org", organisation, True, ObjectType.list_with_strings)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
@@ -928,7 +928,7 @@ class YAMLEditable(VCardWrapper):
                     private_objects[key] = []
                 ablabel = self._get_ablabel(child)
                 private_objects[key].append(
-                    ablabel + (": " if ablabel else "") + child.value)
+                    {ablabel: child.value} if ablabel else child.value)
         # sort private object lists
         for value in private_objects.values():
             value.sort()
