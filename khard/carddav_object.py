@@ -16,10 +16,8 @@ import sys
 import time
 
 from atomicwrites import atomic_write
+from ruamel import yaml
 import vobject
-
-import ruamel.yaml
-from ruamel.yaml import YAML
 
 from . import helpers
 from .object_type import ObjectType
@@ -1017,12 +1015,11 @@ class YAMLEditable(VCardWrapper):
         :returns: the parsed datastructure
         :rtype: dict
         """
-        yaml_parser = YAML(typ='base')
+        yaml_parser = yaml.YAML(typ='base')
         # parse user input string
         try:
             contact_data = yaml_parser.load(input)
-        except (ruamel.yaml.parser.ParserError,
-                ruamel.yaml.scanner.ScannerError) as err:
+        except (yaml.parser.ParserError, yaml.scanner.ScannerError) as err:
             raise ValueError(err)
         else:
             if not contact_data:
