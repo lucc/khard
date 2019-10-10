@@ -104,8 +104,7 @@ class VCardWrapper:
     def _get_string_field(self, field):
         """Get a string field from the underlying vCard.
 
-        :param field: the field value to get
-        :type field: str
+        :param str field: the field value to get
         :returns: the field value or the empty string
         :rtype: str
 
@@ -125,8 +124,7 @@ class VCardWrapper:
         If the property is part of a group containing exactly two items, with
         exactly one ABLABEL. the property will be prefixed with that ABLABEL.
 
-        :param name: the name of the property (should be UPPER case)
-        :type name: str
+        :param str name: the name of the property (should be UPPER case)
         :returns: the values from all occurences of the named property
         :rtype: list
         """
@@ -147,8 +145,7 @@ class VCardWrapper:
         that X-ABLABEL field will also be deleted.  These fields are commonly
         added by the Apple address book to attach custom labels to some fields.
 
-        :param name: the name of the fields to delete
-        :type name: str
+        :param str name: the name of the fields to delete
         :returns: None
         """
         # first collect all vcard items, which should be removed
@@ -169,10 +166,8 @@ class VCardWrapper:
     def _parse_type_value(types, supported_types):
         """Parse type value of phone numbers, email and post addresses.
 
-        :param types: list of type values
-        :type types: list(str)
-        :param supported_types: all allowed standard types
-        :type supported_types: list(str)
+        :param list(str) types: list of type values
+        :param list(str) supported_types: all allowed standard types
         :returns: tuple of standard and custom types and pref integer
         :rtype: tuple(list(str), list(str), int)
         """
@@ -200,10 +195,8 @@ class VCardWrapper:
     def _get_types_for_vcard_object(self, object, default_type):
         """get list of types for phone number, email or post address
 
-        :param object: vcard class object
-        :type object: vobject.base.ContentLine
-        :param default_type: use if the object contains no type
-        :type default_type: str
+        :param vobject.base.ContentLine object: vcard class object
+        :param str default_type: use if the object contains no type
         :returns: list of type labels
         :rtype: list(str)
         """
@@ -346,11 +339,9 @@ class VCardWrapper:
         Will return the ABLABEL only if the item is part of a group with exactly
         two items, exactly one of which is an ABLABEL.
 
-        :param item: the item to be labelled
-        :type item: vobject.base.ContentLine
+        :param vobject.base.ContentLine item: the item to be labelled
         :returns: the ABLABEL in the circumstances above or an empty string
         :rtype: str
-
         """
         label = ""
         if item.group:
@@ -371,12 +362,10 @@ class VCardWrapper:
         """Get an unused group name for adding new groups. Uses the form item123
          or itemgroup_type123 if a grouptype is specified.
 
-        :param group_type: (Optional) a string to add between "item" and the
-                           number
-        :type group_type: str
+        :param str group_type: (Optional) a string to add between "item" and
+            the number
         :returns: the name of the first unused group of the specified form
         :rtype: str
-
         """
         counter = 1
         while True:
@@ -467,8 +456,8 @@ class VCardWrapper:
         requires the vCard to only habe one FN field.  For other versions we
         enforce this equally.
 
-        :param value: the new formatted name
-        :type value: str
+        :param str value: the new formatted name
+        :returns: None
         """
         self._delete_vcard_object("FN")
         if value:
@@ -479,7 +468,7 @@ class VCardWrapper:
                      self._get_first_names(),
                      self._get_last_names(),
                      self._get_name_suffixes()]
-            name = [x for x in names if x]
+            names = [x for x in names if x]
             value = helpers.list_to_string(names, " ")
         else:  # add an empty FN
             value = ""
@@ -488,8 +477,7 @@ class VCardWrapper:
     def _get_names_part(self, part):
         """Get some part of the "N" entry in the vCard as a list
 
-        :param part: the name to get e.g. "prefix" or "given"
-        :type part: str
+        :param str part: the name to get e.g. "prefix" or "given"
         :returns: a list of entries for this name part
         :rtype: list(str)
 
@@ -897,6 +885,7 @@ class VCardWrapper:
 
 
 class YAMLEditable(VCardWrapper):
+    """Conversion of vcards to YAML and updateing the vcard from YAML"""
 
     def __init__(self, vcard, supported_private_objects=None, version=None,
                  localize_dates=False):
@@ -990,7 +979,8 @@ class YAMLEditable(VCardWrapper):
         degree.
 
         :param str input: the YAML document to parse
-        :returns dict: the parsed datastructure
+        :returns: the parsed datastructure
+        :rtype: dict
         """
         yaml_parser = YAML(typ='base')
         # parse user input string
