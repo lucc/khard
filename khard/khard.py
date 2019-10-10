@@ -143,7 +143,7 @@ def modify_existing_contact(old_contact):
         "# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
         "# if you want to cancel, exit without saving\n\n{}".format(
             old_contact, old_contact.address_book, old_contact.version,
-            old_contact.get_template()))
+            old_contact.to_yaml()))
 
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
@@ -201,13 +201,13 @@ def merge_existing_contacts(source_contact, target_contact,
         "# merge from {}\n# Address book: {}\n# Vcard version: {}\n"
         "# if you want to cancel, exit without saving\n\n{}".format(
             source_contact, source_contact.address_book,
-            source_contact.version, source_contact.get_template()))
+            source_contact.version, source_contact.to_yaml()))
     # target vcard
     target_temp_file_name = write_temp_file(
         "# merge into {}\n# Address book: {}\n# Vcard version: {}\n"
         "# if you want to cancel, exit without saving\n\n{}".format(
             target_contact, target_contact.address_book,
-            target_contact.version, target_contact.get_template()))
+            target_contact.version, target_contact.to_yaml()))
 
     target_temp_file_creation = helpers.file_modification_date(
         target_temp_file_name)
@@ -1312,7 +1312,7 @@ def main(argv=sys.argv[1:]):
                          "# Name: {}\n# Vcard version: {}\n\n{}".format(
                              khard_version, selected_vcard,
                              selected_vcard.version,
-                             selected_vcard.get_template())
+                             selected_vcard.to_yaml())
             args.output_file.write(output)
         elif args.action == "edit":
             modify_subcommand(selected_vcard, input_from_stdin_or_file,

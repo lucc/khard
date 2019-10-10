@@ -243,6 +243,6 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         card._add_organisation("ACME, Inc")
         card._add_note("foo: bar")
         card2 = copy.copy(card)
-        yaml = card.get_template()
+        yaml = card.to_yaml()
         card.update(yaml)
         self.assertEqual(card.vcard.serialize(), card2.vcard.serialize())

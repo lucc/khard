@@ -1274,7 +1274,15 @@ class YAMLEditable(VCardWrapper):
         self._delete_vcard_object("NOTE")
         self._set_string_list(self._add_note, "Note", contact_data)
 
-    def get_template(self):
+    def to_yaml(self):
+        """Convert this contact to a YAML string
+
+        The conversion follows the implicit schema that is given by the
+        internal YAML template of khard.
+
+        :returns: a YAML representation of this contact
+        :rtype: str
+        """
         strings = []
         for line in helpers.get_new_contact_template().splitlines():
             if line.startswith("#"):
