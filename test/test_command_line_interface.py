@@ -149,7 +149,7 @@ class FileSystemCommands(unittest.TestCase):
         self.abook1.mkdir()
         self.abook2.mkdir()
         self.contact = self.abook1 / 'contact.vcf'
-        shutil.copy('test/fixture/test.abook/contact1.vcf', str(self.contact))
+        shutil.copy('test/fixture/vcards/contact1.vcf', str(self.contact))
         config = path / 'conf'
         with config.open('w') as fh:
             fh.write(
