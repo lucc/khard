@@ -989,8 +989,7 @@ class YAMLEditable(VCardWrapper):
             if localize:
                 return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
             utc_offset = -time.timezone / 60 / 60
-            return date.strftime("%FT%T+{}:00".format(
-                str(int(utc_offset)).zfill(2)))
+            return date.strftime("%FT%T+{:02}:00".format(int(utc_offset)))
         if localize:
             return date.strftime(locale.nl_langinfo(locale.D_FMT))
         return date.strftime("%F")
