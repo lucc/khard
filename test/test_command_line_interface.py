@@ -13,7 +13,7 @@ import pathlib
 import shutil
 import tempfile
 import unittest
-import unittest.mock as mock
+from unittest import mock
 
 from ruamel.yaml import YAML
 
@@ -136,7 +136,6 @@ class ListingCommands2(unittest.TestCase):
         self.assertListEqual(text, expect)
 
 
-
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""
 
@@ -152,16 +151,11 @@ class FileSystemCommands(unittest.TestCase):
         shutil.copy('test/fixture/vcards/contact1.vcf', str(self.contact))
         config = path / 'conf'
         with config.open('w') as fh:
-            fh.write(
-                """[general]
-                editor = editor
-                merge_editor = meditor
-                [addressbooks]
-                [[abook1]]
-                path = {}
-                [[abook2]]
-                path = {}
-                """.format(self.abook1, self.abook2))
+            fh.write("""[addressbooks]
+                        [[abook1]]
+                        path = {}
+                        [[abook2]]
+                        path = {}""".format(self.abook1, self.abook2))
         self._patch = mock.patch.dict('os.environ', KHARD_CONFIG=str(config))
         self._patch.start()
 
@@ -217,9 +211,9 @@ class MiscCommands(unittest.TestCase):
     """Tests for other subcommands."""
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
-    def test_simple_export_without_options(self):
+    def test_simple_show_with_yaml_format(self):
         with mock_stdout() as stdout:
-            khard.main(["export", "uid1"])
+            khard.main(["show", "--format=yaml", "uid1"])
         # This implicitly tests if the output is valid yaml.
         yaml = YAML(typ="base").load(stdout.getvalue())
         # Just test some keys.
@@ -236,7 +230,7 @@ class MiscCommands(unittest.TestCase):
         with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
             with mock.patch('sys.stdout'):
-                khard.main(["modify", "uid1"])
+                khard.main(["edit", "uid1"])
         # The editor is called with a temp file so how to we check this more
         # precisely?
         popen.assert_called_once()
