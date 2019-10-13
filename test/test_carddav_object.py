@@ -1,4 +1,5 @@
 """Tests for the CarddavObject class from the carddav module."""
+# pylint: disable=missing-docstring
 
 import datetime
 import unittest

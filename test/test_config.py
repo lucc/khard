@@ -1,4 +1,5 @@
 """Tests for the config module."""
+# pylint: disable=missing-docstring
 
 import io
 import logging

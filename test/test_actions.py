@@ -1,4 +1,5 @@
 """Tests for the action class"""
+# pylint: disable=missing-docstring
 
 import unittest
 

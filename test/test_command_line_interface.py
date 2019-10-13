@@ -4,6 +4,8 @@ This also contains some "end to end" tests.  That means some very high level
 calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
 """
+# pylint: disable=missing-docstring
+
 # TODO We are still missing high level tests for the add-email and merge
 # subcommands.  They depend heavily on user interaction and are hard to test in
 # their current form.

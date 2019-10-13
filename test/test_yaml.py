@@ -1,4 +1,5 @@
 """Tests for the custom YAML format."""
+# pylint: disable=missing-docstring
 
 import datetime
 from io import StringIO
