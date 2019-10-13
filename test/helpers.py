@@ -1,4 +1,5 @@
 """Helper functions for the tests."""
+# pylint: disable=invalid-name
 
 import contextlib
 import os
@@ -14,8 +15,7 @@ def expectedFailureForVersion(major, minor):
     "A decorator to mark a test as an expected failure for one python version."
     if sys.version_info.major == major and sys.version_info.minor == minor:
         return unittest.expectedFailure
-    else:
-        return lambda x: x
+    return lambda x: x
 
 
 def create_test_vcard(**kwargs):
@@ -31,6 +31,11 @@ def create_test_vcard(**kwargs):
 
 
 class with_vcards(contextlib.ContextDecorator):
+    """Context manager to create a temporary khard configuration.
+
+    The given vcards will be copied to the only address book in the
+    configuration which will be called "tmp".
+    """
 
     def __init__(self, vcards):
         self.tempdir = None
@@ -56,7 +61,7 @@ class with_vcards(contextlib.ContextDecorator):
         self.mock.start()
         return self
 
-    def __exit__(self, a, b, c):
+    def __exit__(self, _a, _b, _c):
         self.mock.stop()
         os.unlink(self.config.name)
         self.tempdir.cleanup()
