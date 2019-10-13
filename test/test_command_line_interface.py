@@ -38,7 +38,7 @@ class HelpOption(unittest.TestCase):
         """Test the command line args and compare the prefix of the output."""
         with self.assertRaises(SystemExit):
             with mock_stdout() as stdout:
-                khard.main(args)
+                khard.parse_args(args)
         text = stdout.getvalue()
         self.assertTrue(text.startswith(expect))
 
