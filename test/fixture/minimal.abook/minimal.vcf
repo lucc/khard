@@ -1,4 +1,1 @@
-BEGIN:VCARD
-VERSION:4.0
-FN:minimal contact
-END:VCARD
+../vcards/minimal.vcf

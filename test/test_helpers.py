@@ -1,4 +1,5 @@
 """Tests for the helpers module."""
+# pylint: disable=missing-docstring
 
 import datetime
 import unittest
