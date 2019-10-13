@@ -547,6 +547,7 @@ def merge_args_into_config(args, config):
         args.addressbook = [abook.name for abook in config.abooks]
     if "target_addressbook" in args and not args.target_addressbook:
         args.target_addressbook = [abook.name for abook in config.abooks]
+    return config
 
 
 def load_address_books(names, config, search_queries):
@@ -1695,8 +1696,7 @@ def parse_args(argv):
     if "debug" in args and args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
-    # Create the global config instance.
-    global config
+    # Create the config instance.
     config = Config(args.config)
     logging.debug("Finished parsing config=%s", vars(config))
 
@@ -1746,11 +1746,11 @@ def parse_args(argv):
         args.action = "edit"
         args.format = "vcard"
 
-    return args
+    return args, config
 
 
 def main(argv=sys.argv[1:]):
-    args = parse_args(argv)
+    args, conf = parse_args(argv)
 
     # if args.action isn't one of the defined actions, it must be an alias
     if args.action not in Actions.get_actions():
@@ -1758,7 +1758,11 @@ def main(argv=sys.argv[1:]):
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
-    merge_args_into_config(args, config)
+    conf = merge_args_into_config(args, conf)
+
+    # store the config instance in the module level variable
+    global config
+    config = conf
 
     # Check some of the simpler subcommands first.  These don't have any
     # options and can directly be run.
