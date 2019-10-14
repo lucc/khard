@@ -937,7 +937,7 @@ class YAMLEditable(VCardWrapper):
                     {ablabel: child.value} if ablabel else child.value)
         # sort private object lists
         for value in private_objects.values():
-            value.sort()
+            value.sort(key=multi_property_key)
         return private_objects
 
     def _add_private_object(self, key, value):
