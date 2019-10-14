@@ -557,6 +557,11 @@ class VCardWrapper:
         return self._get_multi_property("ORG")
 
     def _add_organisation(self, organisation):
+        """Add one ORG entry to the underlying vcard
+
+        :param str|list(str) organisation: the value to add
+        :returns: None
+        """
         org_obj = self.vcard.add('org')
         org_obj.value = convert_to_vcard("organisation", organisation,
                                          ObjectType.list_with_strings)
@@ -1016,9 +1021,9 @@ class YAMLEditable(VCardWrapper):
             if isinstance(value, str):
                 setter(value)
             elif isinstance(value, list):
-                for v in value:
-                    if v:
-                        setter(v)
+                for val in value:
+                    if val:
+                        setter(val)
             else:
                 raise ValueError(
                     "{} must be a string or a list of strings".format(key))
