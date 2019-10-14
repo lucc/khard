@@ -34,8 +34,6 @@ def parse_yaml(yaml=''):
     :returns: the parsed CarddavObject
     :rtype: CarddavObject
     """
-    # Careful, this function doesn't actually support named arguments so
-    # they have to be kept in this order!
     return CarddavObject.from_yaml(address_book=mock.Mock(path='foo-path'),
                                    yaml=yaml, supported_private_objects=[],
                                    version='3.0', localize_dates=False)
