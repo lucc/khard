@@ -560,7 +560,7 @@ class VCardWrapper:
     def organisations(self):
         """
         :returns: list of organisations, sorted alphabetically
-        :rtype: list(list(str))
+        :rtype: list(list(str) or dict(list(str)))
         """
         return self._get_multi_property("ORG")
 
