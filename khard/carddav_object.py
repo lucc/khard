@@ -574,7 +574,10 @@ class VCardWrapper:
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
-            org_value = helpers.list_to_string(self.organisations[0], ", ")
+            first_org = self.organisations[0]
+            if isinstance(first_org, dict):
+                first_org = list(first_org.values())[0]
+            org_value = helpers.list_to_string(first_org, ", ")
             self.formatted_name = org_value.replace("\n", " ").replace("\\",
                                                                        "")
             showas_obj = self.vcard.add('x-abshowas')
