@@ -570,7 +570,8 @@ class VCardWrapper:
         :param str|list(str) organisation: the value to add
         :returns: None
         """
-        self._add_labelled_object("org", organisation, True, ObjectType.list_with_strings)
+        self._add_labelled_object("org", organisation, True,
+            ObjectType.list_with_strings)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
@@ -586,52 +587,47 @@ class VCardWrapper:
     @property
     def titles(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("TITLE")
 
     def _add_title(self, title):
-        title_obj = self.vcard.add('title')
-        title_obj.value = convert_to_vcard("title", title, ObjectType.string)
+        self._add_labelled_object("title", title, True)
 
     @property
     def roles(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("ROLE")
 
     def _add_role(self, role):
-        role_obj = self.vcard.add('role')
-        role_obj.value = convert_to_vcard("role", role, ObjectType.string)
+        self._add_labelled_object("role", role, True)
 
     @property
     def nicknames(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("NICKNAME")
 
     def _add_nickname(self, nickname):
-        nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = convert_to_vcard("nickname", nickname,
-                                              ObjectType.string)
+        self._add_labelled_object("nickname", nickname, True)
 
     @property
     def notes(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("NOTE")
 
     def _add_note(self, note):
-        note_obj = self.vcard.add('note')
-        note_obj.value = convert_to_vcard("note", note, ObjectType.string)
+        self._add_labelled_object("note", note, True)
 
     @property
     def webpages(self):
         """
-        :rtype: list(str)
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("URL")
 
