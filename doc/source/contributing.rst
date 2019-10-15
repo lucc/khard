@@ -33,6 +33,8 @@ Please stick to the following standards when you open pull requests:
 - Khard's development tries to follow `Vincent's branching model`_ so normal
   pull requests should be made against the `develop`_ branch. Only important
   bug fixes that affect the current release should be opened against `master`_.
+- Write "good" commit messages, especially a proper subject line.  This is also
+  explained in `the Git book`_.
 - Format your python code according to `PEP 8`_.
 - Khard has a test suite, please provide tests for bugs that you fix and also
   for new code and new features that are introduced.
@@ -61,6 +63,7 @@ isolate khard from your system Python environment you can use a `virtualenv`_
 to do so.
 
 .. _bug reports: https://github.com/scheibler/khard/issues
+.. _the Git book: https://www.git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project#_commit_guidelines
 .. _develop: https://github.com/scheibler/khard/tree/develop
 .. _feature requests: https://github.com/scheibler/khard/pulls
 .. _Github: https://github.com/scheibler/khard
