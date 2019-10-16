@@ -19,6 +19,7 @@ from unittest import mock
 
 from ruamel.yaml import YAML
 
+from khard import cli
 from khard import config
 from khard import khard
 
@@ -258,7 +259,7 @@ class CommandLineDefaultsDoNotOverwriteConfigValues(unittest.TestCase):
         options = '\n'.join('{}={}'.format(key, kwargs[key]) for key in kwargs)
         conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.\n'
                                          '[contact table]\n' + options))
-        return khard.merge_args_into_config(args, conf)
+        return cli.merge_args_into_config(args, conf)
 
     def test_group_by_addressbook(self):
         conf = self._with_contact_table(['list'], group_by_addressbook=True)
@@ -273,7 +274,7 @@ class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
         args, _conf = khard.parse_args(args)
         # This config file just loads all defaults from the config.spec.
         conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.'))
-        return khard.merge_args_into_config(args, conf)
+        return cli.merge_args_into_config(args, conf)
 
     def test_sort_is_picked_up_from_arguments(self):
         conf = self._merge(['list', '--sort=last_name'])

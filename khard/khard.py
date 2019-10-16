@@ -15,7 +15,7 @@ from . import helpers
 from .actions import Actions
 from .address_book import AddressBookCollection, AddressBookParseError
 from .carddav_object import CarddavObject
-from .cli import parse_args
+from .cli import parse_args, merge_args_into_config
 from .version import version as khard_version
 
 
@@ -511,42 +511,6 @@ def get_contacts(address_books, query, method="all", reverse=False,
                           unidecode(x.formatted_name.lower()))
     raise ValueError('sort must be "first_name", "last_name" or '
                      '"formatted_name" not {}.'.format(sort))
-
-
-def merge_args_into_config(args, config):
-    """Merge the parsed arguments from argparse into the config object.
-
-    :param args: the parsed command line arguments
-    :type args: argparse.Namespace
-    :param config: the parsed config file
-    :type config: config.Config
-    :returns: the merged config object
-    :rtype: config.Config
-
-    """
-    merge = {'general': ['debug'],
-             'contact table': ['reverse', 'group_by_addressbook', 'display',
-                               'sort'],
-             'vcard': ['search_in_source_files', 'skip_unparsable',
-                       'preferred_version'],
-             }
-    merge = {k1: {k2: getattr(args, k2)
-                  for k2 in v1 if k2 in args and getattr(args, k2) is not None}
-             for k1, v1 in merge.items()}
-    logging.debug('Merging in %s', merge)
-    config.merge(merge)
-    logging.debug('Merged: %s', vars(config))
-
-    # Now we can savely initialize the address books as all command line
-    # options have been incorporated into the config object.
-    config.load_address_books()
-    # If the user could but did not specify address books on the command line
-    # it means they want to use all address books in that place.
-    if "addressbook" in args and not args.addressbook:
-        args.addressbook = [abook.name for abook in config.abooks]
-    if "target_addressbook" in args and not args.target_addressbook:
-        args.target_addressbook = [abook.name for abook in config.abooks]
-    return config
 
 
 def load_address_books(names, config, search_queries):
