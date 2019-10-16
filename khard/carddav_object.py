@@ -58,10 +58,20 @@ def convert_to_vcard(name, value, allowed_object_type):
 
 
 def multi_property_key(item):
-    if isinstance(item, dict) or isinstance(item, list):
-        return list(item)[0]
+    """key function to pass to sorted(), allowing sorting of dicts with lists
+    and strings. Dicts will be sorted by their label, after other types.
+
+    :param item: member of the list being sorted
+    :type item: a dict with a single entry or any sortable type
+    :returns: a list with two members. The first is int(isinstance(item, dict).
+        The second is either the key from the dict or the unchanged item if it
+        is not a dict.
+    :rtype list(int, type(item)) or list(int, str)
+    """
+    if isinstance(item, dict):
+        return [1, list(item)[0]]
     else:
-        return item
+        return [0, item]
 
 
 class VCardWrapper:
@@ -386,6 +396,19 @@ class VCardWrapper:
 
     def _add_labelled_object(self, obj_type, user_input, name_groups=False,
                              allowed_object_type=ObjectType.string):
+        """Add an object to the VCARD. If user_input is a dict, the object will
+         be added to a group with an ABLABEL created from the key of the dict.
+
+        :param str obj_type: type of object to add to the VCARD.
+        :param user_input: Contents of the object to add. If a dict
+        :type user_input: str or list(str) or dict(str) or dict(list(str))
+        :param bool name_groups: (Optional) If True, use the obj_type in the
+            group name for labelled objects.
+        :param allowed_object_type: (Optional) set the accepted return type
+            for vcard attribute
+        :type allowed_object_type: enum of type ObjectType
+        :returns: None
+        """
         obj = self.vcard.add(obj_type)
         if isinstance(user_input, dict):
             if len(user_input) > 1:
@@ -571,7 +594,7 @@ class VCardWrapper:
         :returns: None
         """
         self._add_labelled_object("org", organisation, True,
-            ObjectType.list_with_strings)
+                                  ObjectType.list_with_strings)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name

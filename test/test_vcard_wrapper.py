@@ -464,14 +464,14 @@ class ABLabels(unittest.TestCase):
         wrapper._add_webpage({'github': 'https://github.com/scheibler/khard'})
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper.webpages, [
-            {'github': 'https://github.com/scheibler/khard'},
-            'http://example.com'])
+            'http://example.com',
+            {'github': 'https://github.com/scheibler/khard'}])
 
     def test_labels_on_structured_values(self):
         vcard = VCardWrapper(_from_file('test/fixture/vcards/labels.vcf'))
         self.assertListEqual(vcard.organisations, [{'Work': ['Test Inc']}])
 
-    def test_setting_and_getting_webpages(self):
+    def test_setting_fn_from_labelled_org(self):
         vcard = create_test_vcard()
         wrapper = VCardWrapper(vcard)
         wrapper._delete_vcard_object("FN")

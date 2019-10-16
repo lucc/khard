@@ -116,7 +116,8 @@ class yaml_ablabel(unittest.TestCase):
                       " - github: https://github.com/scheibler/khard"
         x = self._parse_yaml(ablabel_url)
         self.assertListEqual(x.webpages, [
-            {'github': 'https://github.com/scheibler/khard'}, 'http://example.com'])
+            'http://example.com',
+            {'github': 'https://github.com/scheibler/khard'}])
 
 
 class UpdateVcardWithYamlUserInput(unittest.TestCase):
