@@ -12,7 +12,6 @@ from tempfile import NamedTemporaryFile
 from unidecode import unidecode
 
 from . import helpers
-from .actions import Actions
 from .address_book import AddressBookCollection, AddressBookParseError
 from .carddav_object import CarddavObject
 from . import cli
