@@ -15,7 +15,7 @@ from . import helpers
 from .actions import Actions
 from .address_book import AddressBookCollection, AddressBookParseError
 from .carddav_object import CarddavObject
-from .cli import parse_args, merge_args_into_config
+from . import cli
 from .version import version as khard_version
 
 
@@ -1341,15 +1341,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
 
 
 def main(argv=sys.argv[1:]):
-    args, conf = parse_args(argv)
-
-    # if args.action isn't one of the defined actions, it must be an alias
-    if args.action not in Actions.get_actions():
-        # convert alias to corresponding action
-        # example: "ls" --> "list"
-        args.action = Actions.get_action(args.action)
-
-    conf = merge_args_into_config(args, conf)
+    args, conf = cli.init(argv)
 
     # store the config instance in the module level variable
     global config

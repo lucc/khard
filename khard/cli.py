@@ -13,6 +13,7 @@ def parse_args(argv):
     """Parse the command line arguments and return the namespace that was
     creates by argparse.ArgumentParser.parse_args().
 
+    :param list(str) argv: the command line arguments
     :returns: the namespace parsed from the command line
     :rtype: argparse.Namespace
 
@@ -415,3 +416,21 @@ def merge_args_into_config(args, config):
     if "target_addressbook" in args and not args.target_addressbook:
         args.target_addressbook = [abook.name for abook in config.abooks]
     return config
+
+
+def init(argv):
+    """Initialize khard by parsing the command line and reading the config file
+
+    :param list(str) argv: the command line arguments
+    :returns: the parsed command line and the fully initialized config
+    :rtype: (argparse.Namespace, Config)
+    """
+    args, conf = parse_args(argv)
+
+    # if args.action isn't one of the defined actions, it must be an alias
+    if args.action not in Actions.get_actions():
+        # convert alias to corresponding action
+        # example: "ls" --> "list"
+        args.action = Actions.get_action(args.action)
+
+    return args, merge_args_into_config(args, conf)

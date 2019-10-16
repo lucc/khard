@@ -40,7 +40,7 @@ class HelpOption(unittest.TestCase):
         """Test the command line args and compare the prefix of the output."""
         with self.assertRaises(SystemExit):
             with mock_stdout() as stdout:
-                khard.parse_args(args)
+                cli.parse_args(args)
         text = stdout.getvalue()
         self.assertTrue(text.startswith(expect))
 
@@ -255,7 +255,7 @@ class CommandLineDefaultsDoNotOverwriteConfigValues(unittest.TestCase):
 
     @staticmethod
     def _with_contact_table(args, **kwargs):
-        args = khard.parse_args(args)
+        args = cli.parse_args(args)
         options = '\n'.join('{}={}'.format(key, kwargs[key]) for key in kwargs)
         conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.\n'
                                          '[contact table]\n' + options))
@@ -271,7 +271,7 @@ class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
 
     @staticmethod
     def _merge(args):
-        args, _conf = khard.parse_args(args)
+        args, _conf = cli.parse_args(args)
         # This config file just loads all defaults from the config.spec.
         conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.'))
         return cli.merge_args_into_config(args, conf)
