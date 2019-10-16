@@ -14,8 +14,7 @@ from . import helpers
 
 
 def create_test_card():
-    with mock.patch('__main__.open', mock.mock_open()):
-        return YAMLEditable(helpers.create_test_vcard())
+    return YAMLEditable(helpers.create_test_vcard())
 
 
 def to_yaml(data):
