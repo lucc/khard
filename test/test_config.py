@@ -121,15 +121,15 @@ class Defaults(unittest.TestCase):
         c = config.Config("test/fixture/minimal.conf")
         self.assertListEqual(c.private_objects, [])
 
-    def search_in_source_files_defaults_to_false(self):
+    def test_search_in_source_files_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
         self.assertFalse(c.search_in_source_files)
 
-    def skip_unparsable_defaults_to_false(self):
+    def test_skip_unparsable_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
         self.assertFalse(c.skip_unparsable)
 
-    def preferred_version_defaults_to_3(self):
+    def test_preferred_version_defaults_to_3(self):
         c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.preferred_vcard_version, '3.0')
 
