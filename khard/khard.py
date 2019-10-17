@@ -610,11 +610,9 @@ def prepare_search_queries(args):
     return queries
 
 
-def generate_contact_list(config, args):
+def generate_contact_list(args):
     """TODO: Docstring for generate_contact_list.
 
-    :param config: the config object to use
-    :type config: config.Config
     :param args: the command line arguments
     :type args: argparse.Namespace
     :returns: the contacts for further processing (TODO)
@@ -1370,7 +1368,7 @@ def main(argv=sys.argv[1:]):
         args.target_addressbook = list(load_address_books(
             args.target_addressbook, config, search_queries))
 
-    vcard_list = generate_contact_list(config, args)
+    vcard_list = generate_contact_list(args)
 
     if args.action == "filename":
         print('\n'.join(contact.filename for contact in vcard_list))
