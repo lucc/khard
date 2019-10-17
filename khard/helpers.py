@@ -118,7 +118,7 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
     :param str name: name of object (example: phone)
     :param value: object contents
     :type value: str, list(str), list(list(str)), list(dict)
-    :param str indentation: indent all by number of spaces
+    :param int indentation: indent all by number of spaces
     :param int index_of_colon: use to position : at the name string (-1 for no
         space)
     :param bool show_multi_line_character: option to hide "|"
@@ -181,7 +181,7 @@ def indent_multiline_string(input, indentation, show_multi_line_character):
     if isinstance(input, list):
         input = list_to_string(input, "")
     # format multiline string
-    if "\n" in input:
+    if "\n" in input or ": " in input:
         lines = ["|"] if show_multi_line_character else [""]
         for line in input.split("\n"):
             lines.append("%s%s" % (' ' * indentation, line.strip()))

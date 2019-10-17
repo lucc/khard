@@ -5,12 +5,15 @@ import datetime
 from io import StringIO
 import unittest
 from unittest import mock
+import copy
 
 from ruamel.yaml import YAML
 
 from khard.carddav_object import CarddavObject, YAMLEditable
 
 from . import helpers
+
+import khard.helpers
 
 
 def create_test_card():
@@ -172,3 +175,31 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         data = to_yaml(data)
         card.update(data)
         self.assertEqual(card.formatted_name, fn)
+
+    def test_parse_field(self):
+        """Test round-trip of a field to/from YAML"""
+        card = create_test_card()
+        data = "First name: Nobody\n"
+        data += "\n".join(khard.helpers.convert_to_yaml("Note", "foobar", 0,
+                                                        5, True))
+        card.update(data)
+        self.assertListEqual(card.notes, ["foobar"])
+
+    def test_parse_field_with_colon(self):
+        """Test round-trip of a field containing ': ' to/from YAML"""
+        card = create_test_card()
+        data = "First name: Nobody\n"
+        data += "\n".join(khard.helpers.convert_to_yaml("Note", "foo: bar", 0,
+                                                        5, True))
+        card.update(data)
+        self.assertListEqual(card.notes, ["foo: bar"])
+
+    def test_vcard_round_trip(self):
+        """Test a VCARD can be converted to YAML and back unchanged"""
+        card = create_test_card()
+        card._add_organisation("ACME, Inc")
+        card._add_note("foo: bar")
+        card2 = copy.copy(card)
+        yaml = card.get_template()
+        card.update(yaml)
+        self.assertEqual(card.vcard.serialize(), card2.vcard.serialize())
