@@ -9,14 +9,16 @@ from .config import Config
 from .version import version as khard_version
 
 
-def parse_args(argv):
-    """Parse the command line arguments and return the namespace that was
-    creates by argparse.ArgumentParser.parse_args().
+def create_parsers():
+    """Create two argument parsers.
 
-    :param list(str) argv: the command line arguments
-    :returns: the namespace parsed from the command line
-    :rtype: argparse.Namespace
+    The first parser is manly used to find the config file which can than be
+    used to set some default values on the second parser.  The second parser
+    can parse the remainder of the command line with the subcommand and all
+    further options and arguments.
 
+    :returns: the two parsers for the first and the second parsing pass
+    :rtype: (argparse.ArgumentParser, argparse.ArgumentParser)
     """
     # Create the base argument parser.  It will be reused for the first and
     # second round of argument parsing.
@@ -317,6 +319,18 @@ def parse_args(argv):
     # reported before command line syntax errors.
     first_parser.print_help = parser.print_help
 
+    return first_parser, parser
+
+
+def parse_args(argv):
+    """Parse the command line arguments and return the namespace that was
+    creates by argparse.ArgumentParser.parse_args().
+
+    :param list(str) argv: the command line arguments
+    :returns: the namespace parsed from the command line
+    :rtype: argparse.Namespace
+    """
+    first_parser, parser = create_parsers()
     # Parese the command line with the first argument parser.  It will handle
     # the config option (its main job) and also the help, version and debug
     # options as these do not depend on anything else.
