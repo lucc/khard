@@ -23,7 +23,7 @@ def parse_args(argv):
     base = argparse.ArgumentParser(
         description="Khard is a carddav address book for the console",
         formatter_class=argparse.RawTextHelpFormatter, add_help=False)
-    base.add_argument("-c", "--config", default="", help="config file to use")
+    base.add_argument("-c", "--config", help="config file to use")
     base.add_argument("--debug", action="store_true",
                       help="enable debug output")
     base.add_argument("--skip-unparsable", action="store_true",
