@@ -98,9 +98,4 @@ addressbooks
 Configuration
 -------------
 
-The configuration file of khard is located in ~/.config/khard/khard.conf.  (If
-$XDG_CONFIG_HOME is set $XDG_CONFIG_HOME/khard/khard.conf is used instead.)
-The location can be overwritten on the command line with the *-c* option.
-
-The file is in ini-style syntax.  For an example file with a description of the
-default options see ../../misc/khard/khard.conf.example.
+See :manpage:`khard.conf(5)`.
