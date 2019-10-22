@@ -412,7 +412,7 @@ class VCardWrapper:
         obj = self.vcard.add(obj_type)
         if isinstance(user_input, dict):
             if len(user_input) > 1:
-                raise ValueError("Error: %s must be a string or a dict " +\
+                raise ValueError("Error: %s must be a string or a dict "
                                  "containing one key/value pair." % obj_type)
             label = list(user_input)[0]
             group_name = self._get_new_group(obj_type if name_groups else "")
@@ -1028,9 +1028,8 @@ class YAMLEditable(VCardWrapper):
 
         # check for available data
         # at least enter name or organisation
-        if not contact_data.get("First name") \
-                and not contact_data.get("Last name") \
-                and not contact_data.get("Organisation"):
+        if not (contact_data.get("First name") or contact_data.get("Last name")
+                or contact_data.get("Organisation")):
             raise ValueError(
                 "Error: You must either enter a name or an organisation")
         return contact_data
@@ -1516,8 +1515,8 @@ class CarddavObject(YAMLEditable):
         """
         with open(filename, "r") as file:
             contents = file.read()
-        if query is None or \
-                re.search(query, contents, re.IGNORECASE | re.DOTALL):
+        if query is None or re.search(query, contents,
+                                      re.IGNORECASE | re.DOTALL):
             try:
                 vcard = vobject.readOne(contents)
             except Exception:

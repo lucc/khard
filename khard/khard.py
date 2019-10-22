@@ -32,16 +32,15 @@ def write_temp_file(text=""):
     :rtype: str
 
     """
-    with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) \
-         as tempfile:
-        tempfile.write(text)
-        return tempfile.name
+    with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
+        tmp.write(text)
+        return tmp.name
 
 
 def edit(*filenames, merge=False):
     """Edit the given files with the configured editor or merge editor"""
     editor = config.merge_editor if merge else config.editor
-    editor = [editor] if type(editor) == str else editor
+    editor = [editor] if isinstance(editor, str) else editor
     editor.extend(filenames)
     child = subprocess.Popen(editor)
     child.communicate()
@@ -429,9 +428,8 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
     list_contacts(vcard_list)
     while True:
         try:
-            prompt_string = "Enter Index (" + \
-                            ("0 for None, " if include_none else "") + \
-                            "q to quit): "
+            prompt_string = "Enter Index ({}q to quit): ".format(
+                "0 for None, " if include_none else "")
             input_string = input(prompt_string)
             if input_string in ["", "q", "Q"]:
                 print("Canceled")
@@ -444,8 +442,8 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
             else:
                 raise ValueError
         except (EOFError, IndexError, ValueError):
-            print("Please enter an index value between 1 and %d or nothing"
-                  " to exit." % len(vcard_list))
+            print("Please enter an index value between 1 and {} or nothing"
+                  " to exit.".format(len(vcard_list)))
         else:
             break
     print("")
@@ -806,8 +804,8 @@ def add_email_subcommand(text, abooks):
             config.localize_dates)
 
     # check if the contact already contains the email address
-    for type, email_list in sorted(selected_vcard.emails.items(),
-                                   key=lambda k: k[0].lower()):
+    for _, email_list in sorted(selected_vcard.emails.items(),
+                                key=lambda k: k[0].lower()):
         for email in email_list:
             if email == email_address:
                 print("The contact %s already contains the email address %s" %
