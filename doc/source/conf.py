@@ -151,8 +151,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/khard', 'khard', 'khard Documentation', '', 1),
-    ('man/khard.conf', 'khard.conf', 'khard.conf Documentation', '', 5),
+    ('man/khard', 'khard', 'Console carddav client', '', 1),
+    ('man/khard.conf', 'khard.conf', 'configuration file for khard', '', 5),
 ]
 
 
