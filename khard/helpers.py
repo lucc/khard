@@ -5,7 +5,6 @@ import pathlib
 import random
 import string
 from datetime import datetime
-from textwrap import dedent
 
 
 def pretty_print(table, justify="L"):
