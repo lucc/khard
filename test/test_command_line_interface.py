@@ -19,6 +19,8 @@ from unittest import mock
 
 from ruamel.yaml import YAML
 
+from khard import cli
+from khard import config
 from khard import khard
 
 from .helpers import expectedFailureForVersion, with_vcards
@@ -38,7 +40,7 @@ class HelpOption(unittest.TestCase):
         """Test the command line args and compare the prefix of the output."""
         with self.assertRaises(SystemExit):
             with mock_stdout() as stdout:
-                khard.parse_args(args)
+                cli.parse_args(args)
         text = stdout.getvalue()
         self.assertTrue(text.startswith(expect))
 
@@ -246,6 +248,57 @@ class MiscCommands(unittest.TestCase):
                 khard.main(["edit", "--format=vcard", "uid1"])
         popen.assert_called_once_with(['editor',
                                        'test/fixture/test.abook/contact1.vcf'])
+
+
+@mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+class CommandLineDefaultsDoNotOverwriteConfigValues(unittest.TestCase):
+
+    @staticmethod
+    def _with_contact_table(args, **kwargs):
+        args = cli.parse_args(args)
+        options = '\n'.join('{}={}'.format(key, kwargs[key]) for key in kwargs)
+        conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.\n'
+                                         '[contact table]\n' + options))
+        return cli.merge_args_into_config(args, conf)
+
+    def test_group_by_addressbook(self):
+        conf = self._with_contact_table(['list'], group_by_addressbook=True)
+        self.assertTrue(conf.group_by_addressbook)
+
+
+@mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
+
+    @staticmethod
+    def _merge(args):
+        args, _conf = cli.parse_args(args)
+        # This config file just loads all defaults from the config.spec.
+        conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.'))
+        return cli.merge_args_into_config(args, conf)
+
+    def test_sort_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--sort=last_name'])
+        self.assertEqual(conf.sort, 'last_name')
+
+    def test_display_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--display=last_name'])
+        self.assertEqual(conf.display, 'last_name')
+
+    def test_reverse_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--reverse'])
+        self.assertTrue(conf.reverse)
+
+    def test_group_by_addressbook_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--group-by-addressbook'])
+        self.assertTrue(conf.group_by_addressbook)
+
+    def test_search_in_source_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--search-in-source-files'])
+        self.assertTrue(conf.search_in_source_files)
+
+#    def test_strict_is_picked_up_from_arguments(self):
+#        conf = self._merge(['list', '--strict'])
+#        self.assertTrue(conf.strict)
 
 
 if __name__ == "__main__":

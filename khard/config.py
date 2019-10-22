@@ -94,7 +94,7 @@ class Config:
     supported_vcard_versions = ("3.0", "4.0")
     SPEC_FILE = os.path.join(os.path.dirname(__file__), 'data', 'config.spec')
 
-    def __init__(self, config_file=""):
+    def __init__(self, config_file=None):
         self.config = None
         self.abooks = []
         self.abook = None
