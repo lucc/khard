@@ -57,6 +57,23 @@ def convert_to_vcard(name, value, allowed_object_type):
                      " must be a string or a list with strings.")
 
 
+def multi_property_key(item):
+    """key function to pass to sorted(), allowing sorting of dicts with lists
+    and strings. Dicts will be sorted by their label, after other types.
+
+    :param item: member of the list being sorted
+    :type item: a dict with a single entry or any sortable type
+    :returns: a list with two members. The first is int(isinstance(item, dict).
+        The second is either the key from the dict or the unchanged item if it
+        is not a dict.
+    :rtype list(int, type(item)) or list(int, str)
+    """
+    if isinstance(item, dict):
+        return [1, list(item)[0]]
+    else:
+        return [0, item]
+
+
 class VCardWrapper:
     """Wrapper class around a vobject.vCard object.
 
@@ -133,10 +150,10 @@ class VCardWrapper:
             if child.name == name:
                 ablabel = self._get_ablabel(child)
                 if ablabel:
-                    values.append(ablabel + ": " + child.value)
+                    values.append({ablabel: child.value})
                 else:
                     values.append(child.value)
-        return sorted(values)
+        return sorted(values, key=multi_property_key)
 
     def _delete_vcard_object(self, name):
         """Delete all fields with the given name from the underlying vCard.
@@ -377,7 +394,21 @@ class VCardWrapper:
             else:
                 return group_name
 
-    def _add_labelled_object(self, obj_type, user_input, name_groups=False):
+    def _add_labelled_object(self, obj_type, user_input, name_groups=False,
+                             allowed_object_type=ObjectType.string):
+        """Add an object to the VCARD. If user_input is a dict, the object will
+         be added to a group with an ABLABEL created from the key of the dict.
+
+        :param str obj_type: type of object to add to the VCARD.
+        :param user_input: Contents of the object to add. If a dict
+        :type user_input: str or list(str) or dict(str) or dict(list(str))
+        :param bool name_groups: (Optional) If True, use the obj_type in the
+            group name for labelled objects.
+        :param allowed_object_type: (Optional) set the accepted return type
+            for vcard attribute
+        :type allowed_object_type: enum of type ObjectType
+        :returns: None
+        """
         obj = self.vcard.add(obj_type)
         if isinstance(user_input, dict):
             if len(user_input) > 1:
@@ -387,13 +418,13 @@ class VCardWrapper:
             group_name = self._get_new_group(obj_type if name_groups else "")
             obj.group = group_name
             obj.value = convert_to_vcard(obj_type, user_input[label],
-                                         ObjectType.string)
+                                         allowed_object_type)
             ablabel_obj = self.vcard.add('X-ABLABEL')
             ablabel_obj.group = group_name
             ablabel_obj.value = label
         else:
             obj.value = convert_to_vcard(obj_type, user_input,
-                                         ObjectType.string)
+                                         allowed_object_type)
 
     @anniversary.setter
     def anniversary(self, date):
@@ -552,7 +583,7 @@ class VCardWrapper:
     def organisations(self):
         """
         :returns: list of organisations, sorted alphabetically
-        :rtype: list(list(str))
+        :rtype: list(list(str) or dict(list(str)))
         """
         return self._get_multi_property("ORG")
 
@@ -562,13 +593,15 @@ class VCardWrapper:
         :param str|list(str) organisation: the value to add
         :returns: None
         """
-        org_obj = self.vcard.add('org')
-        org_obj.value = convert_to_vcard("organisation", organisation,
-                                         ObjectType.list_with_strings)
+        self._add_labelled_object("org", organisation, True,
+                                  ObjectType.list_with_strings)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
-            org_value = helpers.list_to_string(self.organisations[0], ", ")
+            first_org = self.organisations[0]
+            if isinstance(first_org, dict):
+                first_org = list(first_org.values())[0]
+            org_value = helpers.list_to_string(first_org, ", ")
             self.formatted_name = org_value.replace("\n", " ").replace("\\",
                                                                        "")
             showas_obj = self.vcard.add('x-abshowas')
@@ -577,52 +610,47 @@ class VCardWrapper:
     @property
     def titles(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("TITLE")
 
     def _add_title(self, title):
-        title_obj = self.vcard.add('title')
-        title_obj.value = convert_to_vcard("title", title, ObjectType.string)
+        self._add_labelled_object("title", title, True)
 
     @property
     def roles(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("ROLE")
 
     def _add_role(self, role):
-        role_obj = self.vcard.add('role')
-        role_obj.value = convert_to_vcard("role", role, ObjectType.string)
+        self._add_labelled_object("role", role, True)
 
     @property
     def nicknames(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("NICKNAME")
 
     def _add_nickname(self, nickname):
-        nickname_obj = self.vcard.add('nickname')
-        nickname_obj.value = convert_to_vcard("nickname", nickname,
-                                              ObjectType.string)
+        self._add_labelled_object("nickname", nickname, True)
 
     @property
     def notes(self):
         """
-        :rtype: list(list(str))
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("NOTE")
 
     def _add_note(self, note):
-        note_obj = self.vcard.add('note')
-        note_obj.value = convert_to_vcard("note", note, ObjectType.string)
+        self._add_labelled_object("note", note, True)
 
     @property
     def webpages(self):
         """
-        :rtype: list(str)
+        :rtype: list(str or dict(str))
         """
         return self._get_multi_property("URL")
 
@@ -928,10 +956,10 @@ class YAMLEditable(VCardWrapper):
                     private_objects[key] = []
                 ablabel = self._get_ablabel(child)
                 private_objects[key].append(
-                    ablabel + (": " if ablabel else "") + child.value)
+                    {ablabel: child.value} if ablabel else child.value)
         # sort private object lists
         for value in private_objects.values():
-            value.sort()
+            value.sort(key=multi_property_key)
         return private_objects
 
     def _add_private_object(self, key, value):

@@ -464,11 +464,16 @@ class ABLabels(unittest.TestCase):
         wrapper._add_webpage({'github': 'https://github.com/scheibler/khard'})
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper.webpages, [
-            'github: https://github.com/scheibler/khard',
-            'http://example.com'])
+            'http://example.com',
+            {'github': 'https://github.com/scheibler/khard'}])
 
-    @unittest.expectedFailure
     def test_labels_on_structured_values(self):
         vcard = VCardWrapper(_from_file('test/fixture/vcards/labels.vcf'))
-        # TODO find a solution for issue #221
-        self.assertListEqual(vcard.organisations, ['Test Inc'])
+        self.assertListEqual(vcard.organisations, [{'Work': ['Test Inc']}])
+
+    def test_setting_fn_from_labelled_org(self):
+        vcard = create_test_vcard()
+        wrapper = VCardWrapper(vcard)
+        wrapper._delete_vcard_object("FN")
+        wrapper._add_organisation({'Work': ['Test Inc']})
+        self.assertEqual(wrapper.formatted_name, 'Test Inc')
