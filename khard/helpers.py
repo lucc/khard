@@ -118,7 +118,7 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
 
     :param str name: name of object (example: phone)
     :param value: object contents
-    :type value: str, list(str), list(list(str))
+    :type value: str, list(str), list(list(str)), list(dict)
     :param str indentation: indent all by number of spaces
     :param int index_of_colon: use to position : at the name string (-1 for no
         space)
@@ -168,6 +168,12 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
                             ' ' * (indentation+8), indent_multiline_string(
                                 inner, indentation+12,
                                 show_multi_line_character)))
+            elif isinstance(outer, dict):
+                # ABLABEL'd lists
+                for k in outer:
+                    strings += convert_to_yaml(
+                        "- " + k, outer[k], indentation+4, index_of_colon,
+                        show_multi_line_character)
     return strings
 
 
