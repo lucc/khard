@@ -7,18 +7,8 @@
 
 from setuptools import setup
 
-# get long description of package (either rst or markdown)
-# see https://gist.github.com/aubricus/9184003#gistcomment-1488025
-with open('README.md', 'rb') as f:
-    ld_md = f.read().decode("utf-8")
-try:
-    # pypi wants the long description as restructured text (rst)
-    # so try to convert from markdown to rst
-    import pypandoc
-    ld = pypandoc.convert_text(ld_md, 'rst', format='md')
-except ImportError:
-    # else use long description in markdown format
-    ld = ld_md
+with open('README.rst', 'rb') as f:
+    readme = f.read().decode("utf-8")
 
 setup(
     name='khard',
@@ -26,7 +16,7 @@ setup(
     author_email='email@eric-scheibler.de',
     url='https://github.com/scheibler/khard/',
     description='A console carddav client',
-    long_description=ld,
+    long_description=readme,
     license='GPL',
     keywords='Carddav console addressbook',
     classifiers=[
