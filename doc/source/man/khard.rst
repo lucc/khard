@@ -1,5 +1,5 @@
-Manpage
-=======
+khard
+=====
 
 Synopsis
 --------
