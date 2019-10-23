@@ -1,9 +1,12 @@
-# Contact template for khard version 0.13.0
+# Contact template for khard version 0.15.0
 #
 # Use this yaml formatted template to create a new contact:
 #   either with: khard new -a address_book -i template.yaml
 #   or with: cat template.yaml | khard new -a address_book
 
+# Every contact must contain a formatted name, it will be autofilled
+# from the full name below if not given.
+Formatted name : 
 
 # name components
 # every entry may contain a string or a list of strings
