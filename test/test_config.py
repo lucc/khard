@@ -77,9 +77,9 @@ class Defaults(unittest.TestCase):
         c = config.Config("test/fixture/minimal.conf")
         self.assertFalse(c.debug)
 
-    def test_default_action_defaults_to_list(self):
+    def test_default_action_defaults_to_none(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(c.default_action, 'list')
+        self.assertIsNone(c.default_action)
 
     def test_reverse_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
