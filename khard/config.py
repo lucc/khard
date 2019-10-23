@@ -151,16 +151,6 @@ class Config:
         self.merge_editor = general["merge_editor"] \
             or os.environ.get("MERGE_EDITOR", "vimdiff")
         self.default_action = general["default_action"]
-        if self.default_action is None:
-            # When these two lines are replaced with "pass" khard requires a
-            # subcommand on the command line as long as no default_action is
-            # explicitly given in the config file.
-            logging.warning(
-                "No default_action was set in the config.  Currently this "
-                "will default to default_action='list' but will require the "
-                "use of a subcommand on the command line in a future version "
-                "of khard.")
-            self.default_action = "list"
         table = self.config["contact table"]
         vcard = self.config["vcard"]
         self.sort = table["sort"]
