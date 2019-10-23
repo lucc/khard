@@ -1,1 +1,4 @@
-doc/build/
+build
+dist/
+khard/version.py
+doc/source/api/

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Names and aliases for the subcommands on the command line"""
 
 
 class Actions:

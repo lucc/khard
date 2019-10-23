@@ -1,0 +1,1 @@
+doc/source/contributing.rst

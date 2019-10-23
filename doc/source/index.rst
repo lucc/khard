@@ -7,8 +7,15 @@ Welcome to khard's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+
+   index
+   commandline
+   davcontroller
+   contributing
+   man
+   API documentation for developers <api/modules.rst>
+   indices
 
 Khard is an address book for the Linux command line.  It can read, create,
 modify and delete carddav address book entries.  Khard only works with a local
@@ -19,6 +26,10 @@ programs like an email client, text editor, vdir synchronizer or VOIP client.
 Installation
 ============
 
+.. image:: https://repology.org/badge/tiny-repos/khard.svg
+   :target: https://repology.org/project/khard/versions
+   :alt: Packaging status
+
 Khard is available as a native package for some Linux distributions so you
 should check your package manager first.  If you want or need to install
 manually you can use the release from `PyPi`_:
@@ -28,7 +39,7 @@ manually you can use the release from `PyPi`_:
   pip3 install khard
 
 If you want to help the development or need more advanced installation
-instructions see the Development section below.
+instructions see :doc:`contributing`.
 
 Configuration
 =============
@@ -40,7 +51,7 @@ If the environment variable ``$XDG_CONFIG_HOME`` is set, it is
 
 A minimal configuration is provided in the source tree.  It looks like this:
 
-.. literalinclude :: ../../misc/khard/khard.conf.example
+.. literalinclude:: ../../misc/khard/khard.conf.example
    :language: ini
 
 
@@ -187,43 +198,4 @@ as your merge editor in khard's config file:
 
   merge_editor = /path/to/sdiff_khard_wrapper.sh
 
-
-Development
-===========
-
-Khard is developed on `Github`_ where you are welcome to post `bug reports`_,
-`feature requests`_ or join the discussion in general.
-
-The `develop`_ branch is used for active development so please open all pull
-requests for new features against that branch.  Only bug fixes should be opened
-against master.
-
-In order to start coding you need to fetch the develop branch:
-
-.. code-block:: shell
-
-  git clone https://github.com/scheibler/khard
-  cd khard
-  git fetch --all
-  git checkout develop
-  pip3 install --editable .
-
-Alternatively you can use the ``setup.py`` script directly.  If you want to
-isolate khard from your system Python environment you can use a `virtualenv`_
-to do so.
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
 .. _PyPi: https://pypi.python.org/pypi/khard/
-.. _Github: https://github.com/scheibler/khard
-.. _develop: https://github.com/scheibler/khard/tree/develop
-.. _virtualenv: https://virtualenv.pypa.io/en/stable/
-.. _bug reports: https://github.com/scheibler/khard/issues
-.. _feature requests: https://github.com/scheibler/khard/pulls
-

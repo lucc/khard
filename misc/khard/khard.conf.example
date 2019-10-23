@@ -1,5 +1,5 @@
-# example configuration file for khard version >= 0.13.0
-# place it under $HOME/.config/khard/khard.conf
+# example configuration file for khard version > 0.14.0
+# place it under ~/.config/khard/khard.conf
 
 [addressbooks]
 [[family]]
@@ -10,11 +10,12 @@ path = ~/.contacts/friends/
 [general]
 debug = no
 default_action = list
-editor = vim
+# These are either strings or comma seperated lists
+editor = vim, -i, NONE
 merge_editor = vimdiff
 
 [contact table]
-# display names by first or last name: first_name / last_name
+# display names by first or last name: first_name / last_name / formatted_name
 display = first_name
 # group by address book: yes / no
 group_by_addressbook = no
@@ -24,7 +25,7 @@ reverse = no
 show_nicknames = no
 # show uid table column: yes / no
 show_uids = yes
-# sort by first or last name: first_name / last_name
+# sort by first or last name: first_name / last_name / formatted_name
 sort = last_name
 # localize dates: yes / no
 localize_dates = yes

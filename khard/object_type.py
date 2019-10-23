@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Helper module for validating typed vcard properties"""
 
 from enum import Enum
 

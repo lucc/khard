@@ -1,4 +1,3 @@
-dist: xenial # required for Python >= 3.7
 language: python
 python:
   - "3.5"
@@ -23,6 +22,6 @@ install: |
 
 script: |
   case $JOB in
-    tests) python -m unittest discover;;
-    docs) make -C doc html man;;
+    tests) python setup.py test;;
+    docs) python setup.py build; make -C doc html man;;
   esac

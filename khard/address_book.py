@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A simple class to load and manage the vcard files from disk."""
 
 import abc
@@ -6,7 +5,6 @@ import glob
 import logging
 import os
 import re
-import sys
 
 import vobject.base
 
@@ -16,10 +14,16 @@ from .carddav_object import CarddavObject
 class AddressBookParseError(Exception):
     """Indicate an error while parsing data from an address book backend."""
 
-    def __init__(self, filename, *args, **kwargs):
+    def __init__(self, filename, abook, reason, *args, **kwargs):
         """Store the filename that caused the error."""
         super().__init__(*args, **kwargs)
         self.filename = filename
+        self.abook = abook
+        self.reason = reason
+
+    def __str__(self):
+        return "Error when parsing {} in address book {}: {}".format(
+            self.filename, self.abook, self.reason)
 
 
 class AddressBook(metaclass=abc.ABCMeta):
@@ -145,15 +149,13 @@ class AddressBook(metaclass=abc.ABCMeta):
         if not self._loaded:
             self.load(query)
         if method == "all":
-            search_function = self._search_all
+            return self._search_all(query)
         elif method == "name":
-            search_function = self._search_names
+            return self._search_names(query)
         elif method == "uid":
-            search_function = self._search_uid
-        else:
-            raise ValueError('Only the search methods "all", "name" and "uid" '
-                             'are supported.')
-        return list(search_function(query))
+            return self._search_uid(query)
+        raise ValueError(
+            'Only the search methods "all", "name" and "uid" are supported.')
 
     def get_short_uid_dict(self, query=None):
         """Create a dictionary of shortend UIDs for all contacts.
@@ -244,31 +246,6 @@ class VdirAddressBook(AddressBook):
                                     " {} does not exist.".format(path, name))
         super().__init__(name, **kwargs)
 
-    def _find_vcard_files(self, search=None, search_in_source_files=False):
-        """Find all vcard files inside this address book.
-
-        If a search string is given only files which contents match that will
-        be returned.
-
-        :param search: a regular expression to limit the results
-        :type search: str
-        :param search_in_source_files: apply search regexp directly on the .vcf
-            files to speed up parsing (less accurate)
-        :type search_in_source_files: bool
-        :returns: the paths of the vcard files
-        :rtype: generator
-
-        """
-        files = glob.glob(os.path.join(self.path, "*.vcf"))
-        if search and search_in_source_files:
-            for filename in files:
-                with open(filename, "r") as filehandle:
-                    if re.search(search, filehandle.read(),
-                                 re.IGNORECASE | re.DOTALL):
-                        yield filename
-        else:
-            yield from files
-
     def load(self, query=None, search_in_source_files=False):
         """Load all vcard files in this address book from disk.
 
@@ -289,12 +266,13 @@ class VdirAddressBook(AddressBook):
             return
         logging.debug('Loading Vdir %s with query %s', self.name, query)
         errors = 0
-        for filename in self._find_vcard_files(
-                search=query, search_in_source_files=search_in_source_files):
+        for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
-                card = CarddavObject.from_file(self, filename,
-                                               self._private_objects,
-                                               self._localize_dates)
+                card = CarddavObject.from_file(
+                    self, filename, query if search_in_source_files else None,
+                    self._private_objects, self._localize_dates)
+                if card is None:
+                    continue
             except (IOError, vobject.base.ParseError) as err:
                 verb = "open" if isinstance(err, IOError) else "parse"
                 logging.debug("Error: Could not %s file %s\n%s", verb,
@@ -302,24 +280,17 @@ class VdirAddressBook(AddressBook):
                 if self._skip:
                     errors += 1
                 else:
-                    # FIXME: This should throw an apropriate exception and the
-                    # sys.exit should be called somewhere closer to the command
-                    # line parsing.
-                    logging.error(
-                        "The vcard file %s of address book %s could not be "
-                        "parsed\nUse --debug for more information or "
-                        "--skip-unparsable to proceed", filename, self.name)
-                    sys.exit(2)
+                    raise AddressBookParseError(filename, self.name, err)
             else:
                 uid = card.uid
                 if not uid:
                     logging.warning("Card %s from address book %s has no UID "
-                                    "and will not be availbale.", card,
+                                    "and will not be available.", card,
                                     self.name)
                 elif uid in self.contacts:
                     logging.warning(
                         "Card %s and %s from address book %s have the same "
-                        "UID. The former will not be availbale.", card,
+                        "UID. The former will not be available.", card,
                         self.contacts[uid], self.name)
                 else:
                     self.contacts[uid] = card
@@ -361,7 +332,7 @@ class AddressBookCollection(AddressBook):
             for uid in abook.contacts:
                 if uid in self.contacts:
                     logging.warning(
-                        "Card %s from address book %s will not be availbale "
+                        "Card %s from address book %s will not be available "
                         "because there is already another card with the same "
                         "UID: %s", abook.contacts[uid], abook, uid)
                 else:

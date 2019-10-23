@@ -4,6 +4,8 @@ This also contains some "end to end" tests.  That means some very high level
 calls to the main function and a check against the output.  These might later
 be converted to proper "unit" tests.
 """
+# pylint: disable=missing-docstring
+
 # TODO We are still missing high level tests for the add-email and merge
 # subcommands.  They depend heavily on user interaction and are hard to test in
 # their current form.
@@ -13,13 +15,15 @@ import pathlib
 import shutil
 import tempfile
 import unittest
-import unittest.mock as mock
+from unittest import mock
 
 from ruamel.yaml import YAML
 
+from khard import cli
+from khard import config
 from khard import khard
 
-from .helpers import expectedFailureForVersion
+from .helpers import expectedFailureForVersion, with_vcards
 
 
 def mock_stdout():
@@ -36,7 +40,7 @@ class HelpOption(unittest.TestCase):
         """Test the command line args and compare the prefix of the output."""
         with self.assertRaises(SystemExit):
             with mock_stdout() as stdout:
-                khard.main(args)
+                cli.parse_args(args)
         text = stdout.getvalue()
         self.assertTrue(text.startswith(expect))
 
@@ -44,7 +48,6 @@ class HelpOption(unittest.TestCase):
         self._test(['-h'], 'usage: TESTSUITE [-h]')
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
-    @mock.patch('khard.config.find_executable', lambda x: x)
     def test_subcommand_help(self):
         self._test(['list', '-h'], 'usage: TESTSUITE list [-h]')
 
@@ -52,7 +55,6 @@ class HelpOption(unittest.TestCase):
         self._test(['-h', 'list'], 'usage: TESTSUITE [-h]')
 
 
-@mock.patch('khard.config.find_executable', lambda x: x)
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
 class ListingCommands(unittest.TestCase):
     """Tests for subcommands that simply list stuff."""
@@ -103,9 +105,9 @@ class ListingCommands(unittest.TestCase):
         with mock_stdout() as stdout:
             khard.main(['filename'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["test/fixture/foo.abook/contact1.vcf",
-                  "test/fixture/foo.abook/text-bday.vcf",
-                  "test/fixture/foo.abook/contact2.vcf"]
+        expect = ["test/fixture/test.abook/contact1.vcf",
+                  "test/fixture/test.abook/text-bday.vcf",
+                  "test/fixture/test.abook/contact2.vcf"]
         self.assertListEqual(text, expect)
 
     def test_simple_abooks_without_options(self):
@@ -124,7 +126,20 @@ class ListingCommands(unittest.TestCase):
         self.assertIn('UID: testuid1', text)
 
 
-@mock.patch('khard.config.find_executable', lambda x: x)
+class ListingCommands2(unittest.TestCase):
+
+    def test_list_bug_195(self):
+        with with_vcards(['test/fixture/vcards/tel-value-uri.vcf']):
+            with mock_stdout() as stdout:
+                khard.main(['list'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = [
+            "Address book: tmp",
+            "Index    Name       Phone             E-Mail    UID",
+            "1        bug 195    cell: 67545678              b"]
+        self.assertListEqual(text, expect)
+
+
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""
 
@@ -137,19 +152,14 @@ class FileSystemCommands(unittest.TestCase):
         self.abook1.mkdir()
         self.abook2.mkdir()
         self.contact = self.abook1 / 'contact.vcf'
-        shutil.copy('test/fixture/foo.abook/contact1.vcf', str(self.contact))
+        shutil.copy('test/fixture/vcards/contact1.vcf', str(self.contact))
         config = path / 'conf'
         with config.open('w') as fh:
-            fh.write(
-                """[general]
-                editor = editor
-                merge_editor = meditor
-                [addressbooks]
-                [[abook1]]
-                path = {}
-                [[abook2]]
-                path = {}
-                """.format(self.abook1, self.abook2))
+            fh.write("""[addressbooks]
+                        [[abook1]]
+                        path = {}
+                        [[abook2]]
+                        path = {}""".format(self.abook1, self.abook2))
         self._patch = mock.patch.dict('os.environ', KHARD_CONFIG=str(config))
         self._patch.start()
 
@@ -201,14 +211,13 @@ class FileSystemCommands(unittest.TestCase):
         self.assertEqual(new, old + 1)
 
 
-@mock.patch('khard.config.find_executable', lambda x: x)
 class MiscCommands(unittest.TestCase):
     """Tests for other subcommands."""
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
-    def test_simple_export_without_options(self):
+    def test_simple_show_with_yaml_format(self):
         with mock_stdout() as stdout:
-            khard.main(["export", "uid1"])
+            khard.main(["show", "--format=yaml", "uid1"])
         # This implicitly tests if the output is valid yaml.
         yaml = YAML(typ="base").load(stdout.getvalue())
         # Just test some keys.
@@ -225,19 +234,71 @@ class MiscCommands(unittest.TestCase):
         with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
             with mock.patch('sys.stdout'):
-                khard.main(["modify", "uid1"])
+                khard.main(["edit", "uid1"])
         # The editor is called with a temp file so how to we check this more
         # precisely?
         popen.assert_called_once()
 
-    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf',
+                     EDITOR='editor')
     def test_edit_source_file_without_modifications(self):
         with mock.patch('subprocess.Popen') as popen:
             # just hide stdout
             with mock.patch('sys.stdout'):
                 khard.main(["edit", "--format=vcard", "uid1"])
         popen.assert_called_once_with(['editor',
-                                       'test/fixture/foo.abook/contact1.vcf'])
+                                       'test/fixture/test.abook/contact1.vcf'])
+
+
+@mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+class CommandLineDefaultsDoNotOverwriteConfigValues(unittest.TestCase):
+
+    @staticmethod
+    def _with_contact_table(args, **kwargs):
+        args = cli.parse_args(args)
+        options = '\n'.join('{}={}'.format(key, kwargs[key]) for key in kwargs)
+        conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.\n'
+                                         '[contact table]\n' + options))
+        return cli.merge_args_into_config(args, conf)
+
+    def test_group_by_addressbook(self):
+        conf = self._with_contact_table(['list'], group_by_addressbook=True)
+        self.assertTrue(conf.group_by_addressbook)
+
+
+@mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
+
+    @staticmethod
+    def _merge(args):
+        args, _conf = cli.parse_args(args)
+        # This config file just loads all defaults from the config.spec.
+        conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.'))
+        return cli.merge_args_into_config(args, conf)
+
+    def test_sort_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--sort=last_name'])
+        self.assertEqual(conf.sort, 'last_name')
+
+    def test_display_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--display=last_name'])
+        self.assertEqual(conf.display, 'last_name')
+
+    def test_reverse_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--reverse'])
+        self.assertTrue(conf.reverse)
+
+    def test_group_by_addressbook_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--group-by-addressbook'])
+        self.assertTrue(conf.group_by_addressbook)
+
+    def test_search_in_source_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--search-in-source-files'])
+        self.assertTrue(conf.search_in_source_files)
+
+#    def test_strict_is_picked_up_from_arguments(self):
+#        conf = self._merge(['list', '--strict'])
+#        self.assertTrue(conf.strict)
 
 
 if __name__ == "__main__":

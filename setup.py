@@ -5,30 +5,18 @@
 #  - https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
 #  - https://gehrcke.de/2014/02/distributing-a-python-command-line-application/
 
-import re
 from setuptools import setup
 
-# get long description of package (either rst or markdown)
-# see https://gist.github.com/aubricus/9184003#gistcomment-1488025
-with open('README.md', 'rb') as f:
-    ld_md = f.read().decode("utf-8")
-try:
-    # pypi wants the long description as restructured text (rst)
-    # so try to convert from markdown to rst
-    import pypandoc
-    ld = pypandoc.convert_text(ld_md, 'rst', format='md')
-except ImportError:
-    # else use long description in markdown format
-    ld = ld_md
+with open('README.rst', 'rb') as f:
+    readme = f.read().decode("utf-8")
 
 setup(
     name='khard',
-    version=re.sub("[^0-9.]", "", open('khard/version.py').read()),
     author='Eric Scheibler',
     author_email='email@eric-scheibler.de',
     url='https://github.com/scheibler/khard/',
     description='A console carddav client',
-    long_description=ld,
+    long_description=readme,
     license='GPL',
     keywords='Carddav console addressbook',
     classifiers=[
@@ -48,11 +36,12 @@ setup(
         'unidecode',
         'vobject'
     ],
+    use_scm_version={'write_to': 'khard/version.py'},
+    setup_requires=['setuptools_scm'],
     packages=['khard'],
-    entry_points={
-        'console_scripts': ['khard = khard.khard:main']
-    },
+    entry_points={'console_scripts': ['khard = khard.khard:main']},
     test_suite="test",
     # the dependency ruamel.yaml requires >=3.5
     python_requires=">=3.5",
+    include_package_data=True,
 )

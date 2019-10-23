@@ -1,9 +1,3 @@
-# Contact template for khard version 0.15.0
-#
-# Use this yaml formatted template to create a new contact:
-#   either with: khard new -a address_book -i template.yaml
-#   or with: cat template.yaml | khard new -a address_book
-
 # Every contact must contain a formatted name, it will be autofilled
 # from the full name below if not given.
 Formatted name : 
@@ -124,10 +118,7 @@ Webpage :
 # these objects are stored with a leading "X-" before the object name in the
 # vcard files.
 # every entry may contain a string or a list of strings
-Private :
-    Jabber  : 
-    Skype   : 
-    Twitter : 
+Private : {}
 
 # notes
 # may contain a string or a list of strings

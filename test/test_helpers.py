@@ -1,4 +1,5 @@
 """Tests for the helpers module."""
+# pylint: disable=missing-docstring
 
 import datetime
 import unittest
@@ -99,6 +100,13 @@ class StringToDate(unittest.TestCase):
         string = '1900-01-02T06:42:17-06:00'
         result = helpers.string_to_date(string)
         self.assertEqual(result, self.zone)
+
+
+class ConvertToYAML(unittest.TestCase):
+
+    def test_colon_handling(self):
+        result = helpers.convert_to_yaml("Note", "foo: bar", 0, 5, True)
+        self.assertEqual(result[0], "Note : |\n    foo: bar")
 
 
 if __name__ == "__main__":
