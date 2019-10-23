@@ -1,6 +1,22 @@
 Change Log
 ==========
 
+v0.15.0: 2019-10-24
+- Require either default_action or a subcommand in the future (add deprecation
+  warning for now)
+- add man page for the config file
+- make all options in the config file optional except for the address book
+  definitions
+- allow lists of strings for editor an merge_editor config options
+- add a CONTRIBUTING file on Github
+- handle ABLABELs on most fields
+- add formatted name to the yaml template
+- show formatted name in contact details
+- make it possible to sort by and display formatted name in linstings
+- remove the khard-runner.py helper script
+- validate the config file upon loading it
+- internal code refactoring
+
 
 v0.14.0: 2019-06-21
 - Display ABLABELs for URLs and Private Objects
