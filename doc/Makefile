@@ -20,5 +20,8 @@ help:
 %: Makefile generate-api-docs
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-generate-api-docs:
+generate-api-docs: ../khard/*.py
 	@$(SPHINXAPIDOC) -e -M -o "$(SOURCEDIR)/api/" ../khard
+
+# The python source files are always up to date.
+../khard/%.py:;
