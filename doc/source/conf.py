@@ -53,6 +53,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx_autodoc_typehints',  # https://pypi.org/project/sphinx-autodoc-typehints/
+    'sphinxarg.ext',
 ]
 
 autoapi_type = 'python'
