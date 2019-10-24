@@ -85,7 +85,7 @@ vcard
 Example
 -------
 
-This is the example config file:
+This is the :download:`example config file <../examples/khard.conf.example>`:
 
-.. literalinclude :: ../../../misc/khard/khard.conf.example
+.. literalinclude :: ../examples/khard.conf.example
    :language: ini

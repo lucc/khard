@@ -49,9 +49,10 @@ If the environment variable ``$XDG_CONFIG_HOME`` is set, it is
 ``$XDG_CONFIG_HOME/khard/khard.conf`` and it defaults to
 ``~/.config/khard/khard.conf`` otherwise.
 
-A minimal configuration is provided in the source tree.  It looks like this:
+An :download:`example configuration <examples/khard.conf.example>` is provided
+in the source tree.  It looks like this:
 
-.. literalinclude:: ../../misc/khard/khard.conf.example
+.. literalinclude:: examples/khard.conf.example
    :language: ini
 
 

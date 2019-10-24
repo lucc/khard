@@ -109,10 +109,11 @@ of the more recent version 4.0, you may change this with the option --vcard-vers
 
    khard new --vcard-version=4.0 [-a "address book name"]
 
-For a more permanent solution you may set the preferred_version parameter in the vcard section of
-the khard config file (see misc/khard/khard.conf.example for more details).  But beware, that khard
-cannot convert already existing contacts from version 3.0 to 4.0. Therefore this setting is not
-applicable to the modify action.
+For a more permanent solution you may set the preferred_version parameter in
+the vcard section of the khard config file (see the :download:`example config
+file <examples/khard.conf.example>` for more details).  But beware, that khard
+cannot convert already existing contacts from version 3.0 to 4.0. Therefore
+this setting is not applicable to the modify action.
 
 
 Edit contacts

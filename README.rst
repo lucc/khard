@@ -34,13 +34,12 @@ found in the `documentation <doc/source/index.rst#installation>`_.
 Usage
 -----
 
-There is an `example config file <misc/khard/khard.conf.example>`_ which you
-can copy to the default config file location:
-``~/.config/khard/khard.conf``. ``khard`` has several subcommands which are
-all documented by their ``--help`` option. `The docs
-<doc/source/index.rst>`_ also have a chapter on `command line usage
-<doc/source/commandline.rst>`_ and `configuration
-<doc/source/index.rst#configuration>`_.
+There is an `example config file <doc/source/examples/khard.conf.example>`_
+which you can copy to the default config file location:
+``~/.config/khard/khard.conf``. ``khard`` has several subcommands which are all
+documented by their ``--help`` option. `The docs <doc/source/index.rst>`_ also
+have a chapter on `command line usage <doc/source/commandline.rst>`_ and
+`configuration <doc/source/index.rst#configuration>`_.
 
 Development
 -----------
