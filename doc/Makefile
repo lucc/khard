@@ -13,15 +13,17 @@ SPHINXAPIDOC  = sphinx-apidoc
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile generate-api-docs
+.PHONY: help generate-api-docs
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile generate-api-docs
+%: Makefile source/examples/template.yaml generate-api-docs
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 generate-api-docs: ../khard/*.py
 	@$(SPHINXAPIDOC) -e -M -o "$(SOURCEDIR)/api/" ../khard
-
-# The python source files are always up to date.
-../khard/%.py:;
+source/examples/template.yaml: ../khard/data/template.yaml Makefile
+	python3 -c 'print(open("$<").read().format("\n    Jabber  : \n    Skype   : \n    Twitter : "))' > $@
+# These files are always up to date.
+Makefile:;
+../khard/%:;

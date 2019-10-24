@@ -102,6 +102,10 @@ You may get an empty contact template with the following command:
 
    khard template
 
+Assuming the user had configured the three supported private object "Jabber",
+"Skype", and "Twitter" in their config, the template would look :download:`like
+this <examples/template.yaml>`.
+
 Per default khard creates vcards of version 3.0. If your other contact
 applications support vcards of the more recent version 4.0, you may change this
 with the option :option:`--vcard-version`. Example:
