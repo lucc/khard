@@ -13,21 +13,21 @@ khard -v|--version
 Description
 -----------
 
-Khard is an address book for the Linux command line.  It can read, create,
-modify and delete carddav address book entries.  Khard only works with a local
+:program:`khard` is an address book for the Linux command line.  It can read, create,
+modify and delete carddav address book entries.  :program:`khard` only works with a local
 store of VCARD files.  It is intended to be used in conjunction with other
 programs like an email client, text editor, vdir synchronizer or VOIP client.
 
 Options
 -------
 
--c CONFIG, --config CONFIG
-  configuration file (default: ~/.config/khard/khard.conf)
+.. option:: -c CONFIG, --config CONFIG
+  configuration file (default: :file:`~/.config/khard/khard.conf`)
 
---debug
+.. option:: --debug
   output debugging information
 
---skip-unparsable
+.. option:: --skip-unparsable
   skip unparsable vcards when reading the address books
 
 Subcommands
