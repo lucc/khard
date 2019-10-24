@@ -66,7 +66,7 @@ def multi_property_key(item):
     :returns: a list with two members. The first is int(isinstance(item, dict).
         The second is either the key from the dict or the unchanged item if it
         is not a dict.
-    :rtype list(int, type(item)) or list(int, str)
+    :rtype: list(int, type(item)) or list(int, str)
     """
     if isinstance(item, dict):
         return [1, list(item)[0]]
