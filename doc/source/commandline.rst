@@ -50,8 +50,9 @@ or select the contact by it's uid, which you can find at the contacts table:
    khard show -u ID
 
 The parameters :option:`-a` and :option:`-u` from the examples above are always
-optional. If you don't use them or your input produces unambiguous results, you
-may pick the contacts from a list instead.
+optional.  They can be given on all subcommands that select one or more
+contacts.  If you don't use them or your input produces unambiguous results,
+you may pick the contacts from a list instead.
 
 The search parameter searches in all data fields. Therefore you aren't limited
 to the contact's name but you also could for example search for a part of a
@@ -87,13 +88,13 @@ Alternatively you can create the contact from stdin:
        - cat1
        - cat2
        - cat3
-   " | khard new [-a "address book name"]
+   " | khard new
 
 or create from input template file:
 
 .. code-block:: shell
 
-   khard new -i contact.yaml [-a "address book name"]
+   khard new -i contact.yaml
 
 You may get an empty contact template with the following command:
 
@@ -107,7 +108,7 @@ with the option :option:`--vcard-version`. Example:
 
 .. code-block:: shell
 
-   khard new --vcard-version=4.0 [-a "address book name"]
+   khard new --vcard-version=4.0
 
 For a more permanent solution you may set the preferred_version parameter in
 the vcard section of the khard config file (see the :download:`example config
