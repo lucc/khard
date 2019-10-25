@@ -141,7 +141,4 @@ as your merge editor in khard's config file:
 
   merge_editor = /path/to/sdiff_khard_wrapper.sh
 
-.. _PyPi: https://pypi.python.org/pypi/khard/
-
-
 .. include:: davcontroller.rst

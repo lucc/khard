@@ -41,6 +41,8 @@ manually you can use the release from `PyPi`_:
 If you want to help the development or need more advanced installation
 instructions see :doc:`contributing`.
 
+.. _PyPi: https://pypi.python.org/pypi/khard/
+
 Configuration
 =============
 
