@@ -63,6 +63,14 @@ are welcome to post `bug reports <https://github.com/scheibler/khard/issues>`_
 and `feature requests <https://github.com/scheibler/khard/pulls>`_.  Also see
 the `notes for contributors <doc/source/contributing.rst>`_.
 
+Authors
+-------
+
+Khard was started by `Eric Scheibler <http://eric-scheibler.de>`_ and is
+currently maintained by @lucc.  `Several people
+<https://github.com/scheibler/khard/graphs/contributors>`_ have contributed
+over the years.
+
 Related projects
 ----------------
 
