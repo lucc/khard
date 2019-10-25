@@ -4,7 +4,7 @@ khard
 Synopsis
 --------
 
-:program:`khard` [:option:`-c CONFIG`] [:option:`--debug`] [:option:`--skip-unparsable`] SUBCOMMAND ...
+:program:`khard` [:option:`-c` CONFIG] [:option:`--debug`] [:option:`--skip-unparsable`] SUBCOMMAND ...
 
 :program:`khard` :option:`-h` | :option:`--help`
 
