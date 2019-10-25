@@ -35,7 +35,8 @@ Please stick to the following standards when you open pull requests:
   bug fixes that affect the current release should be opened against `master`_.
 - Write "good" commit messages, especially a proper subject line.  This is also
   explained in `the Git book`_.
-- Format your python code according to `PEP 8`_.
+- Format your python code according to `PEP 8`_.  Tools like `pylint`_ also
+  help in writing maintainable code.
 - Khard has a test suite, please provide tests for bugs that you fix and also
   for new code and new features that are introduced.
 - Please verify *all* tests pass before sending a pull request, they will be
@@ -69,6 +70,7 @@ to do so.
 .. _Github: https://github.com/scheibler/khard
 .. _master: https://github.com/scheibler/khard/tree/master
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _pylint: https://pylint.readthedocs.io/en/latest/
 .. |travis| image:: https://travis-ci.org/scheibler/khard.svg?branch=develop
    :target: https://travis-ci.org/scheibler/khard
    :alt: build status
