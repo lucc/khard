@@ -4,31 +4,42 @@ khard
 Synopsis
 --------
 
-khard [-c CONFIG] [--debug] [--skip-unparsable] SUBCOMMAND ...
+:program:`khard` [:option:`-c` CONFIG] [:option:`--debug`] [:option:`--skip-unparsable`] SUBCOMMAND ...
 
-khard -h|--help
+:program:`khard` :option:`-h` | :option:`--help`
 
-khard -v|--version
+:program:`khard` :option:`-v` | :option:`--version`
 
 Description
 -----------
 
-Khard is an address book for the Linux command line.  It can read, create,
-modify and delete carddav address book entries.  Khard only works with a local
+:program:`khard` is an address book for the Linux command line.  It can read, create,
+modify and delete carddav address book entries.  :program:`khard` only works with a local
 store of VCARD files.  It is intended to be used in conjunction with other
 programs like an email client, text editor, vdir synchronizer or VOIP client.
 
 Options
 -------
 
--c CONFIG, --config CONFIG
-  configuration file (default: ~/.config/khard/khard.conf)
+.. option:: -c CONFIG, --config CONFIG
 
---debug
+  configuration file (default: :file:`~/.config/khard/khard.conf`)
+
+.. option:: --debug
+
   output debugging information
 
---skip-unparsable
+.. option:: -h, --help
+
+  show a help message and exit
+
+.. option:: --skip-unparsable
+
   skip unparsable vcards when reading the address books
+
+.. option:: -v, --version
+
+  show program's version number and exit
 
 Subcommands
 -----------
@@ -60,19 +71,20 @@ Detailed display
 
 These subcommands display detailed information about one subcommand.
 
-details
-  display detailed information about one contact
+show
+  display detailed information about one contact, supported output formats
+  are "pretty", "yaml" and "vcard"
 export
-  export a contact to the custom yaml format that is also used for editing and
-  creating contacts
+  DEPRECATED, use ``show --format=yaml`` instead
 
 Modifying subcommands
 ~~~~~~~~~~~~~~~~~~~~~
 
 These subcommands are used to modify contacts.
 
-source
-  edit the vcard file of a contact directly
+edit
+  edit the data of a contact, supported formats for editing are "yaml" and
+  "vcard"
 new
   create a new contact
 add-email
@@ -80,20 +92,22 @@ add-email
   existing contact or create a new one
 merge
   merge two contacts
-modify
-  edit the data of a contact
 copy
   copy a contact to a different addressbook
 move
   move a contact to a different addressbook
 remove
   remove a contact
+source
+  DEPRECATED, use ``edit --format=vcard`` instead
 
 Other subcommands
 ~~~~~~~~~~~~~~~~~
 
 addressbooks
   list all address books
+template
+  print an empty yaml template
 
 Configuration
 -------------
