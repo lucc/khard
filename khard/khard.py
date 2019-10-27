@@ -39,6 +39,37 @@ def confirm(message):
         print('Please answer with "y" for yes or "n" for no.')
 
 
+def select(items, include_none=False):
+    """Ask the user to select an item from a list.
+
+    The list should be displayed to the user before calling this function and
+    should be indexed starting with 1.  This function might exit if the user
+    selects "q".
+
+    :param list(T) items: the list from which to select
+    :param bool include_none: weather to allow the selection of no item
+    :returns: None or the selected item
+    :rtype: T|None
+    """
+    while True:
+        try:
+            answer = input("Enter Index ({}q to quit): ".format(
+                "0 for None, " if include_none else ""))
+            answer = answer.lower()
+            if answer in ["", "q"]:
+                print("Canceled")
+                sys.exit(0)
+            index = int(answer)
+            if include_none and index == 0:
+                return None
+            if index > 0:
+                return items[index - 1]
+        except (EOFError, IndexError, ValueError):
+            pass
+        print("Please enter an index value between 1 and {} or q to exit."
+              .format(len(items)))
+
+
 def write_temp_file(text=""):
     """Create a new temporary file and write some initial text to it.
 
@@ -390,25 +421,7 @@ def choose_address_book_from_list(header_string, address_books):
         return address_books[0]
     print(header_string)
     list_address_books(address_books)
-    while True:
-        try:
-            input_string = input("Enter Index: ")
-            if input_string in ["", "q", "Q"]:
-                print("Canceled")
-                sys.exit(0)
-            addr_index = int(input_string)
-            if addr_index > 0:
-                # make sure the address book is loaded afterwards
-                selected_address_book = address_books[addr_index - 1]
-            else:
-                raise ValueError
-        except (EOFError, IndexError, ValueError):
-            print("Please enter an index value between 1 and %d or nothing"
-                  " to exit." % len(address_books))
-        else:
-            break
-    print("")
-    return selected_address_book
+    return select(address_books)
 
 
 def choose_vcard_from_list(header_string, vcard_list, include_none=False):
@@ -418,28 +431,7 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
         return vcard_list[0]
     print(header_string)
     list_contacts(vcard_list)
-    while True:
-        try:
-            prompt_string = "Enter Index ({}q to quit): ".format(
-                "0 for None, " if include_none else "")
-            input_string = input(prompt_string)
-            if input_string in ["", "q", "Q"]:
-                print("Canceled")
-                sys.exit(0)
-            addr_index = int(input_string)
-            if addr_index == 0 and include_none:
-                return None
-            if addr_index > 0:
-                selected_vcard = vcard_list[addr_index - 1]
-            else:
-                raise ValueError
-        except (EOFError, IndexError, ValueError):
-            print("Please enter an index value between 1 and {} or nothing"
-                  " to exit.".format(len(vcard_list)))
-        else:
-            break
-    print("")
-    return selected_vcard
+    return select(vcard_list, True)
 
 
 def get_contact_list_by_user_selection(address_books, search, strict_search):
