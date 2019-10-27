@@ -242,7 +242,8 @@ class VCardWrapper:
                         type_list.append(type[2:])
         # try to get pref parameter from vcard version 4.0
         try:
-            type_list.append("pref=%d" % int(object.params.get("PREF")[0]))
+            type_list.append("pref={}".format(
+                int(object.params.get("PREF")[0])))
         except (IndexError, TypeError, ValueError):
             # else try to determine, if type params contain pref attribute
             try:
@@ -386,7 +387,7 @@ class VCardWrapper:
         """
         counter = 1
         while True:
-            group_name = "item%s%d" % (group_type, counter)
+            group_name = "item{}{}".format(group_type, counter)
             for child in self.vcard.getChildren():
                 if child.group and child.group == group_name:
                     counter += 1
@@ -412,8 +413,9 @@ class VCardWrapper:
         obj = self.vcard.add(obj_type)
         if isinstance(user_input, dict):
             if len(user_input) > 1:
-                raise ValueError("Error: %s must be a string or a dict "
-                                 "containing one key/value pair." % obj_type)
+                raise ValueError(
+                    "Error: {} must be a string or a dict containing one "
+                    "key/value pair.".format(obj_type))
             label = list(user_input)[0]
             group_name = self._get_new_group(obj_type if name_groups else "")
             obj.group = group_name
@@ -462,17 +464,17 @@ class VCardWrapper:
             if self.version == "4.0":
                 fmt = "%Y%m%dT%H%M%S{}".format(date.tzname()[3:])
             else:
-                fmt = "%Y-%m-%dT%H:%M:%S{}".format(date.tzname()[3:])
+                fmt = "%FT%T{}".format(date.tzname()[3:])
         elif date.hour != 0 or date.minute != 0 or date.second != 0:
             if self.version == "4.0":
                 fmt = "%Y%m%dT%H%M%SZ"
             else:
-                fmt = "%Y-%m-%dT%H:%M:%SZ"
+                fmt = "%FT%TZ"
         else:
             if self.version == "4.0":
                 fmt = "%Y%m%d"
             else:
-                fmt = "%Y-%m-%d"
+                fmt = "%F"
         return date.strftime(fmt), False
 
     @property
@@ -721,8 +723,8 @@ class VCardWrapper:
                              helpers.list_to_string(custom_types, ", "))
         phone_obj = self.vcard.add('tel')
         if self.version == "4.0":
-            phone_obj.value = "tel:%s" % convert_to_vcard(
-                "phone number", number, ObjectType.string)
+            phone_obj.value = "tel:{}".format(
+                convert_to_vcard("phone number", number, ObjectType.string))
             phone_obj.params['VALUE'] = ["uri"]
             if pref > 0:
                 phone_obj.params['PREF'] = str(pref)
@@ -739,7 +741,7 @@ class VCardWrapper:
                 if label.name == "X-ABLABEL" and label.group.startswith(
                         "itemtel"):
                     custom_label_count += 1
-            group_name = "itemtel%d" % (custom_label_count + 1)
+            group_name = "itemtel{}".format(custom_label_count + 1)
             phone_obj.group = group_name
             label_obj = self.vcard.add('x-ablabel')
             label_obj.group = group_name
@@ -792,7 +794,7 @@ class VCardWrapper:
                 if label.name == "X-ABLABEL" and label.group.startswith(
                         "itememail"):
                     custom_label_count += 1
-            group_name = "itememail%d" % (custom_label_count + 1)
+            group_name = "itememail{}".format(custom_label_count + 1)
             email_obj.group = group_name
             label_obj = self.vcard.add('x-ablabel')
             label_obj.group = group_name
@@ -910,7 +912,7 @@ class VCardWrapper:
                 if label.name == "X-ABLABEL" and label.group.startswith(
                         "itemadr"):
                     custom_label_count += 1
-            group_name = "itemadr%d" % (custom_label_count + 1)
+            group_name = "itemadr{}".format(custom_label_count + 1)
             adr_obj.group = group_name
             label_obj = self.vcard.add('x-ablabel')
             label_obj.group = group_name
@@ -983,17 +985,17 @@ class YAMLEditable(VCardWrapper):
             return date
         if date.year == 1900 and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0:
-            return "--%.2d-%.2d" % (date.month, date.day)
+            return date.strftime("--%m-%d")
         if (date.tzname() and date.tzname()[3:]) or (
                 date.hour != 0 or date.minute != 0 or date.second != 0):
             if localize:
                 return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
             utc_offset = -time.timezone / 60 / 60
-            return date.strftime("%Y-%m-%dT%H:%M:%S+{}:00".format(
+            return date.strftime("%FT%T+{}:00".format(
                 str(int(utc_offset)).zfill(2)))
         if localize:
             return date.strftime(locale.nl_langinfo(locale.D_FMT))
-        return date.strftime("%Y-%m-%d")
+        return date.strftime("%F")
 
     @staticmethod
     def _filter_invalid_tags(contents):
@@ -1356,7 +1358,7 @@ class YAMLEditable(VCardWrapper):
                     for type, post_adr_list in sorted(
                             self.post_addresses.items(),
                             key=lambda k: k[0].lower()):
-                        strings.append("    %s:" % type)
+                        strings.append("    {}:".format(type))
                         for post_adr in post_adr_list:
                             indentation = 8
                             if len(post_adr_list) > 1:
@@ -1398,43 +1400,42 @@ class YAMLEditable(VCardWrapper):
                 anniversary = self.anniversary
                 if anniversary:
                     if isinstance(anniversary, str):
-                        strings.append("Anniversary : text= %s" % anniversary)
+                        strings.append("Anniversary : text= {}".format(
+                            anniversary))
                     elif (anniversary.year == 1900 and anniversary.month != 0
                           and anniversary.day != 0 and anniversary.hour == 0
                           and anniversary.minute == 0
                           and anniversary.second == 0
                           and self.version == "4.0"):
-                        strings.append("Anniversary : --%.2d-%.2d"
-                                       % (anniversary.month, anniversary.day))
+                        strings.append(
+                            anniversary.strftime("Anniversary : --%m-%d"))
                     elif ((anniversary.tzname() and anniversary.tzname()[3:])
                           or anniversary.hour != 0 or anniversary.minute != 0
                           or anniversary.second != 0):
-                        strings.append("Anniversary : %s" %
-                                       anniversary.isoformat())
+                        strings.append(
+                            "Anniversary : {}".format(anniversary.isoformat()))
                     else:
-                        strings.append("Anniversary : %.4d-%.2d-%.2d" % (
-                            anniversary.year, anniversary.month,
-                            anniversary.day))
+                        strings.append(
+                            anniversary.strftime("Anniversary : %F"))
                 else:
                     strings.append("Anniversary : ")
             elif line.lower().startswith("birthday"):
                 birthday = self.birthday
                 if birthday:
                     if isinstance(birthday, str):
-                        strings.append("Birthday : text= %s" % birthday)
+                        strings.append("Birthday : text= {}".format(birthday))
                     elif birthday.year == 1900 and birthday.month != 0 and \
                             birthday.day != 0 and birthday.hour == 0 and \
                             birthday.minute == 0 and birthday.second == 0 and \
                             self.version == "4.0":
-                        strings.append("Birthday : --%.2d-%.2d"
-                                       % (birthday.month, birthday.day))
+                        strings.append(birthday.strftime("Birthday : --%m-%d"))
                     elif (birthday.tzname() and birthday.tzname()[3:]) or \
                             (birthday.hour != 0 or birthday.minute != 0
                              or birthday.second != 0):
-                        strings.append("Birthday : %s" % birthday.isoformat())
+                        strings.append(
+                            "Birthday : {}".format(birthday.isoformat()))
                     else:
-                        strings.append("Birthday : %.4d-%.2d-%.2d" % (
-                            birthday.year, birthday.month, birthday.day))
+                        strings.append(birthday.strftime("Birthday : %F"))
                 else:
                     strings.append("Birthday : ")
             elif line.lower().startswith("categories"):
@@ -1581,15 +1582,15 @@ class CarddavObject(YAMLEditable):
 
         # address book name
         if show_address_book:
-            strings.append("Address book: %s" % self.address_book)
+            strings.append("Address book: {}".format(self.address_book))
 
         # person related information
         if (self.birthday is not None or self.anniversary is not None
                 or self.nicknames or self.roles or self.titles):
             strings.append("General:")
             if self.anniversary:
-                strings.append("    Anniversary: %s"
-                               % self.get_formatted_anniversary())
+                strings.append("    Anniversary: {}".format(
+                    self.get_formatted_anniversary()))
             if self.birthday:
                 strings.append(
                     "    Birthday: {}".format(self.get_formatted_birthday()))

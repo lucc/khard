@@ -139,12 +139,12 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
             # same applies to value = [["string"]]
             value = value[0][0]
     if isinstance(value, str):
-        strings.append("%s%s%s: %s" % (
+        strings.append("{}{}{}: {}".format(
             ' ' * indentation, name, ' ' * (index_of_colon-len(name)),
             indent_multiline_string(value, indentation+4,
                                     show_multi_line_character)))
     elif isinstance(value, list):
-        strings.append("%s%s%s: " % (
+        strings.append("{}{}{}: ".format(
             ' ' * indentation, name, ' ' * (index_of_colon-len(name))))
         for outer in value:
             # special case for single item sublists
@@ -156,14 +156,14 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
                 # but to "- string" instead
                 outer = outer[0]
             if isinstance(outer, str):
-                strings.append("%s- %s" % (
+                strings.append("{}- {}".format(
                     ' ' * (indentation+4), indent_multiline_string(
                         outer, indentation+8, show_multi_line_character)))
             elif isinstance(outer, list):
-                strings.append("%s- " % (' ' * (indentation+4)))
+                strings.append("{}- ".format(' ' * (indentation+4)))
                 for inner in outer:
                     if isinstance(inner, str):
-                        strings.append("%s- %s" % (
+                        strings.append("{}- {}".format(
                             ' ' * (indentation+8), indent_multiline_string(
                                 inner, indentation+12,
                                 show_multi_line_character)))
@@ -184,7 +184,7 @@ def indent_multiline_string(input, indentation, show_multi_line_character):
     if "\n" in input or ": " in input:
         lines = ["|"] if show_multi_line_character else [""]
         for line in input.split("\n"):
-            lines.append("%s%s" % (' ' * indentation, line.strip()))
+            lines.append("{}{}".format(' ' * indentation, line.strip()))
         return '\n'.join(lines)
     return input.strip()
 

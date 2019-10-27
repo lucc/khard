@@ -31,7 +31,7 @@ def create_parsers():
     base.add_argument("--skip-unparsable", action="store_true",
                       help="skip unparsable vcard files")
     base.add_argument("-v", "--version", action="version",
-                      version="Khard version %s" % khard_version)
+                      version="Khard version {}".format(khard_version))
 
     # Create the first argument parser.  Its main job is to set the correct
     # config file.  The config file is needed to get the default command if no
