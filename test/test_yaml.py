@@ -10,14 +10,13 @@ import copy
 from ruamel.yaml import YAML
 
 from khard.carddav_object import CarddavObject, YAMLEditable
+import khard.helpers
 
 from . import helpers
 
-import khard.helpers
 
-
-def create_test_card():
-    return YAMLEditable(helpers.create_test_vcard())
+def create_test_card(**kwargs):
+    return YAMLEditable(helpers.create_test_vcard(**kwargs))
 
 
 def to_yaml(data):
@@ -108,6 +107,8 @@ class yaml_ablabel(unittest.TestCase):
 class UpdateVcardWithYamlUserInput(unittest.TestCase):
 
     _date = datetime.datetime(2000, 1, 1)
+    _datetime = datetime.datetime(2013, 4, 2, 13, 14, 15)
+    _no_year = datetime.datetime(1900, 1, 1)
 
     def test_update_org_simple(self):
         card = create_test_card()
@@ -154,12 +155,54 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         card.update(data)
         self.assertEqual(card.birthday, self._date)
 
+    def test_update_bday_without_year(self):
+        card = create_test_card(version="4.0")
+        data = {'Birthday': '--01-01'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.birthday, self._no_year)
+
+    def test_update_bday_with_text(self):
+        card = create_test_card(version="4.0")
+        data = {'Birthday': 'text= some day maybe'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.birthday, 'some day maybe')
+
+    def test_update_bday_with_date_and_time(self):
+        card = create_test_card()
+        data = {'Birthday': '2013-04-02T13:14:15'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.birthday, self._datetime)
+
     def test_update_anniverary(self):
         card = create_test_card()
         data = {'Anniversary': '2000-01-01'}
         data = to_yaml(data)
         card.update(data)
         self.assertEqual(card.anniversary, self._date)
+
+    def test_update_anniversary_without_year(self):
+        card = create_test_card(version="4.0")
+        data = {'Anniversary': '--01-01'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.anniversary, self._no_year)
+
+    def test_update_anniversary_with_text(self):
+        card = create_test_card(version="4.0")
+        data = {'Anniversary': 'text= some day maybe'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.anniversary, 'some day maybe')
+
+    def test_update_anniversary_with_date_and_time(self):
+        card = create_test_card()
+        data = {'Anniversary': '2013-04-02T13:14:15'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.anniversary, self._datetime)
 
     def test_update_name_simple(self):
         card = create_test_card()
