@@ -22,6 +22,23 @@ from .version import version as khard_version
 config = None
 
 
+def confirm(message):
+    """Ask the user for confirmation on the terminal.
+
+    :param str message: the question to print
+    :returns: the answer of the user
+    :rtype: bool
+    """
+    while True:
+        answer = input(message + ' (y/N) ')
+        answer = answer.lower()
+        if answer == 'y':
+            return True
+        if answer in ['', 'n', 'q']:
+            return False
+        print('Please answer with "y" for yes or "n" for no.')
+
+
 def write_temp_file(text=""):
     """Create a new temporary file and write some initial text to it.
 
@@ -73,15 +90,10 @@ def create_new_contact(address_book):
                 config.preferred_vcard_version, config.localize_dates)
         except ValueError as err:
             print("\n{}\n".format(err))
-            while True:
-                input_string = input(
-                    "Do you want to open the editor again (y/n)? ")
-                if input_string.lower() in ["", "n", "q"]:
-                    print("Canceled")
-                    os.remove(temp_file_name)
-                    sys.exit(0)
-                if input_string.lower() == "y":
-                    break
+            if not confirm("Do you want to open the editor again?"):
+                print("Canceled")
+                os.remove(temp_file_name)
+                sys.exit(0)
         else:
             os.remove(temp_file_name)
             break
@@ -122,15 +134,10 @@ def modify_existing_contact(old_contact):
                 old_contact, new_contact_template, config.localize_dates)
         except ValueError as err:
             print("\n{}\n".format(err))
-            while True:
-                input_string = input(
-                    "Do you want to open the editor again (y/n)? ")
-                if input_string.lower() in ["", "n", "q"]:
-                    print("Canceled")
-                    os.remove(temp_file_name)
-                    sys.exit(0)
-                if input_string.lower() == "y":
-                    break
+            if not confirm("Do you want to open the editor again?"):
+                print("Canceled")
+                os.remove(temp_file_name)
+                sys.exit(0)
         else:
             os.remove(temp_file_name)
             break
@@ -154,13 +161,9 @@ def merge_existing_contacts(source_contact, target_contact,
               "will be converted to vcard version {} but beware: This could "
               "corrupt the contact file or cause data loss.".format(
                   target_contact.version, config.preferred_vcard_version))
-        while True:
-            input_string = input("Do you want to proceed anyway (y/n)? ")
-            if input_string.lower() in ["", "n", "q"]:
-                print("Canceled")
-                sys.exit(0)
-            if input_string.lower() == "y":
-                break
+        if not confirm("Do you want to proceed anyway?"):
+            print("Canceled")
+            sys.exit(0)
     # create temp files for each vcard
     # source vcard
     source_temp_file_name = write_temp_file(
@@ -196,16 +199,11 @@ def merge_existing_contacts(source_contact, target_contact,
                 target_contact, merged_contact_template, config.localize_dates)
         except ValueError as err:
             print("\n{}\n".format(err))
-            while True:
-                input_string = input(
-                    "Do you want to open the editor again (y/n)? ")
-                if input_string.lower() in ["", "n", "q"]:
-                    print("Canceled")
-                    os.remove(source_temp_file_name)
-                    os.remove(target_temp_file_name)
-                    sys.exit(0)
-                if input_string.lower() == "y":
-                    break
+            if not confirm("Do you want to open the editor again?"):
+                print("Canceled")
+                os.remove(source_temp_file_name)
+                os.remove(target_temp_file_name)
+                return
         else:
             os.remove(source_temp_file_name)
             os.remove(target_temp_file_name)
@@ -226,13 +224,9 @@ def merge_existing_contacts(source_contact, target_contact,
         print("Keep unchanged")
     print("\n\n{}\n\nMerged\n\n{}\n".format(source_contact.print_vcard(),
                                             merged_contact.print_vcard()))
-    while True:
-        input_string = input("Are you sure? (y/n): ")
-        if input_string.lower() in ["", "n", "q"]:
-            print("Canceled")
-            return
-        if input_string.lower() == "y":
-            break
+    if not confirm("Are you sure?"):
+        print("Canceled")
+        return
 
     # save merged_contact to disk and delete source contact
     merged_contact.write_to_file(overwrite=True)
@@ -688,14 +682,10 @@ def add_email_subcommand(text, abooks):
         get_contact_list_by_user_selection(abooks, name, True))
     if selected_vcard is None:
         # create new contact
-        while True:
-            input_string = input("Contact %s does not exist. Do you want "
-                                 "to create it (y/n)? " % name)
-            if input_string.lower() in ["", "n", "q"]:
-                print("Canceled")
-                sys.exit(0)
-            if input_string.lower() == "y":
-                break
+        if not confirm("Contact {} does not exist. Do you want to create it?"
+                       .format(name)):
+            print("Canceled")
+            sys.exit(0)
         # ask for address book, in which to create the new contact
         selected_address_book = choose_address_book_from_list(
             "Select address book for new contact", config.abooks)
@@ -727,15 +717,10 @@ def add_email_subcommand(text, abooks):
                 sys.exit(0)
 
     # ask for confirmation again
-    while True:
-        input_string = input(
-            "Do you want to add the email address %s to the contact %s (y/n)? "
-            % (email_address, selected_vcard))
-        if input_string.lower() in ["", "n", "q"]:
-            print("Canceled")
-            sys.exit(0)
-        if input_string.lower() == "y":
-            break
+    if not confirm("Do you want to add the email address {} to the contact {}?"
+                   .format(email_address, selected_vcard)):
+        print("Canceled")
+        sys.exit(0)
 
     # ask for the email label
     print("\nAdding email address {} to contact {}\n"
@@ -1083,13 +1068,9 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
               " converted to vcard version {} but beware: This could corrupt "
               "the contact file or cause data loss.".format(
                   selected_vcard.version, config.preferred_vcard_version))
-        while True:
-            input_string = input("Do you want to proceed anyway (y/n)? ")
-            if input_string.lower() in ["", "n", "q"]:
-                print("Canceled")
-                sys.exit(0)
-            if input_string.lower() == "y":
-                break
+        if not confirm("Do you want to proceed anyway?"):
+            print("Canceled")
+            return
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
@@ -1103,18 +1084,14 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
             print("Nothing changed\n\n{}".format(new_contact.print_vcard()))
         else:
             print("Modification\n\n{}\n".format(new_contact.print_vcard()))
-            while True:
-                input_string = input("Do you want to proceed (y/n)? ")
-                if input_string.lower() in ["", "n", "q"]:
-                    print("Canceled")
-                    break
-                if input_string.lower() == "y":
-                    new_contact.write_to_file(overwrite=True)
-                    if open_editor:
-                        modify_existing_contact(new_contact)
-                    else:
-                        print("Done")
-                    break
+            if confirm("Do you want to proceed?"):
+                new_contact.write_to_file(overwrite=True)
+                if open_editor:
+                    modify_existing_contact(new_contact)
+                else:
+                    print("Done")
+            else:
+                print("Canceled")
     else:
         modify_existing_contact(selected_vcard)
 
@@ -1131,15 +1108,11 @@ def remove_subcommand(selected_vcard, force):
 
     """
     if not force:
-        while True:
-            input_string = input(
-                "Deleting contact %s from address book %s. Are you sure? "
-                "(y/n): " % (selected_vcard, selected_vcard.address_book))
-            if input_string.lower() in ["", "n", "q"]:
-                print("Canceled")
-                sys.exit(0)
-            if input_string.lower() == "y":
-                break
+        if not confirm("Deleting contact {} from address book {}. "
+                       "Are you sure?".format(selected_vcard,
+                                              selected_vcard.address_book)):
+            print("Canceled")
+            sys.exit(0)
     selected_vcard.delete_vcard_file()
     print("Contact {} deleted successfully".format(
         selected_vcard.formatted_name))
