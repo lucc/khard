@@ -92,7 +92,6 @@ def validate_private_objects(value):
 class Config:
 
     supported_vcard_versions = ("3.0", "4.0")
-    SPEC_FILE = os.path.join(os.path.dirname(__file__), 'data', 'config.spec')
 
     def __init__(self, config_file=None):
         self.config = None
@@ -115,9 +114,11 @@ class Config:
                                         os.path.expanduser("~/.config"))
             config_file = os.getenv("KHARD_CONFIG", os.path.join(
                 xdg_config_home, "khard", "khard.conf"))
+        configspec = os.path.join(os.path.dirname(__file__),
+                                  'data', 'config.spec')
         try:
             return configobj.ConfigObj(
-                infile=config_file, configspec=cls.SPEC_FILE,
+                infile=config_file, configspec=configspec,
                 interpolation=False, file_error=True)
         except configobj.ConfigObjError as err:
             exit(str(err))
