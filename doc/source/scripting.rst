@@ -68,10 +68,11 @@ Add the following lines to your alot config file:
 Twinkle
 -------
 
-For those who also use the SIP client twinkle to take phone calls, khard can be
-used to query incoming numbers. The plugin tries to find the incoming caller id
-and speaks it together with the phone's ring tone. The plugin needs the
-following programs:
+For those who also use the SIP client twinkle to take phone calls, khard can be used to query
+incoming numbers. The plugin tries to find the incoming caller id and speaks it together with the
+phone's ring tone. But it is more or less a proof of concept - feel free to extend.
+
+The plugin needs the following programs:
 
 .. code-block:: shell
 
@@ -89,6 +90,14 @@ config folder:
 .. code-block:: shell
 
   cp -R misc/twinkle/* ~/.twinkle/
+
+Next convert the sound samples to wave:
+
+.. code-block:: shell
+
+  ffmpeg -i incoming_call.ogg incoming_call.wav
+  ffmpeg -i outgoing_call.ogg outgoing_call.wav
+  ffmpeg -i ringtone_segment.ogg ringtone_segment.wav
 
 Then edit your twinkle config file (mostly ``~/.twinkle/twinkle.cfg``) like
 this:
