@@ -536,7 +536,7 @@ def load_address_books(names, config, search_queries):
                      ', '.join(all_names)))
     # load address books which are defined in the configuration file
     for name in names:
-        address_book = config.abook.get_abook(name)
+        address_book = config.abook[name]
         try:
             address_book.load(
                 search_queries[address_book.name],
@@ -593,7 +593,7 @@ def prepare_search_queries(args):
     # Get all possible search queries for address book parsing, always
     # depending on the fact if the address book is used to find source or
     # target contacts or both.
-    queries = {abook.name: [] for abook in config.abook._abooks}
+    queries = {abook.name: [] for abook in config.abook}
     for name in queries:
         if "addressbook" in args and name in args.addressbook:
             queries[name].append(source_queries)

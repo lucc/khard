@@ -321,13 +321,13 @@ class AddressBookCollection(AddressBook):
         :param **kwargs: further arguments for the parent constructor
         """
         super().__init__(name, **kwargs)
-        self._abooks = abooks
+        self._abooks = {ab.name: ab for ab in abooks}
 
     def load(self, query=None):
         if self._loaded:
             return
         logging.debug('Loading collection %s with query %s', self.name, query)
-        for abook in self._abooks:
+        for abook in self._abooks.values():
             abook.load(query)
             for uid in abook.contacts:
                 if uid in self.contacts:
@@ -341,15 +341,18 @@ class AddressBookCollection(AddressBook):
         logging.debug('Loded %s contacts from address book %s.',
                       len(self.contacts), self.name)
 
-    def get_abook(self, name):
-        """Get one of the backing abdress books by its name,
+    def __getitem__(self, name):
+        """Get one of the backing address books by its name
 
         :param name: the name of the address book to get
         :type name: str
         :returns: the matching address book or None
-        :rtype: AddressBook or NoneType
-
+        :rtype: AddressBook
+        :throws: KeyError
         """
-        for abook in self._abooks:
-            if abook.name == name:
-                return abook
+        return self._abooks[name]
+
+    def __iter__(self):
+        """:return: an iterator over the underlying address books"""
+        return iter(self._abooks.values())
+

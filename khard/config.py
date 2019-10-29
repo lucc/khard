@@ -180,7 +180,7 @@ class Config:
                         for name in section], **kwargs)
         except IOError as err:
             exit(str(err))
-        self.abooks = [self.abook.get_abook(name) for name in section]
+        self.abooks = [self.abook[name] for name in section]
 
     def merge(self, other):
         """Merge the config with some other dict or ConfigObj
