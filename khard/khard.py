@@ -12,7 +12,8 @@ from tempfile import NamedTemporaryFile
 from unidecode import unidecode
 
 from . import helpers
-from .address_book import AddressBookCollection, AddressBookParseError
+from .address_book import AddressBookCollection, AddressBookParseError, \
+    AddressBookNameError
 from .carddav_object import CarddavObject
 from . import cli
 from .version import version as khard_version
@@ -263,10 +264,10 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         contact.address_book, target_address_book))
 
 
-def list_address_books(address_book_list):
+def list_address_books(address_books):
     table = [["Index", "Address book"]]
-    for index, address_book in enumerate(address_book_list):
-        table.append([index + 1, address_book.name])
+    for index, address_book in enumerate(address_books, 1):
+        table.append([index, address_book.name])
     print(helpers.pretty_print(table))
 
 
@@ -286,10 +287,8 @@ def list_contacts(vcard_list):
         table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
     if config.show_uids:
         table_header.append("UID")
-        abook_collection = AddressBookCollection(
-            'short uids collection', selected_address_books,
-            private_objects=config.private_objects,
-            localize_dates=config.localize_dates, skip=config.skip_unparsable)
+        abook_collection = AddressBookCollection('short uids collection',
+                                                 selected_address_books)
 
     table.append(table_header)
     # table body
@@ -390,13 +389,13 @@ def list_email_addresses(email_address_list):
     print(helpers.pretty_print(table))
 
 
-def choose_address_book_from_list(header_string, address_book_list):
-    if not address_book_list:
+def choose_address_book_from_list(header_string, address_books):
+    if not address_books:
         return None
-    if len(address_book_list) == 1:
-        return address_book_list[0]
+    if len(address_books) == 1:
+        return address_books[0]
     print(header_string)
-    list_address_books(address_book_list)
+    list_address_books(address_books)
     while True:
         try:
             input_string = input("Enter Index: ")
@@ -406,12 +405,12 @@ def choose_address_book_from_list(header_string, address_book_list):
             addr_index = int(input_string)
             if addr_index > 0:
                 # make sure the address book is loaded afterwards
-                selected_address_book = address_book_list[addr_index - 1]
+                selected_address_book = address_books[addr_index - 1]
             else:
                 raise ValueError
         except (EOFError, IndexError, ValueError):
             print("Please enter an index value between 1 and %d or nothing"
-                  " to exit." % len(address_book_list))
+                  " to exit." % len(address_books))
         else:
             break
     print("")
@@ -451,12 +450,9 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
 
 def get_contact_list_by_user_selection(address_books, search, strict_search):
     """returns a list of CarddavObject objects
-    :param address_books: list of selected address books
-    :type address_books: list(address_book.AddressBook)
-    :param search: filter contact list
-    :type search: str
-    :param strict_search: if True, search only in full name field
-    :type strict_search: bool
+    :param AddressBookCollection address_books: selected address books
+    :param str search: filter contact list
+    :param bool strict_search: if True, search only in full name field
     :returns: list of CarddavObject objects
     :rtype: list(CarddavObject)
     """
@@ -469,8 +465,7 @@ def get_contacts(address_books, query, method="all", reverse=False,
                  group=False, sort="first_name"):
     """Get a list of contacts from one or more address books.
 
-    :param address_books: the address books to search
-    :type address_books: list(address_book.AddressBook)
+    :param AddressBookCollection address_books: the address books to search
     :param str query: a search query to select contacts
     :param str method: the search method, one of "all", "name" or "uid"
     :param bool reverse: reverse the order of the returned contacts
@@ -479,12 +474,9 @@ def get_contacts(address_books, query, method="all", reverse=False,
         "last_name", "formatted_name"
     :returns: contacts from the address_books that match the query
     :rtype: list(CarddavObject)
-
     """
     # Search for the contacts in all address books.
-    contacts = []
-    for address_book in address_books:
-        contacts.extend(address_book.search(query, method=method))
+    contacts = address_books.search(query, method=method)
     # Sort the contacts.
     if group:
         if sort == "first_name":
@@ -511,40 +503,6 @@ def get_contacts(address_books, query, method="all", reverse=False,
                           unidecode(x.formatted_name.lower()))
     raise ValueError('sort must be "first_name", "last_name" or '
                      '"formatted_name" not {}.'.format(sort))
-
-
-def load_address_books(names, config, search_queries):
-    """Load all address books with the given names from the config.
-
-    :param names: the address books to load
-    :type names: list(str)
-    :param config: the config instance to use when looking up address books
-    :type config: config.Config
-    :param search_queries: a mapping of address book names to search queries
-    :type search_queries: dict
-    :yields: the loaded address books
-    :ytype: addressbook.AddressBook
-
-    """
-    all_names = {str(book) for book in config.abooks}
-    if not names:
-        names = all_names
-    elif not all_names.issuperset(names):
-        sys.exit('Error: The entered address books "{}" do not exist.\n'
-                 'Possible values are: {}'.format(
-                     '", "'.join(set(names) - all_names),
-                     ', '.join(all_names)))
-    # load address books which are defined in the configuration file
-    for name in names:
-        address_book = config.abook.get_abook(name)
-        try:
-            address_book.load(
-                search_queries[address_book.name],
-                search_in_source_files=config.search_in_source_files)
-        except AddressBookParseError as err:
-            sys.exit("{}\nUse --debug for more information or "
-                     "--skip-unparsable to proceed".format(err))
-        yield address_book
 
 
 def prepare_search_queries(args):
@@ -593,7 +551,7 @@ def prepare_search_queries(args):
     # Get all possible search queries for address book parsing, always
     # depending on the fact if the address book is used to find source or
     # target contacts or both.
-    queries = {abook.name: [] for abook in config.abook._abooks}
+    queries = {abook.name: [] for abook in config.abooks}
     for name in queries:
         if "addressbook" in args and name in args.addressbook:
             queries[name].append(source_queries)
@@ -668,18 +626,13 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
                    open_editor):
     """Create a new contact.
 
-    :param selected_address_books: a list of addressbooks that were selected on
-        the command line
-    :type selected_address_books: list of address_book.AddressBook
-    :param input_from_stdin_or_file: the data for the new contact as a yaml
+    :param AddressBookCollection selected_address_books: a list of addressbooks
+        that were selected on the command line
+    :param str input_from_stdin_or_file: the data for the new contact as a yaml
         formatted string
-    :type input_from_stdin_or_file: str
-    :param open_editor: whether to open the new contact in the edior after
+    :param bool open_editor: whether to open the new contact in the edior after
         creation
-    :type open_editor: bool
     :returns: None
-    :rtype: None
-
     """
     # ask for address book, in which to create the new contact
     selected_address_book = choose_address_book_from_list(
@@ -711,11 +664,9 @@ def add_email_subcommand(text, abooks):
     """Add a new email address to contacts, creating new contacts if necessary.
 
     :param str text: the input text to search for the new email
-    :param abooks: the addressbooks that were selected on the command line
-    :type abooks: list of address_book.AddressBook
+    :param AddressBookCollection abooks: the addressbooks that were selected on
+        the command line
     :returns: None
-    :rtype: None
-
     """
     # get name and email address
     message = message_from_string(text, policy=SMTP_POLICY)
@@ -1200,17 +1151,12 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     """Merge two contacts into one.
 
     :param vcard_list: the vcards from which to choose contacts for mergeing
-    :type vcard_list: list of carddav_object.CarddavObject
-    :param selected_address_books: the addressbooks to use to find the target
-        contact
-    :type selected_address_books: list(addressbook.AddressBook)
-    :param search_terms: the search terms to find the target contact
-    :type search_terms: str
-    :param target_uid: the uid of the target contact or empty
-    :type target_uid: str
+    :type vcard_list: list(carddav_object.CarddavObject)
+    :param AddressBookCollection selected_address_books: the addressbooks to
+        use to find the target contact
+    :param str search_terms: the search terms to find the target contact
+    :param str target_uid: the uid of the target contact or empty
     :returns: None
-    :rtype: None
-
     """
     # Check arguments.
     if target_uid != "" and search_terms != "":
@@ -1256,18 +1202,16 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
-def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
+def copy_or_move_subcommand(action, vcard_list, target_address_books):
     """Copy or move a contact to a different address book.
 
-    :action: the string "copy" or "move" to indicate what to do
-    :type action: str
+    :param str action: the string "copy" or "move" to indicate what to do
     :param vcard_list: the contact list from which to select one for the action
     :type vcard_list: list of carddav_object.CarddavObject
-    :param target_address_book_list: the list of target address books
-    :type target_address_book_list: list(addressbook.AddressBook)
+    :param target_address_books: the target address books
+    :type target_address_books: addressbook.AddressBookCollection
     :returns: None
     :rtype: None
-
     """
     # get the source vcard, which to copy or move
     source_vcard = choose_vcard_from_list(
@@ -1279,12 +1223,12 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
             action.title(), source_vcard, source_vcard.address_book))
 
     # get target address book
-    if len(target_address_book_list) == 1 \
-            and target_address_book_list[0] == source_vcard.address_book:
+    if len(target_address_books) == 1 \
+            and target_address_books[0] == source_vcard.address_book:
         sys.exit("The address book {} already contains the contact {}".format(
-            target_address_book_list[0], source_vcard))
+            target_address_books[0], source_vcard))
     else:
-        available_address_books = [abook for abook in target_address_book_list
+        available_address_books = [abook for abook in target_address_books
                                    if abook != source_vcard.address_book]
         selected_target_address_book = choose_address_book_from_list(
             "Select target address book", available_address_books)
@@ -1294,7 +1238,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
-        get_contact_list_by_user_selection([selected_target_address_book],
+        get_contact_list_by_user_selection(selected_target_address_book,
                                            source_vcard.formatted_name, True),
         True)
     # If the target contact doesn't exist, move or copy the source contact into
@@ -1364,12 +1308,18 @@ def main(argv=sys.argv[1:]):
     search_queries = prepare_search_queries(args)
 
     # load address books
-    if "addressbook" in args:
-        args.addressbook = list(load_address_books(args.addressbook, config,
-                                                   search_queries))
-    if "target_addressbook" in args:
-        args.target_addressbook = list(load_address_books(
-            args.target_addressbook, config, search_queries))
+    try:
+        if "addressbook" in args:
+            args.addressbook = config.get_address_books(args.addressbook,
+                                                        search_queries)
+        if "target_addressbook" in args:
+            args.target_addressbook = config.get_address_books(
+                args.target_addressbook, search_queries)
+    except AddressBookParseError as err:
+        sys.exit("{}\nUse --debug for more information or --skip-unparsable "
+                 "to proceed".format(err))
+    except AddressBookNameError as err:
+        sys.exit(err)
 
     vcard_list = generate_contact_list(args)
 

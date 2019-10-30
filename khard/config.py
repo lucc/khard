@@ -11,7 +11,8 @@ import configobj
 import validate
 
 from .actions import Actions
-from .address_book import AddressBookCollection, VdirAddressBook
+from .address_book import AddressBookCollection, AddressBookNameError, \
+    VdirAddressBook
 
 
 def exit(message, prefix="Error in config file\n"):
@@ -90,14 +91,14 @@ def validate_private_objects(value):
 
 
 class Config:
+    """Parse and validate the config file with configobj."""
 
     supported_vcard_versions = ("3.0", "4.0")
     SPEC_FILE = os.path.join(os.path.dirname(__file__), 'data', 'config.spec')
 
     def __init__(self, config_file=None):
         self.config = None
-        self.abooks = []
-        self.abook = None
+        self.abooks = None
         locale.setlocale(locale.LC_ALL, '')
         config = self._load_config_file(config_file)
         self.config = self._validate(config)
@@ -169,18 +170,49 @@ class Config:
         self.preferred_phone_number_type = table['preferred_phone_number_type']
         self.show_uids = table['show_uids']
 
-    def load_address_books(self):
+    def init_address_books(self):
+        """Initialize the internal address book collection.
+
+        This method should only be called *after* merging in the command line
+        options as they can hold some options that are relevant for the loading
+        of the address books.
+
+        :returns: None
+        """
         section = self.config['addressbooks']
         kwargs = {'private_objects': self.private_objects,
                   'localize_dates': self.localize_dates,
                   'skip': self.skip_unparsable}
         try:
-            self.abook = AddressBookCollection(
+            self.abooks = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
-                        for name in section], **kwargs)
+                        for name in section])
         except IOError as err:
             exit(str(err))
-        self.abooks = [self.abook.get_abook(name) for name in section]
+
+    def get_address_books(self, names, queries):
+        """Load all address books with the given names.
+
+        :param list(str) names: the address books to load
+        :param dict queries: a mapping of address book names to search queries
+        :returns: the loaded address books
+        :rtype: addressbook.AddressBookCollection
+        """
+        all_names = {str(book) for book in self.abooks}
+        if not names:
+            names = all_names
+        elif not all_names.issuperset(names):
+            raise AddressBookNameError(
+                "The following address books are not defined: {}".format(
+                    ', '.join(set(names) - all_names)))
+        # load address books which are defined in the configuration file
+        collection = AddressBookCollection("tmp", [self.abooks[name]
+                                                   for name in names])
+        # We can not use AddressBookCollection.load here because we want to
+        # select the collection based on the address book.
+        for abook in collection:
+            abook.load(queries[abook.name], self.search_in_source_files)
+        return collection
 
     def merge(self, other):
         """Merge the config with some other dict or ConfigObj
@@ -191,3 +223,22 @@ class Config:
         self.config.merge(other)
         self._validate(self.config)
         self._set_attributes()
+
+    def merge_args(self, args):
+        """Merge options from a flat argparse object.
+
+        :param argparse.Namespace args: the parsed arguments to incorperate
+        :returns: None
+        """
+        merge = {'general': ['debug'],
+                 'contact table': ['reverse', 'group_by_addressbook',
+                                   'display', 'sort'],
+                 'vcard': ['search_in_source_files', 'skip_unparsable',
+                           'preferred_version'],
+                 }
+        merge = {sec: {key: getattr(args, key) for key in opts
+                       if key in args and getattr(args, key) is not None}
+                 for sec, opts in merge.items()}
+        logging.debug('Merging in %s', merge)
+        self.merge(merge)
+        logging.debug('Merged: %s', vars(self))

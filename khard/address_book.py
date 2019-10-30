@@ -26,29 +26,19 @@ class AddressBookParseError(Exception):
             self.filename, self.abook, self.reason)
 
 
+class AddressBookNameError(Exception):
+    """Indicate an error with an address book name."""
+
+
 class AddressBook(metaclass=abc.ABCMeta):
     """The base class of all address book implementations."""
 
-    def __init__(self, name, private_objects=tuple(), localize_dates=True,
-                 skip=False):
-        """
-        :param name: the name to identify the address book
-        :type name: str
-        :param private_objects: the names of private vCard extension fields to
-            load
-        :type private_objects: iterable(str)
-        :param localize_dates: wheater to display dates in the local format
-        :type localize_dates: bool
-        :param skip: skip unparsable vCard files
-        :type skip: bool
-        """
+    def __init__(self, name):
+        """:param str name: the name to identify the address book"""
         self._loaded = False
         self.contacts = {}
         self._short_uids = None
         self.name = name
-        self._private_objects = private_objects
-        self._localize_dates = localize_dates
-        self._skip = skip
 
     def __str__(self):
         return self.name
@@ -232,19 +222,25 @@ class VdirAddressBook(AddressBook):
     direcotry on disk.
     """
 
-    def __init__(self, name, path, **kwargs):
+    def __init__(self, name, path, private_objects=tuple(),
+                 localize_dates=True, skip=False):
         """
-        :param name: the name to identify the address book
-        :type name: str
-        :param path: the path to the backing structure on disk
-        :type path: str
-        :param **kwargs: further arguments for the parent constructor
+        :param str name: the name to identify the address book
+        :param str path: the path to the backing structure on disk
+        :param iterable(str) private_objects: the names of private vCard
+            extension fields to load
+        :param bool localize_dates: wheater to display dates in the local
+            format
+        :param bool skip: skip unparsable vCard files
         """
         self.path = os.path.expanduser(path)
         if not os.path.isdir(self.path):
             raise FileNotFoundError("[Errno 2] The path {} to the address book"
                                     " {} does not exist.".format(path, name))
-        super().__init__(name, **kwargs)
+        self._private_objects = private_objects
+        self._localize_dates = localize_dates
+        self._skip = skip
+        super().__init__(name)
 
     def load(self, query=None, search_in_source_files=False):
         """Load all vcard files in this address book from disk.
@@ -312,7 +308,7 @@ class AddressBookCollection(AddressBook):
     all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name, abooks, **kwargs):
+    def __init__(self, name, abooks):
         """
         :param name: the name to identify the address book
         :type name: str
@@ -320,14 +316,24 @@ class AddressBookCollection(AddressBook):
         :type abooks: list(AddressBook)
         :param **kwargs: further arguments for the parent constructor
         """
-        super().__init__(name, **kwargs)
-        self._abooks = abooks
+        super().__init__(name)
+        self._abooks = {ab.name: ab for ab in abooks}
 
-    def load(self, query=None):
+    def load(self, query=None, search_in_source_files=False):
+        """Load the wrapped address books with the given parameters
+
+        All parameters will be handed to VdirAddressBook.load.
+
+        :param str query: a regular expression to limit the results
+        :param bool search_in_source_files: apply search regexp directly on the
+            .vcf files to speed up parsing (less accurate)
+        :returns: None
+        :throws: AddressBookParseError
+        """
         if self._loaded:
             return
         logging.debug('Loading collection %s with query %s', self.name, query)
-        for abook in self._abooks:
+        for abook in self._abooks.values():
             abook.load(query)
             for uid in abook.contacts:
                 if uid in self.contacts:
@@ -341,15 +347,22 @@ class AddressBookCollection(AddressBook):
         logging.debug('Loded %s contacts from address book %s.',
                       len(self.contacts), self.name)
 
-    def get_abook(self, name):
-        """Get one of the backing abdress books by its name,
+    def __getitem__(self, key):
+        """Get one of the backing address books by name or index
 
-        :param name: the name of the address book to get
-        :type name: str
-        :returns: the matching address book or None
-        :rtype: AddressBook or NoneType
-
+        :param str|int key: the name of the address book to get or its index
+        :returns: the matching address book
+        :rtype: AddressBook
+        :throws: KeyError
         """
-        for abook in self._abooks:
-            if abook.name == name:
-                return abook
+        try:
+            return self._abooks[key]
+        except KeyError:
+            return list(self._abooks.values())[key]
+
+    def __iter__(self):
+        """:return: an iterator over the underlying address books"""
+        return iter(self._abooks.values())
+
+    def __len__(self):
+        return len(self._abooks)
