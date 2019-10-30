@@ -266,8 +266,8 @@ def copy_contact(contact, target_address_book, delete_source_contact):
 
 def list_address_books(address_books):
     table = [["Index", "Address book"]]
-    for index, address_book in enumerate(address_books):
-        table.append([index + 1, address_book.name])
+    for index, address_book in enumerate(address_books, 1):
+        table.append([index, address_book.name])
     print(helpers.pretty_print(table))
 
 
@@ -450,12 +450,9 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
 
 def get_contact_list_by_user_selection(address_books, search, strict_search):
     """returns a list of CarddavObject objects
-    :param address_books: list of selected address books
-    :type address_books: list(address_book.AddressBook)
-    :param search: filter contact list
-    :type search: str
-    :param strict_search: if True, search only in full name field
-    :type strict_search: bool
+    :param AddressBookCollection address_books: selected address books
+    :param str search: filter contact list
+    :param bool strict_search: if True, search only in full name field
     :returns: list of CarddavObject objects
     :rtype: list(CarddavObject)
     """
@@ -468,8 +465,7 @@ def get_contacts(address_books, query, method="all", reverse=False,
                  group=False, sort="first_name"):
     """Get a list of contacts from one or more address books.
 
-    :param address_books: the address books to search
-    :type address_books: list(address_book.AddressBook)
+    :param AddressBookCollection address_books: the address books to search
     :param str query: a search query to select contacts
     :param str method: the search method, one of "all", "name" or "uid"
     :param bool reverse: reverse the order of the returned contacts
@@ -478,12 +474,9 @@ def get_contacts(address_books, query, method="all", reverse=False,
         "last_name", "formatted_name"
     :returns: contacts from the address_books that match the query
     :rtype: list(CarddavObject)
-
     """
     # Search for the contacts in all address books.
-    contacts = []
-    for address_book in address_books:
-        contacts.extend(address_book.search(query, method=method))
+    contacts = address_books.search(query, method=method)
     # Sort the contacts.
     if group:
         if sort == "first_name":
@@ -633,18 +626,13 @@ def new_subcommand(selected_address_books, input_from_stdin_or_file,
                    open_editor):
     """Create a new contact.
 
-    :param selected_address_books: a list of addressbooks that were selected on
-        the command line
-    :type selected_address_books: list of address_book.AddressBook
-    :param input_from_stdin_or_file: the data for the new contact as a yaml
+    :param AddressBookCollection selected_address_books: a list of addressbooks
+        that were selected on the command line
+    :param str input_from_stdin_or_file: the data for the new contact as a yaml
         formatted string
-    :type input_from_stdin_or_file: str
-    :param open_editor: whether to open the new contact in the edior after
+    :param bool open_editor: whether to open the new contact in the edior after
         creation
-    :type open_editor: bool
     :returns: None
-    :rtype: None
-
     """
     # ask for address book, in which to create the new contact
     selected_address_book = choose_address_book_from_list(
@@ -676,11 +664,9 @@ def add_email_subcommand(text, abooks):
     """Add a new email address to contacts, creating new contacts if necessary.
 
     :param str text: the input text to search for the new email
-    :param abooks: the addressbooks that were selected on the command line
-    :type abooks: list of address_book.AddressBook
+    :param AddressBookCollection abooks: the addressbooks that were selected on
+        the command line
     :returns: None
-    :rtype: None
-
     """
     # get name and email address
     message = message_from_string(text, policy=SMTP_POLICY)
@@ -1165,17 +1151,12 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
     """Merge two contacts into one.
 
     :param vcard_list: the vcards from which to choose contacts for mergeing
-    :type vcard_list: list of carddav_object.CarddavObject
-    :param selected_address_books: the addressbooks to use to find the target
-        contact
-    :type selected_address_books: list(addressbook.AddressBook)
-    :param search_terms: the search terms to find the target contact
-    :type search_terms: str
-    :param target_uid: the uid of the target contact or empty
-    :type target_uid: str
+    :type vcard_list: list(carddav_object.CarddavObject)
+    :param AddressBookCollection selected_address_books: the addressbooks to
+        use to find the target contact
+    :param str search_terms: the search terms to find the target contact
+    :param str target_uid: the uid of the target contact or empty
     :returns: None
-    :rtype: None
-
     """
     # Check arguments.
     if target_uid != "" and search_terms != "":
@@ -1257,7 +1238,7 @@ def copy_or_move_subcommand(action, vcard_list, target_address_books):
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
-        get_contact_list_by_user_selection([selected_target_address_book],
+        get_contact_list_by_user_selection(selected_target_address_book,
                                            source_vcard.formatted_name, True),
         True)
     # If the target contact doesn't exist, move or copy the source contact into
