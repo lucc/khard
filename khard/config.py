@@ -195,8 +195,8 @@ class Config:
 
         :param list(str) names: the address books to load
         :param dict queries: a mapping of address book names to search queries
-        :yields: the loaded address books
-        :ytype: addressbook.AddressBook
+        :returns: the loaded address books
+        :rtype: addressbook.AddressBookCollection
         """
         all_names = {str(book) for book in self.abooks}
         if not names:
@@ -206,14 +206,13 @@ class Config:
                 "The following address books are not defined: {}".format(
                     ', '.join(set(names) - all_names)))
         # load address books which are defined in the configuration file
-        abooks = [self.abooks[name] for name in names]
-        collection = AddressBookCollection("tmp", abooks)
-        for name in names:
-            address_book = self.abooks[name]
-            address_book.load(
-                queries[name],
-                search_in_source_files=self.search_in_source_files)
-            yield address_book
+        collection = AddressBookCollection("tmp", [self.abooks[name]
+                                                   for name in names])
+        # We can not use AddressBookCollection.load here because we want to
+        # select the collection based on the address book.
+        for abook in collection:
+            abook.load(queries[abook.name], self.search_in_source_files)
+        return collection
 
     def merge(self, other):
         """Merge the config with some other dict or ConfigObj

@@ -319,7 +319,17 @@ class AddressBookCollection(AddressBook):
         super().__init__(name)
         self._abooks = {ab.name: ab for ab in abooks}
 
-    def load(self, query=None):
+    def load(self, query=None, search_in_source_files=False):
+        """Load the wrapped address books with the given parameters
+
+        All parameters will be handed to VdirAddressBook.load.
+
+        :param str query: a regular expression to limit the results
+        :param bool search_in_source_files: apply search regexp directly on the
+            .vcf files to speed up parsing (less accurate)
+        :returns: None
+        :throws: AddressBookParseError
+        """
         if self._loaded:
             return
         logging.debug('Loading collection %s with query %s', self.name, query)
@@ -337,18 +347,22 @@ class AddressBookCollection(AddressBook):
         logging.debug('Loded %s contacts from address book %s.',
                       len(self.contacts), self.name)
 
-    def __getitem__(self, name):
-        """Get one of the backing address books by its name
+    def __getitem__(self, key):
+        """Get one of the backing address books by name or index
 
-        :param name: the name of the address book to get
-        :type name: str
-        :returns: the matching address book or None
+        :param str|int key: the name of the address book to get or its index
+        :returns: the matching address book
         :rtype: AddressBook
         :throws: KeyError
         """
-        return self._abooks[name]
+        try:
+            return self._abooks[key]
+        except KeyError:
+            return list(self._abooks.values())[key]
 
     def __iter__(self):
         """:return: an iterator over the underlying address books"""
         return iter(self._abooks.values())
 
+    def __len__(self):
+        return len(self._abooks)

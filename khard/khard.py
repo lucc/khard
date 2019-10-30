@@ -264,9 +264,9 @@ def copy_contact(contact, target_address_book, delete_source_contact):
         contact.address_book, target_address_book))
 
 
-def list_address_books(address_book_list):
+def list_address_books(address_books):
     table = [["Index", "Address book"]]
-    for index, address_book in enumerate(address_book_list):
+    for index, address_book in enumerate(address_books):
         table.append([index + 1, address_book.name])
     print(helpers.pretty_print(table))
 
@@ -389,13 +389,13 @@ def list_email_addresses(email_address_list):
     print(helpers.pretty_print(table))
 
 
-def choose_address_book_from_list(header_string, address_book_list):
-    if not address_book_list:
+def choose_address_book_from_list(header_string, address_books):
+    if not address_books:
         return None
-    if len(address_book_list) == 1:
-        return address_book_list[0]
+    if len(address_books) == 1:
+        return address_books[0]
     print(header_string)
-    list_address_books(address_book_list)
+    list_address_books(address_books)
     while True:
         try:
             input_string = input("Enter Index: ")
@@ -405,12 +405,12 @@ def choose_address_book_from_list(header_string, address_book_list):
             addr_index = int(input_string)
             if addr_index > 0:
                 # make sure the address book is loaded afterwards
-                selected_address_book = address_book_list[addr_index - 1]
+                selected_address_book = address_books[addr_index - 1]
             else:
                 raise ValueError
         except (EOFError, IndexError, ValueError):
             print("Please enter an index value between 1 and %d or nothing"
-                  " to exit." % len(address_book_list))
+                  " to exit." % len(address_books))
         else:
             break
     print("")
@@ -1221,18 +1221,16 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
-def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
+def copy_or_move_subcommand(action, vcard_list, target_address_books):
     """Copy or move a contact to a different address book.
 
-    :action: the string "copy" or "move" to indicate what to do
-    :type action: str
+    :param str action: the string "copy" or "move" to indicate what to do
     :param vcard_list: the contact list from which to select one for the action
     :type vcard_list: list of carddav_object.CarddavObject
-    :param target_address_book_list: the list of target address books
-    :type target_address_book_list: list(addressbook.AddressBook)
+    :param target_address_books: the target address books
+    :type target_address_books: addressbook.AddressBookCollection
     :returns: None
     :rtype: None
-
     """
     # get the source vcard, which to copy or move
     source_vcard = choose_vcard_from_list(
@@ -1244,12 +1242,12 @@ def copy_or_move_subcommand(action, vcard_list, target_address_book_list):
             action.title(), source_vcard, source_vcard.address_book))
 
     # get target address book
-    if len(target_address_book_list) == 1 \
-            and target_address_book_list[0] == source_vcard.address_book:
+    if len(target_address_books) == 1 \
+            and target_address_books[0] == source_vcard.address_book:
         sys.exit("The address book {} already contains the contact {}".format(
-            target_address_book_list[0], source_vcard))
+            target_address_books[0], source_vcard))
     else:
-        available_address_books = [abook for abook in target_address_book_list
+        available_address_books = [abook for abook in target_address_books
                                    if abook != source_vcard.address_book]
         selected_target_address_book = choose_address_book_from_list(
             "Select target address book", available_address_books)
@@ -1331,11 +1329,11 @@ def main(argv=sys.argv[1:]):
     # load address books
     try:
         if "addressbook" in args:
-            args.addressbook = list(config.get_address_books(args.addressbook,
-                                                             search_queries))
+            args.addressbook = config.get_address_books(args.addressbook,
+                                                        search_queries)
         if "target_addressbook" in args:
-            args.target_addressbook = list(config.get_address_books(
-                args.target_addressbook, search_queries))
+            args.target_addressbook = config.get_address_books(
+                args.target_addressbook, search_queries)
     except AddressBookParseError as err:
         sys.exit("{}\nUse --debug for more information or --skip-unparsable "
                  "to proceed".format(err))
