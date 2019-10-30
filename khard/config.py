@@ -96,8 +96,7 @@ class Config:
 
     def __init__(self, config_file=None):
         self.config = None
-        self.abooks = []
-        self.abook = None
+        self.abooks = None
         locale.setlocale(locale.LC_ALL, '')
         config = self._load_config_file(config_file)
         self.config = self._validate(config)
@@ -175,12 +174,11 @@ class Config:
                   'localize_dates': self.localize_dates,
                   'skip': self.skip_unparsable}
         try:
-            self.abook = AddressBookCollection(
+            self.abooks = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
                         for name in section], **kwargs)
         except IOError as err:
             exit(str(err))
-        self.abooks = [self.abook[name] for name in section]
 
     def merge(self, other):
         """Merge the config with some other dict or ConfigObj
