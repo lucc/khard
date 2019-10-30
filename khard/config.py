@@ -170,7 +170,15 @@ class Config:
         self.preferred_phone_number_type = table['preferred_phone_number_type']
         self.show_uids = table['show_uids']
 
-    def load_address_books(self):
+    def init_address_books(self):
+        """Initialize the internal address book collection.
+
+        This method should only be called *after* merging in the command line
+        options as they can hold some options that are relevant for the loading
+        of the address books.
+
+        :returns: None
+        """
         section = self.config['addressbooks']
         kwargs = {'private_objects': self.private_objects,
                   'localize_dates': self.localize_dates,
@@ -214,3 +222,22 @@ class Config:
         self.config.merge(other)
         self._validate(self.config)
         self._set_attributes()
+
+    def merge_args(self, args):
+        """Merge options from a flat argparse object.
+
+        :param argparse.Namespace args: the parsed arguments to incorperate
+        :returns: None
+        """
+        merge = {'general': ['debug'],
+                 'contact table': ['reverse', 'group_by_addressbook',
+                                   'display', 'sort'],
+                 'vcard': ['search_in_source_files', 'skip_unparsable',
+                           'preferred_version'],
+                 }
+        merge = {sec: {key: getattr(args, key) for key in opts
+                       if key in args and getattr(args, key) is not None}
+                 for sec, opts in merge.items()}
+        logging.debug('Merging in %s', merge)
+        self.merge(merge)
+        logging.debug('Merged: %s', vars(self))
