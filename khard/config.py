@@ -11,7 +11,8 @@ import configobj
 import validate
 
 from .actions import Actions
-from .address_book import AddressBookCollection, VdirAddressBook
+from .address_book import AddressBookCollection, AddressBookNameError, \
+    VdirAddressBook
 
 
 def exit(message, prefix="Error in config file\n"):
@@ -90,6 +91,7 @@ def validate_private_objects(value):
 
 
 class Config:
+    """Parse and validate the config file with configobj."""
 
     supported_vcard_versions = ("3.0", "4.0")
     SPEC_FILE = os.path.join(os.path.dirname(__file__), 'data', 'config.spec')
@@ -179,6 +181,29 @@ class Config:
                         for name in section], **kwargs)
         except IOError as err:
             exit(str(err))
+
+    def get_address_books(self, names, queries):
+        """Load all address books with the given names.
+
+        :param list(str) names: the address books to load
+        :param dict queries: a mapping of address book names to search queries
+        :yields: the loaded address books
+        :ytype: addressbook.AddressBook
+        """
+        all_names = {str(book) for book in self.abooks}
+        if not names:
+            names = all_names
+        elif not all_names.issuperset(names):
+            raise AddressBookNameError(
+                "The following address books are not defined: {}".format(
+                    ', '.join(set(names) - all_names)))
+        # load address books which are defined in the configuration file
+        for name in names:
+            address_book = self.abooks[name]
+            address_book.load(
+                queries[name],
+                search_in_source_files=self.search_in_source_files)
+            yield address_book
 
     def merge(self, other):
         """Merge the config with some other dict or ConfigObj

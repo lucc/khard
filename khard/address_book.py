@@ -26,6 +26,10 @@ class AddressBookParseError(Exception):
             self.filename, self.abook, self.reason)
 
 
+class AddressBookNameError(Exception):
+    """Indicate an error with an address book name."""
+
+
 class AddressBook(metaclass=abc.ABCMeta):
     """The base class of all address book implementations."""
 

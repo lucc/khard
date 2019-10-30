@@ -12,7 +12,8 @@ from tempfile import NamedTemporaryFile
 from unidecode import unidecode
 
 from . import helpers
-from .address_book import AddressBookCollection, AddressBookParseError
+from .address_book import AddressBookCollection, AddressBookParseError, \
+    AddressBookNameError
 from .carddav_object import CarddavObject
 from . import cli
 from .version import version as khard_version
@@ -511,40 +512,6 @@ def get_contacts(address_books, query, method="all", reverse=False,
                           unidecode(x.formatted_name.lower()))
     raise ValueError('sort must be "first_name", "last_name" or '
                      '"formatted_name" not {}.'.format(sort))
-
-
-def load_address_books(names, config, search_queries):
-    """Load all address books with the given names from the config.
-
-    :param names: the address books to load
-    :type names: list(str)
-    :param config: the config instance to use when looking up address books
-    :type config: config.Config
-    :param search_queries: a mapping of address book names to search queries
-    :type search_queries: dict
-    :yields: the loaded address books
-    :ytype: addressbook.AddressBook
-
-    """
-    all_names = {str(book) for book in config.abooks}
-    if not names:
-        names = all_names
-    elif not all_names.issuperset(names):
-        sys.exit('Error: The entered address books "{}" do not exist.\n'
-                 'Possible values are: {}'.format(
-                     '", "'.join(set(names) - all_names),
-                     ', '.join(all_names)))
-    # load address books which are defined in the configuration file
-    for name in names:
-        address_book = config.abooks[name]
-        try:
-            address_book.load(
-                search_queries[address_book.name],
-                search_in_source_files=config.search_in_source_files)
-        except AddressBookParseError as err:
-            sys.exit("{}\nUse --debug for more information or "
-                     "--skip-unparsable to proceed".format(err))
-        yield address_book
 
 
 def prepare_search_queries(args):
@@ -1364,12 +1331,18 @@ def main(argv=sys.argv[1:]):
     search_queries = prepare_search_queries(args)
 
     # load address books
-    if "addressbook" in args:
-        args.addressbook = list(load_address_books(args.addressbook, config,
-                                                   search_queries))
-    if "target_addressbook" in args:
-        args.target_addressbook = list(load_address_books(
-            args.target_addressbook, config, search_queries))
+    try:
+        if "addressbook" in args:
+            args.addressbook = list(config.get_address_books(args.addressbook,
+                                                             search_queries))
+        if "target_addressbook" in args:
+            args.target_addressbook = list(config.get_address_books(
+                args.target_addressbook, search_queries))
+    except AddressBookParseError as err:
+        sys.exit("{}\nUse --debug for more information or --skip-unparsable "
+                 "to proceed".format(err))
+    except AddressBookNameError as err:
+        sys.exit(err)
 
     vcard_list = generate_contact_list(args)
 
