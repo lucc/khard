@@ -287,10 +287,8 @@ def list_contacts(vcard_list):
         table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
     if config.show_uids:
         table_header.append("UID")
-        abook_collection = AddressBookCollection(
-            'short uids collection', selected_address_books,
-            private_objects=config.private_objects,
-            localize_dates=config.localize_dates, skip=config.skip_unparsable)
+        abook_collection = AddressBookCollection('short uids collection',
+                                                 selected_address_books)
 
     table.append(table_header)
     # table body

@@ -186,7 +186,7 @@ class Config:
         try:
             self.abooks = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
-                        for name in section], **kwargs)
+                        for name in section])
         except IOError as err:
             exit(str(err))
 
@@ -206,6 +206,8 @@ class Config:
                 "The following address books are not defined: {}".format(
                     ', '.join(set(names) - all_names)))
         # load address books which are defined in the configuration file
+        abooks = [self.abooks[name] for name in names]
+        collection = AddressBookCollection("tmp", abooks)
         for name in names:
             address_book = self.abooks[name]
             address_book.load(
