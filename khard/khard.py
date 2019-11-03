@@ -386,30 +386,9 @@ def list_contacts(vcard_list):
     print(helpers.pretty_print(table))
 
 
-def list_birthdays(birthday_list):
-    table = [["Name", "Birthday"]]
-    for row in birthday_list:
-        table.append(row.split("\t"))
-    print(helpers.pretty_print(table))
-
-
-def list_phone_numbers(phone_number_list):
-    table = [["Name", "Type", "Phone"]]
-    for row in phone_number_list:
-        table.append(row.split("\t"))
-    print(helpers.pretty_print(table))
-
-
-def list_post_addresses(post_address_list):
-    table = [["Name", "Type", "Post address"]]
-    for row in post_address_list:
-        table.append(row.split("\t"))
-    print(helpers.pretty_print(table))
-
-
-def list_email_addresses(email_address_list):
-    table = [["Name", "Type", "E-Mail"]]
-    for row in email_address_list:
+def list_with_headers(the_list, *headers):
+    table = [headers]
+    for row in the_list:
         table.append(row.split("\t"))
     print(helpers.pretty_print(table))
 
@@ -785,7 +764,7 @@ def birthdays_subcommand(vcard_list, parsable):
         if parsable:
             print('\n'.join(birthday_list))
         else:
-            list_birthdays(birthday_list)
+            list_with_headers(birthday_list, "Name", "Birthday")
     else:
         if not parsable:
             print("Found no birthdays")
@@ -842,16 +821,12 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                         matching_phone_number_list.append(phone_number_line)
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
-    if matching_phone_number_list:
+    numbers = matching_phone_number_list or all_phone_numbers_list
+    if numbers:
         if parsable:
-            print('\n'.join(matching_phone_number_list))
+            print('\n'.join(numbers))
         else:
-            list_phone_numbers(matching_phone_number_list)
-    elif all_phone_numbers_list:
-        if parsable:
-            print('\n'.join(all_phone_numbers_list))
-        else:
-            list_phone_numbers(all_phone_numbers_list)
+            list_with_headers(numbers, "Name", "Type", "Phone")
     else:
         if not parsable:
             print("Found no phone numbers")
@@ -906,16 +881,12 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
                 matching_post_address_list.append(post_address_line)
             # collect all post addresses in a different list as fallback
             all_post_address_list.append(post_address_line)
-    if matching_post_address_list:
+    addresses = matching_post_address_list or all_post_address_list
+    if addresses:
         if parsable:
-            print('\n'.join(matching_post_address_list))
+            print('\n'.join(addresses))
         else:
-            list_post_addresses(matching_post_address_list)
-    elif all_post_address_list:
-        if parsable:
-            print('\n'.join(all_post_address_list))
-        else:
-            list_post_addresses(all_post_address_list)
+            list_with_headers(addresses, "Name", "Type", "Post address")
     else:
         if not parsable:
             print("Found no post adresses")
@@ -975,22 +946,15 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
                 all_email_address_list.append(email_address_line)
-    if matching_email_address_list:
+    emails = matching_email_address_list or all_email_address_list
+    if emails:
         if parsable:
             if not remove_first_line:
                 # at least mutt requires that line
                 print("searching for '{}' ...".format(search_terms))
-            print('\n'.join(matching_email_address_list))
+            print('\n'.join(emails))
         else:
-            list_email_addresses(matching_email_address_list)
-    elif all_email_address_list:
-        if parsable:
-            if not remove_first_line:
-                # at least mutt requires that line
-                print("searching for '{}' ...".format(search_terms))
-            print('\n'.join(all_email_address_list))
-        else:
-            list_email_addresses(all_email_address_list)
+            list_with_headers(emails, "Name", "Type", "E-Mail")
     else:
         if not parsable:
             print("Found no email addresses")
