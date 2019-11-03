@@ -358,8 +358,8 @@ def parse_args(argv):
     # command line.
     if not remainder or remainder[0] not in Actions.get_all():
         if config.default_action is None:
-            exit("Missing subcommand on command line or default action "
-                 "parameter in config.")
+            parser.error("Missing subcommand on command line or default action"
+                         " parameter in config.")
         remainder.insert(0, config.default_action)
         logging.debug("updated remainder=%s", remainder)
 
