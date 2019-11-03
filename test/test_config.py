@@ -46,7 +46,7 @@ class LoadingConfigFile(unittest.TestCase):
     def test_load_empty_file_fails(self):
         with tempfile.NamedTemporaryFile() as name:
             with self.assertLogs(level=logging.ERROR):
-                with self.assertRaises(SystemExit):
+                with self.assertRaises(config.ConfigError):
                     config.Config(name)
 
     @mock.patch.dict('os.environ', EDITOR='editor', MERGE_EDITOR='meditor')
@@ -159,28 +159,28 @@ class Validation(unittest.TestCase):
         action = 'this is not a valid action'
         conf = self._template('general', 'default_action', action)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
     def test_rejects_unparsable_editor_commands(self):
         editor = 'editor --option "unparsable because quotes are missing'
         conf = self._template('general', 'editor', editor)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
     def test_rejects_private_objects_with_strange_chars(self):
         obj = 'X-VCÄRD-EXTENSIÖN'
         conf = self._template('vcard', 'private_objects', obj)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
     def test_rejects_private_objects_starting_with_minus(self):
         obj = '-INVALID-'
         conf = self._template('vcard', 'private_objects', obj)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
 

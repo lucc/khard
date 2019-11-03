@@ -5,7 +5,7 @@ import logging
 import sys
 
 from .actions import Actions
-from .config import Config
+from .config import Config, ConfigError
 from .version import version as khard_version
 
 
@@ -344,7 +344,10 @@ def parse_args(argv):
         logging.basicConfig(level=logging.DEBUG)
 
     # Create the config instance.
-    config = Config(args.config)
+    try:
+        config = Config(args.config)
+    except ConfigError as err:
+        parser.exit(3, "Error in config file: {}\n".format(err))
     logging.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with

@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import shlex
-import sys
 
 import configobj
 import validate
@@ -15,21 +14,8 @@ from .address_book import AddressBookCollection, AddressBookNameError, \
     VdirAddressBook
 
 
-def exit(message, prefix="Error in config file\n"):
-    """Exit with a message and a return code indicating an error in the config
-    file.
-
-    This function doesn't return, it calls sys.exit.
-
-    :param message: the message to print
-    :type message: str
-    :param prefix: the prefix to put in front of the message
-    :type prefix: str
-    :returns: does not return
-
-    """
-    print(prefix + message)
-    sys.exit(3)
+class ConfigError(Exception):
+    """Errors during config file parsing"""
 
 
 def validate_command(value):
@@ -122,7 +108,7 @@ class Config:
                 infile=config_file, configspec=configspec,
                 interpolation=False, file_error=True)
         except configobj.ConfigObjError as err:
-            exit(str(err))
+            raise ConfigError(str(err))
 
     @staticmethod
     def _validate(config):
@@ -139,7 +125,7 @@ class Config:
             logging.error("Error in config file, %s: %s",
                           ".".join([*path, key]), exception)
         if result:
-            sys.exit(3)
+            raise ConfigError
         return config
 
     def _set_attributes(self):
@@ -189,7 +175,7 @@ class Config:
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
                         for name in section])
         except IOError as err:
-            exit(str(err))
+            raise ConfigError(str(err))
 
     def get_address_books(self, names, queries):
         """Load all address books with the given names.
