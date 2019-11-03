@@ -1,23 +1,21 @@
 """Tests for the config module."""
 # pylint: disable=missing-docstring
 
-import io
 import logging
 import os.path
 import tempfile
 import unittest
 import unittest.mock as mock
 
-from khard import config
-
 import configobj
+
+from khard import config
 
 
 class LoadingConfigFile(unittest.TestCase):
 
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
-        stdout = io.StringIO()
         with self.assertRaises(IOError) as cm:
             config.Config._load_config_file(filename)
         self.assertTrue(str(cm.exception).startswith('Config file not found:'))
@@ -46,9 +44,8 @@ class LoadingConfigFile(unittest.TestCase):
         self.assertEqual(ret['infile'], expected)
 
     def test_load_empty_file_fails(self):
-        stdout = io.StringIO()
         with tempfile.NamedTemporaryFile() as name:
-            with self.assertLogs(level=logging.ERROR) as cm:
+            with self.assertLogs(level=logging.ERROR):
                 with self.assertRaises(SystemExit):
                     config.Config(name)
 
