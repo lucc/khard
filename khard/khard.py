@@ -909,9 +909,8 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
         # create post address line list
         post_address_line_list = []
         if parsable:
-            for type, post_address_list in sorted(
-                    vcard.get_post_addresses().items(),
-                    key=lambda k: k[0].lower()):
+            for type, post_address_list in sorted(vcard.post_addresses.items(),
+                                                  key=lambda k: k[0].lower()):
                 for post_address in post_address_list:
                     post_address_line_list.append(
                         "\t".join([str(post_address), name, type]))
