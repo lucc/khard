@@ -1671,8 +1671,7 @@ class CarddavObject(YAMLEditable):
             sys.exit(4)
 
     def delete_vcard_file(self):
-        if os.path.exists(self.filename):
+        try:
             os.remove(self.filename)
-        else:
-            print("Error: Vcard file {} does not exist.".format(self.filename))
-            sys.exit(4)
+        except IOError as err:
+            logging.error("Can not remove vCard file: %s", err)
