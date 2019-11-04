@@ -7,7 +7,7 @@
 
 from setuptools import setup
 
-with open('README.rst', 'rb') as f:
+with open('README.md', 'rb') as f:
     readme = f.read().decode("utf-8")
 
 setup(
@@ -17,6 +17,7 @@ setup(
     url='https://github.com/scheibler/khard/',
     description='A console carddav client',
     long_description=readme,
+    long_description_content_type='text/markdown',
     license='GPL',
     keywords='Carddav console addressbook',
     classifiers=[
