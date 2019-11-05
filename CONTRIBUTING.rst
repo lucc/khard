@@ -52,8 +52,7 @@ In order to start coding you need to fetch the develop branch:
 
   git clone https://github.com/scheibler/khard
   cd khard
-  git fetch --all
-  git checkout develop
+  python setup.py build  # to generate the version.py file
   python -m kard --help
   # or
   pip3 install --editable .
