@@ -34,3 +34,13 @@ script: |
     docs) python setup.py build; make -C doc html man;;
     check) mypy --ignore-missing-imports khard;;
   esac
+
+deploy:
+  provider: pypi
+  username: # TODO <username>
+  password: # TODO <encrypted password>
+  # see https://blog.travis-ci.com/2019-08-27-deployment-tooling-dpl-v2-preview-release
+  edge: true # opt in to dpl v2
+  skip_existing: true
+  on:
+    tags: true
