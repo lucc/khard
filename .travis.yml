@@ -3,8 +3,10 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
+  - "3.8"
   - "nightly"
   - "pypy3.5"
+  - "pypy3" # this is 3.6
 env:
   - JOB=tests
   - JOB=docs
@@ -13,6 +15,7 @@ jobs:
   allow_failures:
     - python: "nightly"
     - python: "pypy3.5"
+    - python: "pypy3"
 
 install: |
   case $JOB in
