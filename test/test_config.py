@@ -148,7 +148,9 @@ class Validation(unittest.TestCase):
 
     @staticmethod
     def _template(section, key, value):
-        c = configobj.ConfigObj(configspec=config.Config.SPEC_FILE)
+        configspec = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                  'khard', 'data', 'config.spec')
+        c = configobj.ConfigObj(configspec=configspec)
         c['general'] = {}
         c['vcard'] = {}
         c['contact table'] = {}
