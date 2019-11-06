@@ -26,8 +26,10 @@ Installation
 </a>
 
 Khard is already packaged for quite some distributions.  Chances are you can
-install it with your default package manager.  Further instructions can be
-found in the [documentation](doc/source/index.rst#installation).
+install it with your default package manager.  Releases are also published on
+[PyPi](https://pypi.org/project/khard/) and can be installed with `pip`.
+Further instructions can be found in the
+[documentation](doc/source/index.rst#installation).
 
 Usage
 -----
