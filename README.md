@@ -39,6 +39,10 @@ option. [The docs](doc/source/index.rst) also have a chapter on [command line
 usage](doc/source/commandline.rst) and
 [configuration](doc/source/index.rst#configuration).
 
+In order to build the documentation locally you need
+[Sphinx](https://www.sphinx-doc.org/).  It can be build from the Makefile in
+the [`doc`](doc) directory.
+
 Development
 -----------
 
