@@ -11,7 +11,7 @@ with open('README.md', 'rb') as f:
     readme = f.read().decode("utf-8")
 
 setup(
-    name='khard',
+    name='khard-test-lucc',
     author='Eric Scheibler',
     author_email='email@eric-scheibler.de',
     url='https://github.com/scheibler/khard/',
