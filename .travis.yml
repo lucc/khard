@@ -37,8 +37,10 @@ script: |
 
 deploy:
   provider: pypi
-  username: # TODO <username>
-  password: # TODO <encrypted password>
+  server: https://test.pypi.org/legacy/
+  username: __token__
+  password:
+    secure: fZuXQbwE0u4nyBIPmSsIVd/fWJ4E4gHFwMbhdaRZcwu5rIj8Q46rPZYcLv4xGWEqEyMHwNkmmJc0Pi0e3WFRVUMOrTPbWy1Og74MxiddpeTBQ5ekDjgO/hQ72vYZaV/lyPyitDtEk8KsncmD70FhLBmMqHKGeDR+m7kQkMsvnsAmyK8vaLXN0S0XkhblBonf59JOiXL3mfahrOOScRyrXZNp40xCfJeAB/7Bi37KwGO3no0M6EoIWlOZzgHVZepPUn17RFj+nvrW4Hir6YwaNPF5qoN3b08RKTV7PTdzIx4mdt5+xMQEkrrIUxKAXdpvApnfLHBvs1r3d2ibSITf/wpDCOGputJt9aknW3OOPJoZfw4NcuvqqWChvfiA+ufZbk0GyzLJTU2ejGfn9PlILndyb8dBjAbRWfeV6yReJlnyvf9BtbFHvFjEMwXpv8cDmy+u4MtfkD56OmUBbFZgkQtF++hUiS+mF2dOgcszsQZ0jy1GSma8IwMF8tqfYWs9xRI7A4F2CDxU7QhwoIQrnSxCR32fIRJKRjw7aJhKaBSdn6E2akQd0vwDjbuKX5Ypdqp15AuKkONDjI7hSRTP/ptDKJZzhkJ1Cda/dJCSFz2prxtVLNTxSgVP3DdYHVLTgUbHuVGoHNzFg0omh3uNCQvfcrHN9OrcxJr7ZkR25P8=
   # see https://blog.travis-ci.com/2019-08-27-deployment-tooling-dpl-v2-preview-release
   edge: true # opt in to dpl v2
   skip_existing: true
