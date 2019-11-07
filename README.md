@@ -29,7 +29,7 @@ Khard is already packaged for quite some distributions.  Chances are you can
 install it with your default package manager.  Releases are also published on
 [PyPi](https://pypi.org/project/khard/) and can be installed with `pip`.
 Further instructions can be found in the
-[documentation](doc/source/index.rst#installation).
+[documentation](https://khard.readthedocs.io/en/latest/#installation).
 
 Usage
 -----
@@ -37,13 +37,14 @@ Usage
 There is an [example config file](doc/source/examples/khard.conf.example) which
 you can copy to the default config file location: `~/.config/khard/khard.conf`.
 `khard` has several subcommands which are all documented by their `--help`
-option. [The docs](doc/source/index.rst) also have a chapter on [command line
-usage](doc/source/commandline.rst) and
-[configuration](doc/source/index.rst#configuration).
+option. [The docs](https://khard.readthedocs.io/en/latest/) also have a chapter
+on [command line
+usage](https://khard.readthedocs.io/en/latest/commandline.html) and
+[configuration](https://khard.readthedocs.io/en/latest/#configuration).
 
 In order to build the documentation locally you need
 [Sphinx](https://www.sphinx-doc.org/).  It can be build from the Makefile in
-the [`doc`](doc) directory.
+the `doc` directory.
 
 Development
 -----------
@@ -56,7 +57,7 @@ Development
 Khard is developed [on GitHub](https://github.com/scheibler/khard) where you
 are welcome to post [bug reports](https://github.com/scheibler/khard/issues)
 and [feature requests](https://github.com/scheibler/khard/pulls).  Also see the
-[notes for contributors](doc/source/contributing.rst).
+[notes for contributors](CONTRIBUTING.rst).
 
 Authors
 -------
