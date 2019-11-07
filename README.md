@@ -20,10 +20,8 @@ post](http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-
 Installation
 ------------
 
-<a href="https://repology.org/project/khard/versions">
-    <img src="https://repology.org/badge/tiny-repos/khard.svg"
-        alt="Packaging status" align="right">
-</a>
+[![Packaging
+status](https://repology.org/badge/tiny-repos/khard.svg)](https://repology.org/project/khard/versions)
 
 Khard is already packaged for quite some distributions.  Chances are you can
 install it with your default package manager.  Releases are also published on
@@ -33,6 +31,9 @@ Further instructions can be found in the
 
 Usage
 -----
+
+[![Documentation
+Status](https://readthedocs.org/projects/khard/badge/?version=latest)](https://khard.readthedocs.io/en/latest/?badge=latest)
 
 There is an [example config file](doc/source/examples/khard.conf.example) which
 you can copy to the default config file location: `~/.config/khard/khard.conf`.
@@ -49,10 +50,8 @@ the `doc` directory.
 Development
 -----------
 
-<a href="https://travis-ci.org/scheibler/khard">
-    <img src="https://travis-ci.org/scheibler/khard.svg?branch=develop"
-        alt="Build status" align="right">
-</a>
+[![Build
+Status](https://travis-ci.org/scheibler/khard.svg?branch=develop)](https://travis-ci.org/scheibler/khard)
 
 Khard is developed [on GitHub](https://github.com/scheibler/khard) where you
 are welcome to post [bug reports](https://github.com/scheibler/khard/issues)
