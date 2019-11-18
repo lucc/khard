@@ -288,7 +288,7 @@ class VCardWrapper:
         # versions.
         self._delete_vcard_object("REV")
         rev = self.vcard.add('rev')
-        rev.value = datetime.datetime.now().strftime("%Y%mdT%H%M%SZ")
+        rev.value = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
 
     @property
     def birthday(self):
