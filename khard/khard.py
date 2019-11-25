@@ -413,7 +413,7 @@ def choose_vcard_from_list(header_string, vcard_list, include_none=False):
     return select(vcard_list, True)
 
 
-def get_contact_list_by_user_selection(address_books, search, strict_search):
+def get_contact_list_by_user_selection(address_books, search, strict_search, category_search=False):
     """returns a list of CarddavObject objects
     :param AddressBookCollection address_books: selected address books
     :param str search: filter contact list
@@ -422,7 +422,7 @@ def get_contact_list_by_user_selection(address_books, search, strict_search):
     :rtype: list(CarddavObject)
     """
     return get_contacts(address_books, search,
-                        "name" if strict_search else "all", config.reverse,
+                        "category" if category_search else "name" if strict_search else "all", config.reverse,
                         config.group_by_addressbook, config.sort)
 
 
@@ -583,7 +583,8 @@ def generate_contact_list(args):
         logging.debug("args.search_terms=%s", args.search_terms)
         vcard_list = get_contact_list_by_user_selection(
             args.addressbook, args.search_terms,
-            args.strict_search if "strict_search" in args else False)
+            args.strict_search if "strict_search" in args else False,
+            args.category_search if "category_search" in args else False)
     return vcard_list
 
 

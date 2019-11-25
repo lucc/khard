@@ -120,6 +120,9 @@ def create_parsers():
         "-e", "--strict-search", action="store_true",
         help="narrow contact search to name field")
     default_search_parser.add_argument(
+        "--category-search", action="store_true",
+        help="narrow contact search to category field")
+    default_search_parser.add_argument(
         "-u", "--uid", default="", help="select contact by uid")
     default_search_parser.add_argument(
         "search_terms", nargs="*", metavar="search terms",
@@ -133,6 +136,9 @@ def create_parsers():
     merge_search_parser.add_argument(
         "-e", "--strict-search", action="store_true",
         help="narrow contact search to name fields")
+    merge_search_parser.add_argument(
+        "--category-search", action="store_true",
+        help="narrow contact search to category fields")
     merge_search_parser.add_argument(
         "-t", "--target-contact", "--target", default="",
         help="search in all fields to find matching target contact")

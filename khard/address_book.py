@@ -86,8 +86,22 @@ class AddressBook(metaclass=abc.ABCMeta):
                         and len(re.sub(r"\D", "", query)) >= 3:
                     yield contact
 
+    def _search_category(self, query):
+        """Search in all the fields for contacts containing words from the query.
+
+        :param query: the words to search for
+        :type query: str
+        :yields: all found contacts
+        :rtype: generator(carddav_object.CarddavObject)
+
+        """
+        categories = query.split(".*")
+        for contact in self.contacts.values():
+            if all(category in contact.categories for category in categories):
+                yield contact
+
     def _search_names(self, query):
-        """Search in the name filed for contacts matching query.
+        """Search in the name field for contacts matching query.
 
         :param query: the query to search for
         :type query: str
@@ -135,17 +149,19 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: list(carddav_object.CarddavObject)
 
         """
-        logging.debug('address book %s, searching with %s', self.name, query)
+        logging.debug('address book %s, searching %s with %s', self.name, method, query)
         if not self._loaded:
             self.load(query)
         if method == "all":
             return self._search_all(query)
+        elif method == "category":
+            return self._search_category(query)
         elif method == "name":
             return self._search_names(query)
         elif method == "uid":
             return self._search_uid(query)
         raise ValueError(
-            'Only the search methods "all", "name" and "uid" are supported.')
+            'Only the search methods "all", "name", "category" and "uid" are supported.')
 
     def get_short_uid_dict(self, query=None):
         """Create a dictionary of shortend UIDs for all contacts.
