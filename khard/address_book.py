@@ -95,7 +95,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: generator(carddav_object.CarddavObject)
 
         """
-        categories = query.split(".*")
+        categories = query.replace("\\", "").split(".*")
         for contact in self.contacts.values():
             if all(category in contact.categories for category in categories):
                 yield contact
