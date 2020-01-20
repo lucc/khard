@@ -139,6 +139,33 @@ class ListingCommands2(unittest.TestCase):
             "1        bug 195    cell: 67545678              b"]
         self.assertListEqual(text, expect)
 
+    def test_list_bug_243_part_1(self):
+        """Search for a category with the ls command"""
+        with with_vcards(['test/fixture/vcards/category.vcf']):
+            with mock_stdout() as stdout:
+                khard.main(['list', 'testcategory'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = [
+            "Address book: tmp",
+            "Index    Name                     Phone    "
+            "E-Mail                           UID",
+            "1        contact with category             "
+            "internet: testcat@example.org    c",
+        ]
+        self.assertListEqual(text, expect)
+
+    def test_list_bug_243_part_2(self):
+        """Search for a category with the email command"""
+        with with_vcards(['test/fixture/vcards/category.vcf']):
+            with mock_stdout() as stdout:
+                khard.main(['email', 'testcategory'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = [
+            "Name                     Type        E-Mail",
+            "contact with category    internet    testcat@example.org",
+        ]
+        self.assertListEqual(text, expect)
+
 
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""
