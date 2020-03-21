@@ -143,14 +143,14 @@ class ListingCommands2(unittest.TestCase):
         """Search for a category with the ls command"""
         with with_vcards(['test/fixture/vcards/category.vcf']):
             with mock_stdout() as stdout:
-                khard.main(['list', 'testcategory'])
+                khard.main(['list', 'bar'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = [
             "Address book: tmp",
             "Index    Name                     Phone    "
-            "E-Mail                           UID",
+            "E-Mail                       UID",
             "1        contact with category             "
-            "internet: testcat@example.org    c",
+            "internet: foo@example.org    c",
         ]
         self.assertListEqual(text, expect)
 
@@ -158,11 +158,11 @@ class ListingCommands2(unittest.TestCase):
         """Search for a category with the email command"""
         with with_vcards(['test/fixture/vcards/category.vcf']):
             with mock_stdout() as stdout:
-                khard.main(['email', 'testcategory'])
+                khard.main(['email', 'bar'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = [
             "Name                     Type        E-Mail",
-            "contact with category    internet    testcat@example.org",
+            "contact with category    internet    foo@example.org",
         ]
         self.assertListEqual(text, expect)
 
