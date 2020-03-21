@@ -160,9 +160,9 @@ def create_parsers():
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     list_parser.add_argument(
-        "-F", "--fields", default=['index', 'name', 'phone', 'email', 'uid'],
+        "-F", "--fields", default=[],
         type=lambda x: [y.strip() for y in x.split(",")],
-        help="Comma separated list of fields to show (default index,name,phone,email,uid)")
+        help="Comma separated list of fields to show")
     show_parser = subparsers.add_parser(
         "show",
         aliases=Actions.get_aliases("show"),

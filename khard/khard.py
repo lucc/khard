@@ -316,7 +316,7 @@ def ugly_name(name):
     return name.replace('-', '').replace(' ', '_').lower()
 
 
-def list_contacts(vcard_list, fields=[]):
+def list_contacts(vcard_list, fields=[], parsable=False):
     selected_address_books = []
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
@@ -324,21 +324,29 @@ def list_contacts(vcard_list, fields=[]):
     table = []
     # table header
     if len(selected_address_books) == 1:
-        print("Address book: {}".format(selected_address_books[0]))
+        if not parsable:
+            print("Address book: {}".format(selected_address_books[0]))
         table_header = ["index", "name", "phone", "email"]
     else:
-        print("Address books: {}".format(', '.join(
-            [str(book) for book in selected_address_books])))
+        if not parsable:
+            print("Address books: {}".format(', '.join(
+                [str(book) for book in selected_address_books])))
         table_header = ["index", "name", "phone", "email", "addressbook"]
     if config.show_uids:
         table_header.append("uid")
+
+    if parsable:
+        # Legacy default header fields for parsable.
+        table_header = ["uid", "name", "addressbook"]
+
     if fields:
         table_header = [ugly_name(x) for x in fields]
 
     abook_collection = AddressBookCollection('short uids collection',
                                              selected_address_books)
 
-    table.append([pretty_name(x) for x in table_header])
+    if not parsable:
+        table.append([pretty_name(x) for x in table_header])
     # table body
     for index, vcard in enumerate(vcard_list):
         row = []
@@ -350,15 +358,21 @@ def list_contacts(vcard_list, fields=[]):
             elif field == 'addressbook':
                 row.append(vcard.address_book.name)
             elif field == 'uid':
-                if abook_collection.get_short_uid(vcard.uid):
+                if parsable:
+                    row.append(vcard.uid)
+                elif abook_collection.get_short_uid(vcard.uid):
                     row.append(abook_collection.get_short_uid(vcard.uid))
                 else:
                     row.append("")
             else:
                 # TODO: Allow grabbing ordered elements like 'emails[0]'
                 row.append(vcard.__getattribute__(field))
-        table.append(row)
-    print(helpers.pretty_print(table))
+        if parsable:
+            print("\t".join([str(v) for v in row]))
+        else:
+            table.append(row)
+    if not parsable:
+        print(helpers.pretty_print(table))
 
 
 def get_special_field(vcard, field):
@@ -1009,20 +1023,8 @@ def list_subcommand(vcard_list, parsable, fields):
         if not parsable:
             print("Found no contacts")
         sys.exit(1)
-    elif parsable:
-        contact_line_list = []
-        for vcard in vcard_list:
-            if config.display == "first_name":
-                name = vcard.get_first_name_last_name()
-            elif config.display == "last_name":
-                name = vcard.get_last_name_first_name()
-            else:
-                name = vcard.formatted_name
-            contact_line_list.append('\t'.join([vcard.uid, name,
-                                                vcard.address_book.name]))
-        print('\n'.join(contact_line_list))
     else:
-        list_contacts(vcard_list, fields)
+        list_contacts(vcard_list, fields, parsable)
 
 
 def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
