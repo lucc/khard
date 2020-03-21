@@ -297,7 +297,7 @@ def list_address_books(address_books):
     print(helpers.pretty_print(table))
 
 
-def list_contacts(vcard_list):
+def list_contacts(vcard_list, fields=[]):
     selected_address_books = []
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
@@ -313,8 +313,19 @@ def list_contacts(vcard_list):
         table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
     if config.show_uids:
         table_header.append("UID")
-        abook_collection = AddressBookCollection('short uids collection',
-                                                 selected_address_books)
+    if fields:
+        field = {
+            'index': "Index",
+            'name': "Name",
+            'phone': "Phone",
+            'email': "E-Mail",
+            'addressbook': "Address book",
+            'uid': "UID",
+        }
+        table_header = [field[x] for x in fields if x in field]
+
+    abook_collection = AddressBookCollection('short uids collection',
+                                             selected_address_books)
 
     table.append(table_header)
     # table body
@@ -350,7 +361,7 @@ def list_contacts(vcard_list):
                     break
             if not phone_keys:
                 phone_keys = [x for x in phone_dict if "pref" in x.lower()] \
-                             or phone_dict.keys()
+                    or phone_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(phone_keys, key=lambda k: k[0].lower())[0]
             row.append("{}: {}".format(first_type,
@@ -369,7 +380,7 @@ def list_contacts(vcard_list):
                     break
             if not email_keys:
                 email_keys = [x for x in email_dict if "pref" in x.lower()] \
-                             or email_dict.keys()
+                    or email_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(email_keys, key=lambda k: k[0].lower())[0]
             row.append("{}: {}".format(first_type,
@@ -378,7 +389,7 @@ def list_contacts(vcard_list):
             row.append("")
         if len(selected_address_books) > 1:
             row.append(vcard.address_book.name)
-        if config.show_uids:
+        if "UID" in table_header:
             if abook_collection.get_short_uid(vcard.uid):
                 row.append(abook_collection.get_short_uid(vcard.uid))
             else:
@@ -816,7 +827,8 @@ def phone_subcommand(search_terms, vcard_list, parsable):
                         # field and match against that.
                         if re.sub(r"\D", "", search_str) in re.sub(r"\D", "",
                                                                    number):
-                            matching_phone_number_list.append(phone_number_line)
+                            matching_phone_number_list.append(
+                                phone_number_line)
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
     numbers = matching_phone_number_list or all_phone_numbers_list
@@ -961,7 +973,7 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
         sys.exit(1)
 
 
-def list_subcommand(vcard_list, parsable):
+def list_subcommand(vcard_list, parsable, fields):
     """Print a user friendly contacts table.
 
     :param vcard_list: the vcards to print
@@ -989,7 +1001,7 @@ def list_subcommand(vcard_list, parsable):
                                                 vcard.address_book.name]))
         print('\n'.join(contact_line_list))
     else:
-        list_contacts(vcard_list)
+        list_contacts(vcard_list, fields)
 
 
 def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
@@ -1293,7 +1305,7 @@ def main(argv=sys.argv[1:]):
         email_subcommand(args.search_terms, vcard_list,
                          args.parsable, args.remove_first_line)
     elif args.action == "list":
-        list_subcommand(vcard_list, args.parsable)
+        list_subcommand(vcard_list, args.parsable, args.fields)
     elif args.action in ["show", "edit", "remove"]:
         selected_vcard = choose_vcard_from_list(
             "Select contact for {} action".format(args.action.title()),
