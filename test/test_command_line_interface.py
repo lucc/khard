@@ -75,6 +75,16 @@ class ListingCommands(unittest.TestCase):
             "                          testuid2"]
         self.assertListEqual(text, expected)
 
+    def test_ls_fields_like_email(self):
+        with mock_stdout() as stdout:
+            khard.main(['ls', '-p', '-F', 'email,formatted_name'])
+        text = [l.strip() for l in stdout.getvalue().splitlines()]
+        expected = [
+            "E-Mail\tName",
+            "user@example.com\tsecond contact",
+        ]
+        self.assertListEqual(text, expected)
+
     @mock.patch.dict('os.environ', LC_ALL='C')
     def test_simple_bdays_without_options(self):
         with mock_stdout() as stdout:
