@@ -297,6 +297,25 @@ def list_address_books(address_books):
     print(helpers.pretty_print(table))
 
 
+def pretty_name(name):
+    # Note: ugly_name should give the key for each of these.
+    field = {
+        'index': "Index",
+        'name': "Name",
+        'phone': "Phone",
+        'email': "E-Mail",
+        'address_book': "Address book",
+        'uid': "UID",
+    }
+    if name in field:
+        return field[name]
+    return name
+
+
+def ugly_name(name):
+    return name.replace('-', '').replace(' ', '_').lower()
+
+
 def list_contacts(vcard_list, fields=[]):
     selected_address_books = []
     for contact in vcard_list:
@@ -306,49 +325,62 @@ def list_contacts(vcard_list, fields=[]):
     # table header
     if len(selected_address_books) == 1:
         print("Address book: {}".format(selected_address_books[0]))
-        table_header = ["Index", "Name", "Phone", "E-Mail"]
+        table_header = ["index", "name", "phone", "email"]
     else:
         print("Address books: {}".format(', '.join(
             [str(book) for book in selected_address_books])))
-        table_header = ["Index", "Name", "Phone", "E-Mail", "Address book"]
+        table_header = ["index", "name", "phone", "email", "addressbook"]
     if config.show_uids:
-        table_header.append("UID")
+        table_header.append("uid")
     if fields:
-        field = {
-            'index': "Index",
-            'name': "Name",
-            'phone': "Phone",
-            'email': "E-Mail",
-            'addressbook': "Address book",
-            'uid': "UID",
-        }
-        table_header = [field[x] for x in fields if x in field]
+        table_header = [ugly_name(x) for x in fields]
 
     abook_collection = AddressBookCollection('short uids collection',
                                              selected_address_books)
 
-    table.append(table_header)
+    table.append([pretty_name(x) for x in table_header])
     # table body
     for index, vcard in enumerate(vcard_list):
         row = []
-        row.append(index + 1)
+        for field in table_header:
+            if field == 'index':
+                row.append(index + 1)
+            elif field in ['name', 'phone', 'email']:
+                row.append(get_special_field(vcard, field))
+            elif field == 'addressbook':
+                row.append(vcard.address_book.name)
+            elif field == 'uid':
+                if abook_collection.get_short_uid(vcard.uid):
+                    row.append(abook_collection.get_short_uid(vcard.uid))
+                else:
+                    row.append("")
+            else:
+                # TODO: Allow grabbing ordered elements like 'emails[0]'
+                row.append(vcard.__getattribute__(field))
+        table.append(row)
+    print(helpers.pretty_print(table))
+
+
+def get_special_field(vcard, field):
+    if field == 'name':
         if vcard.nicknames and config.show_nicknames:
             if config.display == "first_name":
-                row.append("{} (Nickname: {})".format(
-                    vcard.get_first_name_last_name(), vcard.nicknames[0]))
+                return"{} (Nickname: {})".format(
+                    vcard.get_first_name_last_name(), vcard.nicknames[0])
             elif config.display == "formatted_name":
-                row.append("{} (Nickname: {})".format(vcard.formatted_name,
-                                                      vcard.nicknames[0]))
+                return"{} (Nickname: {})".format(vcard.formatted_name,
+                                                 vcard.nicknames[0])
             else:
-                row.append("{} (Nickname: {})".format(
-                    vcard.get_last_name_first_name(), vcard.nicknames[0]))
+                return "{} (Nickname: {})".format(
+                    vcard.get_last_name_first_name(), vcard.nicknames[0])
         else:
             if config.display == "first_name":
-                row.append(vcard.get_first_name_last_name())
+                return vcard.get_first_name_last_name()
             elif config.display == "formatted_name":
-                row.append(vcard.formatted_name)
+                return vcard.formatted_name
             else:
-                row.append(vcard.get_last_name_first_name())
+                return vcard.get_last_name_first_name()
+    elif field == 'phone':
         if vcard.phone_numbers:
             phone_dict = vcard.phone_numbers
             # filter out preferred phone type if set in config file
@@ -364,10 +396,9 @@ def list_contacts(vcard_list, fields=[]):
                     or phone_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(phone_keys, key=lambda k: k[0].lower())[0]
-            row.append("{}: {}".format(first_type,
-                                       sorted(phone_dict.get(first_type))[0]))
-        else:
-            row.append("")
+            return "{}: {}".format(first_type,
+                                   sorted(phone_dict.get(first_type))[0])
+    elif field == 'email':
         if vcard.emails:
             email_dict = vcard.emails
             # filter out preferred email type if set in config file
@@ -383,19 +414,9 @@ def list_contacts(vcard_list, fields=[]):
                     or email_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(email_keys, key=lambda k: k[0].lower())[0]
-            row.append("{}: {}".format(first_type,
-                                       sorted(email_dict.get(first_type))[0]))
-        else:
-            row.append("")
-        if len(selected_address_books) > 1:
-            row.append(vcard.address_book.name)
-        if "UID" in table_header:
-            if abook_collection.get_short_uid(vcard.uid):
-                row.append(abook_collection.get_short_uid(vcard.uid))
-            else:
-                row.append("")
-        table.append(row)
-    print(helpers.pretty_print(table))
+            return"{}: {}".format(first_type,
+                                  sorted(email_dict.get(first_type))[0])
+    return ""
 
 
 def list_with_headers(the_list, *headers):
