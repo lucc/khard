@@ -8,6 +8,8 @@ from datetime import datetime
 
 
 def pretty_print(table, justify="L"):
+    """Converts a list of lists into a string formatted like a table
+    with spaces separating fields and newlines separating rows"""
     # support for multiline columns
     line_break_table = []
     for row in table:

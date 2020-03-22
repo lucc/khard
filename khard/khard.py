@@ -298,6 +298,7 @@ def list_address_books(address_books):
 
 
 def pretty_name(name):
+    """Convert snake_cased column into their pretty alternative."""
     # Note: ugly_name should give the key for each of these.
     field = {
         'index': "Index",
@@ -313,6 +314,7 @@ def pretty_name(name):
 
 
 def ugly_name(name):
+    """Convert SOME field-names into their_snakecase format."""
     return name.replace('-', '').replace(' ', '_').lower()
 
 
@@ -400,6 +402,8 @@ def get_nested_field(vcard, field):
 
 
 def get_special_field(vcard, field):
+    """Returns certain fields with specific formatting options
+        (for support of some list command options)."""
     if field == 'name':
         if vcard.nicknames and config.show_nicknames:
             if config.display == "first_name":
@@ -1038,6 +1042,8 @@ def list_subcommand(vcard_list, parsable, fields):
     :type vcard_list: list of carddav_object.CarddavObject
     :param parsable: machine readable output: columns devided by tabulator (\t)
     :type parsable: bool
+    :param fields: list of strings for field evaluation
+    :type fields: list
     :returns: None
     :rtype: None
 
