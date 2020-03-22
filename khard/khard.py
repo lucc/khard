@@ -365,14 +365,38 @@ def list_contacts(vcard_list, fields=[], parsable=False):
                 else:
                     row.append("")
             else:
-                # TODO: Allow grabbing ordered elements like 'emails[0]'
-                row.append(vcard.__getattribute__(field))
+                row.append(get_nested_field(vcard, field))
         if parsable:
             print("\t".join([str(v) for v in row]))
         else:
             table.append(row)
     if not parsable:
         print(helpers.pretty_print(table))
+
+
+def get_nested_field(vcard, field):
+    """Returns the value of a nested field from a string
+
+    get_nested_field(vcard,'emails.home.1') is equivalent to
+    vcard.emails['home'][1].
+    :returns: the nested field, or the empty string if it didn't exist"""
+    attr_name = field.split('.')[0]
+    val = ''
+    if hasattr(vcard, attr_name):
+        val = getattr(vcard, attr_name)
+        # Loop through separate parts, changing val to be the head element.
+        for partial in field.split('.')[1:]:
+            if isinstance(val, dict) and partial in val:
+                val = val[partial]
+            elif partial.isdigit() and isinstance(val, list) \
+                    and len(val) > int(partial):
+                val = val[int(partial)]
+            # TODO: Completely support case insensitive indexing
+            elif isinstance(val, dict) and partial.upper() in val:
+                val = val[partial.upper()]
+            else:
+                val = ''
+    return val
 
 
 def get_special_field(vcard, field):
@@ -392,8 +416,7 @@ def get_special_field(vcard, field):
                 return vcard.get_first_name_last_name()
             elif config.display == "formatted_name":
                 return vcard.formatted_name
-            else:
-                return vcard.get_last_name_first_name()
+            return vcard.get_last_name_first_name()
     elif field == 'phone':
         if vcard.phone_numbers:
             phone_dict = vcard.phone_numbers

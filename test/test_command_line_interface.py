@@ -77,11 +77,12 @@ class ListingCommands(unittest.TestCase):
 
     def test_ls_fields_like_email(self):
         with mock_stdout() as stdout:
-            khard.main(['ls', '-p', '-F', 'email,formatted_name'])
-        text = [l.strip() for l in stdout.getvalue().splitlines()]
+            khard.main(['ls', '-p', '-F', 'emails.home.0,name'])
+        text = stdout.getvalue().splitlines()
         expected = [
-            "E-Mail\tName",
             "user@example.com\tsecond contact",
+            "\ttext birthday",
+            "\tthird contact",
         ]
         self.assertListEqual(text, expected)
 
