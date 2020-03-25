@@ -142,6 +142,22 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text1, expected)
         self.assertListEqual(text2, expected)
 
+    def test_case_of_search_terms_does_not_matter(self):
+        with mock_stdout() as stdout1:
+            khard.main(['list', 'second', 'contact'])
+        with mock_stdout() as stdout2:
+            khard.main(['list', 'SECOND', 'CONTACT'])
+        text1 = [l.strip() for l in stdout1.getvalue().splitlines()]
+        text2 = [l.strip() for l in stdout2.getvalue().splitlines()]
+        expected = [
+            "Address book: foo",
+            "Index    Name              Phone                "
+            "E-Mail                    UID",
+            "1        second contact    voice: 0123456789    "
+            "home: user@example.com    testuid1"]
+        self.assertListEqual(text1, expected)
+        self.assertListEqual(text2, expected)
+
 
 class ListingCommands2(unittest.TestCase):
 
