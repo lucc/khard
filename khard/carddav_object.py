@@ -1507,8 +1507,8 @@ class CarddavObject(YAMLEditable):
         :param address_book.AddressBook address_book: the address book where
             this contact is stored
         :param str filename: the file name of the .vcf file
-        :param re.Pattern|str|NoneType query: the regex to search in the source
-            file or None to load the file unconditionally
+        :param list(list(str))|NoneType query: the query to search in the
+            source file or None to load the file unconditionally
         :param list(str)|NoneType supported_private_objects: the list of
             private property names that will be loaded from the actual vcard
             and represented in this pobject
@@ -1520,8 +1520,7 @@ class CarddavObject(YAMLEditable):
         """
         with open(filename, "r") as file:
             contents = file.read()
-        if query is None or re.search(query, contents,
-                                      re.IGNORECASE | re.DOTALL):
+        if query is None or cls.match(contents.lower(), query):
             try:
                 vcard = vobject.readOne(contents)
             except Exception:
@@ -1554,6 +1553,39 @@ class CarddavObject(YAMLEditable):
             localize_dates=localize_dates)
         contact.update(yaml)
         return contact
+
+    @staticmethod
+    def match(string, query):
+        """Check if the given string matches against the query.  The query is a
+        list of lists of strings.  The inner lists are AND joined and the outer
+        lists are OR joined.
+
+        :param str string: the string which to check
+        :param None|str|list(str)|list(list(str)) query:
+        :rtype: bool
+        """
+        def match_str(q,  s):
+            return q.lower() in s
+
+        def match_list1(q, s):
+            return all(match_str(qq, s) for qq in q)
+
+        def match_list2(q, s):
+            return any(match_list1(qq, s) for qq in q)
+
+        logging.debug('match: %s', [string, query])
+
+        if query is None:
+            return True
+        string = string.lower()
+        if isinstance(query, str):
+            return match_str(query, string)
+        # now query can only be list(str) or list(list(str))
+        if not query:
+            return False
+        if isinstance(query[0], str):
+            return match_list1(query, string)
+        return match_list2(query, string)
 
     ######################################
     # overwrite some default class methods

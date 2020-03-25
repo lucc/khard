@@ -72,17 +72,16 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: generator(carddav_object.CarddavObject)
 
         """
-        regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contacts.values():
             # search in all contact fields
-            contact_details = contact.print_vcard()
-            if regexp.search(contact_details) is not None:
+            contact_details = contact.print_vcard().lower()
+            if contact.match(contact_details, query):
                 yield contact
             else:
                 # find phone numbers with special chars like /
                 clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
                                                contact_details)
-                if regexp.search(clean_contact_details) is not None \
+                if contact.match(clean_contact_details, query) \
                         and len(re.sub(r"\D", "", query)) >= 3:
                     yield contact
 
@@ -95,10 +94,9 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: generator(carddav_object.CarddavObject)
 
         """
-        regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contacts.values():
             # only search in contact name
-            if regexp.search(contact.formatted_name) is not None:
+            if contact.match(contact.formatted_name, query):
                 yield contact
 
     def _search_uid(self, query):
@@ -208,7 +206,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         query.  If the query is None all entries will be loaded.
 
         :param query: the query to limit loading to matching entries
-        :type query: str
+        :type query: None or list(list(str))
         :returns: the number of loaded contacts and the number of errors
         :rtype: (int, int)
 
@@ -249,7 +247,7 @@ class VdirAddressBook(AddressBook):
         be loaded.
 
         :param query: a regular expression to limit the results
-        :type query: str
+        :type query: None or list(list(str))
         :param search_in_source_files: apply search regexp directly on the .vcf
             files to speed up parsing (less accurate)
         :type search_in_source_files: bool
@@ -324,7 +322,8 @@ class AddressBookCollection(AddressBook):
 
         All parameters will be handed to VdirAddressBook.load.
 
-        :param str query: a regular expression to limit the results
+        :param query: a regular expression to limit the results
+        :type query: None or list(list(str))
         :param bool search_in_source_files: apply search regexp directly on the
             .vcf files to speed up parsing (less accurate)
         :returns: None
