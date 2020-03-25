@@ -5,11 +5,38 @@ import logging
 import sys
 
 from .actions import Actions
+from .carddav_object import CarddavObject
 from .config import Config, ConfigError
 from .version import version as khard_version
 
 
 logger = logging.getLogger(__name__)
+
+
+def field_argument(orignal):
+    """Check that the field specification for `ls -F` start with a propper
+    field name.  Nested attribute names are not checked.
+
+    :param str orignal: the value from the command line
+    :returns: the orignal value split at "," if the fields are spelled correctly
+    :rtype: list(str)
+    :throws: argparse.ArgumentTypeError
+    """
+    special_fields = ['index', 'name', 'phone', 'email']
+    properties = [name for name in dir(CarddavObject)
+                  if isinstance(getattr(CarddavObject, name), property)]
+    choices = sorted(special_fields + properties)
+    ret = []
+    for candidate in orignal.split(','):
+        candidate = candidate.lower()
+        field = candidate.split('.')[0]
+        if field in choices:
+            ret.append(candidate)
+        else:
+            raise argparse.ArgumentTypeError(
+                '"{}" is not an acepted fiels. Acepted fields are {}.'.format(
+                    field, ', '.join('"{}"'.format(c) for c in choices)))
+    return ret
 
 
 def create_parsers():
@@ -160,8 +187,7 @@ def create_parsers():
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     list_parser.add_argument(
-        "-F", "--fields", default=[],
-        type=lambda x: [y.strip() for y in x.split(",")],
+        "-F", "--fields", default=[], type=field_argument,
         help="Comma separated list of fields to show")
     show_parser = subparsers.add_parser(
         "show",
