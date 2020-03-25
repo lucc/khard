@@ -3,3 +3,4 @@ dist/
 khard/version.py
 doc/source/api/
 doc/source/examples/template.yaml
+.coverage
