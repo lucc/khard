@@ -375,7 +375,8 @@ def get_nested_field(vcard, field):
                 val = val[partial.upper()]
             else:
                 val = ''
-    return val
+    # Convert None and other falsy values to the empty string
+    return val or ''
 
 
 def get_special_field(vcard, field):
