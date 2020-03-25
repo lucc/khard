@@ -141,9 +141,9 @@ class AddressBook(metaclass=abc.ABCMeta):
             self.load(query)
         if method == "all":
             return self._search_all(query)
-        elif method == "name":
+        if method == "name":
             return self._search_names(query)
-        elif method == "uid":
+        if method == "uid":
             return self._search_uid(query)
         raise ValueError(
             'Only the search methods "all", "name" and "uid" are supported.')

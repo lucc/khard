@@ -71,8 +71,7 @@ def multi_property_key(item):
     """
     if isinstance(item, dict):
         return [1, list(item)[0]]
-    else:
-        return [0, item]
+    return [0, item]
 
 
 class VCardWrapper:
