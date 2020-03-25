@@ -297,27 +297,6 @@ def list_address_books(address_books):
     print(helpers.pretty_print(table))
 
 
-def pretty_name(name):
-    """Convert snake_cased column into their pretty alternative."""
-    # Note: ugly_name should give the key for each of these.
-    field = {
-        'index': "Index",
-        'name': "Name",
-        'phone': "Phone",
-        'email': "E-Mail",
-        'address_book': "Address book",
-        'uid': "UID",
-    }
-    if name in field:
-        return field[name]
-    return name
-
-
-def ugly_name(name):
-    """Convert SOME field-names into their_snakecase format."""
-    return name.replace('-', '').replace(' ', '_').lower()
-
-
 def list_contacts(vcard_list, fields=[], parsable=False):
     selected_address_books = []
     for contact in vcard_list:
@@ -333,22 +312,22 @@ def list_contacts(vcard_list, fields=[], parsable=False):
         if not parsable:
             print("Address books: {}".format(', '.join(
                 [str(book) for book in selected_address_books])))
-        table_header = ["index", "name", "phone", "email", "addressbook"]
+        table_header = ["index", "name", "phone", "email", "address_book"]
     if config.show_uids:
         table_header.append("uid")
 
     if parsable:
         # Legacy default header fields for parsable.
-        table_header = ["uid", "name", "addressbook"]
+        table_header = ["uid", "name", "address_book"]
 
     if fields:
-        table_header = [ugly_name(x) for x in fields]
+        table_header = [x.lower().replace(' ','_') for x in fields]
 
     abook_collection = AddressBookCollection('short uids collection',
                                              selected_address_books)
 
     if not parsable:
-        table.append([pretty_name(x) for x in table_header])
+        table.append([x.title().replace('_', ' ') for x in table_header])
     # table body
     for index, vcard in enumerate(vcard_list):
         row = []
@@ -357,8 +336,6 @@ def list_contacts(vcard_list, fields=[], parsable=False):
                 row.append(index + 1)
             elif field in ['name', 'phone', 'email']:
                 row.append(get_special_field(vcard, field))
-            elif field == 'addressbook':
-                row.append(vcard.address_book.name)
             elif field == 'uid':
                 if parsable:
                     row.append(vcard.uid)
