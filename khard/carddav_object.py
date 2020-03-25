@@ -1566,7 +1566,7 @@ class CarddavObject(YAMLEditable):
         :param None|str|list(str)|list(list(str)) query:
         :rtype: bool
         """
-        def match_str(q,  s):
+        def match_str(q, s):
             return q.lower() in s
 
         def match_list1(q, s):

@@ -126,7 +126,7 @@ class Config:
                            'No address book entries available'))
         for path, key, exception in result:
             logger.error("Error in config file, %s: %s",
-                          ".".join([*path, key]), exception)
+                         ".".join([*path, key]), exception)
         if result:
             raise ConfigError
         return config
