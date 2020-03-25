@@ -158,6 +158,12 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text1, expected)
         self.assertListEqual(text2, expected)
 
+    def test_regex_special_chars_are_not_special(self):
+        with self.assertRaises(SystemExit):
+            with mock_stdout() as stdout:
+                khard.main(['list', 'uid.'])
+        self.assertEqual(stdout.getvalue(), "Found no contacts\n")
+
 
 class ListingCommands2(unittest.TestCase):
 
