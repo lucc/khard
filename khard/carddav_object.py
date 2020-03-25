@@ -285,9 +285,14 @@ class VCardWrapper:
         uid.value = convert_to_vcard("uid", value, ObjectType.string)
 
     def _update_revision(self):
-        # All vCards should only always have one revision, this is a
-        # requirement for version 4 but also makes sense for all other
-        # versions.
+        """Generate a new REV field for the vCard, replace any existing
+
+        All vCards should only always have one revision, this is a
+        requirement for version 4 but also makes sense for all other
+        versions.
+
+        :rtype: NoneType
+        """
         self._delete_vcard_object("REV")
         rev = self.vcard.add('rev')
         rev.value = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
@@ -332,8 +337,9 @@ class VCardWrapper:
 
     @property
     def anniversary(self):
-        """:returns: contacts anniversary or None if not available
-            :rtype: datetime.datetime or str
+        """
+        :returns: contacts anniversary or None if not available
+        :rtype: datetime.datetime or str
         """
         # vcard 4.0 could contain a single text value
         try:
@@ -541,7 +547,9 @@ class VCardWrapper:
         return self._get_names_part("suffix")
 
     def get_first_name_last_name(self):
-        """
+        """Compute the full name of the contact by joining first, additional
+        and last names together
+
         :rtype: str
         """
         names = self._get_first_names() + self._get_additional_names() + \
@@ -551,7 +559,9 @@ class VCardWrapper:
         return self.formatted_name
 
     def get_last_name_first_name(self):
-        """
+        """Compute the full name of the contact by joining the last names and
+        then after a comma the first and additional names together
+
         :rtype: str
         """
         last_names = []
@@ -571,6 +581,15 @@ class VCardWrapper:
 
     def _add_name(self, prefix, first_name, additional_name, last_name,
                   suffix):
+        """Add an N entry to the vCard. No old entries are affected.
+
+        :param str|list(str) prefix:
+        :param str|list(str) first_name:
+        :param str|list(str) additional_name:
+        :param str|list(str) last_name:
+        :param str|list(str) suffix:
+        :returns: None
+        """
         name_obj = self.vcard.add('n')
         stringlist = ObjectType.string_or_list_with_strings
         name_obj.value = vobject.vcard.Name(
@@ -675,7 +694,11 @@ class VCardWrapper:
         return sorted(category_list)
 
     def _add_category(self, categories):
-        """ categories variable must be a list """
+        """Add categories to the vCard
+
+        :param list(str) categories:
+        :returns: None
+        """
         categories_obj = self.vcard.add('categories')
         categories_obj.value = convert_to_vcard("category", categories,
                                                 ObjectType.list_with_strings)
