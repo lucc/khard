@@ -19,6 +19,7 @@ from . import cli
 from .version import version as khard_version
 
 
+logger = logging.getLogger(__name__)
 config = None
 
 
@@ -508,8 +509,8 @@ def prepare_search_queries(args):
     # searched.
     source_queries = source_queries or None
     target_queries = target_queries or None
-    logging.debug('Created source query: %s', source_queries)
-    logging.debug('Created target query: %s', target_queries)
+    logger.debug('Created source query: %s', source_queries)
+    logger.debug('Created target query: %s', target_queries)
     # Get all possible search queries for address book parsing, always
     # depending on the fact if the address book is used to find source or
     # target contacts or both.
@@ -525,7 +526,7 @@ def prepare_search_queries(args):
         # book.
         if None in queries[name]:
             queries[name] = None
-    logging.debug('Created query: %s', queries)
+    logger.debug('Created query: %s', queries)
     return queries
 
 
@@ -542,7 +543,7 @@ def generate_contact_list(args):
     vcard_list = []
     if "uid" in args and args.uid:
         # If an uid was given we use it to find the contact.
-        logging.debug("args.uid=%s", args.uid)
+        logger.debug("args.uid=%s", args.uid)
         # set search terms to the empty query to prevent errors in
         # phone and email actions
         args.search_terms = None
@@ -575,7 +576,7 @@ def generate_contact_list(args):
             # If no search terms where given on the command line we match
             # everything with the empty search pattern.
             args.search_terms = None
-        logging.debug("args.search_terms=%s", args.search_terms)
+        logger.debug("args.search_terms=%s", args.search_terms)
         vcard_list = get_contact_list_by_user_selection(
             args.addressbook, args.search_terms,
             args.strict_search if "strict_search" in args else False)

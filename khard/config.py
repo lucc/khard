@@ -14,6 +14,9 @@ from .address_book import AddressBookCollection, AddressBookNameError, \
     VdirAddressBook
 
 
+logger = logging.getLogger(__name__)
+
+
 class ConfigError(Exception):
     """Errors during config file parsing"""
 
@@ -29,11 +32,11 @@ def validate_command(value):
     :rtype: list(str)
     :raises: validate.ValidateError
     """
-    logging.debug("validating %s", value)
+    logger.debug("validating %s", value)
     try:
         return validate.is_string_list(value)
     except validate.VdtTypeError:
-        logging.debug('continue with %s', value)
+        logger.debug('continue with %s', value)
         if isinstance(value, str):
             try:
                 return shlex.split(value)
@@ -122,7 +125,7 @@ class Config:
             result.append((['addressbooks'], '__any__',
                            'No address book entries available'))
         for path, key, exception in result:
-            logging.error("Error in config file, %s: %s",
+            logger.error("Error in config file, %s: %s",
                           ".".join([*path, key]), exception)
         if result:
             raise ConfigError
@@ -226,6 +229,6 @@ class Config:
         merge = {sec: {key: getattr(args, key) for key in opts
                        if key in args and getattr(args, key) is not None}
                  for sec, opts in merge.items()}
-        logging.debug('Merging in %s', merge)
+        logger.debug('Merging in %s', merge)
         self.merge(merge)
-        logging.debug('Merged: %s', vars(self))
+        logger.debug('Merged: %s', vars(self))

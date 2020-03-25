@@ -23,6 +23,9 @@ from . import helpers
 from .object_type import ObjectType
 
 
+logger = logging.getLogger(__name__)
+
+
 def convert_to_vcard(name, value, allowed_object_type):
     """converts user input into vcard compatible data structures
 
@@ -105,13 +108,13 @@ class VCardWrapper:
         self.vcard = vcard
         if not self.version:
             version = version or self._default_version
-            logging.warning("Wrapping unversioned vCard object, setting "
-                            "version to %s.", version)
+            logger.warning("Wrapping unversioned vCard object, setting "
+                           "version to %s.", version)
             self.version = version
         elif self.version not in self._supported_versions:
-            logging.warning("Wrapping vCard with unsupported version %s, this "
-                            "might change any incompatible attributes.",
-                            version)
+            logger.warning("Wrapping vCard with unsupported version %s, this "
+                           "might change any incompatible attributes.",
+                           version)
 
     def __str__(self):
         return self.formatted_name
@@ -262,8 +265,8 @@ class VCardWrapper:
     @version.setter
     def version(self, value):
         if value not in self._supported_versions:
-            logging.warning("Setting vcard version to unsupported version %s",
-                            value)
+            logger.warning("Setting vcard version to unsupported version %s",
+                           value)
         # All vCards should only always have one version, this is a requirement
         # for version 4 but also makes sense for all other versions.
         self._delete_vcard_object("VERSION")
@@ -321,7 +324,7 @@ class VCardWrapper:
         """
         value, text = self._prepare_birthday_value(date)
         if value is None:
-            logging.warning('Failed to set anniversary to %s', date)
+            logger.warning('Failed to set anniversary to %s', date)
             return
         bday = self.vcard.add('bday')
         bday.value = value
@@ -430,7 +433,7 @@ class VCardWrapper:
     def anniversary(self, date):
         value, text = self._prepare_birthday_value(date)
         if value is None:
-            logging.warning('Failed to set anniversary to %s', date)
+            logger.warning('Failed to set anniversary to %s', date)
             return
         if text:
             anniversary = self.vcard.add('anniversary')
@@ -1524,8 +1527,8 @@ class CarddavObject(YAMLEditable):
             try:
                 vcard = vobject.readOne(contents)
             except Exception:
-                logging.warning("Filtering some problematic tags from %s",
-                                filename)
+                logger.warning("Filtering some problematic tags from %s",
+                               filename)
                 # if creation fails, try to repair some vcard attributes
                 vcard = vobject.readOne(cls._filter_invalid_tags(contents))
             return cls(vcard, address_book, filename, supported_private_objects,
@@ -1713,4 +1716,4 @@ class CarddavObject(YAMLEditable):
         try:
             os.remove(self.filename)
         except IOError as err:
-            logging.error("Can not remove vCard file: %s", err)
+            logger.error("Can not remove vCard file: %s", err)

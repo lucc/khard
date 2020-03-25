@@ -11,6 +11,9 @@ import vobject.base
 from .carddav_object import CarddavObject
 
 
+logger = logging.getLogger(__name__)
+
+
 class AddressBookParseError(Exception):
     """Indicate an error while parsing data from an address book backend."""
 
@@ -133,7 +136,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         :rtype: list(carddav_object.CarddavObject)
 
         """
-        logging.debug('address book %s, searching with %s', self.name, query)
+        logger.debug('address book %s, searching with %s', self.name, query)
         if not self._loaded:
             self.load(query)
         if method == "all":
@@ -258,7 +261,7 @@ class VdirAddressBook(AddressBook):
         """
         if self._loaded:
             return
-        logging.debug('Loading Vdir %s with query %s', self.name, query)
+        logger.debug('Loading Vdir %s with query %s', self.name, query)
         errors = 0
         for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
@@ -269,8 +272,8 @@ class VdirAddressBook(AddressBook):
                     continue
             except (IOError, vobject.base.ParseError) as err:
                 verb = "open" if isinstance(err, IOError) else "parse"
-                logging.debug("Error: Could not %s file %s\n%s", verb,
-                              filename, err)
+                logger.debug("Error: Could not %s file %s\n%s", verb,
+                             filename, err)
                 if self._skip:
                     errors += 1
                 else:
@@ -278,11 +281,11 @@ class VdirAddressBook(AddressBook):
             else:
                 uid = card.uid
                 if not uid:
-                    logging.warning("Card %s from address book %s has no UID "
-                                    "and will not be available.", card,
-                                    self.name)
+                    logger.warning("Card %s from address book %s has no UID "
+                                   "and will not be available.", card,
+                                   self.name)
                 elif uid in self.contacts:
-                    logging.warning(
+                    logger.warning(
                         "Card %s and %s from address book %s have the same "
                         "UID. The former will not be available.", card,
                         self.contacts[uid], self.name)
@@ -290,11 +293,11 @@ class VdirAddressBook(AddressBook):
                     self.contacts[uid] = card
         self._loaded = True
         if errors:
-            logging.warning(
+            logger.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
-        logging.debug('Loded %s contacts from address book %s.',
-                      len(self.contacts), self.name)
+        logger.debug('Loded %s contacts from address book %s.',
+                     len(self.contacts), self.name)
 
 
 class AddressBookCollection(AddressBook):
@@ -331,20 +334,20 @@ class AddressBookCollection(AddressBook):
         """
         if self._loaded:
             return
-        logging.debug('Loading collection %s with query %s', self.name, query)
+        logger.debug('Loading collection %s with query %s', self.name, query)
         for abook in self._abooks.values():
             abook.load(query)
             for uid in abook.contacts:
                 if uid in self.contacts:
-                    logging.warning(
+                    logger.warning(
                         "Card %s from address book %s will not be available "
                         "because there is already another card with the same "
                         "UID: %s", abook.contacts[uid], abook, uid)
                 else:
                     self.contacts[uid] = abook.contacts[uid]
         self._loaded = True
-        logging.debug('Loded %s contacts from address book %s.',
-                      len(self.contacts), self.name)
+        logger.debug('Loded %s contacts from address book %s.',
+                     len(self.contacts), self.name)
 
     def __getitem__(self, key):
         """Get one of the backing address books by name or index

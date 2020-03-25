@@ -9,6 +9,9 @@ from .config import Config, ConfigError
 from .version import version as khard_version
 
 
+logger = logging.getLogger(__name__)
+
+
 def create_parsers():
     """Create two argument parsers.
 
@@ -348,14 +351,14 @@ def parse_args(argv):
         config = Config(args.config)
     except ConfigError as err:
         parser.exit(3, "Error in config file: {}\n".format(err))
-    logging.debug("Finished parsing config=%s", vars(config))
+    logger.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with
     # the config file.
     if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
-    logging.debug("first args=%s", args)
-    logging.debug("remainder=%s", remainder)
+    logger.debug("first args=%s", args)
+    logger.debug("remainder=%s", remainder)
 
     # Set the default command from the config file if none was given on the
     # command line.
@@ -364,7 +367,7 @@ def parse_args(argv):
             parser.error("Missing subcommand on command line or default action"
                          " parameter in config.")
         remainder.insert(0, config.default_action)
-        logging.debug("updated remainder=%s", remainder)
+        logger.debug("updated remainder=%s", remainder)
 
     # Save the last option that needs to be carried from the first parser run
     # to the second.
@@ -376,7 +379,7 @@ def parse_args(argv):
 
     # Restore settings that are left from the first parser run.
     args.skip_unparsable = skip
-    logging.debug("second args=%s", args)
+    logger.debug("second args=%s", args)
 
     # An integrity check for some options.
     if "uid" in args and args.uid and (
@@ -388,11 +391,11 @@ def parse_args(argv):
 
     # Normalize all deprecated subcommands and emit warnings.
     if args.action == "export":
-        logging.warning("Deprecated subcommand: use 'show --format=yaml'.")
+        logger.warning("Deprecated subcommand: use 'show --format=yaml'.")
         args.action = "show"
         args.format = "yaml"
     elif args.action == "source":
-        logging.warning("Deprecated subcommand: use 'edit --format=vcard'.")
+        logger.warning("Deprecated subcommand: use 'edit --format=vcard'.")
         args.action = "edit"
         args.format = "vcard"
 
