@@ -1,5 +1,7 @@
 # example configuration file for khard version > 0.14.0
 # place it under ~/.config/khard/khard.conf
+# This file is parsed by the configobj library.  The syntax is described at
+# https://configobj.readthedocs.io/en/latest/configobj.html#the-config-file-format
 
 [addressbooks]
 [[family]]
@@ -42,6 +44,7 @@ preferred_email_address_type = pref, work, home
 # every object label may only contain letters, digits and the - character
 # example:
 #   private_objects = Jabber, Skype, Twitter
+# default: ,  (the empty list)
 private_objects = Jabber, Skype, Twitter
 # preferred vcard version: 3.0 / 4.0
 preferred_version = 3.0
