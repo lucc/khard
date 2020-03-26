@@ -385,14 +385,13 @@ def get_special_field(vcard, field):
     if field == 'name':
         if vcard.nicknames and config.show_nicknames:
             if config.display == "first_name":
-                return"{} (Nickname: {})".format(
+                return "{} (Nickname: {})".format(
                     vcard.get_first_name_last_name(), vcard.nicknames[0])
             elif config.display == "formatted_name":
-                return"{} (Nickname: {})".format(vcard.formatted_name,
-                                                 vcard.nicknames[0])
-            else:
-                return "{} (Nickname: {})".format(
-                    vcard.get_last_name_first_name(), vcard.nicknames[0])
+                return "{} (Nickname: {})".format(vcard.formatted_name,
+                                                  vcard.nicknames[0])
+            return "{} (Nickname: {})".format(
+                vcard.get_last_name_first_name(), vcard.nicknames[0])
         else:
             if config.display == "first_name":
                 return vcard.get_first_name_last_name()
@@ -433,8 +432,8 @@ def get_special_field(vcard, field):
                     or email_dict.keys()
             # get first key in alphabetical order
             first_type = sorted(email_keys, key=lambda k: k[0].lower())[0]
-            return"{}: {}".format(first_type,
-                                  sorted(email_dict.get(first_type))[0])
+            return "{}: {}".format(first_type,
+                                   sorted(email_dict.get(first_type))[0])
     return ""
 
 
