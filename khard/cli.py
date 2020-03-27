@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def field_argument(orignal):
-    """Check that the field specification for `ls -F` start with a propper
-    field name.  Nested attribute names are not checked.
+    """Ensure the fields specified for `ls -F` are proper field names.
+    Nested attribute names are not checked.
 
     :param str orignal: the value from the command line
     :returns: the orignal value split at "," if the fields are spelled correctly
@@ -34,7 +34,7 @@ def field_argument(orignal):
             ret.append(candidate)
         else:
             raise argparse.ArgumentTypeError(
-                '"{}" is not an acepted fiels. Acepted fields are {}.'.format(
+                '"{}" is not an accepted field. Accepted fields are {}.'.format(
                     field, ', '.join('"{}"'.format(c) for c in choices)))
     return ret
 
