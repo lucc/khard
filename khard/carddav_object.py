@@ -1555,6 +1555,7 @@ class CarddavObject(YAMLEditable):
                 vcard = vobject.readOne(cls._filter_invalid_tags(contents))
             return cls(vcard, address_book, filename, supported_private_objects,
                        None, localize_dates)
+        return None
 
     @classmethod
     def from_yaml(cls, address_book, yaml, supported_private_objects=None,
@@ -1726,12 +1727,8 @@ class CarddavObject(YAMLEditable):
         except vobject.base.ValidateError as err:
             print("Error: Vcard is not valid.\n{}".format(err))
             sys.exit(4)
-        except IOError as err:
-            print("Error: Can't write\n{}".format(err))
-            sys.exit(4)
         except OSError as err:
-            print("Error: vcard with the file name {} already exists\n"
-                  "{}".format(os.path.basename(self.filename), err))
+            print("Error: Can't write\n{}".format(err))
             sys.exit(4)
 
     def delete_vcard_file(self):

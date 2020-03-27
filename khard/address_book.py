@@ -320,15 +320,13 @@ class AddressBookCollection(AddressBook):
         super().__init__(name)
         self._abooks = {ab.name: ab for ab in abooks}
 
-    def load(self, query=None, search_in_source_files=False):
+    def load(self, query=None):
         """Load the wrapped address books with the given parameters
 
         All parameters will be handed to VdirAddressBook.load.
 
         :param query: a regular expression to limit the results
         :type query: None or list(list(str))
-        :param bool search_in_source_files: apply search regexp directly on the
-            .vcf files to speed up parsing (less accurate)
         :returns: None
         :throws: AddressBookParseError
         """

@@ -297,7 +297,7 @@ def list_address_books(address_books):
     print(helpers.pretty_print(table))
 
 
-def list_contacts(vcard_list, fields=[], parsable=False):
+def list_contacts(vcard_list, fields=(), parsable=False):
     selected_address_books = []
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
@@ -321,7 +321,7 @@ def list_contacts(vcard_list, fields=[], parsable=False):
         table_header = ["uid", "name", "address_book"]
 
     if fields:
-        table_header = [x.lower().replace(' ','_') for x in fields]
+        table_header = [x.lower().replace(' ', '_') for x in fields]
 
     abook_collection = AddressBookCollection('short uids collection',
                                              selected_address_books)
@@ -387,7 +387,7 @@ def get_special_field(vcard, field):
             if config.display == "first_name":
                 return "{} (Nickname: {})".format(
                     vcard.get_first_name_last_name(), vcard.nicknames[0])
-            elif config.display == "formatted_name":
+            if config.display == "formatted_name":
                 return "{} (Nickname: {})".format(vcard.formatted_name,
                                                   vcard.nicknames[0])
             return "{} (Nickname: {})".format(
@@ -395,7 +395,7 @@ def get_special_field(vcard, field):
         else:
             if config.display == "first_name":
                 return vcard.get_first_name_last_name()
-            elif config.display == "formatted_name":
+            if config.display == "formatted_name":
                 return vcard.formatted_name
             return vcard.get_last_name_first_name()
     elif field == 'phone':
@@ -925,7 +925,7 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
         # add to matching and all post address lists
         for post_address_line in post_address_line_list:
             if CarddavObject.match(
-                    "{}\n{}".format(post_address_line, post_address_line),
+                    "{0}\n{0}".format(ost_address_line),
                     search_terms):
                 matching_post_address_list.append(post_address_line)
             # collect all post addresses in a different list as fallback
