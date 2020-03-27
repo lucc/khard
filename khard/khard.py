@@ -383,21 +383,15 @@ def get_special_field(vcard, field):
     """Returns certain fields with specific formatting options
         (for support of some list command options)."""
     if field == 'name':
-        if vcard.nicknames and config.show_nicknames:
-            if config.display == "first_name":
-                return "{} (Nickname: {})".format(
-                    vcard.get_first_name_last_name(), vcard.nicknames[0])
-            if config.display == "formatted_name":
-                return "{} (Nickname: {})".format(vcard.formatted_name,
-                                                  vcard.nicknames[0])
-            return "{} (Nickname: {})".format(
-                vcard.get_last_name_first_name(), vcard.nicknames[0])
+        if config.display == "first_name":
+            name = vcard.get_first_name_last_name()
+        elif config.display == "formatted_name":
+            name = vcard.formatted_name
         else:
-            if config.display == "first_name":
-                return vcard.get_first_name_last_name()
-            if config.display == "formatted_name":
-                return vcard.formatted_name
-            return vcard.get_last_name_first_name()
+            name = vcard.get_last_name_first_name()
+        if vcard.nicknames and config.show_nicknames:
+            return "{} (Nickname: {})".format(name, vcard.nicknames[0])
+        return name
     elif field == 'phone':
         if vcard.phone_numbers:
             return format_labeled_field(vcard.phone_numbers,
