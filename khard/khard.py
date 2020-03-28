@@ -383,58 +383,48 @@ def get_special_field(vcard, field):
     """Returns certain fields with specific formatting options
         (for support of some list command options)."""
     if field == 'name':
-        if vcard.nicknames and config.show_nicknames:
-            if config.display == "first_name":
-                return "{} (Nickname: {})".format(
-                    vcard.get_first_name_last_name(), vcard.nicknames[0])
-            if config.display == "formatted_name":
-                return "{} (Nickname: {})".format(vcard.formatted_name,
-                                                  vcard.nicknames[0])
-            return "{} (Nickname: {})".format(
-                vcard.get_last_name_first_name(), vcard.nicknames[0])
+        if config.display == "first_name":
+            name = vcard.get_first_name_last_name()
+        elif config.display == "formatted_name":
+            name = vcard.formatted_name
         else:
-            if config.display == "first_name":
-                return vcard.get_first_name_last_name()
-            if config.display == "formatted_name":
-                return vcard.formatted_name
-            return vcard.get_last_name_first_name()
+            name = vcard.get_last_name_first_name()
+        if vcard.nicknames and config.show_nicknames:
+            return "{} (Nickname: {})".format(name, vcard.nicknames[0])
+        return name
     elif field == 'phone':
         if vcard.phone_numbers:
-            phone_dict = vcard.phone_numbers
-            # filter out preferred phone type if set in config file
-            phone_keys = []
-            for pref_type in config.preferred_phone_number_type:
-                for phone_type in phone_dict:
-                    if pref_type.lower() in phone_type.lower():
-                        phone_keys.append(phone_type)
-                if phone_keys:
-                    break
-            if not phone_keys:
-                phone_keys = [x for x in phone_dict if "pref" in x.lower()] \
-                    or phone_dict.keys()
-            # get first key in alphabetical order
-            first_type = sorted(phone_keys, key=lambda k: k[0].lower())[0]
-            return "{}: {}".format(first_type,
-                                   sorted(phone_dict.get(first_type))[0])
+            return format_labeled_field(vcard.phone_numbers,
+                                        config.preferred_phone_number_type)
     elif field == 'email':
         if vcard.emails:
-            email_dict = vcard.emails
-            # filter out preferred email type if set in config file
-            email_keys = []
-            for pref_type in config.preferred_email_address_type:
-                for email_type in email_dict:
-                    if pref_type.lower() in email_type.lower():
-                        email_keys.append(email_type)
-                if email_keys:
-                    break
-            if not email_keys:
-                email_keys = [x for x in email_dict if "pref" in x.lower()] \
-                    or email_dict.keys()
-            # get first key in alphabetical order
-            first_type = sorted(email_keys, key=lambda k: k[0].lower())[0]
-            return "{}: {}".format(first_type,
-                                   sorted(email_dict.get(first_type))[0])
+            return format_labeled_field(vcard.emails,
+                                        config.preferred_email_address_type)
     return ""
+
+
+def format_labeled_field(field, preferred):
+    """Format a labeled field from a vcard for display, the first entry under
+    the preferred label will be returned
+
+    :param dict(str:list(str)) field: the labeled field
+    :param list(str) preferred: the order of preferred labels
+    :returns: the formatted field entry
+    :rtype: str
+    """
+    # filter out preferred type if set in config file
+    keys = []
+    for pref in preferred:
+        for key in field:
+            if pref.lower() in key.lower():
+                keys.append(key)
+        if keys:
+            break
+    if not keys:
+        keys = [k for k in field if "pref" in k.lower()] or field.keys()
+    # get first key in alphabetical order
+    first_key = sorted(keys, key=lambda k: k.lower())[0]
+    return "{}: {}".format(first_key, sorted(field.get(first_key))[0])
 
 
 def list_with_headers(the_list, *headers):
