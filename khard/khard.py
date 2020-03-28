@@ -1096,18 +1096,15 @@ def remove_subcommand(selected_vcard, force):
 
     :param selected_vcard: the contact to delete
     :type selected_vcard: carddav_object.CarddavObject
-    :param force: delete without confirmation
-    :type force: bool
+    :param bool force: delete without confirmation
     :returns: None
     :rtype: None
-
     """
-    if not force:
-        if not confirm("Deleting contact {} from address book {}. "
-                       "Are you sure?".format(selected_vcard,
-                                              selected_vcard.address_book)):
-            print("Canceled")
-            sys.exit(0)
+    if not force and not confirm(
+            "Deleting contact {} from address book {}. Are you sure?".format(
+                selected_vcard, selected_vcard.address_book)):
+        print("Canceled")
+        return
     selected_vcard.delete_vcard_file()
     print("Contact {} deleted successfully".format(
         selected_vcard.formatted_name))
