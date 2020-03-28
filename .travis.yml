@@ -10,6 +10,7 @@ python:
 env:
   - JOB=tests
   - JOB=docs
+  - JOB=check
 
 jobs:
   allow_failures:
@@ -21,10 +22,12 @@ install: |
   case $JOB in
     tests) pip install .;;
     docs) pip install sphinx;;
+    check) pip install mypy;;
   esac
 
 script: |
   case $JOB in
     tests) python setup.py test;;
     docs) python setup.py build; make -C doc html man;;
+    check) mypy --ignore-missing-imports khard;;
   esac
