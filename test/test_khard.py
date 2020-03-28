@@ -34,3 +34,14 @@ class FormatLabeledField(unittest.TestCase):
         expected = 'some: more'
         self.assertEqual(expected,
                          khard.format_labeled_field(labeled_field, preferred))
+
+    def test_not_only_first_char_of_label_is_used(self):
+        preferred = []
+        labeled_field = {'x-foo': ['foo'], 'x-bar': ['bar']}
+        expected = 'x-bar: bar'
+        self.assertEqual(expected,
+                         khard.format_labeled_field(labeled_field, preferred))
+        expected = 'bar: bar'
+        labeled_field = {'foo': ['foo'], 'bar': ['bar']}
+        self.assertEqual(expected,
+                         khard.format_labeled_field(labeled_field, preferred))

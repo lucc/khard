@@ -429,7 +429,7 @@ def format_labeled_field(field, preferred):
     if not keys:
         keys = [k for k in field if "pref" in k.lower()] or field.keys()
     # get first key in alphabetical order
-    first_key = sorted(keys, key=lambda k: k[0].lower())[0]
+    first_key = sorted(keys, key=lambda k: k.lower())[0]
     return "{}: {}".format(first_key, sorted(field.get(first_key))[0])
 
 
