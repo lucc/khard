@@ -9,10 +9,15 @@ python:
   - "pypy3" # this is 3.6
 env:
   - JOB=tests
-  - JOB=docs
-  - JOB=check
 
 jobs:
+  include:
+    - python: "3.8"
+      env:
+        - JOB=check
+    - python: "3.8"
+      env:
+        - JOB=docs
   allow_failures:
     - python: "nightly"
     - python: "pypy3.5"
