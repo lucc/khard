@@ -358,6 +358,21 @@ class VCardWrapper:
                 pass
         return None
 
+    @anniversary.setter
+    def anniversary(self, date):
+        value, text = self._prepare_birthday_value(date)
+        if value is None:
+            logger.warning('Failed to set anniversary to %s', date)
+            return
+        if text:
+            anniversary = self.vcard.add('anniversary')
+            anniversary.params['VALUE'] = ['text']
+            anniversary.value = value
+        elif self.version == "4.0":
+            self.vcard.add('anniversary').value = value
+        else:
+            self.vcard.add('x-anniversary').value = value
+
     def _get_ablabel(self, item):
         """Get an ABLABEL for a specified item in the vCard.
         Will return the ABLABEL only if the item is part of a group with exactly
@@ -433,21 +448,6 @@ class VCardWrapper:
         else:
             obj.value = convert_to_vcard(obj_type, user_input,
                                          allowed_object_type)
-
-    @anniversary.setter
-    def anniversary(self, date):
-        value, text = self._prepare_birthday_value(date)
-        if value is None:
-            logger.warning('Failed to set anniversary to %s', date)
-            return
-        if text:
-            anniversary = self.vcard.add('anniversary')
-            anniversary.params['VALUE'] = ['text']
-            anniversary.value = value
-        elif self.version == "4.0":
-            self.vcard.add('anniversary').value = value
-        else:
-            self.vcard.add('x-anniversary').value = value
 
     def _prepare_birthday_value(self, date):
         """Prepare a value to be stored in a BDAY or ANNIVERSARY attribute.
