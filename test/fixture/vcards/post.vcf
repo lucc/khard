@@ -1,0 +1,6 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:With post address
+ADR;TYPE=home:PostBox;Ext;Main Street 1;The City;SomeState;00000;HomeCountry
+UID:postcontact
+END:VCARD

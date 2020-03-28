@@ -174,6 +174,20 @@ class ListingCommands(unittest.TestCase):
                 khard.main(['list', 'uid.'])
         self.assertEqual(stdout.getvalue(), "Found no contacts\n")
 
+    def test_display_post_address(self):
+        with mock_stdout() as stdout:
+            with with_vcards(["test/fixture/vcards/post.vcf"]):
+                khard.main(['postaddress'])
+        text = [line.rstrip() for line in stdout.getvalue().splitlines()]
+        expected = [
+            'Name                 Type    Post address',
+            'With post address    home    Main Street 1',
+            '                             PostBox Ext',
+            '                             00000 The City',
+            '                             SomeState, HomeCountry']
+
+        self.assertListEqual(expected, text)
+
 
 class ListingCommands2(unittest.TestCase):
 
