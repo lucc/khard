@@ -925,7 +925,7 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
         # add to matching and all post address lists
         for post_address_line in post_address_line_list:
             if CarddavObject.match(
-                    "{0}\n{0}".format(ost_address_line),
+                    "{0}\n{0}".format(post_address_line),
                     search_terms):
                 matching_post_address_list.append(post_address_line)
             # collect all post addresses in a different list as fallback
