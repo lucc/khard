@@ -26,7 +26,7 @@ jobs:
 install: |
   case $JOB in
     tests) pip install .;;
-    docs) pip install sphinx;;
+    docs) pip install .[doc];;
     check) pip install mypy;;
   esac
 
