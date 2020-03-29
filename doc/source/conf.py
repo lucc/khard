@@ -33,6 +33,7 @@ from khard.version import version as original_version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
+              'sphinx_autodoc_typehints',
               'sphinx.ext.todo']
 
 # Add any paths that contain templates here, relative to this directory.

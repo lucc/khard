@@ -9,9 +9,15 @@ python:
   - "pypy3" # this is 3.6
 env:
   - JOB=tests
-  - JOB=docs
 
 jobs:
+  include:
+    - python: "3.8"
+      env:
+        - JOB=check
+    - python: "3.8"
+      env:
+        - JOB=docs
   allow_failures:
     - python: "nightly"
     - python: "pypy3.5"
@@ -21,10 +27,12 @@ install: |
   case $JOB in
     tests) pip install .;;
     docs) pip install sphinx;;
+    check) pip install mypy;;
   esac
 
 script: |
   case $JOB in
     tests) python setup.py test;;
     docs) python setup.py build; make -C doc html man;;
+    check) mypy --ignore-missing-imports khard;;
   esac
