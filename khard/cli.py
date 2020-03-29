@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+from typing import List, Tuple
 
 from .actions import Actions
 from .carddav_object import CarddavObject
@@ -13,13 +14,12 @@ from .version import version as khard_version
 logger = logging.getLogger(__name__)
 
 
-def field_argument(orignal):
+def field_argument(orignal: str) -> List[str]:
     """Ensure the fields specified for `ls -F` are proper field names.
     Nested attribute names are not checked.
 
-    :param str orignal: the value from the command line
+    :param orignal: the value from the command line
     :returns: the orignal value split at "," if the fields are spelled correctly
-    :rtype: list(str)
     :throws: argparse.ArgumentTypeError
     """
     special_fields = ['index', 'name', 'phone', 'email']
@@ -39,7 +39,8 @@ def field_argument(orignal):
     return ret
 
 
-def create_parsers():
+def create_parsers() -> Tuple[argparse.ArgumentParser,
+                              argparse.ArgumentParser]:
     """Create two argument parsers.
 
     The first parser is manly used to find the config file which can than be
@@ -350,18 +351,17 @@ def create_parsers():
     # errors in the config file).  The config file will still be parsed before
     # the full command line is parsed so errors in the config file might be
     # reported before command line syntax errors.
-    first_parser.print_help = parser.print_help
+    first_parser.print_help = parser.print_help  # type: ignore
 
     return first_parser, parser
 
 
-def parse_args(argv):
+def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     """Parse the command line arguments and return the namespace that was
     creates by argparse.ArgumentParser.parse_args().
 
-    :param list(str) argv: the command line arguments
+    :param argv: the command line arguments
     :returns: the namespace parsed from the command line
-    :rtype: argparse.Namespace
     """
     first_parser, parser = create_parsers()
     # Parese the command line with the first argument parser.  It will handle
@@ -432,13 +432,12 @@ def parse_args(argv):
     return args, config
 
 
-def merge_args_into_config(args, config):
+def merge_args_into_config(args: argparse.Namespace, config: Config) -> Config:
     """Merge the parsed arguments from argparse into the config object.
 
-    :param argparse.Namespace args: the parsed command line arguments
-    :param config.Config config: the parsed config file
+    :param args: the parsed command line arguments
+    :param config: the parsed config file
     :returns: the merged config object
-    :rtype: config.Config
     """
     config.merge_args(args)
     # Now we can savely initialize the address books as all command line
@@ -453,12 +452,11 @@ def merge_args_into_config(args, config):
     return config
 
 
-def init(argv):
+def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     """Initialize khard by parsing the command line and reading the config file
 
-    :param list(str) argv: the command line arguments
+    :param argv: the command line arguments
     :returns: the parsed command line and the fully initialized config
-    :rtype: (argparse.Namespace, Config)
     """
     args, conf = parse_args(argv)
 
