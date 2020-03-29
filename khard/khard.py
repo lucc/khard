@@ -16,6 +16,7 @@ from .address_book import AddressBookCollection, AddressBookParseError, \
     AddressBookNameError
 from .carddav_object import CarddavObject
 from . import cli
+from .formatter import Formatter
 from .version import version as khard_version
 
 
@@ -394,37 +395,13 @@ def get_special_field(vcard, field):
         return name
     elif field == 'phone':
         if vcard.phone_numbers:
-            return format_labeled_field(vcard.phone_numbers,
-                                        config.preferred_phone_number_type)
+            return Formatter.format_labeled_field(
+                vcard.phone_numbers, config.preferred_phone_number_type)
     elif field == 'email':
         if vcard.emails:
-            return format_labeled_field(vcard.emails,
-                                        config.preferred_email_address_type)
+            return Formatter.format_labeled_field(
+                vcard.emails, config.preferred_email_address_type)
     return ""
-
-
-def format_labeled_field(field, preferred):
-    """Format a labeled field from a vcard for display, the first entry under
-    the preferred label will be returned
-
-    :param dict(str:list(str)) field: the labeled field
-    :param list(str) preferred: the order of preferred labels
-    :returns: the formatted field entry
-    :rtype: str
-    """
-    # filter out preferred type if set in config file
-    keys = []
-    for pref in preferred:
-        for key in field:
-            if pref.lower() in key.lower():
-                keys.append(key)
-        if keys:
-            break
-    if not keys:
-        keys = [k for k in field if "pref" in k.lower()] or field.keys()
-    # get first key in alphabetical order
-    first_key = sorted(keys, key=lambda k: k.lower())[0]
-    return "{}: {}".format(first_key, sorted(field.get(first_key))[0])
 
 
 def list_with_headers(the_list, *headers):
