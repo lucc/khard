@@ -18,9 +18,24 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import pathlib
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 from khard.version import version as original_version
+
+
+# update the template file for the docs if necessary
+def update_template_file():
+    here = pathlib.Path(__file__).parent
+    src = here.parent.parent/'khard'/'data'/'template.yaml'
+    dest = here/'examples'/'template.yaml'
+    if not dest.exists() or src.stat().st_ctime > dest.stat().st_ctime:
+        dest.write_text(src.read_text().format(
+            "\n    Jabber  : \n    Skype   : \n    Twitter : "))
+
+
+update_template_file()
+del update_template_file
 
 
 # -- General configuration ------------------------------------------------
@@ -32,9 +47,15 @@ from khard.version import version as original_version
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-              'sphinx_autodoc_typehints',
-              'sphinx.ext.todo']
+extensions = [
+    'autoapi.extension',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
+    'sphinx_autodoc_typehints',
+]
+
+autoapi_type = 'python'
+autoapi_dirs = ['../../khard']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

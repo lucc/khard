@@ -1,0 +1,12 @@
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+version: 2
+python:
+  install:
+    # Run setup.py first to generate the version.py file. For some reason it
+    # is not generated with `pip install .[doc]`
+    - method: setuptools
+      path: .
+    - method: pip
+      path: .
+      extra_requirements:
+        - doc
