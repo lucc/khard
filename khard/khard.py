@@ -17,6 +17,7 @@ from .address_book import AddressBookCollection, AddressBookParseError, \
 from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
+from .formatter import Formatter
 from .version import version as khard_version
 
 
@@ -327,13 +328,16 @@ def list_contacts(vcard_list, fields=(), parsable=False):
     if not parsable:
         table.append([x.title().replace('_', ' ') for x in table_header])
     # table body
+    formatter = Formatter(config.display, config.preferred_email_address_type,
+                          config.preferred_phone_number_type,
+                          config.show_nicknames)
     for index, vcard in enumerate(vcard_list):
         row = []
         for field in table_header:
             if field == 'index':
                 row.append(index + 1)
             elif field in ['name', 'phone', 'email']:
-                row.append(get_special_field(vcard, field))
+                row.append(formatter.get_special_field(vcard, field))
             elif field == 'uid':
                 if parsable:
                     row.append(vcard.uid)
@@ -342,87 +346,13 @@ def list_contacts(vcard_list, fields=(), parsable=False):
                 else:
                     row.append("")
             else:
-                row.append(get_nested_field(vcard, field))
+                row.append(formatter.get_nested_field(vcard, field))
         if parsable:
             print("\t".join([str(v) for v in row]))
         else:
             table.append(row)
     if not parsable:
         print(helpers.pretty_print(table))
-
-
-def get_nested_field(vcard, field):
-    """Returns the value of a nested field from a string
-
-    get_nested_field(vcard,'emails.home.1') is equivalent to
-    vcard.emails['home'][1].
-    :returns: the nested field, or the empty string if it didn't exist"""
-    attr_name = field.split('.')[0]
-    val = ''
-    if hasattr(vcard, attr_name):
-        val = getattr(vcard, attr_name)
-        # Loop through separate parts, changing val to be the head element.
-        for partial in field.split('.')[1:]:
-            if isinstance(val, dict) and partial in val:
-                val = val[partial]
-            elif partial.isdigit() and isinstance(val, list) \
-                    and len(val) > int(partial):
-                val = val[int(partial)]
-            # TODO: Completely support case insensitive indexing
-            elif isinstance(val, dict) and partial.upper() in val:
-                val = val[partial.upper()]
-            else:
-                val = ''
-    # Convert None and other falsy values to the empty string
-    return val or ''
-
-
-def get_special_field(vcard, field):
-    """Returns certain fields with specific formatting options
-        (for support of some list command options)."""
-    if field == 'name':
-        if config.display == "first_name":
-            name = vcard.get_first_name_last_name()
-        elif config.display == "formatted_name":
-            name = vcard.formatted_name
-        else:
-            name = vcard.get_last_name_first_name()
-        if vcard.nicknames and config.show_nicknames:
-            return "{} (Nickname: {})".format(name, vcard.nicknames[0])
-        return name
-    elif field == 'phone':
-        if vcard.phone_numbers:
-            return format_labeled_field(vcard.phone_numbers,
-                                        config.preferred_phone_number_type)
-    elif field == 'email':
-        if vcard.emails:
-            return format_labeled_field(vcard.emails,
-                                        config.preferred_email_address_type)
-    return ""
-
-
-def format_labeled_field(field, preferred):
-    """Format a labeled field from a vcard for display, the first entry under
-    the preferred label will be returned
-
-    :param dict(str:list(str)) field: the labeled field
-    :param list(str) preferred: the order of preferred labels
-    :returns: the formatted field entry
-    :rtype: str
-    """
-    # filter out preferred type if set in config file
-    keys = []
-    for pref in preferred:
-        for key in field:
-            if pref.lower() in key.lower():
-                keys.append(key)
-        if keys:
-            break
-    if not keys:
-        keys = [k for k in field if "pref" in k.lower()] or field.keys()
-    # get first key in alphabetical order
-    first_key = sorted(keys, key=lambda k: k.lower())[0]
-    return "{}: {}".format(first_key, sorted(field.get(first_key))[0])
 
 
 def list_with_headers(the_list, *headers):
@@ -770,30 +700,17 @@ def birthdays_subcommand(vcard_list, parsable):
                     else (0, 0, x.birthday))
     # add to string list
     birthday_list = []
+    formatter = Formatter(config.display, config.preferred_email_address_type,
+                          config.preferred_phone_number_type,
+                          config.show_nicknames)
     for vcard in vcard_list:
-        date = vcard.birthday
+        name = formatter.get_special_field(vcard, "name")
         if parsable:
-            date = date.strftime("%Y.%m.%d")
-            if config.display == "first_name":
-                birthday_list.append("{}\t{}".format(
-                    date, vcard.get_first_name_last_name()))
-            elif config.display == "formatted_name":
-                birthday_list.append("{}\t{}".format(date,
-                                                     vcard.formatted_name))
-            else:
-                birthday_list.append("{}\t{}".format(
-                    date, vcard.get_last_name_first_name()))
+            date = vcard.birthday.strftime("%Y.%m.%d")
+            birthday_list.append("{}\t{}".format(date, name))
         else:
             date = vcard.get_formatted_birthday()
-            if config.display == "first_name":
-                birthday_list.append("{}\t{}".format(
-                    vcard.get_first_name_last_name(), date))
-            elif config.display == "formatted_name":
-                birthday_list.append("{}\t{}".format(vcard.formatted_name,
-                                                     date))
-            else:
-                birthday_list.append("{}\t{}".format(
-                    vcard.get_last_name_first_name(), date))
+            birthday_list.append("{}\t{}".format(name, date))
     if birthday_list:
         if parsable:
             print('\n'.join(birthday_list))
@@ -820,18 +737,16 @@ def phone_subcommand(search_terms, vcard_list, parsable):
     :rtype: None
 
     """
+    formatter = Formatter(config.display, config.preferred_email_address_type,
+                          config.preferred_phone_number_type,
+                          config.show_nicknames)
     all_phone_numbers_list = []
     matching_phone_number_list = []
     for vcard in vcard_list:
         for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
-                if config.display == "first_name":
-                    name = vcard.get_first_name_last_name()
-                elif config.display == "last_name":
-                    name = vcard.get_last_name_first_name()
-                else:
-                    name = vcard.formatted_name
+                name = formatter.get_special_field(vcard, "name")
                 # create output lines
                 line_formatted = "\t".join([name, type, number])
                 line_parsable = "\t".join([number, name, type])
@@ -885,16 +800,13 @@ def post_address_subcommand(search_terms, vcard_list, parsable):
     :rtype: None
 
     """
+    formatter = Formatter(config.display, config.preferred_email_address_type,
+                          config.preferred_phone_number_type,
+                          config.show_nicknames)
     all_post_address_list = []
     matching_post_address_list = []
     for vcard in vcard_list:
-        # vcard name
-        if config.display == "first_name":
-            name = vcard.get_first_name_last_name()
-        elif config.display == "last_name":
-            name = vcard.get_last_name_first_name()
-        else:
-            name = vcard.formatted_name
+        name = formatter.get_special_field(vcard, "name")
         # create post address line list
         post_address_line_list = []
         if parsable:
@@ -956,18 +868,16 @@ def email_subcommand(search_terms, vcard_list, parsable, remove_first_line):
     :rtype: None
 
     """
+    formatter = Formatter(config.display, config.preferred_email_address_type,
+                          config.preferred_phone_number_type,
+                          config.show_nicknames)
     matching_email_address_list = []
     all_email_address_list = []
     for vcard in vcard_list:
         for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
-                if config.display == "first_name":
-                    name = vcard.get_first_name_last_name()
-                elif config.display == "last_name":
-                    name = vcard.get_last_name_first_name()
-                else:
-                    name = vcard.formatted_name
+                name = formatter.get_special_field(vcard, "name")
                 # create output lines
                 line_formatted = "\t".join([name, type, email])
                 line_parsable = "\t".join([email, name, type])
