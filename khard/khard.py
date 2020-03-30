@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
-from typing import List, Optional
+from typing import cast, List, Optional
 
 from unidecode import unidecode
 
@@ -806,12 +806,12 @@ def post_address_subcommand(search_terms, vcard_list: List[CarddavObject],
                     post_address_line_list.append(
                         "\t".join([str(post_address), name, type]))
         else:
-            for type, post_address_list in sorted(
+            for type, addresses in sorted(
                     vcard.get_formatted_post_addresses().items(),
                     key=lambda k: k[0].lower()):
-                for post_address in sorted(post_address_list):
+                for address in sorted(addresses):
                     post_address_line_list.append(
-                        "\t".join([name, type, post_address]))
+                        "\t".join([name, type, address]))
         # add to matching and all post address lists
         for post_address_line in post_address_line_list:
             if CarddavObject.match(
@@ -1069,8 +1069,8 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
-        get_contact_list_by_user_selection(selected_target_address_book,
-                                           source_vcard.formatted_name, True),
+        get_contact_list_by_user_selection(
+            selected_target_address_book, [source_vcard.formatted_name], True),
         True)
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
