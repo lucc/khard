@@ -330,13 +330,16 @@ def list_contacts(vcard_list, fields=(), parsable=False):
     if not parsable:
         table.append([x.title().replace('_', ' ') for x in table_header])
     # table body
+    formatter = Formatter(config.display, config.preferred_email_address_type,
+                          config.preferred_phone_number_type,
+                          config.show_nicknames)
     for index, vcard in enumerate(vcard_list):
         row = []
         for field in table_header:
             if field == 'index':
                 row.append(index + 1)
             elif field in ['name', 'phone', 'email']:
-                row.append(get_special_field(vcard, field))
+                row.append(formatter.get_special_field(vcard, field))
             elif field == 'uid':
                 if parsable:
                     row.append(vcard.uid)
@@ -378,30 +381,6 @@ def get_nested_field(vcard, field):
                 val = ''
     # Convert None and other falsy values to the empty string
     return val or ''
-
-
-def get_special_field(vcard, field):
-    """Returns certain fields with specific formatting options
-        (for support of some list command options)."""
-    if field == 'name':
-        if config.display == "first_name":
-            name = vcard.get_first_name_last_name()
-        elif config.display == "formatted_name":
-            name = vcard.formatted_name
-        else:
-            name = vcard.get_last_name_first_name()
-        if vcard.nicknames and config.show_nicknames:
-            return "{} (Nickname: {})".format(name, vcard.nicknames[0])
-        return name
-    elif field == 'phone':
-        if vcard.phone_numbers:
-            return Formatter.format_labeled_field(
-                vcard.phone_numbers, config.preferred_phone_number_type)
-    elif field == 'email':
-        if vcard.emails:
-            return Formatter.format_labeled_field(
-                vcard.emails, config.preferred_email_address_type)
-    return ""
 
 
 def list_with_headers(the_list, *headers):
