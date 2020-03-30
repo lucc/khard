@@ -44,7 +44,7 @@ setup(
     packages=['khard'],
     entry_points={'console_scripts': ['khard = khard.khard:main']},
     test_suite="test",
-    # the dependency ruamel.yaml requires >=3.5
-    python_requires=">=3.5",
+    # we use type annotations of unset variables which needs 3.6
+    python_requires=">=3.6",
     include_package_data=True,
 )
