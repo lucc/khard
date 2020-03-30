@@ -5,6 +5,7 @@ import glob
 import logging
 import os
 import re
+from typing import Dict, Generator, Iterable, Iterator, List, Optional, Union
 
 import vobject.base
 
@@ -24,7 +25,7 @@ class AddressBookParseError(Exception):
         self.abook = abook
         self.reason = reason
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Error when parsing {} in address book {}: {}".format(
             self.filename, self.abook, self.reason)
 
@@ -36,44 +37,38 @@ class AddressBookNameError(Exception):
 class AddressBook(metaclass=abc.ABCMeta):
     """The base class of all address book implementations."""
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         """:param str name: the name to identify the address book"""
         self._loaded = False
-        self.contacts = {}
-        self._short_uids = None
+        self.contacts: Dict[str, CarddavObject] = {}
+        self._short_uids: Optional[Dict[str, CarddavObject]] = None
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, type(self)) and self.name == other.name
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not self == other
 
     @staticmethod
-    def _compare_uids(uid1, uid2):
+    def _compare_uids(uid1: str, uid2: str) -> int:
         """Calculate the minimum length of initial substrings of uid1 and uid2
         for them to be different.
 
         :param uid1: first uid to compare
-        :type uid1: str
         :param uid2: second uid to compare
-        :type uid2: str
         :returns: the length of the shortes unequal initial substrings
-        :rtype: int
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def _search_all(self, query):
+    def _search_all(self, query) -> Generator[CarddavObject, None, None]:
         """Search in all fields for contacts matching query.
 
         :param query: the query to search for
-        :type query: str
         :yields: all found contacts
-        :rtype: generator(carddav_object.CarddavObject)
-
         """
         for contact in self.contacts.values():
             # search in all contact fields
@@ -88,28 +83,23 @@ class AddressBook(metaclass=abc.ABCMeta):
                         and len(re.sub(r"\D", "", query)) >= 3:
                     yield contact
 
-    def _search_names(self, query):
+    def _search_names(self, query) -> Generator[CarddavObject, None,
+                                                     None]:
         """Search in the name filed for contacts matching query.
 
         :param query: the query to search for
-        :type query: str
         :yields: all found contacts
-        :rtype: generator(carddav_object.CarddavObject)
-
         """
         for contact in self.contacts.values():
             # only search in contact name
             if contact.match(contact.formatted_name, query):
                 yield contact
 
-    def _search_uid(self, query):
+    def _search_uid(self, query) -> Generator[CarddavObject, None, None]:
         """Search for contacts with a matching uid.
 
         :param query: the query to search for
-        :type query: str
         :yields: all found contacts
-        :rtype: generator(carddav_object.CarddavObject)
-
         """
         try:
             # First we treat the argument as a full UID and try to match it
@@ -122,16 +112,15 @@ class AddressBook(metaclass=abc.ABCMeta):
                 if uid.startswith(query):
                     yield self.contacts[uid]
 
-    def search(self, query, method="all"):
+    def search(self, query: Optional[List[str]], method: str = "all"
+               ) -> Generator[CarddavObject, None, None]:
         """Search this address book for contacts matching the query.
 
         The method can be one of "all", "name" and "uid".  The backend for this
         address book migth be load()ed if needed.
 
         :param query: the query to search for
-        :type query: str
         :param method: the type of fileds to use when seaching
-        :type method: str
         :returns: all found contacts
         :rtype: list(carddav_object.CarddavObject)
 
@@ -148,16 +137,15 @@ class AddressBook(metaclass=abc.ABCMeta):
         raise ValueError(
             'Only the search methods "all", "name" and "uid" are supported.')
 
-    def get_short_uid_dict(self, query=None):
+    def get_short_uid_dict(self, query: Optional[str] = None
+                           ) -> Dict[str, CarddavObject]:
         """Create a dictionary of shortend UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
         and will just be handed to self.load().
 
         :param query: see self.load()
-        :type query: str
         :returns: the contacts mapped by the shortes unique prefix of their UID
-        :rtype: dict(str: CarddavObject)
         """
         if self._short_uids is None:
             if not self._loaded:
@@ -186,13 +174,11 @@ class AddressBook(metaclass=abc.ABCMeta):
                 self._short_uids[item1[:same1 + 1]] = self.contacts[item1]
         return self._short_uids
 
-    def get_short_uid(self, uid):
+    def get_short_uid(self, uid: str) -> str:
         """Get the shortend UID for the given UID.
 
         :param uid: the full UID to shorten
-        :type uid: str
         :returns: the shortend uid or the empty string
-        :rtype: str
         """
         if uid:
             short_uids = self.get_short_uid_dict()
@@ -202,17 +188,14 @@ class AddressBook(metaclass=abc.ABCMeta):
         return ""
 
     @abc.abstractmethod
-    def load(self, query=None):
+    def load(self, query=None) -> None:
         """Load the vCards from the backing store.
 
         If a query is given loading is limited to entries which match the
         query.  If the query is None all entries will be loaded.
 
         :param query: the query to limit loading to matching entries
-        :type query: None or list(list(str))
         :returns: the number of loaded contacts and the number of errors
-        :rtype: (int, int)
-
         """
 
 
@@ -223,16 +206,16 @@ class VdirAddressBook(AddressBook):
     direcotry on disk.
     """
 
-    def __init__(self, name, path, private_objects=tuple(),
-                 localize_dates=True, skip=False):
+    def __init__(self, name: str, path: str,
+                 private_objects: Iterable[str] = tuple(),
+                 localize_dates: bool = True, skip: bool = False) -> None:
         """
-        :param str name: the name to identify the address book
-        :param str path: the path to the backing structure on disk
-        :param iterable(str) private_objects: the names of private vCard
-            extension fields to load
-        :param bool localize_dates: wheater to display dates in the local
-            format
-        :param bool skip: skip unparsable vCard files
+        :param name: the name to identify the address book
+        :param path: the path to the backing structure on disk
+        :param private_objects: the names of private vCard extension fields to
+            load
+        :param localize_dates: wheater to display dates in the local format
+        :param skip: skip unparsable vCard files
         """
         self.path = os.path.expanduser(path)
         if not os.path.isdir(self.path):
@@ -243,20 +226,15 @@ class VdirAddressBook(AddressBook):
         self._skip = skip
         super().__init__(name)
 
-    def load(self, query=None, search_in_source_files=False):
+    def load(self, query=None, search_in_source_files: bool = False) -> None:
         """Load all vcard files in this address book from disk.
 
         If a search string is given only files which contents match that will
         be loaded.
 
         :param query: a regular expression to limit the results
-        :type query: None or list(list(str))
         :param search_in_source_files: apply search regexp directly on the .vcf
             files to speed up parsing (less accurate)
-        :type search_in_source_files: bool
-        :returns: the number of successfully loaded cards and the number of
-            errors
-        :rtype: int, int
         :throws: AddressBookParseError
         """
         if self._loaded:
@@ -309,25 +287,20 @@ class AddressBookCollection(AddressBook):
     all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name, abooks):
+    def __init__(self, name: str, abooks: List[AddressBook]) -> None:
         """
         :param name: the name to identify the address book
-        :type name: str
         :param abooks: a list of address books to combine in this collection
-        :type abooks: list(AddressBook)
-        :param **kwargs: further arguments for the parent constructor
         """
         super().__init__(name)
         self._abooks = {ab.name: ab for ab in abooks}
 
-    def load(self, query=None):
+    def load(self, query=None) -> None:
         """Load the wrapped address books with the given parameters
 
         All parameters will be handed to VdirAddressBook.load.
 
         :param query: a regular expression to limit the results
-        :type query: None or list(list(str))
-        :returns: None
         :throws: AddressBookParseError
         """
         if self._loaded:
@@ -347,22 +320,20 @@ class AddressBookCollection(AddressBook):
         logger.debug('Loded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[int, str]) -> AddressBook:
         """Get one of the backing address books by name or index
 
-        :param str|int key: the name of the address book to get or its index
+        :param key: the name of the address book to get or its index
         :returns: the matching address book
-        :rtype: AddressBook
         :throws: KeyError
         """
-        try:
+        if isinstance(key, str):
             return self._abooks[key]
-        except KeyError:
-            return list(self._abooks.values())[key]
+        return list(self._abooks.values())[key]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[AddressBook]:
         """:return: an iterator over the underlying address books"""
         return iter(self._abooks.values())
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._abooks)

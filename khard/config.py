@@ -200,7 +200,7 @@ class Config:
         # We can not use AddressBookCollection.load here because we want to
         # select the collection based on the address book.
         for abook in collection:
-            abook.load(queries[abook.name], self.search_in_source_files)
+            abook.load(queries[abook.name], self.search_in_source_files) # type: ignore
         return collection
 
     def merge(self, other: Union[configobj.ConfigObj, Dict]) -> None:
