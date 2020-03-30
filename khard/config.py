@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shlex
+from typing import Iterable, Dict, List, Optional, Union
 
 import configobj
 import validate
@@ -21,7 +22,7 @@ class ConfigError(Exception):
     """Errors during config file parsing"""
 
 
-def validate_command(value):
+def validate_command(value) -> List[str]:
     """Special validator to check shell commands
 
     The input must either be a list of strings or a string that shlex.split can
@@ -29,7 +30,6 @@ def validate_command(value):
 
     :param value: the config value to validate
     :returns: the command after validation
-    :rtype: list(str)
     :raises: validate.ValidateError
     """
     logger.debug("validating %s", value)
@@ -47,23 +47,21 @@ def validate_command(value):
         raise
 
 
-def validate_action(value):
+def validate_action(value) -> str:
     """Check that the given value is a valid action.
 
     :param value: the config value to check
     :returns: the same value
-    :rtype: str
     :raises: validate.ValidateError
     """
     return validate.is_option(value, *Actions.get_actions())
 
 
-def validate_private_objects(value):
+def validate_private_objects(value) -> List[str]:
     """Check that the private objects are reasonable
 
     :param value: the config value to check
     :returns: the list of private objects
-    :rtype: list(str)
     :raises: validate.ValidateError
     """
     value = validate.is_string_list(value)
@@ -84,19 +82,20 @@ class Config:
 
     supported_vcard_versions = ("3.0", "4.0")
 
-    def __init__(self, config_file=None):
-        self.config = None
-        self.abooks = None
+    def __init__(self, config_file: Optional[str] = None) -> None:
+        self.config: configobj.ConfigObj
+        self.abooks: AddressBookCollection
         locale.setlocale(locale.LC_ALL, '')
         config = self._load_config_file(config_file)
         self.config = self._validate(config)
         self._set_attributes()
 
     @classmethod
-    def _load_config_file(cls, config_file):
+    def _load_config_file(cls, config_file: Optional[str]
+                          ) -> configobj.ConfigObj:
         """Find and load the config file.
 
-        :param str config_file: the path to the config file to load
+        :param config_file: the path to the config file to load
         :returns: the loaded config file
         """
         if not config_file:
@@ -114,7 +113,7 @@ class Config:
             raise ConfigError(str(err))
 
     @staticmethod
-    def _validate(config):
+    def _validate(config: configobj.ConfigObj) -> configobj.ConfigObj:
         vdr = validate.Validator()
         vdr.functions.update({'command': validate_command,
                               'action': validate_action,
@@ -180,13 +179,13 @@ class Config:
         except IOError as err:
             raise ConfigError(str(err))
 
-    def get_address_books(self, names, queries):
+    def get_address_books(self, names: Iterable[str], queries: Dict
+                          ) -> AddressBookCollection:
         """Load all address books with the given names.
 
-        :param list(str) names: the address books to load
+        :param names: the address books to load
         :param dict queries: a mapping of address book names to search queries
         :returns: the loaded address books
-        :rtype: addressbook.AddressBookCollection
         """
         all_names = {str(book) for book in self.abooks}
         if not names:
@@ -204,7 +203,7 @@ class Config:
             abook.load(queries[abook.name], self.search_in_source_files)
         return collection
 
-    def merge(self, other):
+    def merge(self, other: Union[configobj.ConfigObj, Dict]) -> None:
         """Merge the config with some other dict or ConfigObj
 
         :param other: the other dict or ConfigObj to merge into self
@@ -218,7 +217,6 @@ class Config:
         """Merge options from a flat argparse object.
 
         :param argparse.Namespace args: the parsed arguments to incorperate
-        :returns: None
         """
         merge = {'general': ['debug'],
                  'contact table': ['reverse', 'group_by_addressbook',
