@@ -16,11 +16,12 @@ from .address_book import AddressBookCollection, AddressBookParseError, \
     AddressBookNameError
 from .carddav_object import CarddavObject
 from . import cli
+from .config import Config
 from .version import version as khard_version
 
 
 logger = logging.getLogger(__name__)
-config = None
+config: Config
 
 
 def confirm(message):
