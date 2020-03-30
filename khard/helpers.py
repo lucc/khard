@@ -5,9 +5,10 @@ import pathlib
 import random
 import string
 from datetime import datetime
+from typing import List, Optional
 
 
-def pretty_print(table, justify="L"):
+def pretty_print(table: List[List[str]], justify: str = "L") -> str:
     """Converts a list of lists into a string formatted like a table
     with spaces separating fields and newlines separating rows"""
     # support for multiline columns
@@ -77,13 +78,11 @@ def string_to_list(input, delimiter):
     return [x.strip() for x in input.split(delimiter)]
 
 
-def string_to_date(string):
+def string_to_date(string: str) -> datetime:
     """Convert a date string into a date object.
 
     :param string: the date string to parse
-    :type string: str
     :returns: the parsed datetime object
-    :rtype: datetime.datetime
     """
     # try date formats --mmdd, --mm-dd, yyyymmdd, yyyy-mm-dd and datetime
     # formats yyyymmddThhmmss, yyyy-mm-ddThh:mm:ss, yyyymmddThhmmssZ,
@@ -104,12 +103,12 @@ def string_to_date(string):
     raise ValueError
 
 
-def get_random_uid():
+def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
 
 
-def file_modification_date(filename):
+def file_modification_date(filename: str) -> datetime:
     return datetime.fromtimestamp(os.path.getmtime(filename))
 
 
@@ -191,7 +190,8 @@ def indent_multiline_string(input, indentation, show_multi_line_character):
     return input.strip()
 
 
-def get_new_contact_template(supported_private_objects=None):
+def get_new_contact_template(
+        supported_private_objects: Optional[List[str]] = None) -> str:
     formatted_private_objects = []
     if supported_private_objects:
         formatted_private_objects.append("")
@@ -200,5 +200,5 @@ def get_new_contact_template(supported_private_objects=None):
             formatted_private_objects += convert_to_yaml(
                 object, "", 12, len(longest_key)+1, True)
     template = pathlib.Path(__file__).parent / 'data' / 'template.yaml'
-    with template.open() as template:
-        return template.read().format('\n'.join(formatted_private_objects))
+    with template.open() as temp:
+        return temp.read().format('\n'.join(formatted_private_objects))
