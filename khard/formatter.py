@@ -66,3 +66,33 @@ class Formatter:
                 return self.format_labeled_field(vcard.emails,
                                                  self._preferred_email)
         return ""
+
+    @staticmethod
+    def get_nested_field(vcard: CarddavObject, field: str) -> str:
+        """Returns the value of a nested field from a string
+
+        get_nested_field(vcard,'emails.home.1') is equivalent to
+        vcard.emails['home'][1].
+
+        :param vcard: the contact from which to get the field
+        :param field: a field specification
+        :returns: the nested field, or the empty string if it didn't exist
+        """
+        attr_name = field.split('.')[0]
+        val = ''
+        if hasattr(vcard, attr_name):
+            val = getattr(vcard, attr_name)
+            # Loop through separate parts, changing val to be the head element.
+            for partial in field.split('.')[1:]:
+                if isinstance(val, dict) and partial in val:
+                    val = val[partial]
+                elif partial.isdigit() and isinstance(val, list) \
+                        and len(val) > int(partial):
+                    val = val[int(partial)]
+                # TODO: Completely support case insensitive indexing
+                elif isinstance(val, dict) and partial.upper() in val:
+                    val = val[partial.upper()]
+                else:
+                    val = ''
+        # Convert None and other falsy values to the empty string
+        return val or ''

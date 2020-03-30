@@ -348,39 +348,13 @@ def list_contacts(vcard_list, fields=(), parsable=False):
                 else:
                     row.append("")
             else:
-                row.append(get_nested_field(vcard, field))
+                row.append(formatter.get_nested_field(vcard, field))
         if parsable:
             print("\t".join([str(v) for v in row]))
         else:
             table.append(row)
     if not parsable:
         print(helpers.pretty_print(table))
-
-
-def get_nested_field(vcard, field):
-    """Returns the value of a nested field from a string
-
-    get_nested_field(vcard,'emails.home.1') is equivalent to
-    vcard.emails['home'][1].
-    :returns: the nested field, or the empty string if it didn't exist"""
-    attr_name = field.split('.')[0]
-    val = ''
-    if hasattr(vcard, attr_name):
-        val = getattr(vcard, attr_name)
-        # Loop through separate parts, changing val to be the head element.
-        for partial in field.split('.')[1:]:
-            if isinstance(val, dict) and partial in val:
-                val = val[partial]
-            elif partial.isdigit() and isinstance(val, list) \
-                    and len(val) > int(partial):
-                val = val[int(partial)]
-            # TODO: Completely support case insensitive indexing
-            elif isinstance(val, dict) and partial.upper() in val:
-                val = val[partial.upper()]
-            else:
-                val = ''
-    # Convert None and other falsy values to the empty string
-    return val or ''
 
 
 def list_with_headers(the_list, *headers):
