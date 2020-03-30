@@ -24,12 +24,11 @@ logger = logging.getLogger(__name__)
 config: Config
 
 
-def confirm(message):
+def confirm(message: str) -> bool:
     """Ask the user for confirmation on the terminal.
 
-    :param str message: the question to print
+    :param message: the question to print
     :returns: the answer of the user
-    :rtype: bool
     """
     while True:
         answer = input(message + ' (y/N) ')
@@ -72,14 +71,11 @@ def select(items, include_none=False):
               .format(len(items)))
 
 
-def write_temp_file(text=""):
+def write_temp_file(text: str = "") -> str:
     """Create a new temporary file and write some initial text to it.
 
     :param text: the text to write to the temp file
-    :type text: str
     :returns: the file name of the newly created temp file
-    :rtype: str
-
     """
     with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
         tmp.write(text)
@@ -139,7 +135,7 @@ def create_new_contact(address_book):
         print("Creation successful\n\n{}".format(new_contact.print_vcard()))
 
 
-def modify_existing_contact(old_contact):
+def modify_existing_contact(old_contact: CarddavObject) -> None:
     # create temp file and open it with the specified text editor
     temp_file_name = write_temp_file(
         "# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
@@ -184,8 +180,9 @@ def modify_existing_contact(old_contact):
             new_contact.print_vcard()))
 
 
-def merge_existing_contacts(source_contact, target_contact,
-                            delete_source_contact):
+def merge_existing_contacts(source_contact: CarddavObject,
+                            target_contact: CarddavObject,
+                            delete_source_contact: bool) -> None:
     # show warning, if target vcard version is not 3.0 or 4.0
     if target_contact.version not in config.supported_vcard_versions:
         print("Warning:\nThe target contact in which to merge is based on "
@@ -1024,24 +1021,18 @@ def list_subcommand(vcard_list, parsable, fields):
         list_contacts(vcard_list, fields, parsable)
 
 
-def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
-                      source=False):
+def modify_subcommand(selected_vcard: CarddavObject,
+                      input_from_stdin_or_file: str, open_editor: bool,
+                      source: bool = False) -> None:
     """Modify a contact in an external editor.
 
     :param selected_vcard: the contact to modify
-    :type selected_vcard: carddav_object.CarddavObject
     :param input_from_stdin_or_file: new data from stdin (or a file) that
         should be incorperated into the contact, this should be a yaml
         formatted string
-    :type input_from_stdin_or_file: str
     :param open_editor: whether to open the new contact in the edior after
         creation
-    :type open_editor: bool
     :param source: edit the source file or a yaml version?
-    :type source: bool
-    :returns: None
-    :rtype: None
-
     """
     if source:
         edit(selected_vcard.filename)
@@ -1082,14 +1073,11 @@ def modify_subcommand(selected_vcard, input_from_stdin_or_file, open_editor,
         modify_existing_contact(selected_vcard)
 
 
-def remove_subcommand(selected_vcard, force):
+def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
     """Remove a contact from the addressbook.
 
     :param selected_vcard: the contact to delete
-    :type selected_vcard: carddav_object.CarddavObject
-    :param bool force: delete without confirmation
-    :returns: None
-    :rtype: None
+    :param force: delete without confirmation
     """
     if not force and not confirm(
             "Deleting contact {} from address book {}. Are you sure?".format(
