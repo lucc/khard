@@ -1,5 +1,6 @@
 """Loading and validation of the configuration file"""
 
+from argparse import Namespace
 import locale
 import logging
 import os
@@ -22,7 +23,7 @@ class ConfigError(Exception):
     """Errors during config file parsing"""
 
 
-def validate_command(value) -> List[str]:
+def validate_command(value: List[str]) -> List[str]:
     """Special validator to check shell commands
 
     The input must either be a list of strings or a string that shlex.split can
@@ -47,7 +48,7 @@ def validate_command(value) -> List[str]:
         raise
 
 
-def validate_action(value) -> str:
+def validate_action(value: str) -> str:
     """Check that the given value is a valid action.
 
     :param value: the config value to check
@@ -57,7 +58,7 @@ def validate_action(value) -> str:
     return validate.is_option(value, *Actions.get_actions())
 
 
-def validate_private_objects(value) -> List[str]:
+def validate_private_objects(value: List[str]) -> List[str]:
     """Check that the private objects are reasonable
 
     :param value: the config value to check
@@ -130,11 +131,8 @@ class Config:
             raise ConfigError
         return config
 
-    def _set_attributes(self):
-        """Set the attributes from the internal config instance on self.
-
-        :returns: None
-        """
+    def _set_attributes(self) -> None:
+        """Set the attributes from the internal config instance on self."""
         general = self.config["general"]
         self.debug = general["debug"]
         self.editor = general["editor"] or os.environ.get("EDITOR", "vim")
@@ -159,14 +157,12 @@ class Config:
         self.preferred_phone_number_type = table['preferred_phone_number_type']
         self.show_uids = table['show_uids']
 
-    def init_address_books(self):
+    def init_address_books(self) -> None:
         """Initialize the internal address book collection.
 
         This method should only be called *after* merging in the command line
         options as they can hold some options that are relevant for the loading
         of the address books.
-
-        :returns: None
         """
         section = self.config['addressbooks']
         kwargs = {'private_objects': self.private_objects,
@@ -213,20 +209,20 @@ class Config:
         self._validate(self.config)
         self._set_attributes()
 
-    def merge_args(self, args):
+    def merge_args(self, args: Namespace) -> None:
         """Merge options from a flat argparse object.
 
         :param argparse.Namespace args: the parsed arguments to incorperate
         """
-        merge = {'general': ['debug'],
-                 'contact table': ['reverse', 'group_by_addressbook',
-                                   'display', 'sort'],
-                 'vcard': ['search_in_source_files', 'skip_unparsable',
-                           'preferred_version'],
-                 }
+        skel = {'general': ['debug'],
+                'contact table': ['reverse', 'group_by_addressbook',
+                                  'display', 'sort'],
+                'vcard': ['search_in_source_files', 'skip_unparsable',
+                          'preferred_version'],
+                }
         merge = {sec: {key: getattr(args, key) for key in opts
                        if key in args and getattr(args, key) is not None}
-                 for sec, opts in merge.items()}
+                 for sec, opts in skel.items()}
         logger.debug('Merging in %s', merge)
         self.merge(merge)
         logger.debug('Merged: %s', vars(self))

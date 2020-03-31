@@ -13,14 +13,15 @@ from .carddav_object import CarddavObject
 
 
 logger = logging.getLogger(__name__)
+Query = Union[None, str, List[str], List[List[str]]]
 
 
 class AddressBookParseError(Exception):
     """Indicate an error while parsing data from an address book backend."""
 
-    def __init__(self, filename, abook, reason, *args, **kwargs):
+    def __init__(self, filename: str, abook: str, reason: Exception) -> None:
         """Store the filename that caused the error."""
-        super().__init__(*args, **kwargs)
+        super().__init__()
         self.filename = filename
         self.abook = abook
         self.reason = reason
@@ -149,7 +150,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         if self._short_uids is None:
             if not self._loaded:
-                self.load(query)
+                self.load([query] if query is not None else None)
             if not self.contacts:
                 self._short_uids = {}
             elif len(self.contacts) == 1:
@@ -188,7 +189,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         return ""
 
     @abc.abstractmethod
-    def load(self, query=None) -> None:
+    def load(self, query: Query = None) -> None:
         """Load the vCards from the backing store.
 
         If a query is given loading is limited to entries which match the
@@ -226,7 +227,8 @@ class VdirAddressBook(AddressBook):
         self._skip = skip
         super().__init__(name)
 
-    def load(self, query=None, search_in_source_files: bool = False) -> None:
+    def load(self, query: Query = None,
+             search_in_source_files: bool = False) -> None:
         """Load all vcard files in this address book from disk.
 
         If a search string is given only files which contents match that will
@@ -295,7 +297,7 @@ class AddressBookCollection(AddressBook):
         super().__init__(name)
         self._abooks = {ab.name: ab for ab in abooks}
 
-    def load(self, query=None) -> None:
+    def load(self, query: Query = None) -> None:
         """Load the wrapped address books with the given parameters
 
         All parameters will be handed to VdirAddressBook.load.

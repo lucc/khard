@@ -25,6 +25,7 @@ from .object_type import ObjectType
 
 
 logger = logging.getLogger(__name__)
+Query = Union[None, str, List[str], List[List[str]]]
 
 
 def convert_to_vcard(name: str, value: Union[str, List[str]],
@@ -316,7 +317,7 @@ class VCardWrapper:
         return None
 
     @birthday.setter
-    def birthday(self, date):
+    def birthday(self, date: Union[str, datetime.datetime]) -> None:
         """Store the given date as BDAY in the vcard.
 
         :param date: the new date to store as birthday
@@ -355,7 +356,7 @@ class VCardWrapper:
         return None
 
     @anniversary.setter
-    def anniversary(self, date):
+    def anniversary(self, date: Union[str, datetime.datetime]) -> None:
         value, text = self._prepare_birthday_value(date)
         if value is None:
             logger.warning('Failed to set anniversary to %s', date)
@@ -442,7 +443,8 @@ class VCardWrapper:
             obj.value = convert_to_vcard(obj_type, user_input,
                                          allowed_object_type)
 
-    def _prepare_birthday_value(self, date):
+    def _prepare_birthday_value(self, date: Union[str, datetime.datetime]
+                                ) -> Tuple[Optional[str], bool]:
         """Prepare a value to be stored in a BDAY or ANNIVERSARY attribute.
 
         :param date: the date like value to be stored
@@ -455,15 +457,16 @@ class VCardWrapper:
             if self.version == "4.0":
                 return date.strip(), True
             return None, False
+        tz = date.tzname()
         if date.year == 1900 and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0 \
                 and self.version == "4.0":
             fmt = '--%m%d'
-        elif date.tzname() and date.tzname()[3:]:
+        elif tz and tz[3:]:
             if self.version == "4.0":
-                fmt = "%Y%m%dT%H%M%S{}".format(date.tzname()[3:])
+                fmt = "%Y%m%dT%H%M%S{}".format(tz[3:])
             else:
-                fmt = "%FT%T{}".format(date.tzname()[3:])
+                fmt = "%FT%T{}".format(tz[3:])
         elif date.hour != 0 or date.minute != 0 or date.second != 0:
             if self.version == "4.0":
                 fmt = "%Y%m%dT%H%M%SZ"
@@ -1480,8 +1483,7 @@ class CarddavObject(YAMLEditable):
         return card
 
     @classmethod
-    def from_file(cls, address_book, filename: str,
-                  query: Optional[List[List[str]]],
+    def from_file(cls, address_book, filename: str, query: Query,
                   supported_private_objects: Optional[List[str]] = None,
                   localize_dates: bool = False) -> Optional["CarddavObject"]:
         """Load a CarddavObject object from a .vcf file if the plain file
@@ -1541,8 +1543,7 @@ class CarddavObject(YAMLEditable):
         return contact
 
     @staticmethod
-    def match(string: str, query: Union[None, str, List[str], List[List[str]]]
-              ) -> bool:
+    def match(string: str, query: Query) -> bool:
         """Check if the given string matches against the query.  The query is a
         list of lists of strings.  The inner lists are AND joined and the outer
         lists are OR joined.
