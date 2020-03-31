@@ -109,7 +109,7 @@ def file_modification_date(filename: str) -> datetime:
     return datetime.fromtimestamp(os.path.getmtime(filename))
 
 
-def convert_to_yaml(name: str, value: Union[str, List], indentation: int,
+def convert_to_yaml(name: str, value: Union[None, str, List], indentation: int,
                     index_of_colon: int, show_multi_line_character: bool
                     ) -> List[str]:
     """converts a value list into yaml syntax
