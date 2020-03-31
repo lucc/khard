@@ -14,7 +14,7 @@ import os
 import re
 import sys
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -57,7 +57,7 @@ def convert_to_vcard(name: str, value: Union[str, List[str]],
                      " must be a string or a list with strings.")
 
 
-def multi_property_key(item: Dict) -> List:
+def multi_property_key(item: Union[str, Dict]) -> List:
     """key function to pass to sorted(), allowing sorting of dicts with lists
     and strings. Dicts will be sorted by their label, after other types.
 
@@ -280,7 +280,7 @@ class VCardWrapper:
         uid = self.vcard.add('uid')
         uid.value = convert_to_vcard("uid", value, ObjectType.string)
 
-    def _update_revision(self):
+    def _update_revision(self) -> None:
         """Generate a new REV field for the vCard, replace any existing
 
         All vCards should only always have one revision, this is a
@@ -900,17 +900,17 @@ class VCardWrapper:
 class YAMLEditable(VCardWrapper):
     """Conversion of vcards to YAML and updateing the vcard from YAML"""
 
-    def __init__(self, vcard, supported_private_objects=None, version=None,
-                 localize_dates=False):
+    def __init__(self, vcard: vobject.vCard,
+                 supported_private_objects: Optional[List[str]] = None,
+                 version: Optional[str]=None, localize_dates: bool = False
+                 ) -> None:
         """Initialize atributes needed for yaml conversions
 
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
-        :type supported_private_objects: list(str) or NoneType
         :param version: the version of the RFC to use in this card
-        :type version: str or None
-        :param bool localize_dates: should the formatted output of anniversary
+        :param localize_dates: should the formatted output of anniversary
             and birthday be localized or should the isoformat be used instead
         """
         self.supported_private_objects = supported_private_objects or []
@@ -921,12 +921,9 @@ class YAMLEditable(VCardWrapper):
     # getters and setters
     #####################
 
-    def _get_private_objects(self):
-        """
-        :rtype: dict(str, list(str))
-        """
+    def _get_private_objects(self) -> Dict[str, List[str]]:
         supported = [x.lower() for x in self.supported_private_objects]
-        private_objects = {}
+        private_objects: Dict[str, List[str]] = {}
         for child in self.vcard.getChildren():
             lower = child.name.lower()
             if lower.startswith("x-") and lower[2:] in supported:
@@ -942,13 +939,13 @@ class YAMLEditable(VCardWrapper):
             value.sort(key=multi_property_key)
         return private_objects
 
-    def _add_private_object(self, key, value):
+    def _add_private_object(self, key: str, value) -> None:
         self._add_labelled_object('X-' + key.upper(), value)
 
-    def get_formatted_anniversary(self):
+    def get_formatted_anniversary(self) -> str:
         return self._format_date_object(self.anniversary, self.localize_dates)
 
-    def get_formatted_birthday(self):
+    def get_formatted_birthday(self) -> str:
         return self._format_date_object(self.birthday, self.localize_dates)
 
     #######################
@@ -956,7 +953,8 @@ class YAMLEditable(VCardWrapper):
     #######################
 
     @staticmethod
-    def _format_date_object(date, localize):
+    def _format_date_object(date: Union[str, datetime.datetime],
+                            localize: bool) -> str:
         if not date:
             return ""
         if isinstance(date, str):
@@ -964,8 +962,9 @@ class YAMLEditable(VCardWrapper):
         if date.year == 1900 and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0:
             return date.strftime("--%m-%d")
-        if (date.tzname() and date.tzname()[3:]) or (
-                date.hour != 0 or date.minute != 0 or date.second != 0):
+        tz = date.tzname()
+        if (tz and tz[3:]) or (date.hour != 0 or date.minute != 0
+                               or date.second != 0):
             if localize:
                 return date.strftime(locale.nl_langinfo(locale.D_T_FMT))
             utc_offset = -time.timezone / 60 / 60
@@ -975,7 +974,7 @@ class YAMLEditable(VCardWrapper):
         return date.strftime("%F")
 
     @staticmethod
-    def _filter_invalid_tags(contents):
+    def _filter_invalid_tags(contents: str) -> str:
         for pat, repl in [('aim', 'AIM'), ('gadu', 'GADUGADU'),
                           ('groupwise', 'GROUPWISE'), ('icq', 'ICQ'),
                           ('xmpp', 'JABBER'), ('msn', 'MSN'),
@@ -986,7 +985,7 @@ class YAMLEditable(VCardWrapper):
         return contents
 
     @staticmethod
-    def _parse_yaml(input):
+    def _parse_yaml(input: str) -> Dict:
         """Parse a YAML document into a dictinary and validate the data to some
         degree.
 
@@ -1013,13 +1012,13 @@ class YAMLEditable(VCardWrapper):
         return contact_data
 
     @staticmethod
-    def _set_string_list(setter, key, data):
+    def _set_string_list(setter: Callable[[Union[str, List]], None], key: str,
+                         data: Dict) -> None:
         """Prepocess a string or list and set each value with the given setter
 
-        :param callable setter: the setter method to add a value to a card
-        :param value: the new value to set
-        :type value: str or list(str)
-        :returns: None
+        :param setter: the setter method to add a value to a card
+        :param key:
+        :param data:
         """
         value = data.get(key)
         if value:
@@ -1033,7 +1032,7 @@ class YAMLEditable(VCardWrapper):
                 raise ValueError(
                     "{} must be a string or a list of strings".format(key))
 
-    def _set_date(self, target, key, data):
+    def _set_date(self, target: str, key: str, data: Dict) -> None:
         new = data.get(key)
         if not new:
             return
@@ -1064,11 +1063,10 @@ class YAMLEditable(VCardWrapper):
                          "Use format yyyy-mm-dd or "
                          "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
 
-    def update(self, input):
+    def update(self, input: str) -> None:
         """Update this vcard with some yaml input
 
-        :param str input: a yaml string to parse and then use to update self
-        :returns: None
+        :param input: a yaml string to parse and then use to update self
         """
         contact_data = self._parse_yaml(input)
         # update rev
@@ -1085,7 +1083,7 @@ class YAMLEditable(VCardWrapper):
             contact_data.get("Additional", ""),
             contact_data.get("Last name", ""), contact_data.get("Suffix", ""))
         if "Formatted name" in contact_data:
-            self.formatted_name = contact_data.get("Formatted name")
+            self.formatted_name = contact_data.get("Formatted name", "")
         if not self.formatted_name:
             # Trigger the auto filling code in the setter.
             self.formatted_name = ""
@@ -1110,9 +1108,10 @@ class YAMLEditable(VCardWrapper):
 
         # phone
         self._delete_vcard_object("TEL")
-        if contact_data.get("Phone"):
-            if isinstance(contact_data.get("Phone"), dict):
-                for type, number_list in contact_data.get("Phone").items():
+        phone_data = contact_data.get("Phone")
+        if phone_data:
+            if isinstance(phone_data, dict):
+                for type, number_list in phone_data.items():
                     if isinstance(number_list, str):
                         number_list = [number_list]
                     if isinstance(number_list, list):
@@ -1129,9 +1128,10 @@ class YAMLEditable(VCardWrapper):
 
         # email
         self._delete_vcard_object("EMAIL")
-        if contact_data.get("Email"):
-            if isinstance(contact_data.get("Email"), dict):
-                for type, email_list in contact_data.get("Email").items():
+        email_data = contact_data.get("Email")
+        if email_data:
+            if isinstance(email_data, dict):
+                for type, email_list in email_data.items():
                     if isinstance(email_list, str):
                         email_list = [email_list]
                     if isinstance(email_list, list):
@@ -1148,9 +1148,10 @@ class YAMLEditable(VCardWrapper):
 
         # post addresses
         self._delete_vcard_object("ADR")
-        if contact_data.get("Address"):
-            if isinstance(contact_data.get("Address"), dict):
-                for type, post_adr_list in contact_data.get("Address").items():
+        address_data = contact_data.get("Address")
+        if address_data:
+            if isinstance(address_data, dict):
+                for type, post_adr_list in address_data.items():
                     if isinstance(post_adr_list, dict):
                         post_adr_list = [post_adr_list]
                     if isinstance(post_adr_list, list):
@@ -1187,21 +1188,22 @@ class YAMLEditable(VCardWrapper):
 
         # categories
         self._delete_vcard_object("CATEGORIES")
-        if contact_data.get("Categories"):
-            if isinstance(contact_data.get("Categories"), str):
-                self._add_category([contact_data.get("Categories")])
-            elif isinstance(contact_data.get("Categories"), list):
+        cat_data = contact_data.get("Categories")
+        if cat_data:
+            if isinstance(cat_data, str):
+                self._add_category([cat_data])
+            elif isinstance(cat_data, list):
                 only_contains_strings = True
-                for sub_category in contact_data.get("Categories"):
+                for sub_category in cat_data:
                     if not isinstance(sub_category, str):
                         only_contains_strings = False
                         break
                 # if the category list only contains strings, pack all of them
                 # in a single CATEGORIES vcard tag
                 if only_contains_strings:
-                    self._add_category(contact_data.get("Categories"))
+                    self._add_category(cat_data)
                 else:
-                    for sub_category in contact_data.get("Categories"):
+                    for sub_category in cat_data:
                         if sub_category:
                             if isinstance(sub_category, str):
                                 self._add_category([sub_category])
@@ -1227,9 +1229,10 @@ class YAMLEditable(VCardWrapper):
         # private objects
         for supported in self.supported_private_objects:
             self._delete_vcard_object("X-{}".format(supported.upper()))
-        if contact_data.get("Private"):
-            if isinstance(contact_data.get("Private"), dict):
-                for key, value_list in contact_data.get("Private").items():
+        private_data = contact_data.get("Private")
+        if private_data:
+            if isinstance(private_data, dict):
+                for key, value_list in private_data.items():
                     if key in self.supported_private_objects:
                         if isinstance(value_list, str):
                             value_list = [value_list]
@@ -1254,14 +1257,13 @@ class YAMLEditable(VCardWrapper):
         self._delete_vcard_object("NOTE")
         self._set_string_list(self._add_note, "Note", contact_data)
 
-    def to_yaml(self):
+    def to_yaml(self) -> str:
         """Convert this contact to a YAML string
 
         The conversion follows the implicit schema that is given by the
         internal YAML template of khard.
 
         :returns: a YAML representation of this contact
-        :rtype: str
         """
         strings = []
         for line in helpers.get_new_contact_template().splitlines():
