@@ -1040,10 +1040,10 @@ class YAMLEditable(VCardWrapper):
             raise ValueError("Error: {} must be a string object.".format(key))
         if re.match(r"^text[\s]*=.*$", new):
             if self.version == "4.0":
-                v = ', '.join(x.strip() for x in re.split(r"text[\s]*=", new)
+                v1 = ', '.join(x.strip() for x in re.split(r"text[\s]*=", new)
                               if x.strip())
-                if v:
-                    setattr(self, target, v)
+                if v1:
+                    setattr(self, target, v1)
                 return
             raise ValueError("Error: Free text format for {} only usable with "
                              "vcard version 4.0.".format(key.lower()))
@@ -1053,9 +1053,9 @@ class YAMLEditable(VCardWrapper):
                 "vcard version 4.0. You may use 1900 as placeholder, if "
                 "the year is unknown.".format(key))
         try:
-            v = helpers.string_to_date(new)
-            if v:
-                setattr(self, target, v)
+            v2 = helpers.string_to_date(new)
+            if v2:
+                setattr(self, target, v2)
             return
         except ValueError:
             pass
