@@ -5,7 +5,7 @@ import pathlib
 import random
 import string
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 def pretty_print(table: List[List[str]], justify: str = "L") -> str:
@@ -56,15 +56,12 @@ def pretty_print(table: List[List[str]], justify: str = "L") -> str:
     return '\n'.join(table_row_list)
 
 
-def list_to_string(input, delimiter):
+def list_to_string(input: Union[str, List], delimiter: str) -> str:
     """converts list to string recursively so that nested lists are supported
 
     :param input: a list of strings and lists of strings (and so on recursive)
-    :type input: list
     :param delimiter: the deimiter to use when joining the items
-    :type delimiter: str
     :returns: the recursively joined list
-    :rtype: str
     """
     if isinstance(input, list):
         return delimiter.join(
@@ -72,7 +69,7 @@ def list_to_string(input, delimiter):
     return input
 
 
-def string_to_list(input, delimiter):
+def string_to_list(input: Union[str, List[str]], delimiter: str) -> List[str]:
     if isinstance(input, list):
         return input
     return [x.strip() for x in input.split(delimiter)]
@@ -112,19 +109,19 @@ def file_modification_date(filename: str) -> datetime:
     return datetime.fromtimestamp(os.path.getmtime(filename))
 
 
-def convert_to_yaml(name, value, indentation, index_of_colon,
-                    show_multi_line_character):
+def convert_to_yaml(name: str, value: Union[str, List], indentation: int,
+                    index_of_colon: int, show_multi_line_character: bool
+                    ) -> List[str]:
     """converts a value list into yaml syntax
 
-    :param str name: name of object (example: phone)
+    :param name: name of object (example: phone)
     :param value: object contents
     :type value: str, list(str), list(list(str)), list(dict)
-    :param int indentation: indent all by number of spaces
-    :param int index_of_colon: use to position : at the name string (-1 for no
+    :param indentation: indent all by number of spaces
+    :param index_of_colon: use to position : at the name string (-1 for no
         space)
-    :param bool show_multi_line_character: option to hide "|"
+    :param show_multi_line_character: option to hide "|"
     :returns: yaml formatted string array of name, value pair
-    :rtype: list(str)
     """
     strings = []
     if isinstance(value, list):
@@ -177,7 +174,8 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
     return strings
 
 
-def indent_multiline_string(input, indentation, show_multi_line_character):
+def indent_multiline_string(input: Union[str, List], indentation: int,
+                            show_multi_line_character: bool) -> str:
     # if input is a list, convert to string first
     if isinstance(input, list):
         input = list_to_string(input, "")
