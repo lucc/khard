@@ -1,5 +1,6 @@
 """Main application logic of khard includeing command line handling"""
 
+from argparse import Namespace
 import datetime
 from email import message_from_string
 from email.policy import SMTP as SMTP_POLICY
@@ -9,13 +10,14 @@ import re
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
-from typing import cast, List, Optional
+from typing import cast, Iterable, List, Optional, TypeVar, Union
 
 from unidecode import unidecode
 
 from . import helpers
-from .address_book import AddressBookCollection, AddressBookParseError, \
-    AddressBookNameError
+from .address_book import (AddressBook, AddressBookCollection,
+                           AddressBookNameError, AddressBookParseError,
+                           VdirAddressBook)
 from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
@@ -25,6 +27,7 @@ from .version import version as khard_version
 
 logger = logging.getLogger(__name__)
 config: Config
+T = TypeVar("T")
 
 
 def confirm(message: str) -> bool:
@@ -43,17 +46,16 @@ def confirm(message: str) -> bool:
         print('Please answer with "y" for yes or "n" for no.')
 
 
-def select(items, include_none: bool = False):
+def select(items: List[T], include_none: bool = False) -> Optional[T]:
     """Ask the user to select an item from a list.
 
     The list should be displayed to the user before calling this function and
     should be indexed starting with 1.  This function might exit if the user
     selects "q".
 
-    :param list(T) items: the list from which to select
+    :param items: the list from which to select
     :param include_none: weather to allow the selection of no item
     :returns: None or the selected item
-    :rtype: T|None
     """
     while True:
         try:
@@ -94,7 +96,7 @@ def edit(*filenames: str, merge: bool = False) -> None:
     child.communicate()
 
 
-def create_new_contact(address_book) -> None:
+def create_new_contact(address_book: AddressBook) -> None:
     # create temp file
     template = "# create new contact\n# Address book: {}\n# Vcard version: " \
         "{}\n# if you want to cancel, exit without saving\n\n{}".format(
@@ -268,7 +270,7 @@ def merge_existing_contacts(source_contact: CarddavObject,
     print("Merge successful\n\n{}".format(merged_contact.print_vcard()))
 
 
-def copy_contact(contact: CarddavObject, target_address_book,
+def copy_contact(contact: CarddavObject, target_address_book: VdirAddressBook,
                  delete_source_contact: bool) -> None:
     source_contact_filename = ""
     if delete_source_contact:
@@ -292,15 +294,17 @@ def copy_contact(contact: CarddavObject, target_address_book,
         contact.address_book, target_address_book))
 
 
-def list_address_books(address_books):
+def list_address_books(address_books: Union[AddressBookCollection,
+                                            List[AddressBook]]) -> None:
     table = [["Index", "Address book"]]
     for index, address_book in enumerate(address_books, 1):
-        table.append([index, address_book.name])
+        table.append([cast(str, index), address_book.name])
     print(helpers.pretty_print(table))
 
 
-def list_contacts(vcard_list, fields=(), parsable=False):
-    selected_address_books = []
+def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
+                  parsable: bool = False) -> None:
+    selected_address_books: List[AddressBook] = []
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
             selected_address_books.append(contact.address_book)
@@ -338,7 +342,7 @@ def list_contacts(vcard_list, fields=(), parsable=False):
         row = []
         for field in table_header:
             if field == 'index':
-                row.append(index + 1)
+                row.append(str(index + 1))
             elif field in ['name', 'phone', 'email']:
                 row.append(formatter.get_special_field(vcard, field))
             elif field == 'uid':
@@ -358,21 +362,22 @@ def list_contacts(vcard_list, fields=(), parsable=False):
         print(helpers.pretty_print(table))
 
 
-def list_with_headers(the_list, *headers):
-    table = [headers]
+def list_with_headers(the_list: List, *headers: str) -> None:
+    table = [list(headers)]
     for row in the_list:
         table.append(row.split("\t"))
     print(helpers.pretty_print(table))
 
 
-def choose_address_book_from_list(header_string: str, address_books):
+def choose_address_book_from_list(header_string: str, address_books: Union[
+        AddressBookCollection, List[AddressBook]]) -> Optional[AddressBook]:
     if not address_books:
         return None
     if len(address_books) == 1:
         return address_books[0]
     print(header_string)
     list_address_books(address_books)
-    return select(address_books)
+    return select(cast(List[AddressBook], address_books))
 
 
 def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
@@ -388,7 +393,7 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
 
 
 def get_contact_list_by_user_selection(
-        address_books: AddressBookCollection, search: Optional[List[str]],
+        address_books: AddressBook, search: Optional[List[str]],
         strict_search: bool) -> List[CarddavObject]:
     """returns a list of CarddavObject objects
     :param address_books: selected address books
@@ -401,23 +406,23 @@ def get_contact_list_by_user_selection(
                         config.group_by_addressbook, config.sort)
 
 
-def get_contacts(address_books: AddressBookCollection,
-                 query: Optional[List[str]], method: str = "all",
-                 reverse: bool = False, group: bool = False,
-                 sort: str = "first_name") -> List[CarddavObject]:
+def get_contacts(address_book: AddressBook, query: Optional[List[str]],
+                 method: str = "all", reverse: bool = False,
+                 group: bool = False, sort: str = "first_name"
+                 ) -> List[CarddavObject]:
     """Get a list of contacts from one or more address books.
 
-    :param address_books: the address books to search
+    :param address_book: the address book to search
     :param query: a search query to select contacts
     :param method: the search method, one of "all", "name" or "uid"
     :param reverse: reverse the order of the returned contacts
     :param group: group results by address book
     :param sort: the field to use for sorting, one of "first_name",
         "last_name", "formatted_name"
-    :returns: contacts from the address_books that match the query
+    :returns: contacts from the address_book that match the query
     """
     # Search for the contacts in all address books.
-    contacts = address_books.search(query, method=method)
+    contacts = address_book.search(query, method=method)
     # Sort the contacts.
     if group:
         if sort == "first_name":
@@ -505,11 +510,10 @@ def prepare_search_queries(args):
     return queries
 
 
-def generate_contact_list(args) -> List[CarddavObject]:
+def generate_contact_list(args: Namespace) -> List[CarddavObject]:
     """TODO: Docstring for generate_contact_list.
 
     :param args: the command line arguments
-    :type args: argparse.Namespace
     :returns: the contacts for further processing
     """
     # fill contact list
@@ -720,13 +724,12 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
         sys.exit(1)
 
 
-def phone_subcommand(search_terms, vcard_list: List[CarddavObject],
+def phone_subcommand(search_terms: List[str], vcard_list: List[CarddavObject],
                      parsable: bool) -> None:
     """Print a phone application friendly contact table.
 
     :param search_terms: used as search term to filter the contacts before
         printing
-    :type search_terms: str
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -779,13 +782,13 @@ def phone_subcommand(search_terms, vcard_list: List[CarddavObject],
         sys.exit(1)
 
 
-def post_address_subcommand(search_terms, vcard_list: List[CarddavObject],
-                            parsable: bool) -> None:
+def post_address_subcommand(search_terms: List[str],
+                            vcard_list: List[CarddavObject], parsable: bool
+                            ) -> None:
     """Print a contact table. with all postal / mailing addresses
 
     :param search_terms: used as search term to filter the contacts before
         printing
-    :type search_terms: str
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -832,7 +835,7 @@ def post_address_subcommand(search_terms, vcard_list: List[CarddavObject],
         sys.exit(1)
 
 
-def email_subcommand(search_terms, vcard_list: List[CarddavObject],
+def email_subcommand(search_terms: List[str], vcard_list: List[CarddavObject],
                      parsable: bool, remove_first_line: bool) -> None:
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
@@ -847,7 +850,6 @@ def email_subcommand(search_terms, vcard_list: List[CarddavObject],
 
     :param search_terms: used as search term to filter the contacts before
         printing
-    :type search_terms: str
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -1061,27 +1063,27 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
     else:
         available_address_books = [abook for abook in target_address_books
                                    if abook != source_vcard.address_book]
-        selected_target_address_book = choose_address_book_from_list(
+        target_abook = choose_address_book_from_list(
             "Select target address book", available_address_books)
-        if selected_target_address_book is None:
+        if target_abook is None:
             sys.exit("Error: address book list is empty")
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
         get_contact_list_by_user_selection(
-            selected_target_address_book, [source_vcard.formatted_name], True),
-        True)
+            target_abook, [source_vcard.formatted_name], True), True)
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
-        copy_contact(source_vcard, selected_target_address_book,
+        copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
                      action == "move")
     elif source_vcard == target_vcard:
         # source and target contact are identical
         print("Target contact: {}".format(target_vcard))
         if action == "move":
-            copy_contact(source_vcard, selected_target_address_book, True)
+            copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
+                         True)
         else:
             print("The selected contacts are already identical")
     else:
@@ -1098,11 +1100,11 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
         while True:
             input_string = input("Your choice: ")
             if input_string.lower() == "a":
-                copy_contact(source_vcard, selected_target_address_book,
+                copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
                              action == "move")
                 break
             if input_string.lower() == "o":
-                copy_contact(source_vcard, selected_target_address_book,
+                copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
                              action == "move")
                 target_vcard.delete_vcard_file()
                 break
