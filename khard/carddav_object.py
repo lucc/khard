@@ -14,7 +14,7 @@ import os
 import re
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import cast, Callable, Dict, List, Optional, Tuple, Union
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -1439,25 +1439,22 @@ class YAMLEditable(VCardWrapper):
 
 class CarddavObject(YAMLEditable):
 
-    def __init__(self, vcard, address_book, filename,
-                 supported_private_objects=None, vcard_version=None,
-                 localize_dates=False):
+    def __init__(self, vcard: vobject.vCard, address_book, filename: str,
+                 supported_private_objects: Optional[List[str]] = None,
+                 vcard_version: Optional[str] = None,
+                 localize_dates: bool = False) -> None:
         """Initialize the vcard object.
 
-        :param vobject.vCard vcard: the vCard to wrap
+        :param vcard: the vCard to wrap
         :param address_book.AddressBook address_book: a reference to the
             address book where this vcard is stored
-        :param str filename: the path to the file where this vcard is stored
+        :param filename: the path to the file where this vcard is stored
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
-        :type supported_private_objects: list(str) or NoneType
         :param vcard_version: the version of the RFC to use
-        :type vcard_version: str or None
         :param localize_dates: should the formatted output of anniversary and
             birthday be localized or should the isoformat be used instead
-        :type localize_dates: bool
-
         """
         self.address_book = address_book
         self.filename = filename
@@ -1469,8 +1466,10 @@ class CarddavObject(YAMLEditable):
     #######################################
 
     @classmethod
-    def new(cls, address_book, supported_private_objects=None, version=None,
-            localize_dates=False):
+    def new(cls, address_book,
+            supported_private_objects: Optional[List[str]] = None,
+            version: Optional[str] = None, localize_dates: bool = False
+            ) -> "CarddavObject":
         """Create a new CarddavObject from scratch"""
         vcard = vobject.vCard()
         uid = helpers.get_random_uid()
@@ -1481,24 +1480,24 @@ class CarddavObject(YAMLEditable):
         return card
 
     @classmethod
-    def from_file(cls, address_book, filename, query,
-                  supported_private_objects=None, localize_dates=False):
+    def from_file(cls, address_book, filename: str,
+                  query: Optional[List[List[str]]],
+                  supported_private_objects: Optional[List[str]] = None,
+                  localize_dates: bool = False) -> Optional["CarddavObject"]:
         """Load a CarddavObject object from a .vcf file if the plain file
         matches the query.
 
         :param address_book.AddressBook address_book: the address book where
             this contact is stored
-        :param str filename: the file name of the .vcf file
-        :param list(list(str))|NoneType query: the query to search in the
-            source file or None to load the file unconditionally
-        :param list(str)|NoneType supported_private_objects: the list of
-            private property names that will be loaded from the actual vcard
-            and represented in this pobject
-        :param str|NoneType vcard_version: the version of the RFC to use
-        :param bool localize_dates: should the formatted output of anniversary
+        :param filename: the file name of the .vcf file
+        :param query: the query to search in the source file or None to load
+            the file unconditionally
+        :param supported_private_objects: the list of private property names
+            that will be loaded from the actual vcard and represented in this
+            pobject
+        :param localize_dates: should the formatted output of anniversary
             and birthday be localized or should the isoformat be used instead
         :returns: the loaded CarddavObject or None if the file didn't match
-        :rtype: CarddavObject or NoneType
         """
         with open(filename, "r") as file:
             contents = file.read()
@@ -1515,8 +1514,10 @@ class CarddavObject(YAMLEditable):
         return None
 
     @classmethod
-    def from_yaml(cls, address_book, yaml, supported_private_objects=None,
-                  version=None, localize_dates=False):
+    def from_yaml(cls, address_book, yaml: str,
+                  supported_private_objects: Optional[List[str]] = None,
+                  version: Optional[str] = None, localize_dates: bool = False
+                  ) -> "CarddavObject":
         """Use this if you want to create a new contact from user input."""
         contact = cls.new(address_book, supported_private_objects, version,
                           localize_dates=localize_dates)
@@ -1524,7 +1525,9 @@ class CarddavObject(YAMLEditable):
         return contact
 
     @classmethod
-    def clone_with_yaml_update(cls, contact, yaml, localize_dates=False):
+    def clone_with_yaml_update(cls, contact: "CarddavObject", yaml: str,
+                               localize_dates: bool = False
+                               ) -> "CarddavObject":
         """
         Use this if you want to clone an existing contact and replace its data
         with new user input in one step.
@@ -1538,22 +1541,22 @@ class CarddavObject(YAMLEditable):
         return contact
 
     @staticmethod
-    def match(string, query):
+    def match(string: str, query: Union[None, str, List[str], List[List[str]]]
+              ) -> bool:
         """Check if the given string matches against the query.  The query is a
         list of lists of strings.  The inner lists are AND joined and the outer
         lists are OR joined.
 
-        :param str string: the string which to check
-        :param None|str|list(str)|list(list(str)) query:
-        :rtype: bool
+        :param string: the string which to check
+        :param query:
         """
-        def match_str(q, s):
+        def match_str(q: str, s: str) -> bool:
             return q.lower() in s
 
-        def match_list1(q, s):
+        def match_list1(q: List[str], s: str) -> bool:
             return all(match_str(qq, s) for qq in q)
 
-        def match_list2(q, s):
+        def match_list2(q: List[List[str]], s: str) -> bool:
             return any(match_list1(qq, s) for qq in q)
 
         logging.debug('match: %s', [string, query])
@@ -1567,22 +1570,23 @@ class CarddavObject(YAMLEditable):
         if not query:
             return False
         if isinstance(query[0], str):
-            return match_list1(query, string)
-        return match_list2(query, string)
+            return match_list1(cast(List[str], query), string)
+        return match_list2(cast(List[List[str]], query), string)
 
     ######################################
     # overwrite some default class methods
     ######################################
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, CarddavObject) and \
             self.print_vcard(show_address_book=False, show_uid=False) == \
             other.print_vcard(show_address_book=False, show_uid=False)
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not self == other
 
-    def print_vcard(self, show_address_book=True, show_uid=True):
+    def print_vcard(self, show_address_book: bool = True, show_uid: bool = True
+                    ) -> str:
         strings = []
 
         # Every vcard must have an FN field per the RFC.
@@ -1674,7 +1678,7 @@ class CarddavObject(YAMLEditable):
                     "Note", self.notes, 4, -1, False)
         return '\n'.join(strings)
 
-    def write_to_file(self, overwrite=False):
+    def write_to_file(self, overwrite: bool = False) -> None:
         # make sure, that every contact contains a uid
         if not self.uid:
             self.uid = helpers.get_random_uid()
@@ -1688,7 +1692,7 @@ class CarddavObject(YAMLEditable):
             print("Error: Can't write\n{}".format(err))
             sys.exit(4)
 
-    def delete_vcard_file(self):
+    def delete_vcard_file(self) -> None:
         try:
             os.remove(self.filename)
         except IOError as err:

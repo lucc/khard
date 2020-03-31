@@ -207,7 +207,7 @@ class VdirAddressBook(AddressBook):
     """
 
     def __init__(self, name: str, path: str,
-                 private_objects: Iterable[str] = tuple(),
+                 private_objects: Optional[List[str]] = None,
                  localize_dates: bool = True, skip: bool = False) -> None:
         """
         :param name: the name to identify the address book
@@ -221,7 +221,7 @@ class VdirAddressBook(AddressBook):
         if not os.path.isdir(self.path):
             raise FileNotFoundError("[Errno 2] The path {} to the address book"
                                     " {} does not exist.".format(path, name))
-        self._private_objects = private_objects
+        self._private_objects = private_objects or []
         self._localize_dates = localize_dates
         self._skip = skip
         super().__init__(name)
