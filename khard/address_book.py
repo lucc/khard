@@ -289,7 +289,7 @@ class AddressBookCollection(AddressBook):
     all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name: str, abooks: List[AddressBook]) -> None:
+    def __init__(self, name: str, abooks: List[VdirAddressBook]) -> None:
         """
         :param name: the name to identify the address book
         :param abooks: a list of address books to combine in this collection
@@ -322,7 +322,7 @@ class AddressBookCollection(AddressBook):
         logger.debug('Loded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
-    def __getitem__(self, key: Union[int, str]) -> AddressBook:
+    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook:
         """Get one of the backing address books by name or index
 
         :param key: the name of the address book to get or its index
@@ -333,7 +333,7 @@ class AddressBookCollection(AddressBook):
             return self._abooks[key]
         return list(self._abooks.values())[key]
 
-    def __iter__(self) -> Iterator[AddressBook]:
+    def __iter__(self) -> Iterator[VdirAddressBook]:
         """:return: an iterator over the underlying address books"""
         return iter(self._abooks.values())
 

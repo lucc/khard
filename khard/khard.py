@@ -15,9 +15,8 @@ from typing import cast, Iterable, List, Optional, TypeVar, Union
 from unidecode import unidecode
 
 from . import helpers
-from .address_book import (AddressBook, AddressBookCollection,
-                           AddressBookNameError, AddressBookParseError,
-                           VdirAddressBook)
+from .address_book import (AddressBookCollection, AddressBookNameError,
+                           AddressBookParseError, VdirAddressBook)
 from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
@@ -96,7 +95,7 @@ def edit(*filenames: str, merge: bool = False) -> None:
     child.communicate()
 
 
-def create_new_contact(address_book: AddressBook) -> None:
+def create_new_contact(address_book: VdirAddressBook) -> None:
     # create temp file
     template = "# create new contact\n# Address book: {}\n# Vcard version: " \
         "{}\n# if you want to cancel, exit without saving\n\n{}".format(
@@ -295,7 +294,7 @@ def copy_contact(contact: CarddavObject, target_address_book: VdirAddressBook,
 
 
 def list_address_books(address_books: Union[AddressBookCollection,
-                                            List[AddressBook]]) -> None:
+                                            List[VdirAddressBook]]) -> None:
     table = [["Index", "Address book"]]
     for index, address_book in enumerate(address_books, 1):
         table.append([cast(str, index), address_book.name])
@@ -304,7 +303,7 @@ def list_address_books(address_books: Union[AddressBookCollection,
 
 def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
                   parsable: bool = False) -> None:
-    selected_address_books: List[AddressBook] = []
+    selected_address_books: List[VdirAddressBook] = []
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
             selected_address_books.append(contact.address_book)
@@ -369,15 +368,19 @@ def list_with_headers(the_list: List, *headers: str) -> None:
     print(helpers.pretty_print(table))
 
 
-def choose_address_book_from_list(header_string: str, address_books: Union[
-        AddressBookCollection, List[AddressBook]]) -> Optional[AddressBook]:
+def choose_address_book_from_list(header_string: str,
+                                  address_books: Union[AddressBookCollection,
+                                                       List[VdirAddressBook]]
+                                  ) -> Optional[VdirAddressBook]:
     if not address_books:
         return None
     if len(address_books) == 1:
         return address_books[0]
     print(header_string)
     list_address_books(address_books)
-    return select(cast(List[AddressBook], address_books))
+    # For all intents and purposes of select() an AddressBookCollection can
+    # also be considered a List[VdirAddressBook].
+    return select(cast(List[VdirAddressBook], address_books))
 
 
 def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
@@ -393,8 +396,8 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
 
 
 def get_contact_list_by_user_selection(
-        address_books: AddressBook, search: Optional[List[str]],
-        strict_search: bool) -> List[CarddavObject]:
+        address_books: Union[VdirAddressBook, AddressBookCollection],
+        search: Optional[List[str]], strict_search: bool) -> List[CarddavObject]:
     """returns a list of CarddavObject objects
     :param address_books: selected address books
     :param search: filter contact list
@@ -406,10 +409,10 @@ def get_contact_list_by_user_selection(
                         config.group_by_addressbook, config.sort)
 
 
-def get_contacts(address_book: AddressBook, query: Optional[List[str]],
-                 method: str = "all", reverse: bool = False,
-                 group: bool = False, sort: str = "first_name"
-                 ) -> List[CarddavObject]:
+def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
+                 query: Optional[List[str]], method: str = "all",
+                 reverse: bool = False, group: bool = False,
+                 sort: str = "first_name") -> List[CarddavObject]:
     """Get a list of contacts from one or more address books.
 
     :param address_book: the address book to search

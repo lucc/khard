@@ -20,6 +20,7 @@ from atomicwrites import atomic_write
 from ruamel import yaml
 import vobject
 
+from . import address_book
 from . import helpers
 from .object_type import ObjectType
 
@@ -1443,15 +1444,16 @@ class YAMLEditable(VCardWrapper):
 
 class CarddavObject(YAMLEditable):
 
-    def __init__(self, vcard: vobject.vCard, address_book, filename: str,
+    def __init__(self, vcard: vobject.vCard,
+                 address_book: "address_book.VdirAddressBook", filename: str,
                  supported_private_objects: Optional[List[str]] = None,
                  vcard_version: Optional[str] = None,
                  localize_dates: bool = False) -> None:
         """Initialize the vcard object.
 
         :param vcard: the vCard to wrap
-        :param address_book.AddressBook address_book: a reference to the
-            address book where this vcard is stored
+        :param address_book: a reference to the address book where this vcard
+            is stored
         :param filename: the path to the file where this vcard is stored
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
@@ -1470,7 +1472,7 @@ class CarddavObject(YAMLEditable):
     #######################################
 
     @classmethod
-    def new(cls, address_book,
+    def new(cls, address_book: "address_book.VdirAddressBook",
             supported_private_objects: Optional[List[str]] = None,
             version: Optional[str] = None, localize_dates: bool = False
             ) -> "CarddavObject":
@@ -1484,14 +1486,14 @@ class CarddavObject(YAMLEditable):
         return card
 
     @classmethod
-    def from_file(cls, address_book, filename: str, query: Query,
+    def from_file(cls, address_book: "address_book.VdirAddressBook",
+                  filename: str, query: Query,
                   supported_private_objects: Optional[List[str]] = None,
                   localize_dates: bool = False) -> Optional["CarddavObject"]:
         """Load a CarddavObject object from a .vcf file if the plain file
         matches the query.
 
-        :param address_book.AddressBook address_book: the address book where
-            this contact is stored
+        :param address_book: the address book where this contact is stored
         :param filename: the file name of the .vcf file
         :param query: the query to search in the source file or None to load
             the file unconditionally
@@ -1517,7 +1519,7 @@ class CarddavObject(YAMLEditable):
         return None
 
     @classmethod
-    def from_yaml(cls, address_book, yaml: str,
+    def from_yaml(cls, address_book: "address_book.VdirAddressBook", yaml: str,
                   supported_private_objects: Optional[List[str]] = None,
                   version: Optional[str] = None, localize_dates: bool = False
                   ) -> "CarddavObject":
