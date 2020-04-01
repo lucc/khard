@@ -295,13 +295,12 @@ class VCardWrapper:
         rev.value = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
 
     @property
-    def birthday(self):
+    def birthday(self) -> Union[None, str, datetime.datetime]:
         """Return the birthday as a datetime object or a string depending on
         weather it is of type text or not.  If no birthday is present in the
         vcard None is returned.
 
         :returns: contacts birthday or None if not available
-        :rtype: datetime.datetime or str or NoneType
         """
         # vcard 4.0 could contain a single text value
         try:
@@ -321,7 +320,6 @@ class VCardWrapper:
         """Store the given date as BDAY in the vcard.
 
         :param date: the new date to store as birthday
-        :type date: datetime.datetime or str
         """
         value, text = self._prepare_birthday_value(date)
         if value is None:
@@ -333,10 +331,9 @@ class VCardWrapper:
             bday.params['VALUE'] = ['text']
 
     @property
-    def anniversary(self):
+    def anniversary(self) -> Union[None, str, datetime.datetime]:
         """
         :returns: contacts anniversary or None if not available
-        :rtype: datetime.datetime or str
         """
         # vcard 4.0 could contain a single text value
         try:
@@ -956,7 +953,7 @@ class YAMLEditable(VCardWrapper):
     #######################
 
     @staticmethod
-    def _format_date_object(date: Union[str, datetime.datetime],
+    def _format_date_object(date: Union[None, str, datetime.datetime],
                             localize: bool) -> str:
         if not date:
             return ""
@@ -1398,14 +1395,16 @@ class YAMLEditable(VCardWrapper):
                           and self.version == "4.0"):
                         strings.append(
                             anniversary.strftime("Anniversary : --%m-%d"))
-                    elif ((anniversary.tzname() and anniversary.tzname()[3:])
-                          or anniversary.hour != 0 or anniversary.minute != 0
-                          or anniversary.second != 0):
-                        strings.append(
-                            "Anniversary : {}".format(anniversary.isoformat()))
                     else:
-                        strings.append(
-                            anniversary.strftime("Anniversary : %F"))
+                        tz = anniversary.tzname()
+                        if ((tz and tz[3:]) or anniversary.hour != 0
+                                or anniversary.minute != 0
+                                or anniversary.second != 0):
+                            strings.append("Anniversary : {}".format(
+                                anniversary.isoformat()))
+                        else:
+                            strings.append(
+                                anniversary.strftime("Anniversary : %F"))
                 else:
                     strings.append("Anniversary : ")
             elif line.lower().startswith("birthday"):
@@ -1418,13 +1417,15 @@ class YAMLEditable(VCardWrapper):
                             birthday.minute == 0 and birthday.second == 0 and \
                             self.version == "4.0":
                         strings.append(birthday.strftime("Birthday : --%m-%d"))
-                    elif (birthday.tzname() and birthday.tzname()[3:]) or \
-                            (birthday.hour != 0 or birthday.minute != 0
-                             or birthday.second != 0):
-                        strings.append(
-                            "Birthday : {}".format(birthday.isoformat()))
                     else:
-                        strings.append(birthday.strftime("Birthday : %F"))
+                        tz = birthday.tzname()
+                        if (tz and tz[3:] or birthday.hour != 0
+                                or birthday.minute != 0
+                                or birthday.second != 0):
+                            strings.append(
+                                "Birthday : {}".format(birthday.isoformat()))
+                        else:
+                            strings.append(birthday.strftime("Birthday : %F"))
                 else:
                     strings.append("Birthday : ")
             elif line.lower().startswith("categories"):

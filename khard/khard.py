@@ -691,8 +691,7 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
     :param parsable: machine readable output: columns devided by tabulator (\t)
     """
     # filter out contacts without a birthday date
-    vcard_list = [
-        vcard for vcard in vcard_list if vcard.birthday is not None]
+    vcard_list = [vcard for vcard in vcard_list if vcard.birthday is not None]
     # sort by date (month and day)
     # The sort function should work for strings and datetime objects.  All
     # strings will besorted before any datetime objects.
@@ -707,7 +706,13 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         if parsable:
-            date = vcard.birthday.strftime("%Y.%m.%d")
+            # We did filter out None above but the typechecker does not know
+            # this.
+            bday = cast(Union[str, datetime.datetime], vcard.birthday)
+            if isinstance(bday, str):
+                date = bday
+            else:
+                date = bday.strftime("%Y.%m.%d")
             birthday_list.append("{}\t{}".format(date, name))
         else:
             date = vcard.get_formatted_birthday()

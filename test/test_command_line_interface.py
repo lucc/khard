@@ -96,6 +96,13 @@ class ListingCommands(unittest.TestCase):
                   "second contact    01/20/18"]
         self.assertListEqual(text, expect)
 
+    def test_parsable_bdays(self):
+        with mock_stdout() as stdout:
+            khard.main(['birthdays', '--parsable'])
+        text = stdout.getvalue().splitlines()
+        expect = ["circa 1800\ttext birthday", "2018.01.20\tsecond contact"]
+        self.assertListEqual(text, expect)
+
     def test_simple_email_without_options(self):
         with mock_stdout() as stdout:
             khard.main(['email'])
