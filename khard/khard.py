@@ -464,7 +464,6 @@ def prepare_search_queries(args):
     :returns: a dict mapping abook names to their loading queries, if the query
         is None it means that all cards should be loaded
     :rtype: dict(str:list(list(str)) or None)
-
     """
     # get all possible search queries for address book parsing
     source_queries = []
@@ -982,7 +981,7 @@ def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
 
 
 def merge_subcommand(vcard_list, selected_address_books, search_terms,
-                     target_uid):
+                     target_uid) -> None:
     """Merge two contacts into one.
 
     :param vcard_list: the vcards from which to choose contacts for mergeing
@@ -991,7 +990,6 @@ def merge_subcommand(vcard_list, selected_address_books, search_terms,
         use to find the target contact
     :param str search_terms: the search terms to find the target contact
     :param str target_uid: the uid of the target contact or empty
-    :returns: None
     """
     # Check arguments.
     if target_uid != "" and search_terms != "":
