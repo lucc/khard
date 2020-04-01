@@ -9,7 +9,7 @@ from typing import Dict, Generator, Iterable, Iterator, List, Optional, Union
 
 import vobject.base
 
-from .carddav_object import CarddavObject
+from . import carddav_object
 
 
 logger = logging.getLogger(__name__)
@@ -41,8 +41,8 @@ class AddressBook(metaclass=abc.ABCMeta):
     def __init__(self, name: str) -> None:
         """:param str name: the name to identify the address book"""
         self._loaded = False
-        self.contacts: Dict[str, CarddavObject] = {}
-        self._short_uids: Optional[Dict[str, CarddavObject]] = None
+        self.contacts: Dict[str, "carddav_object.CarddavObject"] = {}
+        self._short_uids: Optional[Dict[str, "carddav_object.CarddavObject"]] = None
         self.name = name
 
     def __str__(self) -> str:
@@ -65,7 +65,8 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def _search_all(self, query) -> Generator[CarddavObject, None, None]:
+    def _search_all(self, query) -> Generator["carddav_object.CarddavObject",
+                                              None, None]:
         """Search in all fields for contacts matching query.
 
         :param query: the query to search for
@@ -84,8 +85,8 @@ class AddressBook(metaclass=abc.ABCMeta):
                         and len(re.sub(r"\D", "", query)) >= 3:
                     yield contact
 
-    def _search_names(self, query) -> Generator[CarddavObject, None,
-                                                     None]:
+    def _search_names(self, query) -> Generator["carddav_object.CarddavObject",
+                                                None, None]:
         """Search in the name filed for contacts matching query.
 
         :param query: the query to search for
@@ -96,7 +97,8 @@ class AddressBook(metaclass=abc.ABCMeta):
             if contact.match(contact.formatted_name, query):
                 yield contact
 
-    def _search_uid(self, query) -> Generator[CarddavObject, None, None]:
+    def _search_uid(self, query) -> Generator["carddav_object.CarddavObject",
+                                              None, None]:
         """Search for contacts with a matching uid.
 
         :param query: the query to search for
@@ -114,7 +116,7 @@ class AddressBook(metaclass=abc.ABCMeta):
                     yield self.contacts[uid]
 
     def search(self, query: Optional[List[str]], method: str = "all"
-               ) -> Generator[CarddavObject, None, None]:
+               ) -> Generator["carddav_object.CarddavObject", None, None]:
         """Search this address book for contacts matching the query.
 
         The method can be one of "all", "name" and "uid".  The backend for this
@@ -123,8 +125,6 @@ class AddressBook(metaclass=abc.ABCMeta):
         :param query: the query to search for
         :param method: the type of fileds to use when seaching
         :returns: all found contacts
-        :rtype: list(carddav_object.CarddavObject)
-
         """
         logger.debug('address book %s, searching with %s', self.name, query)
         if not self._loaded:
@@ -139,7 +139,7 @@ class AddressBook(metaclass=abc.ABCMeta):
             'Only the search methods "all", "name" and "uid" are supported.')
 
     def get_short_uid_dict(self, query: Optional[str] = None
-                           ) -> Dict[str, CarddavObject]:
+                           ) -> Dict[str, "carddav_object.CarddavObject"]:
         """Create a dictionary of shortend UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
@@ -245,7 +245,7 @@ class VdirAddressBook(AddressBook):
         errors = 0
         for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
-                card = CarddavObject.from_file(
+                card = carddav_object.CarddavObject.from_file(
                     self, filename, query if search_in_source_files else None,
                     self._private_objects, self._localize_dates)
                 if card is None:
