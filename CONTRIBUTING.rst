@@ -8,6 +8,7 @@ Contributing
 
    self
    bench
+   API Reference <autoapi/index>
 
 Khard is developed on `Github`_ where you are welcome to post `bug reports`_,
 `feature requests`_ or join the discussion in general.

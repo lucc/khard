@@ -10,7 +10,6 @@ Welcome to khard's documentation!
    scripting
    contributing
    man
-   API documentation for developers <api/modules.rst>
    indices
 
 Khard is an address book for the Unix command line.  It can read, create,
