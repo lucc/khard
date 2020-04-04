@@ -309,16 +309,15 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
         if contact.address_book not in selected_address_books:
             selected_address_books.append(contact.address_book)
     table = []
-    # table header
-    if len(selected_address_books) == 1:
-        if not parsable:
-            print("Address book: {}".format(selected_address_books[0]))
-        table_header = ["index", "name", "phone", "email"]
-    else:
-        if not parsable:
-            print("Address books: {}".format(', '.join(
-                [str(book) for book in selected_address_books])))
-        table_header = ["index", "name", "phone", "email", "address_book"]
+    # default table header
+    table_header = ["index", "name", "phone", "email"]
+    plural = ""
+    if len(selected_address_books) > 1:
+        plural = "s"
+        table_header.append("address_book")
+    if not parsable:
+        print("Address book{}: {}".format(plural, ', '.join(
+                str(book) for book in selected_address_books)))
     if config.show_uids:
         table_header.append("uid")
 
