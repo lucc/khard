@@ -205,17 +205,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         type=argparse.FileType("w"),
         help="Specify output template file name or use stdout by default")
     subparsers.add_parser("template", help="print an empty yaml template")
-    export_parser = subparsers.add_parser(
-        "export",
-        aliases=Actions.get_aliases("export"),
-        parents=[default_addressbook_parser, default_search_parser,
-                 sort_parser],
-        description="DEPRECATED (an alias for 'show --format=yaml')",
-        help="DEPRECATED (an alias for 'show --format=yaml')")
-    export_parser.add_argument(
-        "-o", "--output-file", default=sys.stdout,
-        type=argparse.FileType("w"),
-        help="Specify output template file name or use stdout by default")
     birthdays_parser = subparsers.add_parser(
         "birthdays",
         aliases=Actions.get_aliases("birthdays"),
@@ -263,13 +252,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     post_address_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: address\\tname\\ttype")
-    subparsers.add_parser(
-        "source",
-        aliases=Actions.get_aliases("source"),
-        parents=[default_addressbook_parser, default_search_parser,
-                 sort_parser],
-        description="DEPRECATED (an alias for 'edit --format=vcard')",
-        help="DEPRECATED (an alias for 'edit --format=vcard')")
     new_parser = subparsers.add_parser(
         "new",
         aliases=Actions.get_aliases("new"),
@@ -343,6 +325,21 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
                  sort_parser],
         description="list filenames of all matching contacts",
         help="list filenames of all matching contacts")
+
+    # Deprecated subcommands:  They can be removed after the next release
+    # (v0.17)
+    export_parser = subparsers.add_parser(
+        "export", aliases=Actions.get_aliases("export"), parents=[
+            default_addressbook_parser, default_search_parser, sort_parser],
+        description="DEPRECATED use 'show --format=yaml'",
+        help="DEPRECATED use 'show --format=yaml'")
+    export_parser.add_argument("-o", "--output-file", default=sys.stdout,
+                               type=argparse.FileType("w"))
+    subparsers.add_parser(
+        "source", aliases=Actions.get_aliases("source"), parents=[
+            default_addressbook_parser, default_search_parser, sort_parser],
+        description="DEPRECATED use 'edit --format=vcard'",
+        help="DEPRECATED use 'edit --format=vcard'")
 
     # Replace the print_help method of the first parser with the print_help
     # method of the main parser.  This makes it possible to have the first
@@ -421,11 +418,11 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
 
     # Normalize all deprecated subcommands and emit warnings.
     if args.action == "export":
-        logger.warning("Deprecated subcommand: use 'show --format=yaml'.")
+        logger.error("Deprecated subcommand: use 'show --format=yaml'.")
         args.action = "show"
         args.format = "yaml"
     elif args.action == "source":
-        logger.warning("Deprecated subcommand: use 'edit --format=vcard'.")
+        logger.error("Deprecated subcommand: use 'edit --format=vcard'.")
         args.action = "edit"
         args.format = "vcard"
 
