@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:contact with category
+EMAIL:foo@example.org
+CATEGORIES:bar
+UID:cat1
+END:VCARD

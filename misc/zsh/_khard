@@ -135,6 +135,7 @@ case $state in
         options+=(
           $default_addressbook_options $default_search_options $sort_options
           '(-p)'{-p,--parsable}'[machine readable contact table]'
+	  '(-F)'{-F+,--fields=}'[output field specification]:field specification:'
         );;
       details|show)
 	options+=(

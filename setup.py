@@ -37,12 +37,14 @@ setup(
         'unidecode',
         'vobject'
     ],
+    extras_require={'doc': ['sphinx', 'sphinx-autoapi',
+                            'sphinx-autodoc-typehints']},
     use_scm_version={'write_to': 'khard/version.py'},
     setup_requires=['setuptools_scm'],
     packages=['khard'],
     entry_points={'console_scripts': ['khard = khard.khard:main']},
     test_suite="test",
-    # the dependency ruamel.yaml requires >=3.5
-    python_requires=">=3.5",
+    # we use type annotations of unset variables which needs 3.6
+    python_requires=">=3.6",
     include_package_data=True,
 )

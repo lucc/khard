@@ -3,13 +3,44 @@
 import argparse
 import logging
 import sys
+from typing import List, Tuple
 
 from .actions import Actions
-from .config import Config
+from .carddav_object import CarddavObject
+from .config import Config, ConfigError
 from .version import version as khard_version
 
 
-def create_parsers():
+logger = logging.getLogger(__name__)
+
+
+def field_argument(orignal: str) -> List[str]:
+    """Ensure the fields specified for `ls -F` are proper field names.
+    Nested attribute names are not checked.
+
+    :param orignal: the value from the command line
+    :returns: the orignal value split at "," if the fields are spelled correctly
+    :throws: argparse.ArgumentTypeError
+    """
+    special_fields = ['index', 'name', 'phone', 'email']
+    properties = [name for name in dir(CarddavObject)
+                  if isinstance(getattr(CarddavObject, name), property)]
+    choices = sorted(special_fields + properties)
+    ret = []
+    for candidate in orignal.split(','):
+        candidate = candidate.lower()
+        field = candidate.split('.')[0]
+        if field in choices:
+            ret.append(candidate)
+        else:
+            raise argparse.ArgumentTypeError(
+                '"{}" is not an accepted field. Accepted fields are {}.'.format(
+                    field, ', '.join('"{}"'.format(c) for c in choices)))
+    return ret
+
+
+def create_parsers() -> Tuple[argparse.ArgumentParser,
+                              argparse.ArgumentParser]:
     """Create two argument parsers.
 
     The first parser is manly used to find the config file which can than be
@@ -31,7 +62,7 @@ def create_parsers():
     base.add_argument("--skip-unparsable", action="store_true",
                       help="skip unparsable vcard files")
     base.add_argument("-v", "--version", action="version",
-                      version="Khard version %s" % khard_version)
+                      version="Khard version {}".format(khard_version))
 
     # Create the first argument parser.  Its main job is to set the correct
     # config file.  The config file is needed to get the default command if no
@@ -156,6 +187,9 @@ def create_parsers():
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
+    list_parser.add_argument(
+        "-F", "--fields", default=[], type=field_argument,
+        help="Comma separated list of fields to show")
     show_parser = subparsers.add_parser(
         "show",
         aliases=Actions.get_aliases("show"),
@@ -317,18 +351,17 @@ def create_parsers():
     # errors in the config file).  The config file will still be parsed before
     # the full command line is parsed so errors in the config file might be
     # reported before command line syntax errors.
-    first_parser.print_help = parser.print_help
+    first_parser.print_help = parser.print_help  # type: ignore
 
     return first_parser, parser
 
 
-def parse_args(argv):
+def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     """Parse the command line arguments and return the namespace that was
     creates by argparse.ArgumentParser.parse_args().
 
-    :param list(str) argv: the command line arguments
+    :param argv: the command line arguments
     :returns: the namespace parsed from the command line
-    :rtype: argparse.Namespace
     """
     first_parser, parser = create_parsers()
     # Parese the command line with the first argument parser.  It will handle
@@ -344,24 +377,27 @@ def parse_args(argv):
         logging.basicConfig(level=logging.DEBUG)
 
     # Create the config instance.
-    config = Config(args.config)
-    logging.debug("Finished parsing config=%s", vars(config))
+    try:
+        config = Config(args.config)
+    except ConfigError as err:
+        parser.exit(3, "Error in config file: {}\n".format(err))
+    logger.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with
     # the config file.
     if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
-    logging.debug("first args=%s", args)
-    logging.debug("remainder=%s", remainder)
+    logger.debug("first args=%s", args)
+    logger.debug("remainder=%s", remainder)
 
     # Set the default command from the config file if none was given on the
     # command line.
     if not remainder or remainder[0] not in Actions.get_all():
         if config.default_action is None:
-            exit("Missing subcommand on command line or default action "
-                 "parameter in config.")
+            parser.error("Missing subcommand on command line or default action"
+                         " parameter in config.")
         remainder.insert(0, config.default_action)
-        logging.debug("updated remainder=%s", remainder)
+        logger.debug("updated remainder=%s", remainder)
 
     # Save the last option that needs to be carried from the first parser run
     # to the second.
@@ -373,7 +409,7 @@ def parse_args(argv):
 
     # Restore settings that are left from the first parser run.
     args.skip_unparsable = skip
-    logging.debug("second args=%s", args)
+    logger.debug("second args=%s", args)
 
     # An integrity check for some options.
     if "uid" in args and args.uid and (
@@ -385,44 +421,28 @@ def parse_args(argv):
 
     # Normalize all deprecated subcommands and emit warnings.
     if args.action == "export":
-        logging.warning("Deprecated subcommand: use 'show --format=yaml'.")
+        logger.warning("Deprecated subcommand: use 'show --format=yaml'.")
         args.action = "show"
         args.format = "yaml"
     elif args.action == "source":
-        logging.warning("Deprecated subcommand: use 'edit --format=vcard'.")
+        logger.warning("Deprecated subcommand: use 'edit --format=vcard'.")
         args.action = "edit"
         args.format = "vcard"
 
     return args, config
 
 
-def merge_args_into_config(args, config):
+def merge_args_into_config(args: argparse.Namespace, config: Config) -> Config:
     """Merge the parsed arguments from argparse into the config object.
 
     :param args: the parsed command line arguments
-    :type args: argparse.Namespace
     :param config: the parsed config file
-    :type config: config.Config
     :returns: the merged config object
-    :rtype: config.Config
-
     """
-    merge = {'general': ['debug'],
-             'contact table': ['reverse', 'group_by_addressbook', 'display',
-                               'sort'],
-             'vcard': ['search_in_source_files', 'skip_unparsable',
-                       'preferred_version'],
-             }
-    merge = {k1: {k2: getattr(args, k2)
-                  for k2 in v1 if k2 in args and getattr(args, k2) is not None}
-             for k1, v1 in merge.items()}
-    logging.debug('Merging in %s', merge)
-    config.merge(merge)
-    logging.debug('Merged: %s', vars(config))
-
+    config.merge_args(args)
     # Now we can savely initialize the address books as all command line
     # options have been incorporated into the config object.
-    config.load_address_books()
+    config.init_address_books()
     # If the user could but did not specify address books on the command line
     # it means they want to use all address books in that place.
     if "addressbook" in args and not args.addressbook:
@@ -432,12 +452,11 @@ def merge_args_into_config(args, config):
     return config
 
 
-def init(argv):
+def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     """Initialize khard by parsing the command line and reading the config file
 
-    :param list(str) argv: the command line arguments
+    :param argv: the command line arguments
     :returns: the parsed command line and the fully initialized config
-    :rtype: (argparse.Namespace, Config)
     """
     args, conf = parse_args(argv)
 

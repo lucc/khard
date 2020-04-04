@@ -4,7 +4,7 @@ khard.conf
 Summary
 -------
 
-The config file for :manpage:`khard` is a plain text file with an ini-like
+The config file for :program:`khard` is a plain text file with an ini-like
 syntax.  Many options have a corresponding command line option.  The only
 mandatory section in the config file is the definition of the available address
 books.
@@ -85,7 +85,7 @@ vcard
 Example
 -------
 
-This is the example config file:
+This is the :download:`example config file <../examples/khard.conf.example>`:
 
-.. literalinclude :: ../../../misc/khard/khard.conf.example
+.. literalinclude :: ../examples/khard.conf.example
    :language: ini

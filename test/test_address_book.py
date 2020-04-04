@@ -80,8 +80,9 @@ class VcardAdressBookLoad(unittest.TestCase):
                                              'test/fixture/minimal.abook')
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
-        messages = ['WARNING:root:Card minimal contact from address book test '
-                    'has no UID and will not be available.']
+            messages = ['WARNING:khard.address_book:Card minimal contact from '
+                        'address book test has no UID and will not be '
+                        'available.']
         self.assertListEqual(cm.output, messages)
 
     def test_loading_vcards_from_disk(self):
@@ -109,11 +110,11 @@ class VcardAdressBookLoad(unittest.TestCase):
             'test', 'test/fixture/broken.abook', skip=True)
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
-        self.assertEqual(
-            cm.output, ['WARNING:root:Filtering some problematic tags from '
-                        'test/fixture/broken.abook/unparsable.vcf',
-                        'WARNING:root:1 of 1 vCard files of address book test '
-                        'could not be parsed.'])
+        self.assertEqual(cm.output, [
+            'WARNING:khard.carddav_object:Filtering some problematic tags '
+            'from test/fixture/broken.abook/unparsable.vcf',
+            'WARNING:khard.address_book:1 of 1 vCard files of address book '
+            'test could not be parsed.'])
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):

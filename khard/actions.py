@@ -1,12 +1,14 @@
 """Names and aliases for the subcommands on the command line"""
 
+from typing import Dict, Generator, Iterable, List, Optional
+
 
 class Actions:
 
     """A class to manage the names and aliases of the command line
     subcommands."""
 
-    action_map = {
+    action_map: Dict[str, List[str]] = {
         "add-email":    [],
         "addressbooks": ["abooks"],
         "birthdays":    ["bdays"],
@@ -28,14 +30,12 @@ class Actions:
     }
 
     @classmethod
-    def get_action(cls, alias):
+    def get_action(cls, alias: str) -> Optional[str]:
         """Find the name of the action for the supplied alias.  If no action is
         asociated with the given alias, None is returned.
 
         :param alias: the alias to look up
-        :type alias: str
         :rturns: the name of the corresponding action or None
-        :rtype: str or NoneType
 
         """
         for action, alias_list in cls.action_map.items():
@@ -44,34 +44,29 @@ class Actions:
         return None
 
     @classmethod
-    def get_aliases(cls, action):
+    def get_aliases(cls, action: str) -> Optional[List[str]]:
         """Find all aliases for the given action.  If there is no such action,
         None is returned.
 
         :param action: the action name to look up
-        :type action: str
         :returns: the list of aliases corresponding to the action or None
-        :rtype: list(str) or NoneType
 
         """
         return cls.action_map.get(action)
 
     @classmethod
-    def get_actions(cls):
+    def get_actions(cls) -> Iterable[str]:
         """Find the names of all defined actions.
 
         :returns: all action names
-        :rtype: iterable(str)
         """
         return cls.action_map.keys()
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls) -> Generator[str, None, None]:
         """Find the names of all defined actions and their aliases.
 
         :returns: the names of all actions and aliases
-        :rtype: generator(str)
-
         """
         for key, value in cls.action_map.items():
             yield key

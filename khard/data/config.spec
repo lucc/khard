@@ -5,7 +5,7 @@ editor = command(default=None)
 merge_editor = command(default=None)
 
 [contact table]
-display = option('first_name', 'last_name', default='first_name')
+display = option('first_name', 'last_name', 'formatted_name', default='first_name')
 group_by_addressbook = boolean(default=False)
 localize_dates = boolean(default=True)
 preferred_email_address_type = string_list(default=list('pref'))

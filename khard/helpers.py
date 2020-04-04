@@ -5,9 +5,12 @@ import pathlib
 import random
 import string
 from datetime import datetime
+from typing import List, Optional, Union
 
 
-def pretty_print(table, justify="L"):
+def pretty_print(table: List[List[str]], justify: str = "L") -> str:
+    """Converts a list of lists into a string formatted like a table
+    with spaces separating fields and newlines separating rows"""
     # support for multiline columns
     line_break_table = []
     for row in table:
@@ -53,15 +56,12 @@ def pretty_print(table, justify="L"):
     return '\n'.join(table_row_list)
 
 
-def list_to_string(input, delimiter):
+def list_to_string(input: Union[str, List], delimiter: str) -> str:
     """converts list to string recursively so that nested lists are supported
 
     :param input: a list of strings and lists of strings (and so on recursive)
-    :type input: list
     :param delimiter: the deimiter to use when joining the items
-    :type delimiter: str
     :returns: the recursively joined list
-    :rtype: str
     """
     if isinstance(input, list):
         return delimiter.join(
@@ -69,19 +69,17 @@ def list_to_string(input, delimiter):
     return input
 
 
-def string_to_list(input, delimiter):
+def string_to_list(input: Union[str, List[str]], delimiter: str) -> List[str]:
     if isinstance(input, list):
         return input
     return [x.strip() for x in input.split(delimiter)]
 
 
-def string_to_date(string):
+def string_to_date(string: str) -> datetime:
     """Convert a date string into a date object.
 
     :param string: the date string to parse
-    :type string: str
     :returns: the parsed datetime object
-    :rtype: datetime.datetime
     """
     # try date formats --mmdd, --mm-dd, yyyymmdd, yyyy-mm-dd and datetime
     # formats yyyymmddThhmmss, yyyy-mm-ddThh:mm:ss, yyyymmddThhmmssZ,
@@ -102,28 +100,28 @@ def string_to_date(string):
     raise ValueError
 
 
-def get_random_uid():
+def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
 
 
-def file_modification_date(filename):
+def file_modification_date(filename: str) -> datetime:
     return datetime.fromtimestamp(os.path.getmtime(filename))
 
 
-def convert_to_yaml(name, value, indentation, index_of_colon,
-                    show_multi_line_character):
+def convert_to_yaml(name: str, value: Union[None, str, List], indentation: int,
+                    index_of_colon: int, show_multi_line_character: bool
+                    ) -> List[str]:
     """converts a value list into yaml syntax
 
-    :param str name: name of object (example: phone)
+    :param name: name of object (example: phone)
     :param value: object contents
     :type value: str, list(str), list(list(str)), list(dict)
-    :param int indentation: indent all by number of spaces
-    :param int index_of_colon: use to position : at the name string (-1 for no
+    :param indentation: indent all by number of spaces
+    :param index_of_colon: use to position : at the name string (-1 for no
         space)
-    :param bool show_multi_line_character: option to hide "|"
+    :param show_multi_line_character: option to hide "|"
     :returns: yaml formatted string array of name, value pair
-    :rtype: list(str)
     """
     strings = []
     if isinstance(value, list):
@@ -139,12 +137,12 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
             # same applies to value = [["string"]]
             value = value[0][0]
     if isinstance(value, str):
-        strings.append("%s%s%s: %s" % (
+        strings.append("{}{}{}: {}".format(
             ' ' * indentation, name, ' ' * (index_of_colon-len(name)),
             indent_multiline_string(value, indentation+4,
                                     show_multi_line_character)))
     elif isinstance(value, list):
-        strings.append("%s%s%s: " % (
+        strings.append("{}{}{}: ".format(
             ' ' * indentation, name, ' ' * (index_of_colon-len(name))))
         for outer in value:
             # special case for single item sublists
@@ -156,14 +154,14 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
                 # but to "- string" instead
                 outer = outer[0]
             if isinstance(outer, str):
-                strings.append("%s- %s" % (
+                strings.append("{}- {}".format(
                     ' ' * (indentation+4), indent_multiline_string(
                         outer, indentation+8, show_multi_line_character)))
             elif isinstance(outer, list):
-                strings.append("%s- " % (' ' * (indentation+4)))
+                strings.append("{}- ".format(' ' * (indentation+4)))
                 for inner in outer:
                     if isinstance(inner, str):
-                        strings.append("%s- %s" % (
+                        strings.append("{}- {}".format(
                             ' ' * (indentation+8), indent_multiline_string(
                                 inner, indentation+12,
                                 show_multi_line_character)))
@@ -176,7 +174,8 @@ def convert_to_yaml(name, value, indentation, index_of_colon,
     return strings
 
 
-def indent_multiline_string(input, indentation, show_multi_line_character):
+def indent_multiline_string(input: Union[str, List], indentation: int,
+                            show_multi_line_character: bool) -> str:
     # if input is a list, convert to string first
     if isinstance(input, list):
         input = list_to_string(input, "")
@@ -184,12 +183,13 @@ def indent_multiline_string(input, indentation, show_multi_line_character):
     if "\n" in input or ": " in input:
         lines = ["|"] if show_multi_line_character else [""]
         for line in input.split("\n"):
-            lines.append("%s%s" % (' ' * indentation, line.strip()))
+            lines.append("{}{}".format(' ' * indentation, line.strip()))
         return '\n'.join(lines)
     return input.strip()
 
 
-def get_new_contact_template(supported_private_objects=None):
+def get_new_contact_template(
+        supported_private_objects: Optional[List[str]] = None) -> str:
     formatted_private_objects = []
     if supported_private_objects:
         formatted_private_objects.append("")
@@ -198,5 +198,5 @@ def get_new_contact_template(supported_private_objects=None):
             formatted_private_objects += convert_to_yaml(
                 object, "", 12, len(longest_key)+1, True)
     template = pathlib.Path(__file__).parent / 'data' / 'template.yaml'
-    with template.open() as template:
-        return template.read().format('\n'.join(formatted_private_objects))
+    with template.open() as temp:
+        return temp.read().format('\n'.join(formatted_private_objects))

@@ -5,120 +5,104 @@ import glob
 import logging
 import os
 import re
+from typing import Dict, Generator, Iterable, Iterator, List, Optional, Union
 
 import vobject.base
 
-from .carddav_object import CarddavObject
+from . import carddav_object
+
+
+logger = logging.getLogger(__name__)
+Query = Union[None, str, List[str], List[List[str]]]
 
 
 class AddressBookParseError(Exception):
     """Indicate an error while parsing data from an address book backend."""
 
-    def __init__(self, filename, abook, reason, *args, **kwargs):
+    def __init__(self, filename: str, abook: str, reason: Exception) -> None:
         """Store the filename that caused the error."""
-        super().__init__(*args, **kwargs)
+        super().__init__()
         self.filename = filename
         self.abook = abook
         self.reason = reason
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Error when parsing {} in address book {}: {}".format(
             self.filename, self.abook, self.reason)
+
+
+class AddressBookNameError(Exception):
+    """Indicate an error with an address book name."""
 
 
 class AddressBook(metaclass=abc.ABCMeta):
     """The base class of all address book implementations."""
 
-    def __init__(self, name, private_objects=tuple(), localize_dates=True,
-                 skip=False):
-        """
-        :param name: the name to identify the address book
-        :type name: str
-        :param private_objects: the names of private vCard extension fields to
-            load
-        :type private_objects: iterable(str)
-        :param localize_dates: wheater to display dates in the local format
-        :type localize_dates: bool
-        :param skip: skip unparsable vCard files
-        :type skip: bool
-        """
+    def __init__(self, name: str) -> None:
+        """:param str name: the name to identify the address book"""
         self._loaded = False
-        self.contacts = {}
-        self._short_uids = None
+        self.contacts: Dict[str, "carddav_object.CarddavObject"] = {}
+        self._short_uids: Optional[Dict[str, "carddav_object.CarddavObject"]] = None
         self.name = name
-        self._private_objects = private_objects
-        self._localize_dates = localize_dates
-        self._skip = skip
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, type(self)) and self.name == other.name
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not self == other
 
     @staticmethod
-    def _compare_uids(uid1, uid2):
+    def _compare_uids(uid1: str, uid2: str) -> int:
         """Calculate the minimum length of initial substrings of uid1 and uid2
         for them to be different.
 
         :param uid1: first uid to compare
-        :type uid1: str
         :param uid2: second uid to compare
-        :type uid2: str
         :returns: the length of the shortes unequal initial substrings
-        :rtype: int
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def _search_all(self, query):
+    def _search_all(self, query) -> Generator["carddav_object.CarddavObject",
+                                              None, None]:
         """Search in all fields for contacts matching query.
 
         :param query: the query to search for
-        :type query: str
         :yields: all found contacts
-        :rtype: generator(carddav_object.CarddavObject)
-
         """
-        regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contacts.values():
             # search in all contact fields
-            contact_details = contact.print_vcard()
-            if regexp.search(contact_details) is not None:
+            contact_details = contact.print_vcard().lower()
+            if contact.match(contact_details, query):
                 yield contact
             else:
                 # find phone numbers with special chars like /
                 clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
                                                contact_details)
-                if regexp.search(clean_contact_details) is not None \
+                if contact.match(clean_contact_details, query) \
                         and len(re.sub(r"\D", "", query)) >= 3:
                     yield contact
 
-    def _search_names(self, query):
+    def _search_names(self, query) -> Generator["carddav_object.CarddavObject",
+                                                None, None]:
         """Search in the name filed for contacts matching query.
 
         :param query: the query to search for
-        :type query: str
         :yields: all found contacts
-        :rtype: generator(carddav_object.CarddavObject)
-
         """
-        regexp = re.compile(query, re.IGNORECASE | re.DOTALL)
         for contact in self.contacts.values():
             # only search in contact name
-            if regexp.search(contact.formatted_name) is not None:
+            if contact.match(contact.formatted_name, query):
                 yield contact
 
-    def _search_uid(self, query):
+    def _search_uid(self, query) -> Generator["carddav_object.CarddavObject",
+                                              None, None]:
         """Search for contacts with a matching uid.
 
         :param query: the query to search for
-        :type query: str
         :yields: all found contacts
-        :rtype: generator(carddav_object.CarddavObject)
-
         """
         try:
             # First we treat the argument as a full UID and try to match it
@@ -131,46 +115,42 @@ class AddressBook(metaclass=abc.ABCMeta):
                 if uid.startswith(query):
                     yield self.contacts[uid]
 
-    def search(self, query, method="all"):
+    def search(self, query: Optional[List[str]], method: str = "all"
+               ) -> Generator["carddav_object.CarddavObject", None, None]:
         """Search this address book for contacts matching the query.
 
         The method can be one of "all", "name" and "uid".  The backend for this
         address book migth be load()ed if needed.
 
         :param query: the query to search for
-        :type query: str
         :param method: the type of fileds to use when seaching
-        :type method: str
         :returns: all found contacts
-        :rtype: list(carddav_object.CarddavObject)
-
         """
-        logging.debug('address book %s, searching with %s', self.name, query)
+        logger.debug('address book %s, searching with %s', self.name, query)
         if not self._loaded:
             self.load(query)
         if method == "all":
             return self._search_all(query)
-        elif method == "name":
+        if method == "name":
             return self._search_names(query)
-        elif method == "uid":
+        if method == "uid":
             return self._search_uid(query)
         raise ValueError(
             'Only the search methods "all", "name" and "uid" are supported.')
 
-    def get_short_uid_dict(self, query=None):
+    def get_short_uid_dict(self, query: Optional[str] = None
+                           ) -> Dict[str, "carddav_object.CarddavObject"]:
         """Create a dictionary of shortend UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
         and will just be handed to self.load().
 
         :param query: see self.load()
-        :type query: str
         :returns: the contacts mapped by the shortes unique prefix of their UID
-        :rtype: dict(str: CarddavObject)
         """
         if self._short_uids is None:
             if not self._loaded:
-                self.load(query)
+                self.load([query] if query is not None else None)
             if not self.contacts:
                 self._short_uids = {}
             elif len(self.contacts) == 1:
@@ -195,13 +175,11 @@ class AddressBook(metaclass=abc.ABCMeta):
                 self._short_uids[item1[:same1 + 1]] = self.contacts[item1]
         return self._short_uids
 
-    def get_short_uid(self, uid):
+    def get_short_uid(self, uid: str) -> str:
         """Get the shortend UID for the given UID.
 
         :param uid: the full UID to shorten
-        :type uid: str
         :returns: the shortend uid or the empty string
-        :rtype: str
         """
         if uid:
             short_uids = self.get_short_uid_dict()
@@ -211,17 +189,14 @@ class AddressBook(metaclass=abc.ABCMeta):
         return ""
 
     @abc.abstractmethod
-    def load(self, query=None):
+    def load(self, query: Query = None) -> None:
         """Load the vCards from the backing store.
 
         If a query is given loading is limited to entries which match the
         query.  If the query is None all entries will be loaded.
 
         :param query: the query to limit loading to matching entries
-        :type query: str
         :returns: the number of loaded contacts and the number of errors
-        :rtype: (int, int)
-
         """
 
 
@@ -232,51 +207,53 @@ class VdirAddressBook(AddressBook):
     direcotry on disk.
     """
 
-    def __init__(self, name, path, **kwargs):
+    def __init__(self, name: str, path: str,
+                 private_objects: Optional[List[str]] = None,
+                 localize_dates: bool = True, skip: bool = False) -> None:
         """
         :param name: the name to identify the address book
-        :type name: str
         :param path: the path to the backing structure on disk
-        :type path: str
-        :param **kwargs: further arguments for the parent constructor
+        :param private_objects: the names of private vCard extension fields to
+            load
+        :param localize_dates: wheater to display dates in the local format
+        :param skip: skip unparsable vCard files
         """
         self.path = os.path.expanduser(path)
         if not os.path.isdir(self.path):
             raise FileNotFoundError("[Errno 2] The path {} to the address book"
                                     " {} does not exist.".format(path, name))
-        super().__init__(name, **kwargs)
+        self._private_objects = private_objects or []
+        self._localize_dates = localize_dates
+        self._skip = skip
+        super().__init__(name)
 
-    def load(self, query=None, search_in_source_files=False):
+    def load(self, query: Query = None,
+             search_in_source_files: bool = False) -> None:
         """Load all vcard files in this address book from disk.
 
         If a search string is given only files which contents match that will
         be loaded.
 
         :param query: a regular expression to limit the results
-        :type query: str
         :param search_in_source_files: apply search regexp directly on the .vcf
             files to speed up parsing (less accurate)
-        :type search_in_source_files: bool
-        :returns: the number of successfully loaded cards and the number of
-            errors
-        :rtype: int, int
         :throws: AddressBookParseError
         """
         if self._loaded:
             return
-        logging.debug('Loading Vdir %s with query %s', self.name, query)
+        logger.debug('Loading Vdir %s with query %s', self.name, query)
         errors = 0
         for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
-                card = CarddavObject.from_file(
+                card = carddav_object.CarddavObject.from_file(
                     self, filename, query if search_in_source_files else None,
                     self._private_objects, self._localize_dates)
                 if card is None:
                     continue
             except (IOError, vobject.base.ParseError) as err:
                 verb = "open" if isinstance(err, IOError) else "parse"
-                logging.debug("Error: Could not %s file %s\n%s", verb,
-                              filename, err)
+                logger.debug("Error: Could not %s file %s\n%s", verb,
+                             filename, err)
                 if self._skip:
                     errors += 1
                 else:
@@ -284,11 +261,11 @@ class VdirAddressBook(AddressBook):
             else:
                 uid = card.uid
                 if not uid:
-                    logging.warning("Card %s from address book %s has no UID "
-                                    "and will not be available.", card,
-                                    self.name)
+                    logger.warning("Card %s from address book %s has no UID "
+                                   "and will not be available.", card,
+                                   self.name)
                 elif uid in self.contacts:
-                    logging.warning(
+                    logger.warning(
                         "Card %s and %s from address book %s have the same "
                         "UID. The former will not be available.", card,
                         self.contacts[uid], self.name)
@@ -296,11 +273,11 @@ class VdirAddressBook(AddressBook):
                     self.contacts[uid] = card
         self._loaded = True
         if errors:
-            logging.warning(
+            logger.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
-        logging.debug('Loded %s contacts from address book %s.',
-                      len(self.contacts), self.name)
+        logger.debug('Loded %s contacts from address book %s.',
+                     len(self.contacts), self.name)
 
 
 class AddressBookCollection(AddressBook):
@@ -312,44 +289,53 @@ class AddressBookCollection(AddressBook):
     all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name, abooks, **kwargs):
+    def __init__(self, name: str, abooks: List[VdirAddressBook]) -> None:
         """
         :param name: the name to identify the address book
-        :type name: str
         :param abooks: a list of address books to combine in this collection
-        :type abooks: list(AddressBook)
-        :param **kwargs: further arguments for the parent constructor
         """
-        super().__init__(name, **kwargs)
-        self._abooks = abooks
+        super().__init__(name)
+        self._abooks = {ab.name: ab for ab in abooks}
 
-    def load(self, query=None):
+    def load(self, query: Query = None) -> None:
+        """Load the wrapped address books with the given parameters
+
+        All parameters will be handed to VdirAddressBook.load.
+
+        :param query: a regular expression to limit the results
+        :throws: AddressBookParseError
+        """
         if self._loaded:
             return
-        logging.debug('Loading collection %s with query %s', self.name, query)
-        for abook in self._abooks:
+        logger.debug('Loading collection %s with query %s', self.name, query)
+        for abook in self._abooks.values():
             abook.load(query)
             for uid in abook.contacts:
                 if uid in self.contacts:
-                    logging.warning(
+                    logger.warning(
                         "Card %s from address book %s will not be available "
                         "because there is already another card with the same "
                         "UID: %s", abook.contacts[uid], abook, uid)
                 else:
                     self.contacts[uid] = abook.contacts[uid]
         self._loaded = True
-        logging.debug('Loded %s contacts from address book %s.',
-                      len(self.contacts), self.name)
+        logger.debug('Loded %s contacts from address book %s.',
+                     len(self.contacts), self.name)
 
-    def get_abook(self, name):
-        """Get one of the backing abdress books by its name,
+    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook:
+        """Get one of the backing address books by name or index
 
-        :param name: the name of the address book to get
-        :type name: str
-        :returns: the matching address book or None
-        :rtype: AddressBook or NoneType
-
+        :param key: the name of the address book to get or its index
+        :returns: the matching address book
+        :throws: KeyError
         """
-        for abook in self._abooks:
-            if abook.name == name:
-                return abook
+        if isinstance(key, str):
+            return self._abooks[key]
+        return list(self._abooks.values())[key]
+
+    def __iter__(self) -> Iterator[VdirAddressBook]:
+        """:return: an iterator over the underlying address books"""
+        return iter(self._abooks.values())
+
+    def __len__(self) -> int:
+        return len(self._abooks)

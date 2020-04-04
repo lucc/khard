@@ -1,23 +1,21 @@
 """Tests for the config module."""
 # pylint: disable=missing-docstring
 
-import io
 import logging
 import os.path
 import tempfile
 import unittest
 import unittest.mock as mock
 
-from khard import config
-
 import configobj
+
+from khard import config
 
 
 class LoadingConfigFile(unittest.TestCase):
 
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
-        stdout = io.StringIO()
         with self.assertRaises(IOError) as cm:
             config.Config._load_config_file(filename)
         self.assertTrue(str(cm.exception).startswith('Config file not found:'))
@@ -46,10 +44,9 @@ class LoadingConfigFile(unittest.TestCase):
         self.assertEqual(ret['infile'], expected)
 
     def test_load_empty_file_fails(self):
-        stdout = io.StringIO()
         with tempfile.NamedTemporaryFile() as name:
-            with self.assertLogs(level=logging.ERROR) as cm:
-                with self.assertRaises(SystemExit):
+            with self.assertLogs(level=logging.ERROR):
+                with self.assertRaises(config.ConfigError):
                     config.Config(name)
 
     @mock.patch.dict('os.environ', EDITOR='editor', MERGE_EDITOR='meditor')
@@ -77,9 +74,9 @@ class Defaults(unittest.TestCase):
         c = config.Config("test/fixture/minimal.conf")
         self.assertFalse(c.debug)
 
-    def test_default_action_defaults_to_list(self):
+    def test_default_action_defaults_to_none(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(c.default_action, 'list')
+        self.assertIsNone(c.default_action)
 
     def test_reverse_defaults_to_false(self):
         c = config.Config("test/fixture/minimal.conf")
@@ -162,28 +159,28 @@ class Validation(unittest.TestCase):
         action = 'this is not a valid action'
         conf = self._template('general', 'default_action', action)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
     def test_rejects_unparsable_editor_commands(self):
         editor = 'editor --option "unparsable because quotes are missing'
         conf = self._template('general', 'editor', editor)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
     def test_rejects_private_objects_with_strange_chars(self):
         obj = 'X-VCÄRD-EXTENSIÖN'
         conf = self._template('vcard', 'private_objects', obj)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
     def test_rejects_private_objects_starting_with_minus(self):
         obj = '-INVALID-'
         conf = self._template('vcard', 'private_objects', obj)
         with self.assertLogs(level=logging.ERROR):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(config.ConfigError):
                 config.Config._validate(conf)
 
 

@@ -1,37 +1,29 @@
 """Loading and validation of the configuration file"""
 
+from argparse import Namespace
 import locale
 import logging
 import os
 import re
 import shlex
-import sys
+from typing import Iterable, Dict, List, Optional, Union
 
 import configobj
 import validate
 
 from .actions import Actions
-from .address_book import AddressBookCollection, VdirAddressBook
+from .address_book import AddressBookCollection, AddressBookNameError, \
+    VdirAddressBook
 
 
-def exit(message, prefix="Error in config file\n"):
-    """Exit with a message and a return code indicating an error in the config
-    file.
-
-    This function doesn't return, it calls sys.exit.
-
-    :param message: the message to print
-    :type message: str
-    :param prefix: the prefix to put in front of the message
-    :type prefix: str
-    :returns: does not return
-
-    """
-    print(prefix + message)
-    sys.exit(3)
+logger = logging.getLogger(__name__)
 
 
-def validate_command(value):
+class ConfigError(Exception):
+    """Errors during config file parsing"""
+
+
+def validate_command(value: List[str]) -> List[str]:
     """Special validator to check shell commands
 
     The input must either be a list of strings or a string that shlex.split can
@@ -39,14 +31,13 @@ def validate_command(value):
 
     :param value: the config value to validate
     :returns: the command after validation
-    :rtype: list(str)
     :raises: validate.ValidateError
     """
-    logging.debug("validating %s", value)
+    logger.debug("validating %s", value)
     try:
         return validate.is_string_list(value)
     except validate.VdtTypeError:
-        logging.debug('continue with %s', value)
+        logger.debug('continue with %s', value)
         if isinstance(value, str):
             try:
                 return shlex.split(value)
@@ -57,23 +48,21 @@ def validate_command(value):
         raise
 
 
-def validate_action(value):
+def validate_action(value: str) -> str:
     """Check that the given value is a valid action.
 
     :param value: the config value to check
     :returns: the same value
-    :rtype: str
     :raises: validate.ValidateError
     """
     return validate.is_option(value, *Actions.get_actions())
 
 
-def validate_private_objects(value):
+def validate_private_objects(value: List[str]) -> List[str]:
     """Check that the private objects are reasonable
 
     :param value: the config value to check
     :returns: the list of private objects
-    :rtype: list(str)
     :raises: validate.ValidateError
     """
     value = validate.is_string_list(value)
@@ -90,23 +79,24 @@ def validate_private_objects(value):
 
 
 class Config:
+    """Parse and validate the config file with configobj."""
 
     supported_vcard_versions = ("3.0", "4.0")
 
-    def __init__(self, config_file=None):
-        self.config = None
-        self.abooks = []
-        self.abook = None
+    def __init__(self, config_file: Optional[str] = None) -> None:
+        self.config: configobj.ConfigObj
+        self.abooks: AddressBookCollection
         locale.setlocale(locale.LC_ALL, '')
         config = self._load_config_file(config_file)
         self.config = self._validate(config)
         self._set_attributes()
 
     @classmethod
-    def _load_config_file(cls, config_file):
+    def _load_config_file(cls, config_file: Optional[str]
+                          ) -> configobj.ConfigObj:
         """Find and load the config file.
 
-        :param str config_file: the path to the config file to load
+        :param config_file: the path to the config file to load
         :returns: the loaded config file
         """
         if not config_file:
@@ -121,10 +111,10 @@ class Config:
                 infile=config_file, configspec=configspec,
                 interpolation=False, file_error=True)
         except configobj.ConfigObjError as err:
-            exit(str(err))
+            raise ConfigError(str(err))
 
     @staticmethod
-    def _validate(config):
+    def _validate(config: configobj.ConfigObj) -> configobj.ConfigObj:
         vdr = validate.Validator()
         vdr.functions.update({'command': validate_command,
                               'action': validate_action,
@@ -135,33 +125,20 @@ class Config:
             result.append((['addressbooks'], '__any__',
                            'No address book entries available'))
         for path, key, exception in result:
-            logging.error("Error in config file, %s: %s",
-                          ".".join([*path, key]), exception)
+            logger.error("Error in config file, %s: %s",
+                         ".".join([*path, key]), exception)
         if result:
-            sys.exit(3)
+            raise ConfigError
         return config
 
-    def _set_attributes(self):
-        """Set the attributes from the internal config instance on self.
-
-        :returns: None
-        """
+    def _set_attributes(self) -> None:
+        """Set the attributes from the internal config instance on self."""
         general = self.config["general"]
         self.debug = general["debug"]
         self.editor = general["editor"] or os.environ.get("EDITOR", "vim")
         self.merge_editor = general["merge_editor"] \
             or os.environ.get("MERGE_EDITOR", "vimdiff")
         self.default_action = general["default_action"]
-        if self.default_action is None:
-            # When these two lines are replaced with "pass" khard requires a
-            # subcommand on the command line as long as no default_action is
-            # explicitly given in the config file.
-            logging.warning(
-                "No default_action was set in the config.  Currently this "
-                "will default to default_action='list' but will require the "
-                "use of a subcommand on the command line in a future version "
-                "of khard.")
-            self.default_action = "list"
         table = self.config["contact table"]
         vcard = self.config["vcard"]
         self.sort = table["sort"]
@@ -180,20 +157,49 @@ class Config:
         self.preferred_phone_number_type = table['preferred_phone_number_type']
         self.show_uids = table['show_uids']
 
-    def load_address_books(self):
+    def init_address_books(self) -> None:
+        """Initialize the internal address book collection.
+
+        This method should only be called *after* merging in the command line
+        options as they can hold some options that are relevant for the loading
+        of the address books.
+        """
         section = self.config['addressbooks']
         kwargs = {'private_objects': self.private_objects,
                   'localize_dates': self.localize_dates,
                   'skip': self.skip_unparsable}
         try:
-            self.abook = AddressBookCollection(
+            self.abooks = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
-                        for name in section], **kwargs)
+                        for name in section])
         except IOError as err:
-            exit(str(err))
-        self.abooks = [self.abook.get_abook(name) for name in section]
+            raise ConfigError(str(err))
 
-    def merge(self, other):
+    def get_address_books(self, names: Iterable[str], queries: Dict
+                          ) -> AddressBookCollection:
+        """Load all address books with the given names.
+
+        :param names: the address books to load
+        :param dict queries: a mapping of address book names to search queries
+        :returns: the loaded address books
+        """
+        all_names = {str(book) for book in self.abooks}
+        if not names:
+            names = all_names
+        elif not all_names.issuperset(names):
+            raise AddressBookNameError(
+                "The following address books are not defined: {}".format(
+                    ', '.join(set(names) - all_names)))
+        # load address books which are defined in the configuration file
+        collection = AddressBookCollection("tmp", [self.abooks[name]
+                                                   for name in names])
+        # We can not use AddressBookCollection.load here because we want to
+        # select the collection based on the address book.
+        for abook in collection:
+            abook.load(queries[abook.name], self.search_in_source_files) # type: ignore
+        return collection
+
+    def merge(self, other: Union[configobj.ConfigObj, Dict]) -> None:
         """Merge the config with some other dict or ConfigObj
 
         :param other: the other dict or ConfigObj to merge into self
@@ -202,3 +208,21 @@ class Config:
         self.config.merge(other)
         self._validate(self.config)
         self._set_attributes()
+
+    def merge_args(self, args: Namespace) -> None:
+        """Merge options from a flat argparse object.
+
+        :param argparse.Namespace args: the parsed arguments to incorperate
+        """
+        skel = {'general': ['debug'],
+                'contact table': ['reverse', 'group_by_addressbook',
+                                  'display', 'sort'],
+                'vcard': ['search_in_source_files', 'skip_unparsable',
+                          'preferred_version'],
+                }
+        merge = {sec: {key: getattr(args, key) for key in opts
+                       if key in args and getattr(args, key) is not None}
+                 for sec, opts in skel.items()}
+        logger.debug('Merging in %s', merge)
+        self.merge(merge)
+        logger.debug('Merged: %s', vars(self))

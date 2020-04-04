@@ -66,13 +66,24 @@ class ListingCommands(unittest.TestCase):
         expected = [
             "Address book: foo",
             "Index    Name              Phone                "
-            "E-Mail                    UID",
+            "Email                     Uid",
             "1        second contact    voice: 0123456789    "
             "home: user@example.com    testuid1",
             "2        text birthday                          "
             "                          testuid3",
             "3        third contact                          "
             "                          testuid2"]
+        self.assertListEqual(text, expected)
+
+    def test_ls_fields_like_email(self):
+        with mock_stdout() as stdout:
+            khard.main(['ls', '-p', '-F', 'emails.home.0,name'])
+        text = stdout.getvalue().splitlines()
+        expected = [
+            "user@example.com\tsecond contact",
+            "\ttext birthday",
+            "\tthird contact",
+        ]
         self.assertListEqual(text, expected)
 
     @mock.patch.dict('os.environ', LC_ALL='C')
@@ -83,6 +94,13 @@ class ListingCommands(unittest.TestCase):
         expect = ["Name              Birthday",
                   "text birthday     circa 1800",
                   "second contact    01/20/18"]
+        self.assertListEqual(text, expect)
+
+    def test_parsable_bdays(self):
+        with mock_stdout() as stdout:
+            khard.main(['birthdays', '--parsable'])
+        text = stdout.getvalue().splitlines()
+        expect = ["circa 1800\ttext birthday", "2018.01.20\tsecond contact"]
         self.assertListEqual(text, expect)
 
     def test_simple_email_without_options(self):
@@ -125,6 +143,58 @@ class ListingCommands(unittest.TestCase):
         self.assertIn('Address book: foo', text)
         self.assertIn('UID: testuid1', text)
 
+    def test_order_of_search_term_does_not_matter(self):
+        with mock_stdout() as stdout1:
+            khard.main(['list', 'second', 'contact'])
+        with mock_stdout() as stdout2:
+            khard.main(['list', 'contact', 'second'])
+        text1 = [l.strip() for l in stdout1.getvalue().splitlines()]
+        text2 = [l.strip() for l in stdout2.getvalue().splitlines()]
+        expected = [
+            "Address book: foo",
+            "Index    Name              Phone                "
+            "Email                     Uid",
+            "1        second contact    voice: 0123456789    "
+            "home: user@example.com    testuid1"]
+        self.assertListEqual(text1, expected)
+        self.assertListEqual(text2, expected)
+
+    def test_case_of_search_terms_does_not_matter(self):
+        with mock_stdout() as stdout1:
+            khard.main(['list', 'second', 'contact'])
+        with mock_stdout() as stdout2:
+            khard.main(['list', 'SECOND', 'CONTACT'])
+        text1 = [l.strip() for l in stdout1.getvalue().splitlines()]
+        text2 = [l.strip() for l in stdout2.getvalue().splitlines()]
+        expected = [
+            "Address book: foo",
+            "Index    Name              Phone                "
+            "Email                     Uid",
+            "1        second contact    voice: 0123456789    "
+            "home: user@example.com    testuid1"]
+        self.assertListEqual(text1, expected)
+        self.assertListEqual(text2, expected)
+
+    def test_regex_special_chars_are_not_special(self):
+        with self.assertRaises(SystemExit):
+            with mock_stdout() as stdout:
+                khard.main(['list', 'uid.'])
+        self.assertEqual(stdout.getvalue(), "Found no contacts\n")
+
+    def test_display_post_address(self):
+        with mock_stdout() as stdout:
+            with with_vcards(["test/fixture/vcards/post.vcf"]):
+                khard.main(['postaddress'])
+        text = [line.rstrip() for line in stdout.getvalue().splitlines()]
+        expected = [
+            'Name                 Type    Post address',
+            'With post address    home    Main Street 1',
+            '                             PostBox Ext',
+            '                             00000 The City',
+            '                             SomeState, HomeCountry']
+
+        self.assertListEqual(expected, text)
+
 
 class ListingCommands2(unittest.TestCase):
 
@@ -135,8 +205,35 @@ class ListingCommands2(unittest.TestCase):
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = [
             "Address book: tmp",
-            "Index    Name       Phone             E-Mail    UID",
-            "1        bug 195    cell: 67545678              b"]
+            "Index    Name       Phone             Email    Uid",
+            "1        bug 195    cell: 67545678             b"]
+        self.assertListEqual(text, expect)
+
+    def test_list_bug_243_part_1(self):
+        """Search for a category with the ls command"""
+        with with_vcards(['test/fixture/vcards/category.vcf']):
+            with mock_stdout() as stdout:
+                khard.main(['list', 'bar'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = [
+            "Address book: tmp",
+            "Index    Name                     Phone    "
+            "Email                        Uid",
+            "1        contact with category             "
+            "internet: foo@example.org    c",
+        ]
+        self.assertListEqual(text, expect)
+
+    def test_list_bug_243_part_2(self):
+        """Search for a category with the email command"""
+        with with_vcards(['test/fixture/vcards/category.vcf']):
+            with mock_stdout() as stdout:
+                khard.main(['email', 'bar'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = [
+            "Name                     Type        E-Mail",
+            "contact with category    internet    foo@example.org",
+        ]
         self.assertListEqual(text, expect)
 
 
