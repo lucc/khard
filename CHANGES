@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+v0.16.0: 2020-04-04
+- Require python >= 3.6
+- Require either default_action or a subcommand
+- Twinkle sound samples converted to .ogg (#228)
+- Expand documentation
+- Build and server documentation on https://khard.readthedocs.io/
+- Allow display=formatted_name in config
+- New --fields option for list subcommand
+- Internal changes:
+  - Expanded the test suite
+  - Use of python type annotations, checked on travis
+  - Represent queries as custom data structures not regex
+  - Use custom loggers per module
+
+
 v0.15.0: 2019-10-24
 - Require either default_action or a subcommand in the future (add deprecation
   warning for now)
