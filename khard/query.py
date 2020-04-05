@@ -12,6 +12,38 @@ class Query(metaclass=abc.ABCMeta):
     def match(self, thing: Union[str, List[str]]) -> bool:
         """Match the self query against the given thing"""
 
+    def __and__(self, other: "Query") -> "Query":
+        """Combine two queries with AND"""
+        if isinstance(self, NullQuery) or isinstance(other, NullQuery):
+            return NullQuery()
+        if isinstance(self, AnyQuery):
+            return other
+        if isinstance(other, AnyQuery):
+            return self
+        if isinstance(self, AndQuery) and isinstance(other, AndQuery):
+            return AndQuery(*self._queries, *other._queries)
+        if isinstance(self, AndQuery):
+            return AndQuery(*self._queries, other)
+        if isinstance(other, AndQuery):
+            return AndQuery(self, *other._queries)
+        return AndQuery(self, other)
+
+    def __or__(self, other: "Query") -> "Query":
+        """Combine two queries with OR"""
+        if isinstance(self, AnyQuery) or isinstance(other, AnyQuery):
+            return AnyQuery()
+        if isinstance(self, NullQuery):
+            return other
+        if isinstance(other, NullQuery):
+            return self
+        if isinstance(self, OrQuery) and isinstance(other, OrQuery):
+            return OrQuery(*self._queries, *other._queries)
+        if isinstance(self, OrQuery):
+            return OrQuery(*self._queries, other)
+        if isinstance(other, OrQuery):
+            return OrQuery(self, *other._queries)
+        return OrQuery(self, other)
+
 
 class NullQuery(Query):
 
