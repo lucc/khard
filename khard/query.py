@@ -32,8 +32,8 @@ class TermQuery(Query):
 
 class AndQuery(Query):
 
-    def __init__(self, *queries: Query) -> None:
-        self._queries = queries
+    def __init__(self, first: Query, second: Query, *queries: Query) -> None:
+        self._queries = (first, second, *queries)
 
     def match(self, thing: Union[str, List[str]]) -> bool:
         return all(q.match(thing) for q in self._queries)
@@ -41,8 +41,8 @@ class AndQuery(Query):
 
 class OrQuery(Query):
 
-    def __init__(self, *queries: Query) -> None:
-        self._queries = queries
+    def __init__(self, first: Query, second: Query, *queries: Query) -> None:
+        self._queries = (first, second, *queries)
 
     def match(self, thing: Union[str, List[str]]) -> bool:
         return any(q.match(thing) for q in self._queries)
