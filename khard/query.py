@@ -13,6 +13,12 @@ class Query(metaclass=abc.ABCMeta):
         """Match the self query against the given thing"""
 
 
+class NullQuery(Query):
+
+    def match(self, thing: Union[str, List[str]]) -> bool:
+        return False
+
+
 class AnyQuery(Query):
 
     def match(self, thing: Union[str, List[str]]) -> bool:
