@@ -1563,7 +1563,7 @@ class CarddavObject(YAMLEditable):
         def match_list2(q: List[List[str]], s: str) -> bool:
             return any(match_list1(qq, s) for qq in q)
 
-        logging.debug('match: %s', [string, query])
+        logger.debug('match: %s', [string, query])
 
         if query is None:
             return True
