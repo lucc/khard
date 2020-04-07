@@ -236,7 +236,6 @@ class ListingCommands2(unittest.TestCase):
         ]
         self.assertListEqual(text, expect)
 
-    @unittest.expectedFailure
     def test_list_bug_249(self):
         with with_vcards(['test/fixture/vcards/issue249.vcf']):
             with mock_stdout() as stdout:
