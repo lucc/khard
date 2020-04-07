@@ -236,6 +236,18 @@ class ListingCommands2(unittest.TestCase):
         ]
         self.assertListEqual(text, expect)
 
+    @unittest.expectedFailure
+    def test_list_bug_249(self):
+        with with_vcards(['test/fixture/vcards/issue249.vcf']):
+            with mock_stdout() as stdout:
+                # If all spaces are removed this should match "Foo Bar"
+                khard.main(['list', 'oba'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ['Address book: tmp',
+                  'Index    Name       Phone    Email    Uid',
+                  '1        Foo Bar                      i']
+        self.assertListEqual(text, expect)
+
 
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""
