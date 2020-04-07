@@ -3,6 +3,8 @@
 import abc
 from typing import List, Union
 
+from .carddav_object import CarddavObject
+
 
 class Query(metaclass=abc.ABCMeta):
 
@@ -66,6 +68,17 @@ class TermQuery(Query):
         if isinstance(thing, str):
             return self._term in thing.lower()
         return any(self.match(t) for t in thing)
+
+
+class FieldQuery(TermQuery):
+
+    def __init__(self, field: str, value: str) -> None:
+        self._field = field
+        super().__init__(value)
+
+    def match(self, thing: CarddavObject) -> bool:
+        return hasattr(thing, self._field) \
+            and super().match(getattr(thing, self._field))
 
 
 class AndQuery(Query):
