@@ -42,7 +42,8 @@ class AddressBook(metaclass=abc.ABCMeta):
         """:param str name: the name to identify the address book"""
         self._loaded = False
         self.contacts: Dict[str, "carddav_object.CarddavObject"] = {}
-        self._short_uids: Optional[Dict[str, "carddav_object.CarddavObject"]] = None
+        self._short_uids: Optional[Dict[str,
+                                        "carddav_object.CarddavObject"]] = None
         self.name = name
 
     def __str__(self) -> str:

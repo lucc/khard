@@ -903,7 +903,7 @@ class YAMLEditable(VCardWrapper):
 
     def __init__(self, vcard: vobject.vCard,
                  supported_private_objects: Optional[List[str]] = None,
-                 version: Optional[str]=None, localize_dates: bool = False
+                 version: Optional[str] = None, localize_dates: bool = False
                  ) -> None:
         """Initialize atributes needed for yaml conversions
 
@@ -1042,7 +1042,7 @@ class YAMLEditable(VCardWrapper):
         if re.match(r"^text[\s]*=.*$", new):
             if self.version == "4.0":
                 v1 = ', '.join(x.strip() for x in re.split(r"text[\s]*=", new)
-                              if x.strip())
+                               if x.strip())
                 if v1:
                     setattr(self, target, v1)
                 return
