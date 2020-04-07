@@ -75,7 +75,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         for contact in self.contacts.values():
             # search in all contact fields
-            contact_details = contact.print_vcard().lower()
+            contact_details = contact.pretty().lower()
             if contact.match(contact_details, query):
                 yield contact
             else:

@@ -1583,14 +1583,12 @@ class CarddavObject(YAMLEditable):
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, CarddavObject) and \
-            self.print_vcard(show_address_book=False, show_uid=False) == \
-            other.print_vcard(show_address_book=False, show_uid=False)
+            self.pretty(False) == other.pretty(False)
 
     def __ne__(self, other: object) -> bool:
         return not self == other
 
-    def print_vcard(self, show_address_book: bool = True, show_uid: bool = True
-                    ) -> str:
+    def pretty(self, verbose: bool = True) -> str:
         strings = []
 
         # Every vcard must have an FN field per the RFC.
@@ -1608,7 +1606,7 @@ class CarddavObject(YAMLEditable):
                 "Organisation", self.organisations, 0, -1, False)
 
         # address book name
-        if show_address_book:
+        if verbose:
             strings.append("Address book: {}".format(self.address_book))
 
         # person related information
@@ -1666,10 +1664,10 @@ class CarddavObject(YAMLEditable):
                         False)
 
         # misc stuff
-        if self.categories or self.webpages or self.notes or (
-                show_uid and self.uid):
+        if self.categories or self.webpages or self.notes or (verbose
+                                                              and self.uid):
             strings.append("Miscellaneous")
-            if show_uid and self.uid:
+            if verbose and self.uid:
                 strings.append("    UID: {}".format(self.uid))
             if self.categories:
                 strings += helpers.convert_to_yaml(

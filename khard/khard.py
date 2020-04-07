@@ -136,7 +136,7 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
         print("Canceled")
     else:
         new_contact.write_to_file()
-        print("Creation successful\n\n{}".format(new_contact.print_vcard()))
+        print("Creation successful\n\n{}".format(new_contact.pretty()))
 
 
 def modify_existing_contact(old_contact: CarddavObject) -> None:
@@ -177,11 +177,10 @@ def modify_existing_contact(old_contact: CarddavObject) -> None:
 
     # check if the user changed anything
     if new_contact is None or old_contact == new_contact:
-        print("Nothing changed\n\n{}".format(old_contact.print_vcard()))
+        print("Nothing changed\n\n{}".format(old_contact.pretty()))
     else:
         new_contact.write_to_file(overwrite=True)
-        print("Modification successful\n\n{}".format(
-            new_contact.print_vcard()))
+        print("Modification successful\n\n{}".format(new_contact.pretty()))
 
 
 def merge_existing_contacts(source_contact: CarddavObject,
@@ -246,7 +245,7 @@ def merge_existing_contacts(source_contact: CarddavObject,
     # compare them
     if merged_contact is None or target_contact == merged_contact:
         print("Target contact unmodified\n\n{}".format(
-            target_contact.print_vcard()))
+            target_contact.pretty()))
         sys.exit(0)
 
     print("Merge contact {} from address book {} into contact {} from address "
@@ -256,8 +255,8 @@ def merge_existing_contacts(source_contact: CarddavObject,
         print("To be removed")
     else:
         print("Keep unchanged")
-    print("\n\n{}\n\nMerged\n\n{}\n".format(source_contact.print_vcard(),
-                                            merged_contact.print_vcard()))
+    print("\n\n{}\n\nMerged\n\n{}\n".format(source_contact.pretty(),
+                                            merged_contact.pretty()))
     if not confirm("Are you sure?"):
         print("Canceled")
         return
@@ -266,7 +265,7 @@ def merge_existing_contacts(source_contact: CarddavObject,
     merged_contact.write_to_file(overwrite=True)
     if delete_source_contact:
         source_contact.delete_vcard_file()
-    print("Merge successful\n\n{}".format(merged_contact.print_vcard()))
+    print("Merge successful\n\n{}".format(merged_contact.pretty()))
 
 
 def copy_contact(contact: CarddavObject, target_address_book: VdirAddressBook,
@@ -593,8 +592,7 @@ def new_subcommand(selected_address_books: AddressBookCollection,
         if open_editor:
             modify_existing_contact(new_contact)
         else:
-            print("Creation successful\n\n{}".format(
-                new_contact.print_vcard()))
+            print("Creation successful\n\n{}".format(new_contact.pretty()))
     else:
         create_new_contact(selected_address_book)
 
@@ -682,7 +680,7 @@ def add_email_subcommand(text: str, abooks: AddressBookCollection) -> None:
             break
     # save to disk
     selected_vcard.write_to_file(overwrite=True)
-    print("Done.\n\n{}".format(selected_vcard.print_vcard()))
+    print("Done.\n\n{}".format(selected_vcard.pretty()))
 
 
 def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
@@ -957,9 +955,9 @@ def modify_subcommand(selected_vcard: CarddavObject,
         except ValueError as err:
             sys.exit(err)
         if selected_vcard == new_contact:
-            print("Nothing changed\n\n{}".format(new_contact.print_vcard()))
+            print("Nothing changed\n\n{}".format(new_contact.pretty()))
         else:
-            print("Modification\n\n{}\n".format(new_contact.print_vcard()))
+            print("Modification\n\n{}\n".format(new_contact.pretty()))
             if confirm("Do you want to proceed?"):
                 new_contact.write_to_file(overwrite=True)
                 if open_editor:
@@ -1101,8 +1099,8 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
               "  m: Merge from source into target contact\n"
               "  o: Overwrite target contact\n"
               "  q: Quit".format(target_vcard.address_book, source_vcard,
-                                 source_vcard.print_vcard(),
-                                 target_vcard.print_vcard(), action.title()))
+                                 source_vcard.pretty(), target_vcard.pretty(),
+                                 action.title()))
         while True:
             input_string = input("Your choice: ")
             if input_string.lower() == "a":
@@ -1215,7 +1213,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
             sys.exit("Found no contact")
         if args.action == "show":
             if args.format == "pretty":
-                output = selected_vcard.print_vcard()
+                output = selected_vcard.pretty()
             elif args.format == "vcard":
                 output = open(selected_vcard.filename).read()
             else:
