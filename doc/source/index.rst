@@ -25,7 +25,7 @@ Installation
    :target: https://repology.org/project/khard/versions
    :alt: Packaging status
 
-Khard is available as a native package for some *nix distributions so you
+Khard is available as a native package for some \*nix distributions so you
 should check your package manager first.  If you want or need to install
 manually you can use the release from `PyPi`_:
 

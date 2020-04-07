@@ -5,7 +5,7 @@ import glob
 import logging
 import os
 import re
-from typing import Dict, Generator, Iterable, Iterator, List, Optional, Union
+from typing import cast, Dict, Generator, Iterator, List, Optional, Union
 
 import vobject.base
 
@@ -42,7 +42,8 @@ class AddressBook(metaclass=abc.ABCMeta):
         """:param str name: the name to identify the address book"""
         self._loaded = False
         self.contacts: Dict[str, "carddav_object.CarddavObject"] = {}
-        self._short_uids: Optional[Dict[str, "carddav_object.CarddavObject"]] = None
+        self._short_uids: Optional[Dict[str,
+                                        "carddav_object.CarddavObject"]] = None
         self.name = name
 
     def __str__(self) -> str:
@@ -65,8 +66,8 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def _search_all(self, query) -> Generator["carddav_object.CarddavObject",
-                                              None, None]:
+    def _search_all(self, query: Union[None, str, List[str]]) -> Generator[
+            "carddav_object.CarddavObject", None, None]:
         """Search in all fields for contacts matching query.
 
         :param query: the query to search for
@@ -74,15 +75,14 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         for contact in self.contacts.values():
             # search in all contact fields
-            contact_details = contact.print_vcard().lower()
+            contact_details = contact.pretty().lower()
             if contact.match(contact_details, query):
                 yield contact
             else:
                 # find phone numbers with special chars like /
                 clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
                                                contact_details)
-                if contact.match(clean_contact_details, query) \
-                        and len(re.sub(r"\D", "", query)) >= 3:
+                if contact.match(clean_contact_details, query):
                     yield contact
 
     def _search_names(self, query) -> Generator["carddav_object.CarddavObject",
@@ -97,8 +97,8 @@ class AddressBook(metaclass=abc.ABCMeta):
             if contact.match(contact.formatted_name, query):
                 yield contact
 
-    def _search_uid(self, query) -> Generator["carddav_object.CarddavObject",
-                                              None, None]:
+    def _search_uid(self, query: str) -> Generator[
+            "carddav_object.CarddavObject", None, None]:
         """Search for contacts with a matching uid.
 
         :param query: the query to search for
@@ -115,7 +115,7 @@ class AddressBook(metaclass=abc.ABCMeta):
                 if uid.startswith(query):
                     yield self.contacts[uid]
 
-    def search(self, query: Optional[List[str]], method: str = "all"
+    def search(self, query: Union[None, str, List[str]], method: str = "all"
                ) -> Generator["carddav_object.CarddavObject", None, None]:
         """Search this address book for contacts matching the query.
 
@@ -134,7 +134,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         if method == "name":
             return self._search_names(query)
         if method == "uid":
-            return self._search_uid(query)
+            return self._search_uid(cast(str, query))
         raise ValueError(
             'Only the search methods "all", "name" and "uid" are supported.')
 
