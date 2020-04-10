@@ -4,18 +4,10 @@
 import contextlib
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 
 import vobject
-
-
-def expectedFailureForVersion(major, minor):
-    "A decorator to mark a test as an expected failure for one python version."
-    if sys.version_info.major == major and sys.version_info.minor == minor:
-        return unittest.expectedFailure
-    return lambda x: x
 
 
 def create_test_vcard(**kwargs):

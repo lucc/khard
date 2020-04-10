@@ -23,7 +23,7 @@ from khard import cli
 from khard import config
 from khard import khard
 
-from .helpers import expectedFailureForVersion, with_vcards
+from .helpers import with_vcards
 
 
 def mock_stdout():
@@ -336,7 +336,6 @@ class MiscCommands(unittest.TestCase):
         self.assertIn('Last name', yaml)
         self.assertIn('Nickname', yaml)
 
-    @expectedFailureForVersion(3, 5)
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
         with mock.patch('subprocess.Popen') as popen:
