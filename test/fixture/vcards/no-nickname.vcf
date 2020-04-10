@@ -1,0 +1,6 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:issue251part2
+N:Jones;Mike;;;
+EMAIL;TYPE=pref:mj@example.org
+END:VCARD
