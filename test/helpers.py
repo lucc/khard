@@ -22,7 +22,7 @@ def create_test_vcard(**kwargs):
     return vcard
 
 
-class with_vcards(contextlib.ContextDecorator):
+class TmpConfig(contextlib.ContextDecorator):
     """Context manager to create a temporary khard configuration.
 
     The given vcards will be copied to the only address book in the
@@ -38,7 +38,7 @@ class with_vcards(contextlib.ContextDecorator):
     def __enter__(self):
         self.tempdir = tempfile.TemporaryDirectory()
         for card in self.vcards:
-            shutil.copy(card, self.tempdir.name)
+            shutil.copy(self._card_path(card), self.tempdir.name)
         with tempfile.NamedTemporaryFile("w", delete=False) as config:
             config.write("""[general]
                             editor = editor
@@ -57,4 +57,9 @@ class with_vcards(contextlib.ContextDecorator):
         self.mock.stop()
         os.unlink(self.config.name)
         self.tempdir.cleanup()
-        return False
+
+    @staticmethod
+    def _card_path(card):
+        if os.path.exists(card):
+            return card
+        return os.path.join("test/fixture/vcards", card)

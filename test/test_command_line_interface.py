@@ -23,7 +23,7 @@ from khard import cli
 from khard import config
 from khard import khard
 
-from .helpers import with_vcards
+from .helpers import TmpConfig
 
 
 def mock_stdout():
@@ -183,7 +183,7 @@ class ListingCommands(unittest.TestCase):
 
     def test_display_post_address(self):
         with mock_stdout() as stdout:
-            with with_vcards(["test/fixture/vcards/post.vcf"]):
+            with TmpConfig(["post.vcf"]):
                 khard.main(['postaddress'])
         text = [line.rstrip() for line in stdout.getvalue().splitlines()]
         expected = [
@@ -199,7 +199,7 @@ class ListingCommands(unittest.TestCase):
 class ListingCommands2(unittest.TestCase):
 
     def test_list_bug_195(self):
-        with with_vcards(['test/fixture/vcards/tel-value-uri.vcf']):
+        with TmpConfig(['tel-value-uri.vcf']):
             with mock_stdout() as stdout:
                 khard.main(['list'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
@@ -211,7 +211,7 @@ class ListingCommands2(unittest.TestCase):
 
     def test_list_bug_243_part_1(self):
         """Search for a category with the ls command"""
-        with with_vcards(['test/fixture/vcards/category.vcf']):
+        with TmpConfig(['category.vcf']):
             with mock_stdout() as stdout:
                 khard.main(['list', 'bar'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
@@ -226,7 +226,7 @@ class ListingCommands2(unittest.TestCase):
 
     def test_list_bug_243_part_2(self):
         """Search for a category with the email command"""
-        with with_vcards(['test/fixture/vcards/category.vcf']):
+        with TmpConfig(['category.vcf']):
             with mock_stdout() as stdout:
                 khard.main(['email', 'bar'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
@@ -237,7 +237,7 @@ class ListingCommands2(unittest.TestCase):
         self.assertListEqual(text, expect)
 
     def test_list_bug_249(self):
-        with with_vcards(['test/fixture/vcards/issue249.vcf']):
+        with TmpConfig(['issue249.vcf']):
             with mock_stdout() as stdout:
                 # If all spaces are removed this should match "Foo Bar"
                 khard.main(['list', 'oba'])
