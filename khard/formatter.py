@@ -57,11 +57,11 @@ class Formatter:
             if vcard.nicknames and self._show_nicknames:
                 return "{} (Nickname: {})".format(name, vcard.nicknames[0])
             return name
-        elif field == 'phone':
+        if field == 'phone':
             if vcard.phone_numbers:
                 return self.format_labeled_field(vcard.phone_numbers,
                                                  self._preferred_phone)
-        elif field == 'email':
+        if field == 'email':
             if vcard.emails:
                 return self.format_labeled_field(vcard.emails,
                                                  self._preferred_email)
