@@ -46,6 +46,14 @@ class Query(metaclass=abc.ABCMeta):
             return OrQuery(self, *other._queries)
         return OrQuery(self, other)
 
+    def __eq__(self, other: object) -> bool:
+        """A generic equality for all query types without parameters"""
+        return isinstance(other, type(self))
+
+    def __hash__(self) -> int:
+        "A generic hashing implementation for all queries without parameters"
+        return hash(type(self))
+
 
 class NullQuery(Query):
 
@@ -58,6 +66,9 @@ class AnyQuery(Query):
     def match(self, thing: Union[str, List[str]]) -> bool:
         return True
 
+    def __hash__(self) -> int:
+        return hash(NullQuery)
+
 
 class TermQuery(Query):
 
@@ -68,6 +79,12 @@ class TermQuery(Query):
         if isinstance(thing, str):
             return self._term in thing.lower()
         return any(self.match(t) for t in thing)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, TermQuery) and self._term == other._term
+
+    def __hash__(self) -> int:
+        return hash((TermQuery, self._term))
 
 
 class FieldQuery(TermQuery):
@@ -80,6 +97,13 @@ class FieldQuery(TermQuery):
         return hasattr(thing, self._field) \
             and super().match(getattr(thing, self._field))
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, FieldQuery) and self._field == other._field \
+            and super().__eq__(other)
+
+    def __hash__(self) -> int:
+        return hash((FieldQuery, self._field, self._term))
+
 
 class AndQuery(Query):
 
@@ -89,6 +113,13 @@ class AndQuery(Query):
     def match(self, thing: Union[str, List[str]]) -> bool:
         return all(q.match(thing) for q in self._queries)
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, AndQuery) \
+            and frozenset(self._queries) == frozenset(other._queries)
+
+    def __hash__(self) -> int:
+        return hash((AndQuery, frozenset(self._queries)))
+
 
 class OrQuery(Query):
 
@@ -97,3 +128,10 @@ class OrQuery(Query):
 
     def match(self, thing: Union[str, List[str]]) -> bool:
         return any(q.match(thing) for q in self._queries)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, OrQuery) \
+            and frozenset(self._queries) == frozenset(other._queries)
+
+    def __hash__(self) -> int:
+        return hash((OrQuery, frozenset(self._queries)))

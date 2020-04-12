@@ -50,3 +50,30 @@ class TestOrQuery(unittest.TestCase):
         q2 = TermQuery("b")
         q = OrQuery(q1, q2)
         self.assertFalse(q.match("cd"))
+
+
+class TestEquality(unittest.TestCase):
+
+    def test_any_queries_are_equal(self):
+        self.assertEqual(AnyQuery(), AnyQuery())
+
+    def test_null_queries_are_equal(self):
+        self.assertEqual(NullQuery(), NullQuery())
+
+    def test_or_queries_match_after_sorting(self):
+        null = NullQuery()
+        any = AnyQuery()
+        term = TermQuery("foo")
+        field = FieldQuery("x", "y")
+        first = OrQuery(null, any , term, field)
+        second = OrQuery(any, null, field, term)
+        self.assertEqual(first, second)
+
+    def test_and_queries_match_after_sorting(self):
+        null = NullQuery()
+        any = AnyQuery()
+        term = TermQuery("foo")
+        field = FieldQuery("x", "y")
+        first = AndQuery(null, any , term, field)
+        second = AndQuery(any, null, field, term)
+        self.assertEqual(first, second)
