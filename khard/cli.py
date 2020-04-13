@@ -158,6 +158,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="select contact by uid")
     default_search_parser.add_argument(
         "search_terms", nargs="*", metavar="search terms", type=TermQuery,
+        default=[],
         help="search in all fields to find matching contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
@@ -179,6 +180,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="select target contact by uid")
     merge_search_parser.add_argument(
         "source_search_terms", nargs="*", metavar="source", type=TermQuery,
+        default=[],
         help="search in all fields to find matching source contact")
 
     # create subparsers for actions
@@ -422,10 +424,10 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         parser.error("You can not give arbitrary search terms and --uid at the"
                      " same time.")
     # Build conjunctive queries
-    if "source_search_terms" in args and args.source_search_terms:
+    if "source_search_terms" in args:
         args.source_search_terms = reduce(operator.and_,
                                           args.source_search_terms, AnyQuery())
-    if "search_terms" in args and args.search_terms:
+    if "search_terms" in args:
         args.search_terms = reduce(operator.and_, args.search_terms,
                                    AnyQuery())
 
