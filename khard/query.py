@@ -1,7 +1,9 @@
 """Queries to match against contacts"""
 
 import abc
-from typing import List, Union
+from functools import reduce
+from operator import and_, or_
+from typing import List, Optional, Union
 
 from .carddav_object import CarddavObject
 
@@ -120,6 +122,10 @@ class AndQuery(Query):
     def __hash__(self) -> int:
         return hash((AndQuery, frozenset(self._queries)))
 
+    @staticmethod
+    def reduce(queries: List[Query], start: Optional[Query] = None) -> Query:
+        return reduce(and_, queries, start or AnyQuery())
+
 
 class OrQuery(Query):
 
@@ -135,3 +141,7 @@ class OrQuery(Query):
 
     def __hash__(self) -> int:
         return hash((OrQuery, frozenset(self._queries)))
+
+    @staticmethod
+    def reduce(queries: List[Query], start: Optional[Query] = None) -> Query:
+        return reduce(or_, queries, start or NullQuery())

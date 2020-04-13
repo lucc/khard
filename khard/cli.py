@@ -1,9 +1,7 @@
 """Command line parsing and configuration logic for khard"""
 
 import argparse
-from functools import reduce
 import logging
-import operator
 import sys
 from typing import List, Tuple
 
@@ -429,11 +427,10 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     # Build conjunctive queries.  If uid was given the list of search terms
     # will be empty.  If no uid was given it will be None.
     if "source_search_terms" in args:
-        args.source_search_terms = reduce(
-            operator.and_, args.source_search_terms, args.uid or AnyQuery())
+        args.source_search_terms = AndQuery.reduce(args.source_search_terms,
+                                                   args.uid)
     if "search_terms" in args:
-        args.search_terms = reduce(operator.and_, args.search_terms,
-                                   args.uid or AnyQuery())
+        args.search_terms = AndQuery.reduce(args.search_terms, args.uid)
     if "target_contact" in args:
         # Only one of target_contact or target_uid can be set.
         args.target_contact = args.target_contact or args.target_uid \
