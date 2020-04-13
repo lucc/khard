@@ -1,13 +1,16 @@
 """Command line parsing and configuration logic for khard"""
 
 import argparse
+from functools import reduce
 import logging
+import operator
 import sys
 from typing import List, Tuple
 
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config, ConfigError
+from .query import AndQuery, AnyQuery, FieldQuery, TermQuery
 from .version import version as khard_version
 
 
@@ -151,9 +154,10 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "-e", "--strict-search", action="store_true",
         help="narrow contact search to name field")
     default_search_parser.add_argument(
-        "-u", "--uid", default="", help="select contact by uid")
+        "-u", "--uid", type=lambda x: FieldQuery("uid",  x),
+        help="select contact by uid")
     default_search_parser.add_argument(
-        "search_terms", nargs="*", metavar="search terms",
+        "search_terms", nargs="*", metavar="search terms", type=TermQuery,
         help="search in all fields to find matching contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
@@ -165,14 +169,16 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "-e", "--strict-search", action="store_true",
         help="narrow contact search to name fields")
     merge_search_parser.add_argument(
-        "-t", "--target-contact", "--target", default="",
+        "-t", "--target-contact", "--target", type=TermQuery,
         help="search in all fields to find matching target contact")
     merge_search_parser.add_argument(
-        "-u", "--uid", default="", help="select source contact by uid")
+        "-u", "--uid", type=lambda x: FieldQuery("uid",  x),
+        help="select source contact by uid")
     merge_search_parser.add_argument(
-        "-U", "--target-uid", default="", help="select target contact by uid")
+        "-U", "--target-uid", type=lambda x: FieldQuery("uid",  x),
+        help="select target contact by uid")
     merge_search_parser.add_argument(
-        "source_search_terms", nargs="*", metavar="source",
+        "source_search_terms", nargs="*", metavar="source", type=TermQuery,
         help="search in all fields to find matching source contact")
 
     # create subparsers for actions
@@ -415,6 +421,13 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         # If an uid was given we require that no search terms where given.
         parser.error("You can not give arbitrary search terms and --uid at the"
                      " same time.")
+    # Build conjunctive queries
+    if "source_search_terms" in args and args.source_search_terms:
+        args.source_search_terms = reduce(operator.and_,
+                                          args.source_search_terms, AnyQuery())
+    if "search_terms" in args and args.search_terms:
+        args.search_terms = reduce(operator.and_, args.search_terms,
+                                   AnyQuery())
 
     # Normalize all deprecated subcommands and emit warnings.
     if args.action == "export":
