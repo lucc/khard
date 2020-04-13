@@ -423,13 +423,27 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         # If an uid was given we require that no search terms where given.
         parser.error("You can not give arbitrary search terms and --uid at the"
                      " same time.")
-    # Build conjunctive queries
+    if "target_uid" in args and args.target_uid and args.target_contact:
+        parser.error("You can not give arbitrary target search terms and "
+                     "--target-uid at the same time.")
+    # Build conjunctive queries.  If uid was given the list of search terms
+    # will be empty.  If no uid was given it will be None.
     if "source_search_terms" in args:
-        args.source_search_terms = reduce(operator.and_,
-                                          args.source_search_terms, AnyQuery())
+        args.source_search_terms = reduce(
+            operator.and_, args.source_search_terms, args.uid or AnyQuery())
     if "search_terms" in args:
         args.search_terms = reduce(operator.and_, args.search_terms,
-                                   AnyQuery())
+                                   args.uid or AnyQuery())
+    if "target_contact" in args:
+        # Only one of target_contact or target_uid can be set.
+        args.target_contact = args.target_contact or args.target_uid \
+            or AnyQuery()
+    # Remove uid values from the args Namespace.  They have been merged into
+    # the search terms above.
+    if "uid" in args:
+        del args.uid
+    if "target_uid" in args:
+        del args.target_uid
 
     # Normalize all deprecated subcommands and emit warnings.
     if args.action == "export":
