@@ -2,10 +2,11 @@
 # pylint: disable=invalid-name
 
 import contextlib
+import io
 import os
 import shutil
 import tempfile
-import unittest
+from unittest import mock
 
 import vobject
 
@@ -20,6 +21,22 @@ def create_test_vcard(**kwargs):
     for key, value in kwargs.items():
         vcard.add(key.upper()).value = value
     return vcard
+
+
+def mock_stream(name="stdout"):
+    """A context manager to replace a stdio stream with a string buffer.
+
+    >>> with mock_stream() as s:
+    >>>     print("hello world")
+    >>> assert s.getvalue() == "hello world"
+    >>> with mock_stream("stderr") as e:
+    >>>     print("hallo error", file=sys.stderr)
+    >>> assert e.getvalue() == "hello error"
+    """
+    stream = io.StringIO()
+    context_manager = mock.patch('sys.'+name, stream)
+    context_manager.getvalue = stream.getvalue
+    return context_manager
 
 
 class TmpConfig(contextlib.ContextDecorator):
@@ -48,8 +65,7 @@ class TmpConfig(contextlib.ContextDecorator):
                             path = {}
                             """.format(self.tempdir.name))
         self.config = config
-        self.mock = unittest.mock.patch.dict('os.environ',
-                                             KHARD_CONFIG=config.name)
+        self.mock = mock.patch.dict('os.environ', KHARD_CONFIG=config.name)
         self.mock.start()
         return self
 

@@ -23,14 +23,7 @@ from khard import cli
 from khard import config
 from khard import khard
 
-from .helpers import TmpConfig
-
-
-def mock_stdout():
-    stdout = io.StringIO()
-    context_manager = mock.patch('sys.stdout', stdout)
-    context_manager.getvalue = stdout.getvalue
-    return context_manager
+from .helpers import TmpConfig, mock_stream as mock_stdout
 
 
 @mock.patch('sys.argv', ['TESTSUITE'])
