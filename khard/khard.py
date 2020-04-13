@@ -10,7 +10,7 @@ import re
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
-from typing import cast, Iterable, List, Optional, TypeVar, Union
+from typing import cast, Dict, Iterable, List, Optional, TypeVar, Union
 
 from unidecode import unidecode
 
@@ -21,6 +21,7 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
+from .query import AndQuery, AnyQuery, NullQuery, OrQuery, Query
 from .version import version as khard_version
 
 
@@ -453,62 +454,41 @@ def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
                      '"formatted_name" not {}.'.format(sort))
 
 
-def prepare_search_queries(args):
+def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
     """Prepare the search query string from the given command line args.
 
     Each address book can get a search query string to filter vcards befor
     loading them.  Depending on the question if the address book is used for
-    source or target searches different regexes have to be combined into one
-    search string.
+    source or target searches different queries have to be combined.
 
     :param args: the parsed command line
-    :type args: argparse.Namespace
-    :returns: a dict mapping abook names to their loading queries, if the query
-        is None it means that all cards should be loaded
-    :rtype: dict(str:list(list(str)) or None)
+    :returns: a dict mapping abook names to their loading queries
     """
     # get all possible search queries for address book parsing
-    source_queries = []
-    target_queries = []
-    if "source_search_terms" in args and args.source_search_terms:
-        processed_terms = [x.lower() for x in args.source_search_terms]
-        source_queries.extend(processed_terms)
-        args.source_search_terms = processed_terms
-    if "search_terms" in args and args.search_terms:
-        processed_terms = [x.lower() for x in args.search_terms]
-        source_queries.extend(processed_terms)
-        args.search_terms = processed_terms
-    if "target_contact" in args and args.target_contact:
-        processed_term = args.target_contact.lower()
-        target_queries.append(processed_term)
-        args.target_contact = processed_term
-    if "uid" in args and args.uid:
-        source_queries.append(args.uid.lower())
-    if "target_uid" in args and args.target_uid:
-        target_queries.append(args.target_uid.lower())
-    # None means that no query is given and hence all contacts should be
-    # searched.
-    source_queries = source_queries or None
-    target_queries = target_queries or None
-    logger.debug('Created source query: %s', source_queries)
-    logger.debug('Created target query: %s', target_queries)
+    source_queries: List[Query] = []
+    target_queries: List[Query] = []
+    if "source_search_terms" in args:
+        source_queries.append(args.source_search_terms)
+    if "search_terms" in args:
+        source_queries.append(args.search_terms)
+    if "target_contact" in args:
+        target_queries.append(args.target_contact)
+    source_query = AndQuery.reduce(source_queries)
+    target_query = AndQuery.reduce(target_queries)
+    logger.debug('Created source query: %s', source_query)
+    logger.debug('Created target query: %s', target_query)
     # Get all possible search queries for address book parsing, always
     # depending on the fact if the address book is used to find source or
     # target contacts or both.
-    queries = {abook.name: [] for abook in config.abooks}
+    queries: Dict[str, List[Query]] = {abook.name: [] for abook in config.abooks}
     for name in queries:
         if "addressbook" in args and name in args.addressbook:
-            queries[name].append(source_queries)
+            queries[name].append(source_query)
         if "target_addressbook" in args and name in args.target_addressbook:
-            queries[name].append(target_queries)
-        # If None is included in the search queries of an address book it means
-        # that either no source or target query was given and this address book
-        # is affected by this.  All contacts should be loaded from that address
-        # book.
-        if None in queries[name]:
-            queries[name] = None
+            queries[name].append(target_query)
+    queries2: Dict[str, Query] = {n: OrQuery.reduce(q) for n, q in queries.items()}
     logger.debug('Created query: %s', queries)
-    return queries
+    return queries2
 
 
 def generate_contact_list(args: Namespace) -> List[CarddavObject]:
