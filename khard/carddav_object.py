@@ -23,10 +23,10 @@ import vobject
 from . import address_book
 from . import helpers
 from .object_type import ObjectType
+from .query import Query
 
 
 logger = logging.getLogger(__name__)
-Query = Union[None, str, List[str], List[List[str]]]
 
 
 def convert_to_vcard(name: str, value: Union[str, List[str]],
@@ -1554,28 +1554,7 @@ class CarddavObject(YAMLEditable):
         :param string: the string which to check
         :param query:
         """
-        def match_str(q: str, s: str) -> bool:
-            return q.lower() in s
-
-        def match_list1(q: List[str], s: str) -> bool:
-            return all(match_str(qq, s) for qq in q)
-
-        def match_list2(q: List[List[str]], s: str) -> bool:
-            return any(match_list1(qq, s) for qq in q)
-
-        logger.debug('match: %s', [string, query])
-
-        if query is None:
-            return True
-        string = string.lower()
-        if isinstance(query, str):
-            return match_str(query, string)
-        # now query can only be list(str) or list(list(str))
-        if not query:
-            return False
-        if isinstance(query[0], str):
-            return match_list1(cast(List[str], query), string)
-        return match_list2(cast(List[List[str]], query), string)
+        return query.match(string)
 
     ######################################
     # overwrite some default class methods

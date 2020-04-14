@@ -5,7 +5,7 @@ from functools import reduce
 from operator import and_, or_
 from typing import List, Optional, Union
 
-from .carddav_object import CarddavObject
+from . import carddav_object
 
 
 class Query(metaclass=abc.ABCMeta):
@@ -95,7 +95,7 @@ class FieldQuery(TermQuery):
         self._field = field
         super().__init__(value)
 
-    def match(self, thing: CarddavObject) -> bool:
+    def match(self, thing: "carddav_object.CarddavObject") -> bool:
         return hasattr(thing, self._field) \
             and super().match(getattr(thing, self._field))
 

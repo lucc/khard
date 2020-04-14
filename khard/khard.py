@@ -21,7 +21,7 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
-from .query import AndQuery, AnyQuery, NullQuery, OrQuery, Query
+from .query import AndQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 
@@ -397,7 +397,7 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
 
 def get_contact_list_by_user_selection(
         address_books: Union[VdirAddressBook, AddressBookCollection],
-        search: Optional[List[str]], strict_search: bool) -> List[CarddavObject]:
+        search: Query, strict_search: bool) -> List[CarddavObject]:
     """returns a list of CarddavObject objects
     :param address_books: selected address books
     :param search: filter contact list
@@ -410,9 +410,9 @@ def get_contact_list_by_user_selection(
 
 
 def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
-                 query: Optional[List[str]], method: str = "all",
-                 reverse: bool = False, group: bool = False,
-                 sort: str = "first_name") -> List[CarddavObject]:
+                 query: Query, method: str = "all", reverse: bool = False,
+                 group: bool = False, sort: str = "first_name") -> List[
+                    CarddavObject]:
     """Get a list of contacts from one or more address books.
 
     :param address_book: the address book to search
@@ -709,7 +709,7 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
         sys.exit(1)
 
 
-def phone_subcommand(search_terms: List[str], vcard_list: List[CarddavObject],
+def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                      parsable: bool) -> None:
     """Print a phone application friendly contact table.
 
@@ -767,7 +767,7 @@ def phone_subcommand(search_terms: List[str], vcard_list: List[CarddavObject],
         sys.exit(1)
 
 
-def post_address_subcommand(search_terms: List[str],
+def post_address_subcommand(search_terms: Query,
                             vcard_list: List[CarddavObject], parsable: bool
                             ) -> None:
     """Print a contact table. with all postal / mailing addresses
@@ -820,7 +820,7 @@ def post_address_subcommand(search_terms: List[str],
         sys.exit(1)
 
 
-def email_subcommand(search_terms: List[str], vcard_list: List[CarddavObject],
+def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                      parsable: bool, remove_first_line: bool) -> None:
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
@@ -1056,7 +1056,7 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
         get_contact_list_by_user_selection(
-            target_abook, [source_vcard.formatted_name], True), True)
+            target_abook, TermQuery(source_vcard.formatted_name), True), True)
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
