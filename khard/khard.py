@@ -21,7 +21,7 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
-from .query import AndQuery, OrQuery, Query, TermQuery
+from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 
@@ -521,19 +521,14 @@ def generate_contact_list(args: Namespace) -> List[CarddavObject]:
         # contact.
         if "source_search_terms" in args:
             # exception for merge command
-            if args.source_search_terms:
-                args.search_terms = args.source_search_terms
-            else:
-                args.search_terms = None
+            args.search_terms = args.source_search_terms or AnyQuery()
         elif "search_terms" in args:
-            if args.search_terms:
-                args.search_terms = args.search_terms
-            else:
-                args.search_terms = None
+            if not args.search_terms:
+                args.search_terms = AnyQuery()
         else:
             # If no search terms where given on the command line we match
             # everything with the empty search pattern.
-            args.search_terms = None
+            args.search_terms = AnyQuery()
         logger.debug("args.search_terms=%s", args.search_terms)
         vcard_list = get_contact_list_by_user_selection(
             args.addressbook, args.search_terms,
