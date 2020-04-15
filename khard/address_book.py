@@ -76,13 +76,13 @@ class AddressBook(metaclass=abc.ABCMeta):
         for contact in self.contacts.values():
             # search in all contact fields
             contact_details = contact.pretty().lower()
-            if contact.match(contact_details, query):
+            if query.match(contact_details):
                 yield contact
             else:
                 # find phone numbers with special chars like /
                 clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
                                                contact_details)
-                if contact.match(clean_contact_details, query):
+                if query.match(clean_contact_details):
                     yield contact
 
     def _search_names(self, query: Query) -> Generator[
@@ -94,7 +94,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         for contact in self.contacts.values():
             # only search in contact name
-            if contact.match(contact.formatted_name, query):
+            if query.match(contact.formatted_name):
                 yield contact
 
     def _search_uid(self, query: str) -> Generator[

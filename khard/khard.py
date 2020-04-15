@@ -733,9 +733,8 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                 else:
                     # else: start with name
                     phone_number_line = line_formatted
-                if CarddavObject.match(
-                        "{}\n{}".format(line_formatted, line_parsable),
-                        search_terms):
+                if search_terms.match("{}\n{}".format(line_formatted,
+                                                      line_parsable)):
                     matching_phone_number_list.append(phone_number_line)
                 else:
                     search_str = ''.join(search_terms)
@@ -797,9 +796,7 @@ def post_address_subcommand(search_terms: Query,
                         "\t".join([name, type, address]))
         # add to matching and all post address lists
         for post_address_line in post_address_line_list:
-            if CarddavObject.match(
-                    "{0}\n{0}".format(post_address_line),
-                    search_terms):
+            if search_terms.match("{0}\n{0}".format(post_address_line)):
                 matching_post_address_list.append(post_address_line)
             # collect all post addresses in a different list as fallback
             all_post_address_list.append(post_address_line)
@@ -854,9 +851,8 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                 else:
                     # else: start with name
                     email_address_line = line_formatted
-                if CarddavObject.match(
-                        "{}\n{}".format(line_formatted, line_parsable),
-                        search_terms):
+                if search_terms.match("{}\n{}".format(line_formatted,
+                                                      line_parsable)):
                     matching_email_address_list.append(email_address_line)
                 # collect all email addresses in a different list as fallback
                 all_email_address_list.append(email_address_line)

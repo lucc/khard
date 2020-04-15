@@ -23,7 +23,7 @@ import vobject
 from . import address_book
 from . import helpers
 from .object_type import ObjectType
-from .query import Query
+from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
@@ -1487,7 +1487,7 @@ class CarddavObject(YAMLEditable):
 
     @classmethod
     def from_file(cls, address_book: "address_book.VdirAddressBook",
-                  filename: str, query: Query,
+                  filename: str, query: Query = AnyQuery(),
                   supported_private_objects: Optional[List[str]] = None,
                   localize_dates: bool = False) -> Optional["CarddavObject"]:
         """Load a CarddavObject object from a .vcf file if the plain file
@@ -1506,7 +1506,7 @@ class CarddavObject(YAMLEditable):
         """
         with open(filename, "r") as file:
             contents = file.read()
-        if query is None or cls.match(contents.lower(), query):
+        if query.match(contents):
             try:
                 vcard = vobject.readOne(contents)
             except Exception:
@@ -1514,8 +1514,8 @@ class CarddavObject(YAMLEditable):
                                filename)
                 # if creation fails, try to repair some vcard attributes
                 vcard = vobject.readOne(cls._filter_invalid_tags(contents))
-            return cls(vcard, address_book, filename, supported_private_objects,
-                       None, localize_dates)
+            return cls(vcard, address_book, filename,
+                       supported_private_objects, None, localize_dates)
         return None
 
     @classmethod
@@ -1544,17 +1544,6 @@ class CarddavObject(YAMLEditable):
             localize_dates=localize_dates)
         contact.update(yaml)
         return contact
-
-    @staticmethod
-    def match(string: str, query: Query) -> bool:
-        """Check if the given string matches against the query.  The query is a
-        list of lists of strings.  The inner lists are AND joined and the outer
-        lists are OR joined.
-
-        :param string: the string which to check
-        :param query:
-        """
-        return query.match(string)
 
     ######################################
     # overwrite some default class methods
