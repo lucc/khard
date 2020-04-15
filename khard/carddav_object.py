@@ -14,7 +14,7 @@ import os
 import re
 import sys
 import time
-from typing import cast, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from atomicwrites import atomic_write
 from ruamel import yaml

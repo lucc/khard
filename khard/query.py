@@ -13,7 +13,7 @@ class Query(metaclass=abc.ABCMeta):
     """A query to match against strings, lists of strings and CarddavObjects"""
 
     @abc.abstractmethod
-    def match(self, thing: Union[str, List[str]]) -> bool:
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         """Match the self query against the given thing"""
 
     def __and__(self, other: "Query") -> "Query":
@@ -59,13 +59,13 @@ class Query(metaclass=abc.ABCMeta):
 
 class NullQuery(Query):
 
-    def match(self, thing: Union[str, List[str]]) -> bool:
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return False
 
 
 class AnyQuery(Query):
 
-    def match(self, thing: Union[str, List[str]]) -> bool:
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return True
 
     def __hash__(self) -> int:
@@ -77,10 +77,10 @@ class TermQuery(Query):
     def __init__(self, term: str) -> None:
         self._term = term.lower()
 
-    def match(self, thing: Union[str, List[str]]) -> bool:
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         if isinstance(thing, str):
             return self._term in thing.lower()
-        return any(self.match(t) for t in thing)
+        return self._term in thing.pretty().lower()
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, TermQuery) and self._term == other._term
@@ -95,9 +95,11 @@ class FieldQuery(TermQuery):
         self._field = field
         super().__init__(value)
 
-    def match(self, thing: "carddav_object.CarddavObject") -> bool:
-        return hasattr(thing, self._field) \
-            and super().match(getattr(thing, self._field))
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
+        if isinstance(thing, str):
+            return super().match(thing)
+        return hasattr(thing, self._field) and super().match(
+            getattr(thing, self._field))
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, FieldQuery) and self._field == other._field \
@@ -112,7 +114,7 @@ class AndQuery(Query):
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
 
-    def match(self, thing: Union[str, List[str]]) -> bool:
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return all(q.match(thing) for q in self._queries)
 
     def __eq__(self, other: object) -> bool:
@@ -132,7 +134,7 @@ class OrQuery(Query):
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
 
-    def match(self, thing: Union[str, List[str]]) -> bool:
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return any(q.match(thing) for q in self._queries)
 
     def __eq__(self, other: object) -> bool:

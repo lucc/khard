@@ -17,10 +17,6 @@ class TestTermQuery(unittest.TestCase):
         q = TermQuery('bar')
         self.assertTrue(q.match('FOO BAR BAZ'))
 
-    def test_match_lists_by_mathing_recursive(self):
-        q = TermQuery('bar')
-        self.assertTrue(q.match(['foo', 'bar baz']))
-
 
 class TestAndQuery(unittest.TestCase):
 
