@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 from khard import address_book
+from khard.query import TermQuery
 
 
 class _AddressBook(address_book.AddressBook):
@@ -90,7 +91,7 @@ class VcardAdressBookLoad(unittest.TestCase):
 
     def test_search_in_source_files_only_loads_matching_cards(self):
         abook = address_book.VdirAddressBook('test', 'test/fixture/test.abook')
-        abook.load(query='second', search_in_source_files=True)
+        abook.load(query=TermQuery('second'), search_in_source_files=True)
         self.assertEqual(len(abook.contacts), 1)
 
     def test_loading_unparsable_vcard_fails(self):
