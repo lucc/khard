@@ -1080,14 +1080,12 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
-        copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
-                     action == "move")
+        copy_contact(source_vcard, target_abook, action == "move")
     elif source_vcard == target_vcard:
         # source and target contact are identical
         print("Target contact: {}".format(target_vcard))
         if action == "move":
-            copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
-                         True)
+            copy_contact(source_vcard, target_abook, True)
         else:
             print("The selected contacts are already identical")
     else:
@@ -1104,12 +1102,10 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
         while True:
             input_string = input("Your choice: ")
             if input_string.lower() == "a":
-                copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
-                             action == "move")
+                copy_contact(source_vcard, target_abook, action == "move")
                 break
             if input_string.lower() == "o":
-                copy_contact(source_vcard, cast(VdirAddressBook, target_abook),
-                             action == "move")
+                copy_contact(source_vcard, target_abook, action == "move")
                 target_vcard.delete_vcard_file()
                 break
             if input_string.lower() == "m":
