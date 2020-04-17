@@ -13,6 +13,10 @@ class Formatter:
     of the contact.
     """
 
+    FIRST = "first_name"
+    LAST = "last_name"
+    FORMAT = "formatted_name"
+
     def __init__(self, display: str, preferred_email: List[str],
                  preferred_phone: List[str], show_nicknames: bool) -> None:
         self._display = display
@@ -48,9 +52,9 @@ class Formatter:
         """Returns certain fields with specific formatting options
             (for support of some list command options)."""
         if field == 'name':
-            if self._display == "first_name":
+            if self._display == self.FIRST:
                 name = vcard.get_first_name_last_name()
-            elif self._display == "formatted_name":
+            elif self._display == self.FORMAT:
                 name = vcard.formatted_name
             else:
                 name = vcard.get_last_name_first_name()
