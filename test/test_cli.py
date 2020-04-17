@@ -1,6 +1,7 @@
 """Tests for the cli module"""
 
 import unittest
+from unittest import mock
 
 from khard import cli
 from khard import query
@@ -8,6 +9,7 @@ from khard import query
 from .helpers import mock_stream
 
 
+@mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
 class TestParseArgs(unittest.TestCase):
 
     foo = query.TermQuery("foo")
