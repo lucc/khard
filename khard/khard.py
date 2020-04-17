@@ -6,7 +6,6 @@ from email import message_from_string
 from email.policy import SMTP as SMTP_POLICY
 import logging
 import os
-import re
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
@@ -736,17 +735,6 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                 if search_terms.match("{}\n{}".format(line_formatted,
                                                       line_parsable)):
                     matching_phone_number_list.append(phone_number_line)
-                else:
-                    search_str = ''.join(search_terms)
-                    if len(re.sub(r"\D", "", search_str)) >= 3:
-                        # The user likely searches for a phone number cause the
-                        # search string contains at least three digits.  So we
-                        # remove all non-digit chars from the phone number
-                        # field and match against that.
-                        if re.sub(r"\D", "", search_str) in re.sub(r"\D", "",
-                                                                   number):
-                            matching_phone_number_list.append(
-                                phone_number_line)
                 # collect all phone numbers in a different list as fallback
                 all_phone_numbers_list.append(phone_number_line)
     numbers = matching_phone_number_list or all_phone_numbers_list
