@@ -62,6 +62,9 @@ class NullQuery(Query):
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return False
 
+    def __str__(self) -> str:
+        return "NONE"
+
 
 class AnyQuery(Query):
 
@@ -70,6 +73,9 @@ class AnyQuery(Query):
 
     def __hash__(self) -> int:
         return hash(NullQuery)
+
+    def __str__(self) -> str:
+        return "ALL"
 
 
 class TermQuery(Query):
@@ -87,6 +93,9 @@ class TermQuery(Query):
 
     def __hash__(self) -> int:
         return hash((TermQuery, self._term))
+
+    def __str__(self) -> str:
+        return self._term
 
 
 class FieldQuery(TermQuery):
@@ -108,6 +117,9 @@ class FieldQuery(TermQuery):
     def __hash__(self) -> int:
         return hash((FieldQuery, self._field, self._term))
 
+    def __str__(self) -> str:
+        return '{}:{}'.format(self._field, self._term)
+
 
 class AndQuery(Query):
 
@@ -128,6 +140,9 @@ class AndQuery(Query):
     def reduce(queries: List[Query], start: Optional[Query] = None) -> Query:
         return reduce(and_, queries, start or AnyQuery())
 
+    def __str__(self) -> str:
+        return ' '.join(str(q) for q in self._queries)
+
 
 class OrQuery(Query):
 
@@ -147,3 +162,6 @@ class OrQuery(Query):
     @staticmethod
     def reduce(queries: List[Query], start: Optional[Query] = None) -> Query:
         return reduce(or_, queries, start or NullQuery())
+
+    def __str__(self) -> str:
+        return ' | '.join(str(q) for q in self._queries)
