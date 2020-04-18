@@ -190,6 +190,14 @@ class ListingCommands(unittest.TestCase):
                   "second contact    home    user@example.com"]
         self.assertListEqual(expect, text)
 
+    def test_phone_lists_only_contacts_with_phone_nubers(self):
+        with TmpConfig(["contact1.vcf", "contact2.vcf"]):
+            stdout = run_main("phone")
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["Name              Type     Phone",
+                  "second contact    voice    0123456789"]
+        self.assertListEqual(expect, text)
+
 
 class ListingCommands2(unittest.TestCase):
 
