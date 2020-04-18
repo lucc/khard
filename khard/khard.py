@@ -945,38 +945,18 @@ def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
         selected_vcard.formatted_name))
 
 
-def merge_subcommand(vcard_list, selected_address_books, search_terms,
-                     target_uid) -> None:
+def merge_subcommand(vcard_list: List[CarddavObject],
+                     abooks: AddressBookCollection, search_terms: Query
+                     ) -> None:
     """Merge two contacts into one.
 
     :param vcard_list: the vcards from which to choose contacts for mergeing
-    :type vcard_list: list(carddav_object.CarddavObject)
-    :param AddressBookCollection selected_address_books: the addressbooks to
-        use to find the target contact
-    :param str search_terms: the search terms to find the target contact
-    :param str target_uid: the uid of the target contact or empty
+    :param abooks: the addressbooks to use to find the target contact
+    :param search_terms: the search terms to find the target contact
     """
-    # Check arguments.
-    if target_uid != "" and search_terms != "":
-        sys.exit("You can not specify a target uid and target search terms "
-                 "for a merge.")
     # Find possible target contacts.
-    if target_uid != "":
-        target_vcards = get_contacts(selected_address_books, target_uid,
-                                     method="uid")
-        # We require that the uid given can uniquely identify a contact.
-        if len(target_vcards) != 1:
-            if not target_vcards:
-                print("Found no contact for target uid {}".format(target_uid))
-            else:
-                print("Found multiple contacts for target uid {}".format(
-                    target_uid))
-                for vcard in target_vcards:
-                    print("    {}: {}".format(vcard, vcard.uid))
-            sys.exit(1)
-    else:
-        target_vcards = get_contact_list_by_user_selection(
-            selected_address_books, search_terms, False)
+    target_vcards = get_contact_list_by_user_selection(abooks, search_terms,
+                                                       False)
     # get the source vcard, from which to merge
     source_vcard = choose_vcard_from_list("Select contact from which to merge",
                                           vcard_list)
@@ -1185,7 +1165,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
             remove_subcommand(selected_vcard, args.force)
     elif args.action == "merge":
         merge_subcommand(vcard_list, args.target_addressbook,
-                         args.target_contact, args.target_uid)
+                         args.target_contact)
     elif args.action in ["copy", "move"]:
         copy_or_move_subcommand(
             args.action, vcard_list, args.target_addressbook)

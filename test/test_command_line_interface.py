@@ -448,7 +448,6 @@ class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
 #        self.assertTrue(conf.strict)
 
 
-@unittest.expectedFailure
 class Merge(unittest.TestCase):
 
     def test_merge_with_exact_search_terms(self):
