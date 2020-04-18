@@ -716,28 +716,19 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    all_phone_numbers_list = []
-    matching_phone_number_list = []
+    numbers = []
     for vcard in vcard_list:
         for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
                 name = formatter.get_special_field(vcard, "name")
-                # create output lines
-                line_formatted = "\t".join([name, type, number])
-                line_parsable = "\t".join([number, name, type])
                 if parsable:
                     # parsable option: start with phone number
-                    phone_number_line = line_parsable
+                    fields = number, name, type
                 else:
                     # else: start with name
-                    phone_number_line = line_formatted
-                if search_terms.match("{}\n{}".format(line_formatted,
-                                                      line_parsable)):
-                    matching_phone_number_list.append(phone_number_line)
-                # collect all phone numbers in a different list as fallback
-                all_phone_numbers_list.append(phone_number_line)
-    numbers = matching_phone_number_list or all_phone_numbers_list
+                    fields = name, type, number
+                numbers.append("\t".join(fields))
     if numbers:
         if parsable:
             print('\n'.join(numbers))
