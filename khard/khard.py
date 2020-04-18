@@ -703,12 +703,9 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
         sys.exit(1)
 
 
-def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
-                     parsable: bool) -> None:
+def phone_subcommand(vcard_list: List[CarddavObject], parsable: bool) -> None:
     """Print a phone application friendly contact table.
 
-    :param search_terms: used as search term to filter the contacts before
-        printing
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -740,13 +737,10 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
         sys.exit(1)
 
 
-def post_address_subcommand(search_terms: Query,
-                            vcard_list: List[CarddavObject], parsable: bool
+def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
                             ) -> None:
     """Print a contact table. with all postal / mailing addresses
 
-    :param search_terms: used as search term to filter the contacts before
-        printing
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -1106,9 +1100,9 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
     elif args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
-        phone_subcommand(args.search_terms, vcard_list, args.parsable)
+        phone_subcommand(vcard_list, args.parsable)
     elif args.action == "postaddress":
-        post_address_subcommand(args.search_terms, vcard_list, args.parsable)
+        post_address_subcommand(vcard_list, args.parsable)
     elif args.action == "email":
         email_subcommand(args.search_terms, vcard_list,
                          args.parsable, args.remove_first_line)
