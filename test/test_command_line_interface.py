@@ -261,7 +261,7 @@ class ListingCommands2(unittest.TestCase):
         with mock_stdout() as stdout:
             khard.main(['email', '--parsable', 'mike'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["searching for '['mike']' ...",
+        expect = ["searching for 'mike' ...",
                   "ms@example.org\tMichael Smith\tpref"]
         self.assertListEqual(text, expect)
 
@@ -270,7 +270,7 @@ class ListingCommands2(unittest.TestCase):
         with mock_stdout() as stdout:
             khard.main(['email', '--parsable', 'joe'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["searching for '['joe']' ...",
+        expect = ["searching for 'joe' ...",
                   "jcitizen@foo.com\tJoe Citizen\tpref"]
         self.assertListEqual(text, expect)
 
@@ -282,7 +282,7 @@ class ListingCommands2(unittest.TestCase):
             with mock_stdout() as stdout:
                 khard.main(['email', '--parsable', 'mike'])
         text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ["searching for '['mike']' ...",
+        expect = ["searching for 'mike' ...",
                   'ms@example.org\tMichael Smith\tpref',
                   'mj@example.org\tMike Jones\tpref']
         self.assertListEqual(text, expect)

@@ -35,7 +35,6 @@ class CarddavObjectFormatDateObject(unittest.TestCase):
 class AltIds(unittest.TestCase):
 
     def test_altids_are_read(self):
-        card = CarddavObject.from_file(None, 'test/fixture/vcards/altid.vcf',
-                                       None)
+        card = CarddavObject.from_file(None, 'test/fixture/vcards/altid.vcf')
         expected = 'one representation'
         self.assertEqual(expected, card.get_first_name_last_name())

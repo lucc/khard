@@ -14,6 +14,7 @@ import validate
 from .actions import Actions
 from .address_book import AddressBookCollection, AddressBookNameError, \
     VdirAddressBook
+from .query import Query
 
 
 logger = logging.getLogger(__name__)
@@ -175,12 +176,12 @@ class Config:
         except IOError as err:
             raise ConfigError(str(err))
 
-    def get_address_books(self, names: Iterable[str], queries: Dict
+    def get_address_books(self, names: Iterable[str], queries: Dict[str, Query]
                           ) -> AddressBookCollection:
         """Load all address books with the given names.
 
         :param names: the address books to load
-        :param dict queries: a mapping of address book names to search queries
+        :param queries: a mapping of address book names to search queries
         :returns: the loaded address books
         """
         all_names = {str(book) for book in self.abooks}
