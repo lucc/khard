@@ -182,6 +182,14 @@ class ListingCommands(unittest.TestCase):
 
         self.assertListEqual(expected, text)
 
+    def test_email_lists_only_contacts_with_emails(self):
+        with TmpConfig(["contact1.vcf", "contact2.vcf"]):
+            stdout = run_main("email")
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["Name              Type    E-Mail",
+                  "second contact    home    user@example.com"]
+        self.assertListEqual(expect, text)
+
 
 class ListingCommands2(unittest.TestCase):
 
