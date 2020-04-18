@@ -443,10 +443,6 @@ class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
         conf = self._merge(['list', '--search-in-source-files'])
         self.assertTrue(conf.search_in_source_files)
 
-#    def test_strict_is_picked_up_from_arguments(self):
-#        conf = self._merge(['list', '--strict'])
-#        self.assertTrue(conf.strict)
-
 
 class Merge(unittest.TestCase):
 
