@@ -198,6 +198,17 @@ class ListingCommands(unittest.TestCase):
                   "second contact    voice    0123456789"]
         self.assertListEqual(expect, text)
 
+    def test_postaddr_lists_only_contacts_with_post_addresses(self):
+        with TmpConfig(["contact1.vcf", "post.vcf"]):
+            stdout = run_main("postaddress")
+        text = [line.rstrip() for line in stdout.getvalue().splitlines()]
+        expect = ['Name                 Type    Post address',
+                  'With post address    home    Main Street 1',
+                  '                             PostBox Ext',
+                  '                             00000 The City',
+                  '                             SomeState, HomeCountry']
+        self.assertListEqual(expect, text)
+
 
 class ListingCommands2(unittest.TestCase):
 
