@@ -256,7 +256,6 @@ class ListingCommands2(unittest.TestCase):
                   'issue251part2']
         self.assertListEqual(text, expect)
 
-    @unittest.expectedFailure
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/nick.conf')
     def test_email_bug_251(self):
         with mock_stdout() as stdout:
@@ -266,7 +265,6 @@ class ListingCommands2(unittest.TestCase):
                   "ms@example.org\tMichael Smith\tpref"]
         self.assertListEqual(text, expect)
 
-    @unittest.expectedFailure
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/nick.conf')
     def test_email_bug_251_part2(self):
         with mock_stdout() as stdout:
