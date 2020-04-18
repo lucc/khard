@@ -754,32 +754,24 @@ def post_address_subcommand(search_terms: Query,
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    all_post_address_list = []
-    matching_post_address_list = []
+    addresses = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         # create post address line list
-        post_address_line_list = []
+        contact_addresses = []
         if parsable:
-            for type, post_address_list in sorted(vcard.post_addresses.items(),
-                                                  key=lambda k: k[0].lower()):
-                for post_address in post_address_list:
-                    post_address_line_list.append(
-                        "\t".join([str(post_address), name, type]))
+            for type, post_addresses in sorted(vcard.post_addresses.items(),
+                                               key=lambda k: k[0].lower()):
+                for post_address in post_addresses:
+                    contact_addresses.append([str(post_address), name, type])
         else:
-            for type, addresses in sorted(
+            for type, formatted_addresses in sorted(
                     vcard.get_formatted_post_addresses().items(),
                     key=lambda k: k[0].lower()):
-                for address in sorted(addresses):
-                    post_address_line_list.append(
-                        "\t".join([name, type, address]))
-        # add to matching and all post address lists
-        for post_address_line in post_address_line_list:
-            if search_terms.match("{0}\n{0}".format(post_address_line)):
-                matching_post_address_list.append(post_address_line)
-            # collect all post addresses in a different list as fallback
-            all_post_address_list.append(post_address_line)
-    addresses = matching_post_address_list or all_post_address_list
+                for address in sorted(formatted_addresses):
+                    contact_addresses.append([name, type, address])
+        for addr in contact_addresses:
+            addresses.append("\t".join(addr))
     if addresses:
         if parsable:
             print('\n'.join(addresses))
