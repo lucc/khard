@@ -269,7 +269,6 @@ class ListingCommands2(unittest.TestCase):
                   "jcitizen@foo.com\tJoe Citizen\tpref"]
         self.assertListEqual(text, expect)
 
-    @unittest.expectedFailure
     def test_email_bug_251_part_3(self):
         "Find contacts by nickname even if a match by name exists"
         with TmpConfig(["test/fixture/nick.abook/nickname.vcf",

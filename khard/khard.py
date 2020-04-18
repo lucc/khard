@@ -823,28 +823,19 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    matching_email_address_list = []
-    all_email_address_list = []
+    emails = []
     for vcard in vcard_list:
         for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
                 name = formatter.get_special_field(vcard, "name")
-                # create output lines
-                line_formatted = "\t".join([name, type, email])
-                line_parsable = "\t".join([email, name, type])
                 if parsable:
                     # parsable option: start with email address
-                    email_address_line = line_parsable
+                    fields = email, name, type
                 else:
                     # else: start with name
-                    email_address_line = line_formatted
-                if search_terms.match("{}\n{}".format(line_formatted,
-                                                      line_parsable)):
-                    matching_email_address_list.append(email_address_line)
-                # collect all email addresses in a different list as fallback
-                all_email_address_list.append(email_address_line)
-    emails = matching_email_address_list or all_email_address_list
+                    fields = name, type, email
+                emails.append("\t".join(fields))
     if emails:
         if parsable:
             if not remove_first_line:
