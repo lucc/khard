@@ -448,5 +448,42 @@ class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
 #        self.assertTrue(conf.strict)
 
 
+@unittest.expectedFailure
+class Merge(unittest.TestCase):
+
+    def test_merge_with_exact_search_terms(self):
+        with TmpConfig(["contact1.vcf", "contact2.vcf"]):
+            with mock.patch('khard.khard.merge_existing_contacts') as merge:
+                with mock.patch('sys.stdout'):  # just hide stdout
+                    khard.main(["merge", "second", "--target", "third"])
+        merge.assert_called_once()
+        # unpack the call arguments
+        call = merge.mock_calls[0]
+        name, args, kwargs = call
+        first, second, delete = args
+        self.assertTrue(delete)
+        first = pathlib.Path(first.filename).name
+        second = pathlib.Path(second.filename).name
+        self.assertEqual('contact1.vcf', first)
+        self.assertEqual('contact2.vcf', second)
+
+    def test_merge_with_exact_uid_search_terms(self):
+        with TmpConfig(["contact1.vcf", "contact2.vcf"]):
+            with mock.patch('khard.khard.merge_existing_contacts') as merge:
+                with mock.patch('sys.stdout'):  # just hide stdout
+                    khard.main(["merge", "--uid", "testuid1", "--target-uid",
+                                "testuid2"])
+        merge.assert_called_once()
+        # unpack the call arguments
+        call = merge.mock_calls[0]
+        name, args, kwargs = call
+        first, second, delete = args
+        self.assertTrue(delete)
+        first = pathlib.Path(first.filename).name
+        second = pathlib.Path(second.filename).name
+        self.assertEqual('contact1.vcf', first)
+        self.assertEqual('contact2.vcf', second)
+
+
 if __name__ == "__main__":
     unittest.main()
