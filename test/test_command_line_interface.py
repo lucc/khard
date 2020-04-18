@@ -240,6 +240,53 @@ class ListingCommands2(unittest.TestCase):
                   '1        Foo Bar                      i']
         self.assertListEqual(text, expect)
 
+    def test_list_bug_251(self):
+        "Find contacts by nickname even if a match by name exists"
+        with TmpConfig(["test/fixture/nick.abook/nickname.vcf",
+                        "test/fixture/vcards/no-nickname.vcf"]):
+            with mock_stdout() as stdout:
+                khard.main(['list', 'mike'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ['Address book: tmp',
+                  'Index    Name             Phone    Email                   '
+                  'Uid',
+                  '1        Michael Smith             pref: ms@example.org    '
+                  'issue251part1',
+                  '2        Mike Jones                pref: mj@example.org    '
+                  'issue251part2']
+        self.assertListEqual(text, expect)
+
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/nick.conf')
+    def test_email_bug_251(self):
+        with mock_stdout() as stdout:
+            khard.main(['email', '--parsable', 'mike'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["searching for '['mike']' ...",
+                  "ms@example.org\tMichael Smith\tpref"]
+        self.assertListEqual(text, expect)
+
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/nick.conf')
+    def test_email_bug_251_part2(self):
+        with mock_stdout() as stdout:
+            khard.main(['email', '--parsable', 'joe'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["searching for '['joe']' ...",
+                  "jcitizen@foo.com\tJoe Citizen\tpref"]
+        self.assertListEqual(text, expect)
+
+    @unittest.expectedFailure
+    def test_email_bug_251_part_3(self):
+        "Find contacts by nickname even if a match by name exists"
+        with TmpConfig(["test/fixture/nick.abook/nickname.vcf",
+                        "test/fixture/vcards/no-nickname.vcf"]):
+            with mock_stdout() as stdout:
+                khard.main(['email', '--parsable', 'mike'])
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["searching for '['mike']' ...",
+                  'ms@example.org\tMichael Smith\tpref',
+                  'mj@example.org\tMike Jones\tpref']
+        self.assertListEqual(text, expect)
+
 
 class FileSystemCommands(unittest.TestCase):
     """Tests for subcommands that interact with different address books."""

@@ -335,7 +335,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
     # table body
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames)
+                          config.show_nicknames, parsable)
     for index, vcard in enumerate(vcard_list):
         row = []
         for field in table_header:
@@ -703,7 +703,7 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
     birthday_list = []
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames)
+                          config.show_nicknames, parsable)
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         if parsable:
@@ -741,7 +741,7 @@ def phone_subcommand(search_terms: List[str], vcard_list: List[CarddavObject],
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames)
+                          config.show_nicknames, parsable)
     all_phone_numbers_list = []
     matching_phone_number_list = []
     for vcard in vcard_list:
@@ -800,7 +800,7 @@ def post_address_subcommand(search_terms: List[str],
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames)
+                          config.show_nicknames, parsable)
     all_post_address_list = []
     matching_post_address_list = []
     for vcard in vcard_list:
@@ -862,7 +862,7 @@ def email_subcommand(search_terms: List[str], vcard_list: List[CarddavObject],
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames)
+                          config.show_nicknames, parsable)
     matching_email_address_list = []
     all_email_address_list = []
     for vcard in vcard_list:

@@ -59,28 +59,39 @@ class GetSpecialField(unittest.TestCase):
     _vcard = CarddavObject(create_test_vcard(fn="Formatted Name", n=_name,
                                              nickname="Nickname"), None, "")
 
-    def _test_name(self, fmt, nick, expected):
-        f = Formatter(fmt, [], [], nick)
+    def _test_name(self, fmt, nick, parsable, expected):
+        f = Formatter(fmt, [], [], nick, parsable)
         actual = f.get_special_field(self._vcard, "name")
         self.assertEqual(expected, actual)
 
     def test_name_formatted_as_first_name_last_name(self):
-        self._test_name(Formatter.FIRST, False, "Given Additional Family")
+        self._test_name(Formatter.FIRST, False, False,
+                        "Given Additional Family")
 
     def test_name_formatted_as_first_name_last_name_with_nickname(self):
-        self._test_name(Formatter.FIRST, True,
+        self._test_name(Formatter.FIRST, True, False,
                         "Given Additional Family (Nickname: Nickname)")
 
     def test_name_formatted_as_last_name_first_name(self):
-        self._test_name(Formatter.LAST, False, "Family, Given Additional")
+        self._test_name(Formatter.LAST, False, False,
+                        "Family, Given Additional")
 
     def test_name_formatted_as_last_name_first_name_with_nickname(self):
-        self._test_name(Formatter.LAST, True,
+        self._test_name(Formatter.LAST, True, False,
                         "Family, Given Additional (Nickname: Nickname)")
 
     def test_name_formatted_as_formatted_name(self):
-        self._test_name(Formatter.FORMAT, False, "Formatted Name")
+        self._test_name(Formatter.FORMAT, False, False, "Formatted Name")
 
     def test_name_formatted_as_formatted_name_with_nickname(self):
-        self._test_name(Formatter.FORMAT, True,
+        self._test_name(Formatter.FORMAT, True, False,
                         "Formatted Name (Nickname: Nickname)")
+
+    def test_parsable_overrides_nickname_with_first_formatting(self):
+        self._test_name(Formatter.FIRST, True, True, "Given Additional Family")
+
+    def test_parsable_overrides_nickname_with_last_formatting(self):
+        self._test_name(Formatter.LAST, True, True, "Family, Given Additional")
+
+    def test_parsable_overrides_nickname_with_formatted_name(self):
+        self._test_name(Formatter.FORMAT, True, True, "Formatted Name")
