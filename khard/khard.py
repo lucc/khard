@@ -491,7 +491,7 @@ def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
 
 
 def generate_contact_list(args: Namespace) -> List[CarddavObject]:
-    """TODO: Docstring for generate_contact_list.
+    """Find the contact list with which we will work later on
 
     :param args: the command line arguments
     :returns: the contacts for further processing
