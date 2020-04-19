@@ -496,43 +496,16 @@ def generate_contact_list(args: Namespace) -> List[CarddavObject]:
     :param args: the command line arguments
     :returns: the contacts for further processing
     """
-    # fill contact list
-    vcard_list = []
-    if "uid" in args and args.uid:
-        # If an uid was given we use it to find the contact.
-        logger.debug("args.uid=%s", args.uid)
-        # set search terms to the empty query to prevent errors in
-        # phone and email actions
-        args.search_terms = None
-        vcard_list = get_contacts(args.addressbook, args.uid, method="uid")
-        # We require that the uid given can uniquely identify a contact.
-        if not vcard_list:
-            sys.exit("Found no contact for {}uid {}".format(
-                "source " if args.action == "merge" else "", args.uid))
-        elif len(vcard_list) != 1:
-            print("Found multiple contacts for {}uid {}".format(
-                "source " if args.action == "merge" else "", args.uid))
-            for vcard in vcard_list:
-                print("    {}: {}".format(vcard, vcard.uid))
-            sys.exit(1)
-    else:
-        # No uid was given so we try to use the search terms to select a
-        # contact.
-        if "source_search_terms" in args:
-            # exception for merge command
-            args.search_terms = args.source_search_terms or AnyQuery()
-        elif "search_terms" in args:
-            if not args.search_terms:
-                args.search_terms = AnyQuery()
-        else:
-            # If no search terms where given on the command line we match
-            # everything with the empty search pattern.
-            args.search_terms = AnyQuery()
-        logger.debug("args.search_terms=%s", args.search_terms)
-        vcard_list = get_contact_list_by_user_selection(
-            args.addressbook, args.search_terms,
-            args.strict_search if "strict_search" in args else False)
-    return vcard_list
+    if "source_search_terms" in args:
+        # exception for merge command
+        args.search_terms = args.source_search_terms or AnyQuery()
+    if "search_terms" not in args:
+        # It is simpler to handle subcommand that do not have and need search
+        # terms here than conditionally calling generate_contact_list().
+        return []
+    return get_contact_list_by_user_selection(
+        args.addressbook, args.search_terms,
+        args.strict_search if "strict_search" in args else False)
 
 
 def new_subcommand(selected_address_books: AddressBookCollection,
