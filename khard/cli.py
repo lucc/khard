@@ -152,12 +152,11 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "-e", "--strict-search", action="store_true",
         help="narrow contact search to name field")
     default_search_parser.add_argument(
-        "-u", "--uid", type=lambda x: FieldQuery("uid",  x),
+        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
         help="select contact by uid")
     default_search_parser.add_argument(
         "search_terms", nargs="*", metavar="search terms", type=TermQuery,
-        default=[],
-        help="search in all fields to find matching contact")
+        default=[], help="search in all fields to find matching contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
         "-f", "--search-in-source-files", action="store_true",
@@ -171,10 +170,10 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "-t", "--target-contact", "--target", type=TermQuery,
         help="search in all fields to find matching target contact")
     merge_search_parser.add_argument(
-        "-u", "--uid", type=lambda x: FieldQuery("uid",  x),
+        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
         help="select source contact by uid")
     merge_search_parser.add_argument(
-        "-U", "--target-uid", type=lambda x: FieldQuery("uid",  x),
+        "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
         help="select target contact by uid")
     merge_search_parser.add_argument(
         "source_search_terms", nargs="*", metavar="source", type=TermQuery,
