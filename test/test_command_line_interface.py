@@ -23,7 +23,14 @@ from khard import cli
 from khard import config
 from khard import khard
 
-from .helpers import TmpConfig, mock_stream as mock_stdout
+from .helpers import TmpConfig, mock_stream
+
+
+def run_main(*args):
+    """Run the khard.main() method with mocked stdout"""
+    with mock_stream() as stdout:
+        khard.main(args)
+    return stdout
 
 
 @mock.patch('sys.argv', ['TESTSUITE'])
@@ -32,7 +39,7 @@ class HelpOption(unittest.TestCase):
     def _test(self, args, expect):
         """Test the command line args and compare the prefix of the output."""
         with self.assertRaises(SystemExit):
-            with mock_stdout() as stdout:
+            with mock_stream() as stdout:
                 cli.parse_args(args)
         text = stdout.getvalue()
         self.assertTrue(text.startswith(expect))
@@ -52,9 +59,9 @@ class HelpOption(unittest.TestCase):
 class ListingCommands(unittest.TestCase):
     """Tests for subcommands that simply list stuff."""
 
+
     def test_simple_ls_without_options(self):
-        with mock_stdout() as stdout:
-            khard.main(['list'])
+        stdout = run_main("list")
         text = [l.strip() for l in stdout.getvalue().splitlines()]
         expected = [
             "Address book: foo",
@@ -69,8 +76,7 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text, expected)
 
     def test_ls_fields_like_email(self):
-        with mock_stdout() as stdout:
-            khard.main(['ls', '-p', '-F', 'emails.home.0,name'])
+        stdout = run_main('ls', '-p', '-F', 'emails.home.0,name')
         text = stdout.getvalue().splitlines()
         expected = [
             "user@example.com\tsecond contact",
@@ -81,8 +87,7 @@ class ListingCommands(unittest.TestCase):
 
     @mock.patch.dict('os.environ', LC_ALL='C')
     def test_simple_bdays_without_options(self):
-        with mock_stdout() as stdout:
-            khard.main(['birthdays'])
+        stdout = run_main('birthdays')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["Name              Birthday",
                   "text birthday     circa 1800",
@@ -90,31 +95,27 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text, expect)
 
     def test_parsable_bdays(self):
-        with mock_stdout() as stdout:
-            khard.main(['birthdays', '--parsable'])
+        stdout = run_main('birthdays', '--parsable')
         text = stdout.getvalue().splitlines()
         expect = ["circa 1800\ttext birthday", "2018.01.20\tsecond contact"]
         self.assertListEqual(text, expect)
 
     def test_simple_email_without_options(self):
-        with mock_stdout() as stdout:
-            khard.main(['email'])
+        stdout = run_main('email')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["Name              Type    E-Mail",
                   "second contact    home    user@example.com"]
         self.assertListEqual(text, expect)
 
     def test_simple_phone_without_options(self):
-        with mock_stdout() as stdout:
-            khard.main(['phone'])
+        stdout = run_main('phone')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["Name              Type     Phone",
                   "second contact    voice    0123456789"]
         self.assertListEqual(text, expect)
 
     def test_simple_file_without_options(self):
-        with mock_stdout() as stdout:
-            khard.main(['filename'])
+        stdout = run_main('filename')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["test/fixture/test.abook/contact1.vcf",
                   "test/fixture/test.abook/text-bday.vcf",
@@ -122,25 +123,21 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text, expect)
 
     def test_simple_abooks_without_options(self):
-        with mock_stdout() as stdout:
-            khard.main(['addressbooks'])
+        stdout = run_main('addressbooks')
         text = stdout.getvalue().strip()
         expect = "foo"
         self.assertEqual(text, expect)
 
     def test_simple_details_without_options(self):
-        with mock_stdout() as stdout:
-            khard.main(['details', 'uid1'])
+        stdout = run_main('details', 'uid1')
         text = stdout.getvalue()
         # Currently the FN field is not shown with "details".
         self.assertIn('Address book: foo', text)
         self.assertIn('UID: testuid1', text)
 
     def test_order_of_search_term_does_not_matter(self):
-        with mock_stdout() as stdout1:
-            khard.main(['list', 'second', 'contact'])
-        with mock_stdout() as stdout2:
-            khard.main(['list', 'contact', 'second'])
+        stdout1 = run_main('list', 'second', 'contact')
+        stdout2 = run_main('list', 'contact', 'second')
         text1 = [l.strip() for l in stdout1.getvalue().splitlines()]
         text2 = [l.strip() for l in stdout2.getvalue().splitlines()]
         expected = [
@@ -153,10 +150,8 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text2, expected)
 
     def test_case_of_search_terms_does_not_matter(self):
-        with mock_stdout() as stdout1:
-            khard.main(['list', 'second', 'contact'])
-        with mock_stdout() as stdout2:
-            khard.main(['list', 'SECOND', 'CONTACT'])
+        stdout1 = run_main('list', 'second', 'contact')
+        stdout2 = run_main('list', 'SECOND', 'CONTACT')
         text1 = [l.strip() for l in stdout1.getvalue().splitlines()]
         text2 = [l.strip() for l in stdout2.getvalue().splitlines()]
         expected = [
@@ -170,14 +165,13 @@ class ListingCommands(unittest.TestCase):
 
     def test_regex_special_chars_are_not_special(self):
         with self.assertRaises(SystemExit):
-            with mock_stdout() as stdout:
+            with mock_stream() as stdout:
                 khard.main(['list', 'uid.'])
         self.assertEqual(stdout.getvalue(), "Found no contacts\n")
 
     def test_display_post_address(self):
-        with mock_stdout() as stdout:
-            with TmpConfig(["post.vcf"]):
-                khard.main(['postaddress'])
+        with TmpConfig(["post.vcf"]):
+            stdout = run_main('postaddress')
         text = [line.rstrip() for line in stdout.getvalue().splitlines()]
         expected = [
             'Name                 Type    Post address',
@@ -188,13 +182,39 @@ class ListingCommands(unittest.TestCase):
 
         self.assertListEqual(expected, text)
 
+    def test_email_lists_only_contacts_with_emails(self):
+        with TmpConfig(["contact1.vcf", "contact2.vcf"]):
+            stdout = run_main("email")
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["Name              Type    E-Mail",
+                  "second contact    home    user@example.com"]
+        self.assertListEqual(expect, text)
+
+    def test_phone_lists_only_contacts_with_phone_nubers(self):
+        with TmpConfig(["contact1.vcf", "contact2.vcf"]):
+            stdout = run_main("phone")
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
+        expect = ["Name              Type     Phone",
+                  "second contact    voice    0123456789"]
+        self.assertListEqual(expect, text)
+
+    def test_postaddr_lists_only_contacts_with_post_addresses(self):
+        with TmpConfig(["contact1.vcf", "post.vcf"]):
+            stdout = run_main("postaddress")
+        text = [line.rstrip() for line in stdout.getvalue().splitlines()]
+        expect = ['Name                 Type    Post address',
+                  'With post address    home    Main Street 1',
+                  '                             PostBox Ext',
+                  '                             00000 The City',
+                  '                             SomeState, HomeCountry']
+        self.assertListEqual(expect, text)
+
 
 class ListingCommands2(unittest.TestCase):
 
     def test_list_bug_195(self):
         with TmpConfig(['tel-value-uri.vcf']):
-            with mock_stdout() as stdout:
-                khard.main(['list'])
+            stdout = run_main('list')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = [
             "Address book: tmp",
@@ -205,8 +225,7 @@ class ListingCommands2(unittest.TestCase):
     def test_list_bug_243_part_1(self):
         """Search for a category with the ls command"""
         with TmpConfig(['category.vcf']):
-            with mock_stdout() as stdout:
-                khard.main(['list', 'bar'])
+            stdout = run_main('list', 'bar')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = [
             "Address book: tmp",
@@ -220,8 +239,7 @@ class ListingCommands2(unittest.TestCase):
     def test_list_bug_243_part_2(self):
         """Search for a category with the email command"""
         with TmpConfig(['category.vcf']):
-            with mock_stdout() as stdout:
-                khard.main(['email', 'bar'])
+            stdout = run_main('email', 'bar')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = [
             "Name                     Type        E-Mail",
@@ -231,9 +249,8 @@ class ListingCommands2(unittest.TestCase):
 
     def test_list_bug_249(self):
         with TmpConfig(['issue249.vcf']):
-            with mock_stdout() as stdout:
-                # If all spaces are removed this should match "Foo Bar"
-                khard.main(['list', 'oba'])
+            # If all spaces are removed this should match "Foo Bar"
+            stdout = run_main('list', 'oba')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ['Address book: tmp',
                   'Index    Name       Phone    Email    Uid',
@@ -244,8 +261,7 @@ class ListingCommands2(unittest.TestCase):
         "Find contacts by nickname even if a match by name exists"
         with TmpConfig(["test/fixture/nick.abook/nickname.vcf",
                         "test/fixture/vcards/no-nickname.vcf"]):
-            with mock_stdout() as stdout:
-                khard.main(['list', 'mike'])
+            stdout = run_main('list', 'mike')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ['Address book: tmp',
                   'Index    Name             Phone    Email                   '
@@ -258,8 +274,7 @@ class ListingCommands2(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/nick.conf')
     def test_email_bug_251(self):
-        with mock_stdout() as stdout:
-            khard.main(['email', '--parsable', 'mike'])
+        stdout = run_main('email', '--parsable', 'mike')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["searching for 'mike' ...",
                   "ms@example.org\tMichael Smith\tpref"]
@@ -267,20 +282,17 @@ class ListingCommands2(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/nick.conf')
     def test_email_bug_251_part2(self):
-        with mock_stdout() as stdout:
-            khard.main(['email', '--parsable', 'joe'])
+        stdout = run_main('email', '--parsable', 'joe')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["searching for 'joe' ...",
                   "jcitizen@foo.com\tJoe Citizen\tpref"]
         self.assertListEqual(text, expect)
 
-    @unittest.expectedFailure
     def test_email_bug_251_part_3(self):
         "Find contacts by nickname even if a match by name exists"
         with TmpConfig(["test/fixture/nick.abook/nickname.vcf",
                         "test/fixture/vcards/no-nickname.vcf"]):
-            with mock_stdout() as stdout:
-                khard.main(['email', '--parsable', 'mike'])
+            stdout = run_main('email', '--parsable', 'mike')
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ["searching for 'mike' ...",
                   'ms@example.org\tMichael Smith\tpref',
@@ -364,8 +376,7 @@ class MiscCommands(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_show_with_yaml_format(self):
-        with mock_stdout() as stdout:
-            khard.main(["show", "--format=yaml", "uid1"])
+        stdout = run_main("show", "--format=yaml", "uid1")
         # This implicitly tests if the output is valid yaml.
         yaml = YAML(typ="base").load(stdout.getvalue())
         # Just test some keys.
@@ -379,9 +390,7 @@ class MiscCommands(unittest.TestCase):
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
         with mock.patch('subprocess.Popen') as popen:
-            # just hide stdout
-            with mock.patch('sys.stdout'):
-                khard.main(["edit", "uid1"])
+            run_main("edit", "uid1")
         # The editor is called with a temp file so how to we check this more
         # precisely?
         popen.assert_called_once()
@@ -390,9 +399,7 @@ class MiscCommands(unittest.TestCase):
                      EDITOR='editor')
     def test_edit_source_file_without_modifications(self):
         with mock.patch('subprocess.Popen') as popen:
-            # just hide stdout
-            with mock.patch('sys.stdout'):
-                khard.main(["edit", "--format=vcard", "uid1"])
+            run_main("edit", "--format=vcard", "uid1")
         popen.assert_called_once_with(['editor',
                                        'test/fixture/test.abook/contact1.vcf'])
 
@@ -449,8 +456,7 @@ class Merge(unittest.TestCase):
     def test_merge_with_exact_search_terms(self):
         with TmpConfig(["contact1.vcf", "contact2.vcf"]):
             with mock.patch('khard.khard.merge_existing_contacts') as merge:
-                with mock.patch('sys.stdout'):  # just hide stdout
-                    khard.main(["merge", "second", "--target", "third"])
+                run_main("merge", "second", "--target", "third")
         merge.assert_called_once()
         # unpack the call arguments
         call = merge.mock_calls[0]
@@ -465,9 +471,8 @@ class Merge(unittest.TestCase):
     def test_merge_with_exact_uid_search_terms(self):
         with TmpConfig(["contact1.vcf", "contact2.vcf"]):
             with mock.patch('khard.khard.merge_existing_contacts') as merge:
-                with mock.patch('sys.stdout'):  # just hide stdout
-                    khard.main(["merge", "--uid", "testuid1", "--target-uid",
-                                "testuid2"])
+                run_main("merge", "--uid", "testuid1", "--target-uid",
+                         "testuid2")
         merge.assert_called_once()
         # unpack the call arguments
         call = merge.mock_calls[0]

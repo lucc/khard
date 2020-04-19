@@ -703,12 +703,9 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
         sys.exit(1)
 
 
-def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
-                     parsable: bool) -> None:
+def phone_subcommand(vcard_list: List[CarddavObject], parsable: bool) -> None:
     """Print a phone application friendly contact table.
 
-    :param search_terms: used as search term to filter the contacts before
-        printing
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -716,28 +713,19 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    all_phone_numbers_list = []
-    matching_phone_number_list = []
+    numbers = []
     for vcard in vcard_list:
         for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
                 name = formatter.get_special_field(vcard, "name")
-                # create output lines
-                line_formatted = "\t".join([name, type, number])
-                line_parsable = "\t".join([number, name, type])
                 if parsable:
                     # parsable option: start with phone number
-                    phone_number_line = line_parsable
+                    fields = number, name, type
                 else:
                     # else: start with name
-                    phone_number_line = line_formatted
-                if search_terms.match("{}\n{}".format(line_formatted,
-                                                      line_parsable)):
-                    matching_phone_number_list.append(phone_number_line)
-                # collect all phone numbers in a different list as fallback
-                all_phone_numbers_list.append(phone_number_line)
-    numbers = matching_phone_number_list or all_phone_numbers_list
+                    fields = name, type, number
+                numbers.append("\t".join(fields))
     if numbers:
         if parsable:
             print('\n'.join(numbers))
@@ -749,13 +737,10 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
         sys.exit(1)
 
 
-def post_address_subcommand(search_terms: Query,
-                            vcard_list: List[CarddavObject], parsable: bool
+def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
                             ) -> None:
     """Print a contact table. with all postal / mailing addresses
 
-    :param search_terms: used as search term to filter the contacts before
-        printing
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -763,32 +748,24 @@ def post_address_subcommand(search_terms: Query,
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    all_post_address_list = []
-    matching_post_address_list = []
+    addresses = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         # create post address line list
-        post_address_line_list = []
+        contact_addresses = []
         if parsable:
-            for type, post_address_list in sorted(vcard.post_addresses.items(),
-                                                  key=lambda k: k[0].lower()):
-                for post_address in post_address_list:
-                    post_address_line_list.append(
-                        "\t".join([str(post_address), name, type]))
+            for type, post_addresses in sorted(vcard.post_addresses.items(),
+                                               key=lambda k: k[0].lower()):
+                for post_address in post_addresses:
+                    contact_addresses.append([str(post_address), name, type])
         else:
-            for type, addresses in sorted(
+            for type, formatted_addresses in sorted(
                     vcard.get_formatted_post_addresses().items(),
                     key=lambda k: k[0].lower()):
-                for address in sorted(addresses):
-                    post_address_line_list.append(
-                        "\t".join([name, type, address]))
-        # add to matching and all post address lists
-        for post_address_line in post_address_line_list:
-            if search_terms.match("{0}\n{0}".format(post_address_line)):
-                matching_post_address_list.append(post_address_line)
-            # collect all post addresses in a different list as fallback
-            all_post_address_list.append(post_address_line)
-    addresses = matching_post_address_list or all_post_address_list
+                for address in sorted(formatted_addresses):
+                    contact_addresses.append([name, type, address])
+        for addr in contact_addresses:
+            addresses.append("\t".join(addr))
     if addresses:
         if parsable:
             print('\n'.join(addresses))
@@ -823,28 +800,19 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    matching_email_address_list = []
-    all_email_address_list = []
+    emails = []
     for vcard in vcard_list:
         for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
                 name = formatter.get_special_field(vcard, "name")
-                # create output lines
-                line_formatted = "\t".join([name, type, email])
-                line_parsable = "\t".join([email, name, type])
                 if parsable:
                     # parsable option: start with email address
-                    email_address_line = line_parsable
+                    fields = email, name, type
                 else:
                     # else: start with name
-                    email_address_line = line_formatted
-                if search_terms.match("{}\n{}".format(line_formatted,
-                                                      line_parsable)):
-                    matching_email_address_list.append(email_address_line)
-                # collect all email addresses in a different list as fallback
-                all_email_address_list.append(email_address_line)
-    emails = matching_email_address_list or all_email_address_list
+                    fields = name, type, email
+                emails.append("\t".join(fields))
     if emails:
         if parsable:
             if not remove_first_line:
@@ -1132,9 +1100,9 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
     elif args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
-        phone_subcommand(args.search_terms, vcard_list, args.parsable)
+        phone_subcommand(vcard_list, args.parsable)
     elif args.action == "postaddress":
-        post_address_subcommand(args.search_terms, vcard_list, args.parsable)
+        post_address_subcommand(vcard_list, args.parsable)
     elif args.action == "email":
         email_subcommand(args.search_terms, vcard_list,
                          args.parsable, args.remove_first_line)
