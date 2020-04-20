@@ -46,7 +46,10 @@ Integration
 ===========
 
 Khard can be used together with email or SIP clients or a synchronisation
-program like `vdirsyncer`_.
+program like `vdirsyncer`_.  For synchronisation programs it is important to
+note that khard expects the contacts in the configured address book directories
+to be stored in individual files.  The files are expected to have a ``.vcf``
+extension.
 
 .. _vdirsyncer: https://github.com/pimutils/vdirsyncer/
 

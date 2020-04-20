@@ -41,7 +41,9 @@ adressbooks
   This section contains several subsections, but at least one. Each subsection
   can have an arbitrary name which will be the name of an addressbook known to
   khard.  Each of these subsections **must** have a *path* key with the path to
-  the folder containing the vcard files for that addressbook.
+  the folder containing the vcard files for that addressbook.  :program:`khard`
+  expects the vcard files to hold only one VCARD record each and end in a
+  :file:`.vcf` extension.
 
 general
   This section allows one to configure some general features about khard.  The
