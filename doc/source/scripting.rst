@@ -103,12 +103,12 @@ Add the following lines to your alot config file:
 .. code-block:: ini
 
   [accounts]
-      [[youraccount]]
-          [[[abook]]]
-              type = shellcommand
-              command = khard email --parsable
-              regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
-              ignorecase = True
+    [[youraccount]]
+      [[[abook]]]
+        type = shellcommand
+        command = khard email --parsable
+        regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
+        ignorecase = True
 
 
 Twinkle
