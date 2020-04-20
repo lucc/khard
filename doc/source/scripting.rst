@@ -1,5 +1,49 @@
-Scripting and integration with other programs
-=============================================
+Scripting
+=========
+
+Many of khard's subcommands can be used for scripting purposes.  The commands
+``list``, ``birthdays``, ``email``, ``phone`` and ``postaddress`` feature a
+``--parsable`` option which changes the output to be tab separated (normally
+the fields are visually aligned with spaces).  They list several contacts at
+once.  If the search terms are known to match one single contact the command
+``khard show --format=yaml`` can also be used for scripting.  It produces the
+contact in the yaml format that is also used for editing.  But if the search
+terms produce more than one result the ``show`` command first asks the user to
+select one contact which is unsuitable for scripting.
+
+Specifying output fields
+------------------------
+
+The ``list`` command additionally features a ``--fields``/``-F`` options which
+allows to specify the fields of a contact that should be printed.  The list of
+supported field names can be seen with ``khard list -F help``.
+
+Some fields can hold complex data structures like mappings and lists.  These
+can be specified by dot-subscripting the field name.  Lists are subscribed with
+numbers starting at zero.  Subscripting can be nested.
+
+If the contact for somebody would contain several email addresses for example:
+
+.. code-block::
+
+  $ khard list --fields emails somebody
+  Emails
+  {'work': ['work@example.org'], 'home': ['some@example.org', 'body@example.org']}
+
+One could access these with different nested field descriptions like this:
+
+.. code-block::
+
+  $ khard list --fields emails.work somebody
+  Emails
+  ['work@example.org']
+  $ khard list --fields emails.home.1 somebody
+  Emails
+  body@example.org
+
+
+Integration
+===========
 
 Khard can be used together with email or SIP clients or a synchronisation
 program like `vdirsyncer`_.
@@ -62,7 +106,6 @@ Add the following lines to your alot config file:
               command = khard email --parsable
               regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
               ignorecase = True
-
 
 
 Twinkle
