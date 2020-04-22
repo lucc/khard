@@ -9,14 +9,10 @@ import copy
 
 from ruamel.yaml import YAML
 
-from khard.carddav_object import CarddavObject, YAMLEditable
+from khard.carddav_object import CarddavObject
 import khard.helpers
 
-from . import helpers
-
-
-def create_test_card(**kwargs):
-    return YAMLEditable(helpers.create_test_vcard(**kwargs))
+from .helpers import TestYAMLEditable as create_test_card
 
 
 def to_yaml(data):

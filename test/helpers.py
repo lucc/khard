@@ -10,9 +10,11 @@ from unittest import mock
 
 import vobject
 
+from khard import carddav_object
 
-def create_test_vcard(**kwargs):
-    """Create a simple vcard for tests."""
+
+def vCard(**kwargs):
+    """Create a simple vobject.vCard for tests."""
     vcard = vobject.vCard()
     if 'fn' not in kwargs:
         kwargs['fn'] = 'Test vCard'
@@ -21,6 +23,21 @@ def create_test_vcard(**kwargs):
     for key, value in kwargs.items():
         vcard.add(key.upper()).value = value
     return vcard
+
+
+def TestVCardWrapper(**kwargs):
+    """Create a simple VCardWrapper for tests."""
+    return carddav_object.VCardWrapper(vCard(**kwargs))
+
+
+def TestYAMLEditable(**kwargs):
+    """Create a simple YAMLEditable for tests."""
+    return carddav_object.YAMLEditable(vCard(**kwargs))
+
+
+def TestCarddavObject(**kwargs):
+    """Create a siple CarddavObject for tests."""
+    return carddav_object.CarddavObject(vCard(**kwargs), None, None)
 
 
 def mock_stream(name="stdout"):
