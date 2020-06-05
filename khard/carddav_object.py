@@ -1646,7 +1646,7 @@ class CarddavObject(YAMLEditable):
             if self.notes:
                 strings += helpers.convert_to_yaml(
                     "Note", self.notes, 4, -1, False)
-        return '\n'.join(strings)
+        return '\n'.join(strings) + '\n'
 
     def write_to_file(self, overwrite: bool = False) -> None:
         # make sure, that every contact contains a uid
