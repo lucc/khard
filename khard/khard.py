@@ -4,6 +4,7 @@ from argparse import Namespace
 import datetime
 from email import message_from_string
 from email.policy import SMTP as SMTP_POLICY
+from email.headerregistry import Address, AddressHeader, Group
 import logging
 import os
 import subprocess
@@ -63,7 +64,7 @@ def select(items: List[T], include_none: bool = False) -> Optional[T]:
             answer = answer.lower()
             if answer in ["", "q"]:
                 print("Canceled")
-                sys.exit(0)
+                return None
             index = int(answer)
             if include_none and index == 0:
                 return None
@@ -411,7 +412,7 @@ def get_contact_list_by_user_selection(
 def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
                  query: Query, method: str = "all", reverse: bool = False,
                  group: bool = False, sort: str = "first_name") -> List[
-                    CarddavObject]:
+        CarddavObject]:
     """Get a list of contacts from one or more address books.
 
     :param address_book: the address book to search
@@ -479,13 +480,15 @@ def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
     # Get all possible search queries for address book parsing, always
     # depending on the fact if the address book is used to find source or
     # target contacts or both.
-    queries: Dict[str, List[Query]] = {abook.name: [] for abook in config.abooks}
+    queries: Dict[str, List[Query]] = {
+        abook.name: [] for abook in config.abooks}
     for name in queries:
         if "addressbook" in args and name in args.addressbook:
             queries[name].append(source_query)
         if "target_addressbook" in args and name in args.target_addressbook:
             queries[name].append(target_query)
-    queries2: Dict[str, Query] = {n: OrQuery.reduce(q) for n, q in queries.items()}
+    queries2: Dict[str, Query] = {
+        n: OrQuery.reduce(q) for n, q in queries.items()}
     logger.debug('Created query: %s', queries)
     return queries2
 
@@ -543,10 +546,14 @@ def new_subcommand(selected_address_books: AddressBookCollection,
     else:
         create_new_contact(selected_address_book)
 
-def add_email_to_contact(name: str, email_address: str, abooks: AddressBookCollection) -> None:
-    """Add a new email address to the given contact, creating the contact if necessary.
 
-    :param text: the input text to search for the new email
+def add_email_to_contact(name: str, email_address: str,
+                         abooks: AddressBookCollection) -> None:
+    """Add a new email address to the given contact,
+    creating the contact if necessary.
+
+    :param name: name of the contact
+    :param email_address: email address of the contact
     :param abooks: the addressbooks that were selected on the command line
     """
     print("Email address: {}".format(email_address))
@@ -558,11 +565,13 @@ def add_email_to_contact(name: str, email_address: str, abooks: AddressBookColle
         "Select contact for the found e-mail address",
         get_contact_list_by_user_selection(abooks, TermQuery(name), True))
     if selected_vcard is None:
+        if not name:
+            return
         # create new contact
-        if not confirm("Contact {} does not exist. Do you want to create it?"
+        if not confirm("Contact '{}' does not exist. Do you want to create it?"
                        .format(name)):
             print("Canceled")
-            sys.exit(0)
+            return
         # ask for address book, in which to create the new contact
         selected_address_book = choose_address_book_from_list(
             "Select address book for new contact", config.abooks)
@@ -591,13 +600,13 @@ def add_email_to_contact(name: str, email_address: str, abooks: AddressBookColle
             if email == email_address:
                 print("The contact {} already contains the email address {}"
                       .format(selected_vcard, email_address))
-                sys.exit(0)
+                return
 
     # ask for confirmation again
     if not confirm("Do you want to add the email address {} to the contact {}?"
                    .format(email_address, selected_vcard)):
         print("Canceled")
-        sys.exit(0)
+        return
 
     # ask for the email label
     print("\nAdding email address {} to contact {}\n"
@@ -619,23 +628,58 @@ def add_email_to_contact(name: str, email_address: str, abooks: AddressBookColle
     print("Done.\n\n{}".format(selected_vcard.pretty()))
 
 
-def add_email_subcommand(text: str, abooks: AddressBookCollection) -> None:
+def find_email_addresses(text: str, fields: List[str]) -> List[Address]:
+    """Search the text for email addresses in the given fields.
+
+    :param text: the text to search for email addresses
+    :param fields: the fields to look in for email addresses.
+        The `all` field searches all headers.
+    """
+    message = message_from_string(text, policy=SMTP_POLICY)
+
+    def extract_addresses(header) -> List[Address]:
+        if header and isinstance(header, (AddressHeader, Group)):
+            return list(header.addresses)
+        return []
+
+    email_addresses = []
+
+    _all = any([f == "all" for f in fields])
+    if _all:
+        for _, value in message.items():
+            email_addresses.extend(extract_addresses(value))
+    else:
+        for field in fields:
+            email_addresses.extend(extract_addresses(message[field]))
+
+    return email_addresses
+
+
+def add_email_subcommand(
+        text: str,
+        abooks: AddressBookCollection,
+        fields: List[str]) -> None:
     """Add a new email address to contacts, creating new contacts if necessary.
 
     :param text: the input text to search for the new email
     :param abooks: the addressbooks that were selected on the command line
+    :param field: the header field to extract contacts from
     """
-    # get name and email address
-    message = message_from_string(text, policy=SMTP_POLICY)
+    email_addresses = find_email_addresses(text, fields)
+    if not email_addresses:
+        sys.exit("No email addresses found in fields {}".format(fields))
 
-    print("Khard: Add email address to contact")
-    if not message['From'] or not message['From'].addresses:
-        sys.exit("Found no email address")
+    print("Khard: Add email addresses to contacts")
 
-    email_address = message['From'].addresses[0].addr_spec
-    name = message['From'].addresses[0].display_name
+    for email_address in email_addresses:
+        name = email_address.display_name
+        address = email_address.addr_spec
 
-    add_email_to_contact(name, email_address, abooks)
+        add_email_to_contact(name, address, abooks)
+
+        print()
+
+    print("No more email addresses")
 
 
 def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
@@ -1077,7 +1121,8 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
         new_subcommand(args.addressbook, input_from_stdin_or_file,
                        args.open_editor)
     elif args.action == "add-email":
-        add_email_subcommand(input_from_stdin_or_file, args.addressbook)
+        add_email_subcommand(input_from_stdin_or_file,
+                             args.addressbook, args.fields)
     elif args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":

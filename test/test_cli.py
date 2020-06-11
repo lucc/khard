@@ -77,3 +77,30 @@ class TestParseArgs(unittest.TestCase):
         args, _config = cli.parse_args(['merge'])
         actual = args.target_contact
         self.assertEqual(expected, actual)
+
+    def test_add_email_defaults_to_from_lowercase(self):
+        args, _config = cli.parse_args(["add-email"])
+        actual = args.fields
+        self.assertEqual(["from"], actual)
+
+    def test_add_email_from_field(self):
+        args, _config = cli.parse_args(["add-email", "-H", "from"])
+        actual = args.fields
+        self.assertEqual(["from"], actual)
+
+    def test_add_email_another_field(self):
+        args, _config = cli.parse_args(["add-email", "-H", "OtHer"])
+        actual = args.fields
+        self.assertEqual(["other"], actual)
+
+    def test_add_email_multiple_headers_separate_args_takes_last(self):
+        args, _config = cli.parse_args(
+            ["add-email", "-H", "OtHer", "-H", "myfield"])
+        actual = args.fields
+        self.assertEqual(["myfield"], actual)
+
+    def test_add_email_multiple_headers_comma_separated(self):
+        args, _config = cli.parse_args(
+            ["add-email", "-H", "OtHer,myfield,from"])
+        actual = args.fields
+        self.assertEqual(["other", "myfield", "from"], actual)
