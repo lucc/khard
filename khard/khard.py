@@ -543,23 +543,12 @@ def new_subcommand(selected_address_books: AddressBookCollection,
     else:
         create_new_contact(selected_address_book)
 
-
-def add_email_subcommand(text: str, abooks: AddressBookCollection) -> None:
-    """Add a new email address to contacts, creating new contacts if necessary.
+def add_email_to_contact(name: str, email_address: str, abooks: AddressBookCollection) -> None:
+    """Add a new email address to the given contact, creating the contact if necessary.
 
     :param text: the input text to search for the new email
     :param abooks: the addressbooks that were selected on the command line
     """
-    # get name and email address
-    message = message_from_string(text, policy=SMTP_POLICY)
-
-    print("Khard: Add email address to contact")
-    if not message['From'] or not message['From'].addresses:
-        sys.exit("Found no email address")
-
-    email_address = message['From'].addresses[0].addr_spec
-    name = message['From'].addresses[0].display_name
-
     print("Email address: {}".format(email_address))
     if not name:
         name = input("Contact's name: ")
@@ -628,6 +617,25 @@ def add_email_subcommand(text: str, abooks: AddressBookCollection) -> None:
     # save to disk
     selected_vcard.write_to_file(overwrite=True)
     print("Done.\n\n{}".format(selected_vcard.pretty()))
+
+
+def add_email_subcommand(text: str, abooks: AddressBookCollection) -> None:
+    """Add a new email address to contacts, creating new contacts if necessary.
+
+    :param text: the input text to search for the new email
+    :param abooks: the addressbooks that were selected on the command line
+    """
+    # get name and email address
+    message = message_from_string(text, policy=SMTP_POLICY)
+
+    print("Khard: Add email address to contact")
+    if not message['From'] or not message['From'].addresses:
+        sys.exit("Found no email address")
+
+    email_address = message['From'].addresses[0].addr_spec
+    name = message['From'].addresses[0].display_name
+
+    add_email_to_contact(name, email_address, abooks)
 
 
 def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
