@@ -567,7 +567,7 @@ def add_email_subcommand(text: str, abooks: AddressBookCollection) -> None:
     # search for an existing contact
     selected_vcard = choose_vcard_from_list(
         "Select contact for the found e-mail address",
-        get_contact_list_by_user_selection(abooks, name, True))
+        get_contact_list_by_user_selection(abooks, TermQuery(name), True))
     if selected_vcard is None:
         # create new contact
         if not confirm("Contact {} does not exist. Do you want to create it?"

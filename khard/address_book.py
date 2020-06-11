@@ -87,7 +87,7 @@ class AddressBook(metaclass=abc.ABCMeta):
 
     def _search_names(self, query: Query) -> Generator[
             "carddav_object.CarddavObject", None, None]:
-        """Search in the name filed for contacts matching query.
+        """Search in the name field for contacts matching query.
 
         :param query: the query to search for
         :yields: all found contacts
