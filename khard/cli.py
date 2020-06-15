@@ -40,6 +40,15 @@ def field_argument(orignal: str) -> List[str]:
     return ret
 
 
+def comma_separated_argument(original: str) -> List[str]:
+    """Return the original string split by commas
+
+    :param original: the value from the command line
+    :returns: the original value split at "," and lower cased
+    """
+    return [f.lower() for f in original.split(",")]
+
+
 def create_parsers() -> Tuple[argparse.ArgumentParser,
                               argparse.ArgumentParser]:
     """Create two argument parsers.
@@ -278,6 +287,14 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     add_email_parser.add_argument(
         "--vcard-version", choices=("3.0", "4.0"), dest='preferred_version',
         help="Select preferred vcard version for new contact")
+    add_email_parser.add_argument(
+        "-H",
+        "--headers",
+        dest='fields',
+        default=["from"],
+        type=comma_separated_argument,
+        help="Extract contacts from the given comma separated header fields. \
+                `all` searches all headers.")
     subparsers.add_parser(
         "merge",
         aliases=Actions.get_aliases("merge"),

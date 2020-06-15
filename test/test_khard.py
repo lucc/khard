@@ -4,8 +4,10 @@ from argparse import Namespace
 import unittest
 from unittest import mock
 
-from khard import khard
-from khard import query
+from email.headerregistry import Address
+
+from khard import khard, query
+from khard.khard import find_email_addresses
 
 
 class TestSearchQueryPreparation(unittest.TestCase):
@@ -44,3 +46,118 @@ class TestSearchQueryPreparation(unittest.TestCase):
                              source_search_terms=query.AnyQuery(),
                              target_contact=query.AnyQuery())
         self.assertEqual(expected, prepared["foo"])
+
+
+class TestAddEmail(unittest.TestCase):
+
+    def test_find_email_addresses_empty_text_finds_none(self):
+        text = ""
+        addrs = find_email_addresses(text, ["from"])
+        self.assertEqual([], addrs)
+
+    def test_find_email_addresses_single_header_finds_one_address(self):
+        text = """From: John Doe <jdoe@machine.example>"""
+        addrs = find_email_addresses(text, ["from"])
+        expected = [Address(display_name="John Doe",
+                            username="jdoe", domain="machine.example")]
+        self.assertEqual(expected, addrs)
+
+    def test_find_email_addresses_single_header_finds_multiple_addresses(self):
+        text = """From: John Doe <jdoe@machine.example>, \
+                Mary Smith <mary@example.net>"""
+        addrs = find_email_addresses(text, ["from"])
+        expected = [
+            Address(
+                display_name="John Doe",
+                username="jdoe",
+                domain="machine.example"),
+            Address(
+                display_name="Mary Smith",
+                username="mary",
+                domain="example.net")]
+        self.assertEqual(expected, addrs)
+
+    def test_find_email_addresses_non_address_header_finds_none(self):
+        text = """From: John Doe <jdoe@machine.example>, \
+                Mary Smith <mary@example.net>
+Other: test"""
+        addrs = find_email_addresses(text, ["other"])
+        expected = []
+        self.assertEqual(expected, addrs)
+
+    def test_find_email_addresses_multiple_headers_finds_some(self):
+        text = """From: John Doe <jdoe@machine.example>, \
+                Mary Smith <mary@example.net>
+Other: test"""
+        addrs = find_email_addresses(text, ["other", "from"])
+        expected = [
+            Address(
+                display_name="John Doe",
+                username="jdoe",
+                domain="machine.example"),
+            Address(
+                display_name="Mary Smith",
+                username="mary",
+                domain="example.net")]
+        self.assertEqual(expected, addrs)
+
+    def test_find_email_addresses_multiple_headers_finds_all(self):
+        text = """From: John Doe <jdoe@machine.example>, \
+                Mary Smith <mary@example.net>
+To: Michael Jones <mjones@machine.example>"""
+        addrs = find_email_addresses(text, ["to", "FrOm"])
+        expected = [
+            Address(
+                display_name="Michael Jones",
+                username="mjones",
+                domain="machine.example"),
+            Address(
+                display_name="John Doe",
+                username="jdoe",
+                domain="machine.example"),
+            Address(
+                display_name="Mary Smith",
+                username="mary",
+                domain="example.net")]
+        self.assertEqual(expected, addrs)
+
+    def test_find_email_addresses_finds_all_emails(self):
+        text = """From: John Doe <jdoe@machine.example>, \
+                Mary Smith <mary@example.net>
+To: Michael Jones <mjones@machine.example>"""
+        addrs = find_email_addresses(text, ["all"])
+        expected = [
+            Address(
+                display_name="John Doe",
+                username="jdoe",
+                domain="machine.example"),
+            Address(
+                display_name="Mary Smith",
+                username="mary",
+                domain="example.net"),
+            Address(
+                display_name="Michael Jones",
+                username="mjones",
+                domain="machine.example")]
+        self.assertEqual(expected, addrs)
+
+    def test_find_email_addresses_finds_all_emails_with_other_headers_too(
+            self):
+        text = """From: John Doe <jdoe@machine.example>, \
+                Mary Smith <mary@example.net>
+To: Michael Jones <mjones@machine.example>"""
+        addrs = find_email_addresses(text, ["other", "all", "from"])
+        expected = [
+            Address(
+                display_name="John Doe",
+                username="jdoe",
+                domain="machine.example"),
+            Address(
+                display_name="Mary Smith",
+                username="mary",
+                domain="example.net"),
+            Address(
+                display_name="Michael Jones",
+                username="mjones",
+                domain="machine.example")]
+        self.assertEqual(expected, addrs)
