@@ -564,23 +564,42 @@ def add_email_to_contact(name: str, email_address: str,
     selected_vcard = choose_vcard_from_list(
         "Select contact for the found e-mail address",
         get_contact_list_by_user_selection(abooks, TermQuery(name), True))
+
     if selected_vcard is None:
         if not name:
             return
+
         # create new contact
         if not confirm("Contact '{}' does not exist. Do you want to create it?"
                        .format(name)):
-            print("Canceled")
+            print("Cancelled")
             return
         # ask for address book, in which to create the new contact
         selected_address_book = choose_address_book_from_list(
             "Select address book for new contact", config.abooks)
         if selected_address_book is None:
             sys.exit("Error: address book list is empty")
+
+        name_parts = name.split()
+        first = name_parts[0] if len(name_parts) > 0 else ""
+        last = name_parts[-1] if len(name_parts) > 1 else ""
+
         # ask for name and organisation of new contact
         while True:
-            first_name = input("First name: ")
-            last_name = input("Last name: ")
+            if first:
+                first_name = input("First name [empty for '{}']: ".format(first))
+                if not first_name:
+                    first_name = first
+            else:
+                first_name = input("First name: ")
+
+            if last:
+                last_name = input("Last name [empty for '{}']: ".format(last))
+                if not last_name:
+                    last_name = last
+            else:
+                last_name = input("Last name: ")
+
             organisation = input("Organisation: ")
             if not first_name and not last_name and not organisation:
                 print("Error: All fields are empty.")
@@ -605,7 +624,7 @@ def add_email_to_contact(name: str, email_address: str,
     # ask for confirmation again
     if not confirm("Do you want to add the email address {} to the contact {}?"
                    .format(email_address, selected_vcard)):
-        print("Canceled")
+        print("Cancelled")
         return
 
     # ask for the email label
