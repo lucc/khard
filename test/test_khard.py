@@ -6,7 +6,7 @@ from unittest import mock
 
 from email.headerregistry import Address
 
-from khard import khard, query
+from khard import khard, query, address_book
 from khard.khard import find_email_addresses
 
 
@@ -161,3 +161,14 @@ To: Michael Jones <mjones@machine.example>"""
                 username="mjones",
                 domain="machine.example")]
         self.assertEqual(expected, addrs)
+
+class TestSearchContacts(unittest.TestCase):
+
+    def test_get_contact_list_by_user_selection(self):
+        abook = address_book.VdirAddressBook('test', 'test/fixture/multiemail.abook')
+        with mock.patch("khard.khard.config.sort", "last_name"):
+            with mock.patch("khard.khard.config.group_by_addressbook", False):
+                with mock.patch("khard.khard.config.reverse", False):
+                    # copied from add_email_to_contact, notice it sets strict_search to True
+                    l = khard.get_contact_list_by_user_selection(abook, query.TermQuery("searchme"), True)
+                    self.assertEqual(len(l), 1)

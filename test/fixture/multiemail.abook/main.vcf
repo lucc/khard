@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:4.0
+UID:testuid1
+itememail1.EMAIL;TYPE=X-hermes:searchme@otherdomain.com
+EMAIL;TYPE=work:testname@domain.net
+FN:multi email
+END:VCARD
