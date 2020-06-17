@@ -97,6 +97,23 @@ class AddressBook(metaclass=abc.ABCMeta):
             if query.match(contact.formatted_name):
                 yield contact
 
+    def _search_emails(self, query: Query) -> Generator[
+            "carddav_object.CarddavObject", None, None]:
+        """Search in the email field for contacts matching query.
+
+        :param query: the query to search for
+        :yields: all found contacts
+        """
+        for contact in self.contacts.values():
+            match = False
+            for k, v in contact.emails.items():
+                for e in v:
+                    if query.match(e):
+                        match = True
+                        break
+            if match:
+                yield contact
+
     def _search_uid(self, query: str) -> Generator[
             "carddav_object.CarddavObject", None, None]:
         """Search for contacts with a matching uid.
@@ -133,6 +150,8 @@ class AddressBook(metaclass=abc.ABCMeta):
             return self._search_all(query)
         if method == "name":
             return self._search_names(query)
+        if method == "email":
+            return self._search_emails(query)
         if method == "uid":
             return self._search_uid(cast(str, query))
         raise ValueError(
