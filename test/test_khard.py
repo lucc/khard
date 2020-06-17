@@ -78,17 +78,15 @@ class TestAddEmail(unittest.TestCase):
         self.assertEqual(expected, addrs)
 
     def test_find_email_addresses_non_address_header_finds_none(self):
-        text = """From: John Doe <jdoe@machine.example>, \
-                Mary Smith <mary@example.net>
-Other: test"""
+        text = "From: John Doe <jdoe@machine.example>, " \
+            "Mary Smith <mary@example.net>\nOther: test"
         addrs = find_email_addresses(text, ["other"])
         expected = []
         self.assertEqual(expected, addrs)
 
     def test_find_email_addresses_multiple_headers_finds_some(self):
-        text = """From: John Doe <jdoe@machine.example>, \
-                Mary Smith <mary@example.net>
-Other: test"""
+        text = "From: John Doe <jdoe@machine.example>, " \
+            "Mary Smith <mary@example.net>\nOther: test"
         addrs = find_email_addresses(text, ["other", "from"])
         expected = [
             Address(
@@ -102,9 +100,9 @@ Other: test"""
         self.assertEqual(expected, addrs)
 
     def test_find_email_addresses_multiple_headers_finds_all(self):
-        text = """From: John Doe <jdoe@machine.example>, \
-                Mary Smith <mary@example.net>
-To: Michael Jones <mjones@machine.example>"""
+        text = "From: John Doe <jdoe@machine.example>, " \
+            "Mary Smith <mary@example.net>\n" \
+            "To: Michael Jones <mjones@machine.example>"
         addrs = find_email_addresses(text, ["to", "FrOm"])
         expected = [
             Address(
@@ -122,9 +120,9 @@ To: Michael Jones <mjones@machine.example>"""
         self.assertEqual(expected, addrs)
 
     def test_find_email_addresses_finds_all_emails(self):
-        text = """From: John Doe <jdoe@machine.example>, \
-                Mary Smith <mary@example.net>
-To: Michael Jones <mjones@machine.example>"""
+        text = "From: John Doe <jdoe@machine.example>, " \
+            "Mary Smith <mary@example.net>\n" \
+            "To: Michael Jones <mjones@machine.example>"
         addrs = find_email_addresses(text, ["all"])
         expected = [
             Address(
@@ -143,9 +141,9 @@ To: Michael Jones <mjones@machine.example>"""
 
     def test_find_email_addresses_finds_all_emails_with_other_headers_too(
             self):
-        text = """From: John Doe <jdoe@machine.example>, \
-                Mary Smith <mary@example.net>
-To: Michael Jones <mjones@machine.example>"""
+        text = "From: John Doe <jdoe@machine.example>, " \
+            "Mary Smith <mary@example.net>\n" \
+            "To: Michael Jones <mjones@machine.example>"
         addrs = find_email_addresses(text, ["other", "all", "from"])
         expected = [
             Address(
