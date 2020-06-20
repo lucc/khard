@@ -42,17 +42,17 @@ class HelpOption(unittest.TestCase):
             with mock_stream() as stdout:
                 cli.parse_args(args)
         text = stdout.getvalue()
-        self.assertTrue(text.startswith(expect))
+        self.assertRegex(text, expect)
 
     def test_global_help(self):
-        self._test(['-h'], 'usage: TESTSUITE [-h]')
+        self._test(['-h'], r'^usage: TESTSUITE \[-h\]')
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_subcommand_help(self):
-        self._test(['list', '-h'], 'usage: TESTSUITE list [-h]')
+        self._test(['list', '-h'], r'^usage: TESTSUITE list \[-h\]')
 
     def test_global_help_with_subcommand(self):
-        self._test(['-h', 'list'], 'usage: TESTSUITE [-h]')
+        self._test(['-h', 'list'], r'^usage: TESTSUITE \[-h\]')
 
 
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
