@@ -53,6 +53,20 @@ extension.
 
 .. _vdirsyncer: https://github.com/pimutils/vdirsyncer/
 
+vdirsyncer
+----------
+
+Make sure to write the contacts into individual files as ``VCARD`` records and
+give them a ``.vcf`` file extension:
+
+.. code-block:: ini
+
+    [storage local_storage_for_khard]
+    type = "filesystem"
+    fileext = "vcf"
+    path = "..."
+
+
 mutt
 ----
 
