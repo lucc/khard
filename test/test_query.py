@@ -127,7 +127,6 @@ class TestFieldQuery(unittest.TestCase):
         query = FieldQuery('emails', 'user@example.com')
         self.assertTrue(query.match(vcard))
 
-    @unittest.expectedFailure
     def test_match_birthday(self):
         vcard = self._load_contact("contact1.vcf")
         query = FieldQuery('birthday', '2018-01-20')

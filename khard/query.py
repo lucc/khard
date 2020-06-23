@@ -1,6 +1,7 @@
 """Queries to match against contacts"""
 
 import abc
+from datetime import datetime
 from functools import reduce
 from operator import and_, or_
 from typing import Any, Dict, List, Optional, Union
@@ -111,7 +112,8 @@ class FieldQuery(TermQuery):
             return self._match_union(getattr(thing, self._field))
         return False
 
-    def _match_union(self, value: Union[str, List, Dict[str, Any]]) -> bool:
+    def _match_union(self, value: Union[str, datetime, List, Dict[str, Any]]
+                     ) -> bool:
         if isinstance(value, str):
             return self.match(value)
         if isinstance(value, list):
@@ -121,6 +123,9 @@ class FieldQuery(TermQuery):
                 if self.match(key) or self._match_union(value[key]):
                     return True
             return False
+        if isinstance(value, datetime):
+            # currently we only support ISO dates
+            return value == datetime.strptime(self._term, "%Y-%m-%d")
         # this should actually be a type error
         return False
 
