@@ -122,7 +122,6 @@ class TestFieldQuery(unittest.TestCase):
         query = FieldQuery('formatted_name', 'foo')
         self.assertTrue(query.match(vcard))
 
-    @unittest.expectedFailure
     def test_match_email(self):
         vcard = self._load_contact("contact1.vcf")
         query = FieldQuery('emails', 'user@example.com')
