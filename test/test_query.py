@@ -1,6 +1,11 @@
+import os.path
 import unittest
 
-from khard.query import AndQuery, AnyQuery, FieldQuery, NullQuery, OrQuery, TermQuery
+from khard.carddav_object import CarddavObject
+from khard.query import AndQuery, AnyQuery, FieldQuery, NullQuery, OrQuery, \
+    TermQuery
+
+from .helpers import TestCarddavObject
 
 
 class TestTermQuery(unittest.TestCase):
@@ -73,3 +78,59 @@ class TestEquality(unittest.TestCase):
         first = AndQuery(null, any , term, field)
         second = AndQuery(any, null, field, term)
         self.assertEqual(first, second)
+
+
+class TestFieldQuery(unittest.TestCase):
+
+    @staticmethod
+    def _load_contact(path):
+        if not os.path.exists(path):
+            path = os.path.join("test/fixture/vcards", path)
+        return CarddavObject.from_file(None, path)
+
+    @unittest.expectedFailure
+    def test_empty_field_values_match_if_the_field_is_present(self):
+        # This test currently fails because the CarddavObject class has all
+        # attributes set because they are properties.  So the test in the query
+        # class if an attribute is present never fails.
+        uid = 'Some Test Uid'
+        vcard1 = TestCarddavObject(uid=uid)
+        vcard2 = TestCarddavObject()
+        query = FieldQuery('uid', '')
+        self.assertTrue(query.match(vcard1))
+        self.assertFalse(query.match(vcard2))
+
+    def test_values_can_match_exact(self):
+        uid = 'Some Test Uid'
+        vcard = TestCarddavObject(uid=uid)
+        query = FieldQuery('uid', uid)
+        self.assertTrue(query.match(vcard))
+
+    def test_values_can_match_substrings(self):
+        uid = 'Some Test Uid'
+        vcard = TestCarddavObject(uid=uid)
+        query = FieldQuery('uid', 'e Test U')
+        self.assertTrue(query.match(vcard))
+
+    def test_valuess_can_match_case_insensitive(self):
+        uid = 'Some Test Uid'
+        vcard = TestCarddavObject(uid=uid)
+        query1 = FieldQuery('uid', uid.upper())
+        query2 = FieldQuery('uid', uid.lower())
+        self.assertTrue(query1.match(vcard))
+        self.assertTrue(query2.match(vcard))
+
+    def test_match_formatted_name(self):
+        vcard = TestCarddavObject(fn='foo bar')
+        query = FieldQuery('formatted_name', 'foo')
+        self.assertTrue(query.match(vcard))
+
+    def test_match_email(self):
+        vcard = self._load_contact("contact1.vcf")
+        query = FieldQuery('emails', 'user@example.com')
+        self.assertTrue(query.match(vcard))
+
+    def test_match_birthday(self):
+        vcard = self._load_contact("contact1.vcf")
+        query = FieldQuery('birthday', '2018-01-20')
+        self.assertTrue(query.match(vcard))

@@ -7,7 +7,7 @@ from vobject.vcard import Name
 from khard.carddav_object import CarddavObject
 from khard.formatter import Formatter
 
-from .helpers import create_test_vcard
+from .helpers import vCard
 
 
 class FormatLabeledField(unittest.TestCase):
@@ -56,8 +56,8 @@ class GetSpecialField(unittest.TestCase):
 
     _name = Name(family='Family', given='Given', additional='Additional',
                  prefix='Prefix', suffix='Suffix')
-    _vcard = CarddavObject(create_test_vcard(fn="Formatted Name", n=_name,
-                                             nickname="Nickname"), None, "")
+    _vcard = CarddavObject(vCard(fn="Formatted Name", n=_name,
+                                 nickname="Nickname"), None, "")
 
     def _test_name(self, fmt, nick, parsable, expected):
         f = Formatter(fmt, [], [], nick, parsable)

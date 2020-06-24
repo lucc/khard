@@ -1,9 +1,10 @@
 """Queries to match against contacts"""
 
 import abc
+from datetime import datetime
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from . import carddav_object
 
@@ -107,8 +108,26 @@ class FieldQuery(TermQuery):
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         if isinstance(thing, str):
             return super().match(thing)
-        return hasattr(thing, self._field) and super().match(
-            getattr(thing, self._field))
+        if hasattr(thing, self._field):
+            return self._match_union(getattr(thing, self._field))
+        return False
+
+    def _match_union(self, value: Union[str, datetime, List, Dict[str, Any]]
+                     ) -> bool:
+        if isinstance(value, str):
+            return self.match(value)
+        if isinstance(value, list):
+            return any(self._match_union(item) for item in value)
+        if isinstance(value, dict):
+            for key in value:
+                if self.match(key) or self._match_union(value[key]):
+                    return True
+            return False
+        if isinstance(value, datetime):
+            # currently we only support ISO dates
+            return value == datetime.strptime(self._term, "%Y-%m-%d")
+        # this should actually be a type error
+        return False
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, FieldQuery) and self._field == other._field \
