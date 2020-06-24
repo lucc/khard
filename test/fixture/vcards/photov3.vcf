@@ -1,0 +1,11 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:photov3
+FN:with photo v3
+NOTE:From the RFC: ENCODING must be "b" (which enforces base64 encoded
+ data)\, TYPE may be present\, but if it is present it must be a valid
+ IANA image type. The value can be the image data or an uri.
+PHOTO;ENCODING=b;TYPE=PNG:iVBORw0KGgoAAAANSUhEUgAAAAsAAAALCAQAAAADpb+tAA
+ AAQklEQVQI122PQQ4AMAjCKv//Mzs4M0zmRYKkamEwWQVoRJogk4PuRoOoMC/EK8nYb+l08
+ WGvSxKlNHO5kxnp/WXrAzsSERN1N6q5AAAAAElFTkSuQmCC
+END:VCARD

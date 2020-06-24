@@ -1,6 +1,7 @@
 """Tests for the CarddavObject class from the carddav module."""
 # pylint: disable=missing-docstring
 
+import base64
 import datetime
 import unittest
 from unittest import mock
@@ -38,3 +39,21 @@ class AltIds(unittest.TestCase):
         card = CarddavObject.from_file(None, 'test/fixture/vcards/altid.vcf')
         expected = 'one representation'
         self.assertEqual(expected, card.get_first_name_last_name())
+
+
+class Photo(unittest.TestCase):
+
+    """Tests related to the PHOTO property of vCards"""
+
+    PNG_HEADER = b'\x89PNG\r\n\x1a\n'
+
+    def test_parsing_base64_ecoded_photo_vcard_v3(self):
+        c = CarddavObject.from_file(None, 'test/fixture/vcards/photov3.vcf')
+        self.assertEqual(c.vcard.photo.value[:8], self.PNG_HEADER)
+
+    def test_parsing_base64_ecoded_photo_vcard_v4(self):
+        c = CarddavObject.from_file(None, 'test/fixture/vcards/photov4.vcf')
+        uri_stuff, data = c.vcard.photo.value.split(',')
+        self.assertEqual(uri_stuff, 'data:image/png;base64')
+        data = base64.decodebytes(data.encode())
+        self.assertEqual(data[:8], self.PNG_HEADER)
