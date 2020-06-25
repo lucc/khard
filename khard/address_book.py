@@ -1,6 +1,7 @@
 """A simple class to load and manage the vcard files from disk."""
 
 import abc
+import binascii
 import glob
 import logging
 import os
@@ -251,10 +252,10 @@ class VdirAddressBook(AddressBook):
                     self._private_objects, self._localize_dates)
                 if card is None:
                     continue
-            except (IOError, vobject.base.ParseError) as err:
+            except (IOError, vobject.base.ParseError, binascii.Error) as err:
                 verb = "open" if isinstance(err, IOError) else "parse"
-                logger.debug("Error: Could not %s file %s\n%s", verb,
-                             filename, err)
+                logger.error("Error: Could not %s file %s\n%s", verb, filename,
+                             err)
                 if self._skip:
                     errors += 1
                 else:
