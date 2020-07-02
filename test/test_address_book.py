@@ -109,6 +109,9 @@ class VcardAdressBookLoad(unittest.TestCase):
         self.assertEqual(cm.output, [
             'WARNING:khard.carddav_object:Filtering some problematic tags '
             'from test/fixture/broken.abook/unparsable.vcf',
+            'ERROR:khard.address_book:Error: Could not parse file '
+            'test/fixture/broken.abook/unparsable.vcf\n'
+            'At line 5: Component VCARD was never closed',
             'WARNING:khard.address_book:1 of 1 vCard files of address book '
             'test could not be parsed.'])
 
