@@ -106,14 +106,19 @@ class VcardAdressBookLoad(unittest.TestCase):
             'test', 'test/fixture/broken.abook', skip=True)
         with self.assertLogs(level='WARNING') as cm:
             abook.load()
-        self.assertEqual(cm.output, [
+        self.assertEqual(cm.output[0],
             'WARNING:khard.carddav_object:Filtering some problematic tags '
-            'from test/fixture/broken.abook/unparsable.vcf',
+            'from test/fixture/broken.abook/unparsable.vcf')
+        # FIXME Remove this regex assert when either
+        # https://github.com/eventable/vobject/issues/156 is closed or we drop
+        # support for python 3.6
+        self.assertRegex(cm.output[1],
             'ERROR:khard.address_book:Error: Could not parse file '
             'test/fixture/broken.abook/unparsable.vcf\n'
-            'At line 5: Component VCARD was never closed',
+            'At line [35]: Component VCARD was never closed')
+        self.assertEqual(cm.output[2],
             'WARNING:khard.address_book:1 of 1 vCard files of address book '
-            'test could not be parsed.'])
+            'test could not be parsed.')
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):
