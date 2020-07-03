@@ -74,9 +74,9 @@ Khard may be used as an external address book for the email client mutt. To
 accomplish that, add the following to your mutt config file (mostly
 ``~/.mutt/muttrc``):
 
-.. code-block:: muttrc
+.. code-block::
 
-  set query_command= "khard email --parsable %s"
+  set query_command = "khard email --parsable %s"
   bind editor <Tab> complete-query
   bind editor ^T    complete
 
@@ -85,21 +85,21 @@ mail dialog. If your address books contain hundreds or even thousands of
 contacts and the query process is very slow, you may try the
 ``--search-in-source-files`` option to speed up the search:
 
-.. code-block:: muttrc
+.. code-block::
 
-  set query_command= "khard email --parsable --search-in-source-files %s"
+  set query_command = "khard email --parsable --search-in-source-files %s"
 
 If you want to complete multi-word search strings like "john smith" then you
 may try out the following instead:
 
-.. code-block:: muttrc
+.. code-block::
 
   set query_command = "echo %s | xargs khard email --parsable --"
 
 To add email addresses to khard's address book, you may also add the following
 lines to your muttrc file:
 
-.. code-block:: muttrc
+.. code-block::
 
   macro index,pager A \
     "<pipe-message>khard add-email<return>" \
