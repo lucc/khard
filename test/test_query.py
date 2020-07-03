@@ -93,6 +93,11 @@ class TestFieldQuery(unittest.TestCase):
         self.assertTrue(query.match(vcard1))
         self.assertFalse(query.match(vcard2))
 
+    def test_empty_field_values_fails_if_the_field_is_absent(self):
+        vcard = TestCarddavObject()
+        query = FieldQuery('emails', '')
+        self.assertFalse(query.match(vcard))
+
     def test_values_can_match_exact(self):
         uid = 'Some Test Uid'
         vcard = TestCarddavObject(uid=uid)
@@ -126,4 +131,14 @@ class TestFieldQuery(unittest.TestCase):
     def test_match_birthday(self):
         vcard = load_contact("contact1.vcf")
         query = FieldQuery('birthday', '2018-01-20')
+        self.assertTrue(query.match(vcard))
+
+    def test_fail_match_in_other_field(self):
+        vcard = load_contact("contact1.vcf")
+        query = FieldQuery('formatted_name', 'user@example.com')
+        self.assertFalse(query.match(vcard))
+
+    def test_match_email_type(self):
+        vcard = load_contact("contact1.vcf")
+        query = FieldQuery('emails', 'home')
         self.assertTrue(query.match(vcard))
