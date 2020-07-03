@@ -24,9 +24,7 @@ def field_argument(orignal: str) -> List[str]:
     :throws: argparse.ArgumentTypeError
     """
     special_fields = ['index', 'name', 'phone', 'email']
-    properties = [name for name in dir(CarddavObject)
-                  if isinstance(getattr(CarddavObject, name), property)]
-    choices = sorted(special_fields + properties)
+    choices = sorted(special_fields + CarddavObject.get_properties())
     ret = []
     for candidate in orignal.split(','):
         candidate = candidate.lower()
