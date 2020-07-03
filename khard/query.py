@@ -60,6 +60,8 @@ class Query(metaclass=abc.ABCMeta):
 
 class NullQuery(Query):
 
+    """The null-query, it matches nothing."""
+
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return False
 
@@ -68,6 +70,8 @@ class NullQuery(Query):
 
 
 class AnyQuery(Query):
+
+    """The match-anything-query, it always matches."""
 
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return True
@@ -80,6 +84,8 @@ class AnyQuery(Query):
 
 
 class TermQuery(Query):
+
+    """A query to match an object against a fixed string."""
 
     def __init__(self, term: str) -> None:
         self._term = term.lower()
@@ -100,6 +106,8 @@ class TermQuery(Query):
 
 
 class FieldQuery(TermQuery):
+
+    """A query to match against a certain field in a carddav object."""
 
     def __init__(self, field: str, value: str) -> None:
         self._field = field
@@ -142,6 +150,8 @@ class FieldQuery(TermQuery):
 
 class AndQuery(Query):
 
+    """A query to combine multible queries with "and"."""
+
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
 
@@ -164,6 +174,8 @@ class AndQuery(Query):
 
 
 class OrQuery(Query):
+
+    """A query to combine multible queries with "or"."""
 
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
