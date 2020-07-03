@@ -248,3 +248,23 @@ class NameQuery(TermQuery):
 
     def __str__(self) -> str:
         return 'name:{}'.format(self._term)
+
+
+def parse(string: str) -> Union[TermQuery, FieldQuery]:
+    """Parse a string into a query object
+
+    The input string interpreted as a :py:class:`FieldQuery` if it starts with
+    a valid property name of the
+    :py:class:`~khard.carddav_object.CarddavObject` class, followed by a colon
+    and an arbitrary search term.  Otherwise it is interpreted as a
+    :py:class:`TermQuery`.
+
+    :param string: a string to parse into a query
+    :returns: a FieldQuery if the string contains a valid field specifier, a
+        TermQuery otherwise
+    """
+    if ":" in string:
+        field, term = string.split(":", maxsplit=1)
+        if field in carddav_object.CarddavObject.get_properties():
+            return FieldQuery(field, term)
+    return TermQuery(string)

@@ -2,7 +2,7 @@ import os.path
 import unittest
 
 from khard.query import AndQuery, AnyQuery, FieldQuery, NameQuery, NullQuery, \
-    OrQuery, TermQuery
+    OrQuery, TermQuery, parse
 
 from .helpers import TestCarddavObject, load_contact
 
@@ -173,3 +173,33 @@ class TestNameQuery(unittest.TestCase):
         vcard = load_contact("contact1.vcf")
         query = NameQuery("testuid1")
         self.assertFalse(query.match(vcard))
+
+
+class TestParser(unittest.TestCase):
+
+    def test_parsing_simple_terms(self):
+        string = "foo bar"
+        expected = TermQuery(string)
+        actual = parse(string)
+        self.assertEqual(actual, expected)
+
+    def test_parsing_simple_field_queries(self):
+        actual = parse("formatted_name:foo bar")
+        expected = FieldQuery("formatted_name", "foo bar")
+        self.assertEqual(actual, expected)
+
+    def test_bad_field_name_returns_term_query(self):
+        string = "foo:bar"
+        actual = parse(string)
+        expected = TermQuery(string)
+        self.assertEqual(actual, expected)
+
+    def test_field_value_can_be_empty(self):
+        actual = parse("formatted_name:")
+        expected = FieldQuery("formatted_name", "")
+        self.assertEqual(actual, expected)
+
+    def test_field_value_can_contain_colons(self):
+        actual = parse("formatted_name:foo:bar")
+        expected = FieldQuery("formatted_name", "foo:bar")
+        self.assertEqual(actual, expected)
