@@ -8,7 +8,7 @@ from typing import List, Tuple
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config, ConfigError
-from .query import AndQuery, AnyQuery, FieldQuery, TermQuery
+from .query import AndQuery, AnyQuery, FieldQuery, TermQuery, parse
 from .version import version as khard_version
 
 
@@ -162,8 +162,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
         help="select contact by uid")
     default_search_parser.add_argument(
-        "search_terms", nargs="*", metavar="search terms", type=TermQuery,
-        default=[], help="search in all fields to find matching contact")
+        "search_terms", nargs="*", metavar="search terms", type=parse,
+        default=[], help="search in specified or all fields to find matching "
+        "contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
         "-f", "--search-in-source-files", action="store_true",
@@ -183,9 +184,10 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
         help="select target contact by uid")
     merge_search_parser.add_argument(
-        "source_search_terms", nargs="*", metavar="source", type=TermQuery,
+        "source_search_terms", nargs="*", metavar="source", type=parse,
         default=[],
-        help="search in all fields to find matching source contact")
+        help="search in specified or all fields to find matching source "
+        "contact")
 
     # create subparsers for actions
     subparsers = parser.add_subparsers(dest="action")
@@ -405,7 +407,6 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
     logger.debug("first args=%s", args)
-    logger.debug("remainder=%s", remainder)
 
     # Set the default command from the config file if none was given on the
     # command line.
