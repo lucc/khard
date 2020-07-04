@@ -17,6 +17,10 @@ class Query(metaclass=abc.ABCMeta):
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         """Match the self query against the given thing"""
 
+    @abc.abstractmethod
+    def get_term(self) -> Optional[str]:
+        """Extract the search terms from a query."""
+
     def __and__(self, other: "Query") -> "Query":
         """Combine two queries with AND"""
         if isinstance(self, NullQuery) or isinstance(other, NullQuery):
@@ -65,6 +69,9 @@ class NullQuery(Query):
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return False
 
+    def get_term(self) -> Optional[str]:
+        return None
+
     def __str__(self) -> str:
         return "NONE"
 
@@ -75,6 +82,9 @@ class AnyQuery(Query):
 
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return True
+
+    def get_term(self) -> Optional[str]:
+        return ""
 
     def __hash__(self) -> int:
         return hash(NullQuery)
@@ -94,6 +104,9 @@ class TermQuery(Query):
         if isinstance(thing, str):
             return self._term in thing.lower()
         return self._term in thing.pretty().lower()
+
+    def get_term(self) -> Optional[str]:
+        return self._term
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, TermQuery) and self._term == other._term
@@ -158,6 +171,12 @@ class AndQuery(Query):
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return all(q.match(thing) for q in self._queries)
 
+    def get_term(self) -> Optional[str]:
+        terms = [x.get_term() for x in self._queries]
+        if None in terms:
+            return None
+        return "".join(terms)
+
     def __eq__(self, other: object) -> bool:
         return isinstance(other, AndQuery) \
             and frozenset(self._queries) == frozenset(other._queries)
@@ -182,6 +201,12 @@ class OrQuery(Query):
 
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return any(q.match(thing) for q in self._queries)
+
+    def get_term(self) -> Optional[str]:
+        terms = [x.get_term() for x in self._queries]
+        if all(t is None for t in terms):
+            return None
+        return "".join(filter(None, terms))
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, OrQuery) \
