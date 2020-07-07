@@ -10,6 +10,7 @@ from unittest import mock
 
 import vobject
 
+from khard import address_book
 from khard import carddav_object
 
 
@@ -54,6 +55,28 @@ def mock_stream(name="stdout"):
     context_manager = mock.patch('sys.'+name, stream)
     context_manager.getvalue = stream.getvalue
     return context_manager
+
+
+class TmpAbook:
+    """Context manager to create a temporary address book folder"""
+
+    def __init__(self, vcards):
+        self.vcards = vcards
+
+    def __enter__(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        for card in self.vcards:
+            shutil.copy(self._card_path(card), self.tempdir.name)
+        return address_book.VdirAddressBook("tmp", self.tempdir.name)
+
+    def __exit__(self, _a, _b, _c):
+        self.tempdir.cleanup()
+
+    @staticmethod
+    def _card_path(card):
+        if os.path.exists(card):
+            return card
+        return os.path.join("test/fixture/vcards", card)
 
 
 class TmpConfig(contextlib.ContextDecorator):
