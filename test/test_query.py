@@ -1,11 +1,10 @@
 import os.path
 import unittest
 
-from khard.carddav_object import CarddavObject
 from khard.query import AndQuery, AnyQuery, FieldQuery, NullQuery, OrQuery, \
     TermQuery
 
-from .helpers import TestCarddavObject
+from .helpers import TestCarddavObject, load_contact
 
 
 class TestTermQuery(unittest.TestCase):
@@ -82,12 +81,6 @@ class TestEquality(unittest.TestCase):
 
 class TestFieldQuery(unittest.TestCase):
 
-    @staticmethod
-    def _load_contact(path):
-        if not os.path.exists(path):
-            path = os.path.join("test/fixture/vcards", path)
-        return CarddavObject.from_file(None, path)
-
     @unittest.expectedFailure
     def test_empty_field_values_match_if_the_field_is_present(self):
         # This test currently fails because the CarddavObject class has all
@@ -126,11 +119,11 @@ class TestFieldQuery(unittest.TestCase):
         self.assertTrue(query.match(vcard))
 
     def test_match_email(self):
-        vcard = self._load_contact("contact1.vcf")
+        vcard = load_contact("contact1.vcf")
         query = FieldQuery('emails', 'user@example.com')
         self.assertTrue(query.match(vcard))
 
     def test_match_birthday(self):
-        vcard = self._load_contact("contact1.vcf")
+        vcard = load_contact("contact1.vcf")
         query = FieldQuery('birthday', '2018-01-20')
         self.assertTrue(query.match(vcard))
