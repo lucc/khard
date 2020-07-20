@@ -1,13 +1,14 @@
 """Unittests for the khard module"""
 
 from argparse import Namespace
+from email.headerregistry import Address
 import unittest
 from unittest import mock
 
-from email.headerregistry import Address
-
-from khard import khard, query
+from khard import khard, query, config
 from khard.khard import find_email_addresses
+
+from .helpers import TmpAbook, load_contact
 
 
 class TestSearchQueryPreparation(unittest.TestCase):
@@ -159,3 +160,49 @@ class TestAddEmail(unittest.TestCase):
                 username="mjones",
                 domain="machine.example")]
         self.assertEqual(expected, addrs)
+
+
+class TestGetContactListByUserSelection(unittest.TestCase):
+
+    def setUp(self):
+        """initialize the global config object with a mock"""
+        khard.config = mock.Mock(spec=config.Config)
+        khard.config.group_by_addressbook = False
+        khard.config.reverse = False
+        khard.config.sort = "last_name"
+
+    def tearDown(self):
+        del khard.config
+
+    def test_uid_query_without_strict_search(self):
+        q = query.FieldQuery("uid", "testuid1")
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            l = khard.get_contact_list_by_user_selection(abook, q, False)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_uid_query_with_strict_search(self):
+        q = query.FieldQuery("uid", "testuid1")
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            l = khard.get_contact_list_by_user_selection(abook, q, True)
+        self.assertEqual(len(l), 0)
+
+    def test_term_query_without_strict_search(self):
+        q = query.TermQuery("testuid1")
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            l = khard.get_contact_list_by_user_selection(abook, q, False)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_term_query_with_strict_search_matching(self):
+        q = query.TermQuery("second contact")
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            l = khard.get_contact_list_by_user_selection(abook, q, True)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_term_query_with_strict_search_failing(self):
+        q = query.TermQuery("testuid1")
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            l = khard.get_contact_list_by_user_selection(abook, q, True)
+        self.assertEqual(len(l), 0)
