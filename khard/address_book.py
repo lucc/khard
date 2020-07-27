@@ -11,7 +11,7 @@ from typing import cast, Dict, Generator, Iterator, List, Optional, Union
 import vobject.base
 
 from . import carddav_object
-from.query import AnyQuery, Query
+from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)

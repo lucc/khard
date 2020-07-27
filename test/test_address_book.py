@@ -19,7 +19,7 @@ class _AddressBook(address_book.AddressBook):
 class AbstractAddressBookSearch(unittest.TestCase):
     """Tests for khard.address_book.AddressBook.search()"""
 
-    def test_invalide_method_failes(self):
+    def test_invalid_method_fails(self):
         abook = _AddressBook('test')
         with self.assertRaises(ValueError):
             abook.search('query', method='invalid_method')
@@ -70,7 +70,7 @@ class AddressBookCompareUids(unittest.TestCase):
         self.assertEqual(actual, expected)
 
 
-class VcardAdressBookLoad(unittest.TestCase):
+class VcardAddressBookLoad(unittest.TestCase):
 
     def test_vcards_without_uid_generate_a_warning(self):
         abook = address_book.VdirAddressBook('test',
