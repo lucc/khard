@@ -219,7 +219,7 @@ class VdirAddressBook(AddressBook):
         :param localize_dates: wheater to display dates in the local format
         :param skip: skip unparsable vCard files
         """
-        self.path = os.path.expanduser(path)
+        self.path = os.path.expanduser(os.path.expandvars(path))
         if not os.path.isdir(self.path):
             raise FileNotFoundError("[Errno 2] The path {} to the address book"
                                     " {} does not exist.".format(path, name))
