@@ -6,6 +6,7 @@ from unittest import mock
 
 from khard import address_book
 from khard.query import TermQuery
+import os
 
 
 class _AddressBook(address_book.AddressBook):
@@ -119,6 +120,30 @@ class VcardAdressBookLoad(unittest.TestCase):
         self.assertEqual(cm.output[2],
             'WARNING:khard.address_book:1 of 1 vCard files of address book '
             'test could not be parsed.')
+
+    def test_env_var_paths(self):
+        var_name = "KHARD_FOO"
+
+        # Unset env vars shouldn't expand.
+        if var_name in os.environ:
+            os.environ.pop(var_name)
+        try:
+            address_book.VdirAddressBook(
+                "test", "test/fixture/test.abook${}".format(var_name))
+            self.assertTrue(False)
+        except FileNotFoundError as err:
+            self.assertIn("test/fixture/test.abook${}".format(var_name),
+                          err.args[0])
+
+        # Env vars set to empty string should expand to empty string.
+        os.environ[var_name] = ""
+        address_book.VdirAddressBook(
+            "test", "test/fixture/test.abook${}".format(var_name))
+
+        # Env vars set to nonempty string should expand appropriately.
+        os.environ[var_name] = "test/fixture"
+        address_book.VdirAddressBook(
+            "test", "${}/test.abook".format(var_name))
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):
