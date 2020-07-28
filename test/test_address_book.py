@@ -121,12 +121,10 @@ class VcardAddressBookLoad(unittest.TestCase):
             'WARNING:khard.address_book:1 of 1 vCard files of address book '
             'test could not be parsed.')
 
-    def test_env_var_paths(self):
+    @mock.patch.dict("os.environ", clear=True)
+    def test_no_expand_unset_env_var(self):
         var_name = "KHARD_FOO"
-
         # Unset env vars shouldn't expand.
-        if var_name in os.environ:
-            os.environ.pop(var_name)
         try:
             address_book.VdirAddressBook(
                 "test", "test/fixture/test.abook${}".format(var_name))
@@ -135,15 +133,17 @@ class VcardAddressBookLoad(unittest.TestCase):
             self.assertIn("test/fixture/test.abook${}".format(var_name),
                           err.args[0])
 
+    @mock.patch.dict("os.environ", KHARD_FOO="")
+    def test_expand_set_env_var_empty(self):
         # Env vars set to empty string should expand to empty string.
-        os.environ[var_name] = ""
         address_book.VdirAddressBook(
-            "test", "test/fixture/test.abook${}".format(var_name))
+            "test", "test/fixture/test.abook${}".format("KHARD_FOO"))
 
+    @mock.patch.dict("os.environ", KHARD_FOO="test/fixture")
+    def test_expand_set_env_var_nonempty(self):
         # Env vars set to nonempty string should expand appropriately.
-        os.environ[var_name] = "test/fixture"
         address_book.VdirAddressBook(
-            "test", "${}/test.abook".format(var_name))
+            "test", "${}/test.abook".format("KHARD_FOO"))
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):
