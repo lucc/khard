@@ -421,7 +421,7 @@ class CommandLineDefaultsDoNotOverwriteConfigValues(unittest.TestCase):
 
 
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
-class CommandLineArguemtsOverwriteConfigValues(unittest.TestCase):
+class CommandLineArgumentsOverwriteConfigValues(unittest.TestCase):
 
     @staticmethod
     def _merge(args):

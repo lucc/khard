@@ -11,7 +11,7 @@ from typing import cast, Dict, Generator, Iterator, List, Optional, Union
 import vobject.base
 
 from . import carddav_object
-from.query import AnyQuery, Query
+from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
@@ -216,10 +216,10 @@ class VdirAddressBook(AddressBook):
         :param path: the path to the backing structure on disk
         :param private_objects: the names of private vCard extension fields to
             load
-        :param localize_dates: wheater to display dates in the local format
+        :param localize_dates: whether to display dates in the local format
         :param skip: skip unparsable vCard files
         """
-        self.path = os.path.expanduser(path)
+        self.path = os.path.expanduser(os.path.expandvars(path))
         if not os.path.isdir(self.path):
             raise FileNotFoundError("[Errno 2] The path {} to the address book"
                                     " {} does not exist.".format(path, name))
@@ -286,9 +286,9 @@ class AddressBookCollection(AddressBook):
     """A collection of several address books.
 
     This represents a temporary merege of the contact collections provided by
-    the underlying adress books.  On load all contacts from all subadressbooks
-    are copied into a dict in this address book.  This allow this class to use
-    all other methods from the parent AddressBook class.
+    the underlying address books.  On load, all contacts from all
+    subaddressbooks are copied into a dict in this address book.  This allows
+    this class to use all other methods from the parent AddressBook class.
     """
 
     def __init__(self, name: str, abooks: List[VdirAddressBook]) -> None:

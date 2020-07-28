@@ -6,6 +6,7 @@ from unittest import mock
 
 from khard import address_book
 from khard.query import TermQuery
+import os
 
 
 class _AddressBook(address_book.AddressBook):
@@ -18,7 +19,7 @@ class _AddressBook(address_book.AddressBook):
 class AbstractAddressBookSearch(unittest.TestCase):
     """Tests for khard.address_book.AddressBook.search()"""
 
-    def test_invalide_method_failes(self):
+    def test_invalid_method_fails(self):
         abook = _AddressBook('test')
         with self.assertRaises(ValueError):
             abook.search('query', method='invalid_method')
@@ -69,7 +70,7 @@ class AddressBookCompareUids(unittest.TestCase):
         self.assertEqual(actual, expected)
 
 
-class VcardAdressBookLoad(unittest.TestCase):
+class VcardAddressBookLoad(unittest.TestCase):
 
     def test_vcards_without_uid_generate_a_warning(self):
         abook = address_book.VdirAddressBook('test',
@@ -119,6 +120,27 @@ class VcardAdressBookLoad(unittest.TestCase):
         self.assertEqual(cm.output[2],
             'WARNING:khard.address_book:1 of 1 vCard files of address book '
             'test could not be parsed.')
+
+    @mock.patch.dict("os.environ", clear=True)
+    def test_do_not_expand_env_var_that_is_unset(self):
+        # Unset env vars shouldn't expand.
+        with self.assertRaises(FileNotFoundError):
+            address_book.VdirAddressBook(
+                "test", "test/fixture/test.abook${}".format("KHARD_FOO"))
+
+    @mock.patch.dict("os.environ", KHARD_FOO="")
+    def test_expand_env_var_that_is_empty(self):
+        # Env vars set to empty string should expand to empty string.
+        abook = address_book.VdirAddressBook(
+            "test", "test/fixture/test.abook${}".format("KHARD_FOO"))
+        self.assertEqual(abook.path, "test/fixture/test.abook")
+
+    @mock.patch.dict("os.environ", KHARD_FOO="test/fixture")
+    def test_expand_env_var_that_is_nonempty(self):
+        # Env vars set to nonempty string should expand appropriately.
+        abook = address_book.VdirAddressBook(
+            "test", "${}/test.abook".format("KHARD_FOO"))
+        self.assertEqual(abook.path, "test/fixture/test.abook")
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):
