@@ -817,7 +817,7 @@ def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
             list_with_headers(addresses, "Name", "Type", "Post address")
     else:
         if not parsable:
-            print("Found no post adresses")
+            print("Found no post addresses")
         sys.exit(1)
 
 

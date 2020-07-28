@@ -286,9 +286,9 @@ class AddressBookCollection(AddressBook):
     """A collection of several address books.
 
     This represents a temporary merege of the contact collections provided by
-    the underlying adress books.  On load all contacts from all subadressbooks
-    are copied into a dict in this address book.  This allow this class to use
-    all other methods from the parent AddressBook class.
+    the underlying address books.  On load all contacts from all
+    subaddressbooks are copied into a dict in this address book.  This allow
+    this class to use all other methods from the parent AddressBook class.
     """
 
     def __init__(self, name: str, abooks: List[VdirAddressBook]) -> None:
