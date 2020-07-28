@@ -286,8 +286,8 @@ class AddressBookCollection(AddressBook):
     """A collection of several address books.
 
     This represents a temporary merege of the contact collections provided by
-    the underlying address books.  On load all contacts from all
-    subaddressbooks are copied into a dict in this address book.  This allow
+    the underlying address books.  On load, all contacts from all
+    subaddressbooks are copied into a dict in this address book.  This allows
     this class to use all other methods from the parent AddressBook class.
     """
 
