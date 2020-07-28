@@ -123,15 +123,10 @@ class VcardAddressBookLoad(unittest.TestCase):
 
     @mock.patch.dict("os.environ", clear=True)
     def test_no_expand_unset_env_var(self):
-        var_name = "KHARD_FOO"
         # Unset env vars shouldn't expand.
-        try:
+        with self.assertRaises(FileNotFoundError):
             address_book.VdirAddressBook(
-                "test", "test/fixture/test.abook${}".format(var_name))
-            self.assertTrue(False)
-        except FileNotFoundError as err:
-            self.assertIn("test/fixture/test.abook${}".format(var_name),
-                          err.args[0])
+                "test", "test/fixture/test.abook${}".format("KHARD_FOO"))
 
     @mock.patch.dict("os.environ", KHARD_FOO="")
     def test_expand_set_env_var_empty(self):
