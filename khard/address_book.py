@@ -216,7 +216,7 @@ class VdirAddressBook(AddressBook):
         :param path: the path to the backing structure on disk
         :param private_objects: the names of private vCard extension fields to
             load
-        :param localize_dates: wheater to display dates in the local format
+        :param localize_dates: whether to display dates in the local format
         :param skip: skip unparsable vCard files
         """
         self.path = os.path.expanduser(os.path.expandvars(path))
