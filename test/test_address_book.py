@@ -131,14 +131,16 @@ class VcardAddressBookLoad(unittest.TestCase):
     @mock.patch.dict("os.environ", KHARD_FOO="")
     def test_expand_set_env_var_empty(self):
         # Env vars set to empty string should expand to empty string.
-        address_book.VdirAddressBook(
+        abook = address_book.VdirAddressBook(
             "test", "test/fixture/test.abook${}".format("KHARD_FOO"))
+        self.assertEqual(abook.path, "test/fixture/test.abook")
 
     @mock.patch.dict("os.environ", KHARD_FOO="test/fixture")
     def test_expand_set_env_var_nonempty(self):
         # Env vars set to nonempty string should expand appropriately.
-        address_book.VdirAddressBook(
+        abook = address_book.VdirAddressBook(
             "test", "${}/test.abook".format("KHARD_FOO"))
+        self.assertEqual(abook.path, "test/fixture/test.abook")
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):
