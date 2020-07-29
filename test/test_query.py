@@ -1,8 +1,8 @@
 import os.path
 import unittest
 
-from khard.query import AndQuery, AnyQuery, FieldQuery, NullQuery, OrQuery, \
-    TermQuery
+from khard.query import AndQuery, AnyQuery, FieldQuery, NameQuery, NullQuery, \
+    OrQuery, TermQuery
 
 from .helpers import TestCarddavObject, load_contact
 
@@ -141,4 +141,22 @@ class TestFieldQuery(unittest.TestCase):
     def test_match_email_type(self):
         vcard = load_contact("contact1.vcf")
         query = FieldQuery('emails', 'home')
+        self.assertTrue(query.match(vcard))
+
+
+class TestNameQuery(unittest.TestCase):
+
+    def test_matches_formatted_name_field(self):
+        vcard = load_contact("minimal.vcf")
+        query = NameQuery("minimal")
+        self.assertTrue(query.match(vcard))
+
+    def test_matches_name_field(self):
+        vcard = load_contact("nickname.vcf")
+        query = NameQuery("smith")
+        self.assertTrue(query.match(vcard))
+
+    def test_matches_nickname_field(self):
+        vcard = load_contact("nickname.vcf")
+        query = NameQuery("mike")
         self.assertTrue(query.match(vcard))
