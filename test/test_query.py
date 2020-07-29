@@ -1,4 +1,3 @@
-import os.path
 import unittest
 
 from khard.query import AndQuery, AnyQuery, FieldQuery, NullQuery, OrQuery, \
