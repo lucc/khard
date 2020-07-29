@@ -196,3 +196,30 @@ class OrQuery(Query):
 
     def __str__(self) -> str:
         return ' | '.join(str(q) for q in self._queries)
+
+
+class NameQuery(TermQuery):
+
+    """special query to match any kind of name field of a vcard"""
+
+    def __init__(self, term: str) -> None:
+        super().__init__(term)
+        self._props_query = OrQuery(FieldQuery("formatted_name", term),
+                                    FieldQuery("nicknames", term))
+
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
+        m = super().match
+        if isinstance(thing, str):
+            return m(thing)
+        return (m(thing.get_first_name_last_name()) or
+                m(thing.get_last_name_first_name()) or
+                self._props_query.match(thing))
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, NameQuery) and self._term == other._term
+
+    def __hash__(self) -> int:
+        return hash((NameQuery, self._term))
+
+    def __str__(self) -> str:
+        return 'name:{}'.format(self._term)
