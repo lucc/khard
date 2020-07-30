@@ -1,12 +1,13 @@
 """Tests for the address book classes."""
 # pylint: disable=missing-docstring
 
+import os
 import unittest
 from unittest import mock
 
-from khard import address_book
-from khard.query import TermQuery
-import os
+from khard import address_book, query
+
+from .helpers import TmpAbook
 
 
 class _AddressBook(address_book.AddressBook):
@@ -92,7 +93,7 @@ class VcardAddressBookLoad(unittest.TestCase):
 
     def test_search_in_source_files_only_loads_matching_cards(self):
         abook = address_book.VdirAddressBook('test', 'test/fixture/test.abook')
-        abook.load(query=TermQuery('second'), search_in_source_files=True)
+        abook.load(query=query.TermQuery('second'), search_in_source_files=True)
         self.assertEqual(len(abook.contacts), 1)
 
     def test_loading_unparsable_vcard_fails(self):
@@ -141,6 +142,54 @@ class VcardAddressBookLoad(unittest.TestCase):
         abook = address_book.VdirAddressBook(
             "test", "${}/test.abook".format("KHARD_FOO"))
         self.assertEqual(abook.path, "test/fixture/test.abook")
+
+
+class VcardAddressBookSearch(unittest.TestCase):
+
+    @staticmethod
+    def _search(query, method):
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            return list(abook.search(query, method))
+
+    def test_uid_query_with_method_all(self):
+        q = query.FieldQuery("uid", "testuid1")
+        l = self._search(q, "all")
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_uid_query_with_method_name(self):
+        q = query.FieldQuery("uid", "testuid1")
+        l = self._search(q, "name")
+        self.assertEqual(len(l), 0)
+
+    def test_term_query_with_method_all(self):
+        q = query.TermQuery("testuid1")
+        l = self._search(q, "all")
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_term_query_with_method_name_matching(self):
+        q = query.TermQuery("second contact")
+        l = self._search(q, "name")
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_term_query_with_method_name_failing(self):
+        q = query.TermQuery("testuid1")
+        l = self._search(q, "name")
+        self.assertEqual(len(l), 0)
+
+    def test_copied_from_merge_test_1(self):
+        q = query.TermQuery("second")
+        l = self._search(q, "all")
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_copied_from_merge_test_2(self):
+        q = query.TermQuery("third")
+        l = self._search(q, "all")
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid2')
 
 
 class AddressBookGetShortUidDict(unittest.TestCase):
