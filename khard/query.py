@@ -4,7 +4,7 @@ import abc
 from datetime import datetime
 from functools import reduce
 from operator import and_, or_
-from typing import Any, Dict, List, Optional, Union
+from typing import cast, Any, Dict, List, Optional, Union
 
 from . import carddav_object
 
@@ -69,7 +69,7 @@ class NullQuery(Query):
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return False
 
-    def get_term(self) -> Optional[str]:
+    def get_term(self) -> None:
         return None
 
     def __str__(self) -> str:
@@ -83,7 +83,7 @@ class AnyQuery(Query):
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return True
 
-    def get_term(self) -> Optional[str]:
+    def get_term(self) -> str:
         return ""
 
     def __hash__(self) -> int:
@@ -105,7 +105,7 @@ class TermQuery(Query):
             return self._term in thing.lower()
         return self._term in thing.pretty().lower()
 
-    def get_term(self) -> Optional[str]:
+    def get_term(self) -> str:
         return self._term
 
     def __eq__(self, other: object) -> bool:
@@ -175,7 +175,7 @@ class AndQuery(Query):
         terms = [x.get_term() for x in self._queries]
         if None in terms:
             return None
-        return "".join(terms)
+        return "".join(cast(List[str], terms))
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, AndQuery) \
