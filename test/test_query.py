@@ -203,3 +203,8 @@ class TestParser(unittest.TestCase):
         actual = parse("formatted_name:foo:bar")
         expected = FieldQuery("formatted_name", "foo:bar")
         self.assertEqual(actual, expected)
+
+    def test_special_field_name_creates_name_queries(self):
+        actual = parse("name:foo")
+        expected = NameQuery("foo")
+        self.assertEqual(actual, expected)

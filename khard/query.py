@@ -265,6 +265,8 @@ def parse(string: str) -> Union[TermQuery, FieldQuery]:
     """
     if ":" in string:
         field, term = string.split(":", maxsplit=1)
+        if field == "name":
+            return NameQuery(term)
         if field in carddav_object.CarddavObject.get_properties():
             return FieldQuery(field, term)
     return TermQuery(string)
