@@ -160,3 +160,8 @@ class TestNameQuery(unittest.TestCase):
         vcard = load_contact("nickname.vcf")
         query = NameQuery("mike")
         self.assertTrue(query.match(vcard))
+
+    def test_does_not_match_uid_field(self):
+        vcard = load_contact("contact1.vcf")
+        query = NameQuery("testuid1")
+        self.assertFalse(query.match(vcard))
