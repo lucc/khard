@@ -24,7 +24,7 @@ class AbstractAddressBookSearch(unittest.TestCase):
         abook = _AddressBook('test')
         load_mock = mock.Mock()
         abook.load = load_mock
-        list(abook.search('foo'))
+        list(abook.search(query.AnyQuery()))
         load_mock.assert_called_once()
 
     def test_search_will_not_trigger_load_if_loaded(self):
@@ -32,7 +32,7 @@ class AbstractAddressBookSearch(unittest.TestCase):
         load_mock = mock.Mock()
         abook.load = load_mock
         abook._loaded = True
-        list(abook.search('foo'))
+        list(abook.search(query.AnyQuery()))
         load_mock.assert_not_called()
 
     def test_search_passes_query_to_load(self):
