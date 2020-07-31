@@ -187,6 +187,18 @@ class TestGetContactListByUserSelection(unittest.TestCase):
             l = khard.get_contact_list_by_user_selection(abook, q, True)
         self.assertEqual(len(l), 0)
 
+    def test_name_query_with_uid_text_and_strict_search(self):
+        q = query.NameQuery("testuid1")
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            l = khard.get_contact_list_by_user_selection(abook, q, True)
+        self.assertEqual(len(l), 0)
+
+    def test_name_query_with_uid_text_and_without_strict_search(self):
+        q = query.NameQuery("testuid1")
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            l = khard.get_contact_list_by_user_selection(abook, q, False)
+        self.assertEqual(len(l), 0)
+
     def test_term_query_without_strict_search(self):
         q = query.TermQuery("testuid1")
         with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
