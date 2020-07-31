@@ -82,11 +82,6 @@ class AddressBook(metaclass=abc.ABCMeta):
         for contact in self.contacts.values():
             if query.match(contact):
                 yield contact
-            else:  # FIXME this legacy code might be moved to the Query classes
-                # find phone numbers with special chars like /
-                clean = re.sub("[^a-zA-Z0-9\n]", "", contact.pretty().lower())
-                if query.match(clean):
-                    yield contact
 
     def get_short_uid_dict(self, query: Query = AnyQuery()) -> Dict[
             str, "carddav_object.CarddavObject"]:
