@@ -8,7 +8,7 @@ from unittest import mock
 from khard import khard, query, config
 from khard.khard import find_email_addresses
 
-from .helpers import TmpAbook, load_contact
+from .helpers import TmpAbook
 
 
 class TestSearchQueryPreparation(unittest.TestCase):

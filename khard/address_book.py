@@ -6,7 +6,7 @@ import glob
 import logging
 import os
 import re
-from typing import cast, Dict, Generator, Iterator, List, Optional, Union
+from typing import Dict, Generator, Iterator, List, Optional, Union
 
 import vobject.base
 
