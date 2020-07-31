@@ -21,7 +21,7 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
-from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
+from .query import AndQuery, AnyQuery, NameQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 
@@ -397,27 +397,31 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
 
 def get_contact_list_by_user_selection(
         address_books: Union[VdirAddressBook, AddressBookCollection],
-        search: Query, strict_search: bool) -> List[CarddavObject]:
-    """returns a list of CarddavObject objects
-    :param address_books: selected address books
-    :param search: filter contact list
-    :param strict_search: if True, search only in full name field
-    :returns: list of CarddavObject objects
+        query: Query, strict_search: bool) -> List[CarddavObject]:
+    """Find contacts in the given address book grouped, sorted and reversed
+    acording to the loaded configuration .
+
+    :param address_books: the address book to search
+    :param query: the query to use when searching
+    :param strict_search: if True, search only in name fields
+    :returns: list of found CarddavObject objects
     """
-    return get_contacts(address_books, search,
-                        "name" if strict_search else "all", config.reverse,
+    if strict_search and not isinstance(query, NameQuery):
+        # Turn all queries into NameQuery
+        terms = query.get_term()
+        if terms is not None:
+            query = NameQuery(terms)
+    return get_contacts(address_books, query, config.reverse,
                         config.group_by_addressbook, config.sort)
 
 
 def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
-                 query: Query, method: str = "all", reverse: bool = False,
-                 group: bool = False, sort: str = "first_name") -> List[
-        CarddavObject]:
+                 query: Query, reverse: bool = False, group: bool = False,
+                 sort: str = "first_name") -> List[CarddavObject]:
     """Get a list of contacts from one or more address books.
 
     :param address_book: the address book to search
     :param query: a search query to select contacts
-    :param method: the search method, one of "all", "name" or "uid"
     :param reverse: reverse the order of the returned contacts
     :param group: group results by address book
     :param sort: the field to use for sorting, one of "first_name",
