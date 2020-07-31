@@ -21,6 +21,14 @@ class TestTermQuery(unittest.TestCase):
         q = TermQuery('bar')
         self.assertTrue(q.match('FOO BAR BAZ'))
 
+    def test_spaces_in_search_subject_are_not_stripped(self):
+        q = TermQuery('oob')
+        self.assertFalse(q.match('foo bar baz'))
+
+    def test_spaces_in_query_are_not_stripped(self):
+        q = TermQuery('foo bar')
+        self.assertFalse(q.match('foobar'))
+
 
 class TestAndQuery(unittest.TestCase):
 
