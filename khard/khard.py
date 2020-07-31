@@ -425,7 +425,7 @@ def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
     :returns: contacts from the address_book that match the query
     """
     # Search for the contacts in all address books.
-    contacts = address_book.search(query, method=method)
+    contacts = address_book.search(query)
     # Sort the contacts.
     if group:
         if sort == "first_name":
