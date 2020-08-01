@@ -160,9 +160,8 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="DEPRECATED use the new query syntax instead")
     default_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="select contact by uid")
+        help="DEPRECATED use the new query syntax instead")
     default_search_parser.add_argument(
-        # TODO if strict_search then only name queries
         "search_terms", nargs="*", metavar="search terms", type=parse,
         default=[], help="search in specified or all fields to find matching "
         "contact")
@@ -176,16 +175,15 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "-e", "--strict-search", action="store_true",
         help="DEPRECATED use the new query syntax instead")
     merge_search_parser.add_argument(
-        "-t", "--target-contact", "--target", type=TermQuery,
-        help="search in all fields to find matching target contact")
+        "-t", "--target-contact", "--target", type=parse,
+        help="search for a matching target contact")
     merge_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
         help="DEPRECATED use the new query syntax instead")
     merge_search_parser.add_argument(
         "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
-        help="select target contact by uid")
+        help="DEPRECATED use -t with the new query syntax instead")
     merge_search_parser.add_argument(
-        # TODO if strict_search then only name queries
         "source_search_terms", nargs="*", metavar="source", type=parse,
         default=[],
         help="search in specified or all fields to find matching source "
