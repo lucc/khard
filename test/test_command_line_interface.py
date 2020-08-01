@@ -247,16 +247,6 @@ class ListingCommands2(unittest.TestCase):
         ]
         self.assertListEqual(text, expect)
 
-    def test_list_bug_249(self):
-        with TmpConfig(['issue249.vcf']):
-            # If all spaces are removed this should match "Foo Bar"
-            stdout = run_main('list', 'oba')
-        text = [line.strip() for line in stdout.getvalue().splitlines()]
-        expect = ['Address book: tmp',
-                  'Index    Name       Phone    Email    Uid',
-                  '1        Foo Bar                      i']
-        self.assertListEqual(text, expect)
-
     def test_list_bug_251(self):
         "Find contacts by nickname even if a match by name exists"
         with TmpConfig(["test/fixture/nick.abook/nickname.vcf",

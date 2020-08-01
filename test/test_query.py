@@ -1,7 +1,7 @@
 import unittest
 
-from khard.query import AndQuery, AnyQuery, FieldQuery, NullQuery, OrQuery, \
-    TermQuery
+from khard.query import AndQuery, AnyQuery, FieldQuery, NameQuery, NullQuery, \
+    OrQuery, TermQuery, parse
 
 from .helpers import TestCarddavObject, load_contact
 
@@ -19,6 +19,14 @@ class TestTermQuery(unittest.TestCase):
     def test_match_arguments_are_case_insensitive(self):
         q = TermQuery('bar')
         self.assertTrue(q.match('FOO BAR BAZ'))
+
+    def test_spaces_in_search_subject_are_not_stripped(self):
+        q = TermQuery('oob')
+        self.assertFalse(q.match('foo bar baz'))
+
+    def test_spaces_in_query_are_not_stripped(self):
+        q = TermQuery('foo bar')
+        self.assertFalse(q.match('foobar'))
 
 
 class TestAndQuery(unittest.TestCase):
@@ -92,6 +100,11 @@ class TestFieldQuery(unittest.TestCase):
         self.assertTrue(query.match(vcard1))
         self.assertFalse(query.match(vcard2))
 
+    def test_empty_field_values_fails_if_the_field_is_absent(self):
+        vcard = TestCarddavObject()
+        query = FieldQuery('emails', '')
+        self.assertFalse(query.match(vcard))
+
     def test_values_can_match_exact(self):
         uid = 'Some Test Uid'
         vcard = TestCarddavObject(uid=uid)
@@ -126,3 +139,71 @@ class TestFieldQuery(unittest.TestCase):
         vcard = load_contact("contact1.vcf")
         query = FieldQuery('birthday', '2018-01-20')
         self.assertTrue(query.match(vcard))
+
+    def test_fail_match_in_other_field(self):
+        vcard = load_contact("contact1.vcf")
+        query = FieldQuery('formatted_name', 'user@example.com')
+        self.assertFalse(query.match(vcard))
+
+    def test_match_email_type(self):
+        vcard = load_contact("contact1.vcf")
+        query = FieldQuery('emails', 'home')
+        self.assertTrue(query.match(vcard))
+
+
+class TestNameQuery(unittest.TestCase):
+
+    def test_matches_formatted_name_field(self):
+        vcard = load_contact("minimal.vcf")
+        query = NameQuery("minimal")
+        self.assertTrue(query.match(vcard))
+
+    def test_matches_name_field(self):
+        vcard = load_contact("nickname.vcf")
+        query = NameQuery("smith")
+        self.assertTrue(query.match(vcard))
+
+    def test_matches_nickname_field(self):
+        vcard = load_contact("nickname.vcf")
+        query = NameQuery("mike")
+        self.assertTrue(query.match(vcard))
+
+    def test_does_not_match_uid_field(self):
+        vcard = load_contact("contact1.vcf")
+        query = NameQuery("testuid1")
+        self.assertFalse(query.match(vcard))
+
+
+class TestParser(unittest.TestCase):
+
+    def test_parsing_simple_terms(self):
+        string = "foo bar"
+        expected = TermQuery(string)
+        actual = parse(string)
+        self.assertEqual(actual, expected)
+
+    def test_parsing_simple_field_queries(self):
+        actual = parse("formatted_name:foo bar")
+        expected = FieldQuery("formatted_name", "foo bar")
+        self.assertEqual(actual, expected)
+
+    def test_bad_field_name_returns_term_query(self):
+        string = "foo:bar"
+        actual = parse(string)
+        expected = TermQuery(string)
+        self.assertEqual(actual, expected)
+
+    def test_field_value_can_be_empty(self):
+        actual = parse("formatted_name:")
+        expected = FieldQuery("formatted_name", "")
+        self.assertEqual(actual, expected)
+
+    def test_field_value_can_contain_colons(self):
+        actual = parse("formatted_name:foo:bar")
+        expected = FieldQuery("formatted_name", "foo:bar")
+        self.assertEqual(actual, expected)
+
+    def test_special_field_name_creates_name_queries(self):
+        actual = parse("name:foo")
+        expected = NameQuery("foo")
+        self.assertEqual(actual, expected)

@@ -4,7 +4,7 @@ import abc
 from datetime import datetime
 from functools import reduce
 from operator import and_, or_
-from typing import Any, Dict, List, Optional, Union
+from typing import cast, Any, Dict, List, Optional, Union
 
 from . import carddav_object
 
@@ -16,6 +16,10 @@ class Query(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         """Match the self query against the given thing"""
+
+    @abc.abstractmethod
+    def get_term(self) -> Optional[str]:
+        """Extract the search terms from a query."""
 
     def __and__(self, other: "Query") -> "Query":
         """Combine two queries with AND"""
@@ -60,8 +64,13 @@ class Query(metaclass=abc.ABCMeta):
 
 class NullQuery(Query):
 
+    """The null-query, it matches nothing."""
+
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return False
+
+    def get_term(self) -> None:
+        return None
 
     def __str__(self) -> str:
         return "NONE"
@@ -69,8 +78,13 @@ class NullQuery(Query):
 
 class AnyQuery(Query):
 
+    """The match-anything-query, it always matches."""
+
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return True
+
+    def get_term(self) -> str:
+        return ""
 
     def __hash__(self) -> int:
         return hash(NullQuery)
@@ -81,6 +95,8 @@ class AnyQuery(Query):
 
 class TermQuery(Query):
 
+    """A query to match an object against a fixed string."""
+
     def __init__(self, term: str) -> None:
         self._term = term.lower()
 
@@ -88,6 +104,9 @@ class TermQuery(Query):
         if isinstance(thing, str):
             return self._term in thing.lower()
         return self._term in thing.pretty().lower()
+
+    def get_term(self) -> str:
+        return self._term
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, TermQuery) and self._term == other._term
@@ -100,6 +119,8 @@ class TermQuery(Query):
 
 
 class FieldQuery(TermQuery):
+
+    """A query to match against a certain field in a carddav object."""
 
     def __init__(self, field: str, value: str) -> None:
         self._field = field
@@ -142,11 +163,19 @@ class FieldQuery(TermQuery):
 
 class AndQuery(Query):
 
+    """A query to combine multible queries with "and"."""
+
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
 
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return all(q.match(thing) for q in self._queries)
+
+    def get_term(self) -> Optional[str]:
+        terms = [x.get_term() for x in self._queries]
+        if None in terms:
+            return None
+        return "".join(cast(List[str], terms))
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, AndQuery) \
@@ -165,11 +194,19 @@ class AndQuery(Query):
 
 class OrQuery(Query):
 
+    """A query to combine multible queries with "or"."""
+
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
 
     def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
         return any(q.match(thing) for q in self._queries)
+
+    def get_term(self) -> Optional[str]:
+        terms = [x.get_term() for x in self._queries]
+        if all(t is None for t in terms):
+            return None
+        return "".join(filter(None, terms))
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, OrQuery) \
@@ -184,3 +221,52 @@ class OrQuery(Query):
 
     def __str__(self) -> str:
         return ' | '.join(str(q) for q in self._queries)
+
+
+class NameQuery(TermQuery):
+
+    """special query to match any kind of name field of a vcard"""
+
+    def __init__(self, term: str) -> None:
+        super().__init__(term)
+        self._props_query = OrQuery(FieldQuery("formatted_name", term),
+                                    FieldQuery("nicknames", term))
+
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
+        m = super().match
+        if isinstance(thing, str):
+            return m(thing)
+        return (m(thing.get_first_name_last_name()) or
+                m(thing.get_last_name_first_name()) or
+                self._props_query.match(thing))
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, NameQuery) and self._term == other._term
+
+    def __hash__(self) -> int:
+        return hash((NameQuery, self._term))
+
+    def __str__(self) -> str:
+        return 'name:{}'.format(self._term)
+
+
+def parse(string: str) -> Union[TermQuery, FieldQuery]:
+    """Parse a string into a query object
+
+    The input string interpreted as a :py:class:`FieldQuery` if it starts with
+    a valid property name of the
+    :py:class:`~khard.carddav_object.CarddavObject` class, followed by a colon
+    and an arbitrary search term.  Otherwise it is interpreted as a
+    :py:class:`TermQuery`.
+
+    :param string: a string to parse into a query
+    :returns: a FieldQuery if the string contains a valid field specifier, a
+        TermQuery otherwise
+    """
+    if ":" in string:
+        field, term = string.split(":", maxsplit=1)
+        if field == "name":
+            return NameQuery(term)
+        if field in carddav_object.CarddavObject.get_properties():
+            return FieldQuery(field, term)
+    return TermQuery(string)

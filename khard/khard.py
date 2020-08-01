@@ -21,7 +21,7 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
-from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
+from .query import AndQuery, AnyQuery, NameQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 
@@ -397,27 +397,25 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
 
 def get_contact_list_by_user_selection(
         address_books: Union[VdirAddressBook, AddressBookCollection],
-        search: Query, strict_search: bool) -> List[CarddavObject]:
-    """returns a list of CarddavObject objects
-    :param address_books: selected address books
-    :param search: filter contact list
-    :param strict_search: if True, search only in full name field
-    :returns: list of CarddavObject objects
+        query: Query) -> List[CarddavObject]:
+    """Find contacts in the given address book grouped, sorted and reversed
+    acording to the loaded configuration .
+
+    :param address_books: the address book to search
+    :param query: the query to use when searching
+    :returns: list of found CarddavObject objects
     """
-    return get_contacts(address_books, search,
-                        "name" if strict_search else "all", config.reverse,
+    return get_contacts(address_books, query, config.reverse,
                         config.group_by_addressbook, config.sort)
 
 
 def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
-                 query: Query, method: str = "all", reverse: bool = False,
-                 group: bool = False, sort: str = "first_name") -> List[
-        CarddavObject]:
+                 query: Query, reverse: bool = False, group: bool = False,
+                 sort: str = "first_name") -> List[CarddavObject]:
     """Get a list of contacts from one or more address books.
 
     :param address_book: the address book to search
     :param query: a search query to select contacts
-    :param method: the search method, one of "all", "name" or "uid"
     :param reverse: reverse the order of the returned contacts
     :param group: group results by address book
     :param sort: the field to use for sorting, one of "first_name",
@@ -425,7 +423,7 @@ def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
     :returns: contacts from the address_book that match the query
     """
     # Search for the contacts in all address books.
-    contacts = address_book.search(query, method=method)
+    contacts = address_book.search(query)
     # Sort the contacts.
     if group:
         if sort == "first_name":
@@ -506,9 +504,8 @@ def generate_contact_list(args: Namespace) -> List[CarddavObject]:
         # It is simpler to handle subcommand that do not have and need search
         # terms here than conditionally calling generate_contact_list().
         return []
-    return get_contact_list_by_user_selection(
-        args.addressbook, args.search_terms,
-        args.strict_search if "strict_search" in args else False)
+    return get_contact_list_by_user_selection(args.addressbook,
+                                              args.search_terms)
 
 
 def new_subcommand(selected_address_books: AddressBookCollection,
@@ -563,7 +560,7 @@ def add_email_to_contact(name: str, email_address: str,
     # search for an existing contact
     selected_vcard = choose_vcard_from_list(
         "Select contact for the found e-mail address",
-        get_contact_list_by_user_selection(abooks, TermQuery(name), True))
+        get_contact_list_by_user_selection(abooks, TermQuery(name)))
 
     if selected_vcard is None:
         if not name:
@@ -967,8 +964,7 @@ def merge_subcommand(vcard_list: List[CarddavObject],
     :param search_terms: the search terms to find the target contact
     """
     # Find possible target contacts.
-    target_vcards = get_contact_list_by_user_selection(abooks, search_terms,
-                                                       False)
+    target_vcards = get_contact_list_by_user_selection(abooks, search_terms)
     # get the source vcard, from which to merge
     source_vcard = choose_vcard_from_list("Select contact from which to merge",
                                           vcard_list)
@@ -1027,7 +1023,7 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
         get_contact_list_by_user_selection(
-            target_abook, TermQuery(source_vcard.formatted_name), True), True)
+            target_abook, TermQuery(source_vcard.formatted_name)), True)
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:

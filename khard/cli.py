@@ -8,7 +8,7 @@ from typing import List, Tuple
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config, ConfigError
-from .query import AndQuery, AnyQuery, FieldQuery, TermQuery
+from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, TermQuery, parse
 from .version import version as khard_version
 
 
@@ -24,9 +24,7 @@ def field_argument(orignal: str) -> List[str]:
     :throws: argparse.ArgumentTypeError
     """
     special_fields = ['index', 'name', 'phone', 'email']
-    properties = [name for name in dir(CarddavObject)
-                  if isinstance(getattr(CarddavObject, name), property)]
-    choices = sorted(special_fields + properties)
+    choices = sorted(special_fields + CarddavObject.get_properties())
     ret = []
     for candidate in orignal.split(','):
         candidate = candidate.lower()
@@ -159,13 +157,15 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "to incomplete results.")
     default_search_parser.add_argument(
         "-e", "--strict-search", action="store_true",
-        help="narrow contact search to name field")
+        help="DEPRECATED use the new query syntax instead")
     default_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
         help="select contact by uid")
     default_search_parser.add_argument(
-        "search_terms", nargs="*", metavar="search terms", type=TermQuery,
-        default=[], help="search in all fields to find matching contact")
+        # TODO if strict_search then only name queries
+        "search_terms", nargs="*", metavar="search terms", type=parse,
+        default=[], help="search in specified or all fields to find matching "
+        "contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
         "-f", "--search-in-source-files", action="store_true",
@@ -174,20 +174,22 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "to incomplete results.")
     merge_search_parser.add_argument(
         "-e", "--strict-search", action="store_true",
-        help="narrow contact search to name fields")
+        help="DEPRECATED use the new query syntax instead")
     merge_search_parser.add_argument(
         "-t", "--target-contact", "--target", type=TermQuery,
         help="search in all fields to find matching target contact")
     merge_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="select source contact by uid")
+        help="DEPRECATED use the new query syntax instead")
     merge_search_parser.add_argument(
         "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
         help="select target contact by uid")
     merge_search_parser.add_argument(
-        "source_search_terms", nargs="*", metavar="source", type=TermQuery,
+        # TODO if strict_search then only name queries
+        "source_search_terms", nargs="*", metavar="source", type=parse,
         default=[],
-        help="search in all fields to find matching source contact")
+        help="search in specified or all fields to find matching source "
+        "contact")
 
     # create subparsers for actions
     subparsers = parser.add_subparsers(dest="action")
@@ -407,7 +409,6 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
     logger.debug("first args=%s", args)
-    logger.debug("remainder=%s", remainder)
 
     # Set the default command from the config file if none was given on the
     # command line.
@@ -440,6 +441,20 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     if "target_uid" in args and args.target_uid and args.target_contact:
         parser.error("You can not give arbitrary target search terms and "
                      "--target-uid at the same time.")
+    # Deprecation workaround
+    if "strict_search" in args and args.strict_search:
+        logger.error("Deprecated option --strict-search, use the new query "
+                     "syntax instead.")
+        if "search_terms" in args:
+            args.search_terms = [NameQuery(t.get_term()) for t in
+                                 args.search_terms]
+        if "source_search_terms" in args:
+            args.source_search_terms = [NameQuery(t.get_term()) for t in
+                                        args.source_search_terms]
+        if "taget_search_terms" in args:
+            args.taget_search_terms = [NameQuery(t.get_term()) for t in
+                                       args.taget_search_terms]
+
     # Build conjunctive queries.  If uid was given the list of search terms
     # will be empty.  If no uid was given it will be None.
     if "source_search_terms" in args:

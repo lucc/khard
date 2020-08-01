@@ -1,12 +1,13 @@
 """Tests for the address book classes."""
 # pylint: disable=missing-docstring
 
+import os
 import unittest
 from unittest import mock
 
-from khard import address_book
-from khard.query import TermQuery
-import os
+from khard import address_book, query
+
+from .helpers import TmpAbook
 
 
 class _AddressBook(address_book.AddressBook):
@@ -19,16 +20,11 @@ class _AddressBook(address_book.AddressBook):
 class AbstractAddressBookSearch(unittest.TestCase):
     """Tests for khard.address_book.AddressBook.search()"""
 
-    def test_invalid_method_fails(self):
-        abook = _AddressBook('test')
-        with self.assertRaises(ValueError):
-            abook.search('query', method='invalid_method')
-
     def test_search_will_trigger_load_if_not_loaded(self):
         abook = _AddressBook('test')
         load_mock = mock.Mock()
         abook.load = load_mock
-        abook.search('foo')
+        list(abook.search(query.AnyQuery()))
         load_mock.assert_called_once()
 
     def test_search_will_not_trigger_load_if_loaded(self):
@@ -36,15 +32,16 @@ class AbstractAddressBookSearch(unittest.TestCase):
         load_mock = mock.Mock()
         abook.load = load_mock
         abook._loaded = True
-        abook.search('foo')
+        list(abook.search(query.AnyQuery()))
         load_mock.assert_not_called()
 
     def test_search_passes_query_to_load(self):
         abook = _AddressBook('test')
+        self.assertFalse(abook._loaded)
         load_mock = mock.Mock()
         abook.load = load_mock
-        abook.search('foo')
-        load_mock.assert_called_once_with('foo')
+        list(abook.search(query.AnyQuery()))
+        load_mock.assert_called_once_with(query.AnyQuery())
 
 
 class AddressBookCompareUids(unittest.TestCase):
@@ -92,7 +89,7 @@ class VcardAddressBookLoad(unittest.TestCase):
 
     def test_search_in_source_files_only_loads_matching_cards(self):
         abook = address_book.VdirAddressBook('test', 'test/fixture/test.abook')
-        abook.load(query=TermQuery('second'), search_in_source_files=True)
+        abook.load(query=query.TermQuery('second'), search_in_source_files=True)
         self.assertEqual(len(abook.contacts), 1)
 
     def test_loading_unparsable_vcard_fails(self):
@@ -143,6 +140,49 @@ class VcardAddressBookLoad(unittest.TestCase):
         self.assertEqual(abook.path, "test/fixture/test.abook")
 
 
+class VcardAddressBookSearch(unittest.TestCase):
+
+    @staticmethod
+    def _search(query):
+        with TmpAbook(["contact1.vcf", "contact2.vcf"]) as abook:
+            return list(abook.search(query))
+
+    def test_uid_query(self):
+        q = query.FieldQuery("uid", "testuid1")
+        l = self._search(q)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_term_query(self):
+        q = query.TermQuery("testuid1")
+        l = self._search(q)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_term_query_matching(self):
+        q = query.TermQuery("second contact")
+        l = self._search(q)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_term_query_failing(self):
+        q = query.TermQuery("this does not match")
+        l = self._search(q)
+        self.assertEqual(len(l), 0)
+
+    def test_copied_from_merge_test_1(self):
+        q = query.TermQuery("second")
+        l = self._search(q)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid1')
+
+    def test_copied_from_merge_test_2(self):
+        q = query.TermQuery("third")
+        l = self._search(q)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0].uid, 'testuid2')
+
+
 class AddressBookGetShortUidDict(unittest.TestCase):
 
     def test_uniqe_uid_also_reslts_in_shortend_uid_in_short_uid_dict(self):
@@ -161,5 +201,5 @@ class ReportedBugs(unittest.TestCase):
     def test_issue_159_uid_search_doesnt_return_items_twice(self):
         # This was the first half of bug report #159.
         abook = address_book.VdirAddressBook('test', 'test/fixture/test.abook')
-        c = abook.search('testuid1', method='uid')
+        c = abook.search(query.TermQuery('testuid1'))
         self.assertEqual(len(list(c)), 1)

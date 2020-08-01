@@ -1,7 +1,1 @@
-BEGIN:VCARD
-VERSION:3.0
-UID:issue251part1
-N:Smith;Michael;;;
-NICKNAME:Mike
-EMAIL;TYPE=pref:ms@example.org
-END:VCARD
+../vcards/nickname.vcf

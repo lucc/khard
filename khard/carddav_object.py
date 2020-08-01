@@ -1667,3 +1667,9 @@ class CarddavObject(YAMLEditable):
             os.remove(self.filename)
         except IOError as err:
             logger.error("Can not remove vCard file: %s", err)
+
+    @classmethod
+    def get_properties(cls) -> List[str]:
+        """Return the property names that are defined on this class."""
+        return [name for name in dir(CarddavObject)
+                if isinstance(getattr(CarddavObject, name), property)]

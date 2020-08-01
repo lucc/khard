@@ -6,7 +6,7 @@ import glob
 import logging
 import os
 import re
-from typing import cast, Dict, Generator, Iterator, List, Optional, Union
+from typing import Dict, Generator, Iterator, List, Optional, Union
 
 import vobject.base
 
@@ -67,77 +67,21 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def _search_all(self, query: Query) -> Generator[
-            "carddav_object.CarddavObject", None, None]:
-        """Search in all fields for contacts matching query.
-
-        :param query: the query to search for
-        :yields: all found contacts
-        """
-        for contact in self.contacts.values():
-            # search in all contact fields
-            contact_details = contact.pretty().lower()
-            if query.match(contact_details):
-                yield contact
-            else:
-                # find phone numbers with special chars like /
-                clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
-                                               contact_details)
-                if query.match(clean_contact_details):
-                    yield contact
-
-    def _search_names(self, query: Query) -> Generator[
-            "carddav_object.CarddavObject", None, None]:
-        """Search in the name field for contacts matching query.
-
-        :param query: the query to search for
-        :yields: all found contacts
-        """
-        for contact in self.contacts.values():
-            # only search in contact name
-            if query.match(contact.formatted_name):
-                yield contact
-
-    def _search_uid(self, query: str) -> Generator[
-            "carddav_object.CarddavObject", None, None]:
-        """Search for contacts with a matching uid.
-
-        :param query: the query to search for
-        :yields: all found contacts
-        """
-        try:
-            # First we treat the argument as a full UID and try to match it
-            # exactly.
-            yield self.contacts[query]
-        except KeyError:
-            # If that failed we look for all contacts whos UID start with the
-            # given query.
-            for uid in self.contacts:
-                if uid.startswith(query):
-                    yield self.contacts[uid]
-
-    def search(self, query: Query, method: str = "all") -> Generator[
-            "carddav_object.CarddavObject", None, None]:
+    def search(self, query: Query) -> Generator["carddav_object.CarddavObject",
+                                                None, None]:
         """Search this address book for contacts matching the query.
 
-        The method can be one of "all", "name" and "uid".  The backend for this
-        address book migth be load()ed if needed.
+        The backend for this address book migth be load()ed if needed.
 
         :param query: the query to search for
-        :param method: the type of fileds to use when seaching
-        :returns: all found contacts
+        :yields: all found contacts
         """
         logger.debug('address book %s, searching with %s', self.name, query)
         if not self._loaded:
             self.load(query)
-        if method == "all":
-            return self._search_all(query)
-        if method == "name":
-            return self._search_names(query)
-        if method == "uid":
-            return self._search_uid(cast(str, query))
-        raise ValueError(
-            'Only the search methods "all", "name" and "uid" are supported.')
+        for contact in self.contacts.values():
+            if query.match(contact):
+                yield contact
 
     def get_short_uid_dict(self, query: Query = AnyQuery()) -> Dict[
             str, "carddav_object.CarddavObject"]:
