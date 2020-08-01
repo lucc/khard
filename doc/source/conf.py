@@ -50,6 +50,7 @@ del update_template_file
 extensions = [
     'autoapi.extension',
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx_autodoc_typehints',
 ]
