@@ -50,6 +50,11 @@ nicknames and formatted names).
    search term.  So ``email:foo`` will search for "email:foo" in any field of
    the contact, because the field is called "emails".
 
+.. note::
+   Nested field names like for the :option:`-F` option of the ``ls`` subcommand
+   are currently not supported in the query syntax.  You can only search with
+   the top level field names.
+
 Show contacts
 -------------
 
