@@ -54,7 +54,7 @@ In order to start coding you need to fetch the develop branch:
   git clone https://github.com/scheibler/khard
   cd khard
   python setup.py build  # to generate the version.py file
-  python -m kard --help
+  python -m khard --help
   # or
   pip3 install --editable .
   khard --help
