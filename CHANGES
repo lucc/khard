@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+v0.17.0: 2020-08-13
+- Do not modify (clean up) search query to find more matches (4583efd)
+- Remove special search handling for phone numbers (a570a85)
+- Remove extra pruning from email, phone and postaddress subcommand (3f315f9, 1b9ce98, c704ce1)
+- Add query syntax for search terms (#131)
+- Add newline at the end of "show --format=pretty" (#256)
+- Add -H to select header from which add-email should read (#258)
+- Expand environment variables in paths in the config file (#269)
+- Deprecate --strict-search (the new query syntax can be used instead)
+
+
 v0.16.0: 2020-04-04
 - Require python >= 3.6
 - Require either default_action or a subcommand
