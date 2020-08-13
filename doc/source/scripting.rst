@@ -1,10 +1,71 @@
-Scripting and integration with other programs
-=============================================
+Scripting
+=========
+
+Many of khard's subcommands can be used for scripting purposes.  The commands
+``list``, ``birthdays``, ``email``, ``phone`` and ``postaddress`` feature a
+``--parsable`` option which changes the output to be tab separated (normally
+the fields are visually aligned with spaces).  They list several contacts at
+once.  If the search terms are known to match one single contact the command
+``khard show --format=yaml`` can also be used for scripting.  It produces the
+contact in the yaml format that is also used for editing.  But if the search
+terms produce more than one result the ``show`` command first asks the user to
+select one contact which is unsuitable for scripting.
+
+Specifying output fields
+------------------------
+
+The ``list`` command additionally features a ``--fields``/``-F`` options which
+allows to specify the fields of a contact that should be printed.  The list of
+supported field names can be seen with ``khard list -F help``.
+
+Some fields can hold complex data structures like mappings and lists.  These
+can be specified by dot-subscripting the field name.  Lists are subscribed with
+numbers starting at zero.  Subscripting can be nested.
+
+If the contact for somebody would contain several email addresses for example:
+
+.. code-block::
+
+  $ khard list --fields emails somebody
+  Emails
+  {'work': ['work@example.org'], 'home': ['some@example.org', 'body@example.org']}
+
+One could access these with different nested field descriptions like this:
+
+.. code-block::
+
+  $ khard list --fields emails.work somebody
+  Emails
+  ['work@example.org']
+  $ khard list --fields emails.home.1 somebody
+  Emails
+  body@example.org
+
+
+Integration
+===========
 
 Khard can be used together with email or SIP clients or a synchronisation
-program like `vdirsyncer`_.
+program like `vdirsyncer`_.  For synchronisation programs it is important to
+note that khard expects the contacts in the configured address book directories
+to be stored in individual files.  The files are expected to have a ``.vcf``
+extension.
 
 .. _vdirsyncer: https://github.com/pimutils/vdirsyncer/
+
+vdirsyncer
+----------
+
+Make sure to write the contacts into individual files as ``VCARD`` records and
+give them a ``.vcf`` file extension:
+
+.. code-block:: ini
+
+    [storage local_storage_for_khard]
+    type = "filesystem"
+    fileext = "vcf"
+    path = "..."
+
 
 mutt
 ----
@@ -13,9 +74,9 @@ Khard may be used as an external address book for the email client mutt. To
 accomplish that, add the following to your mutt config file (mostly
 ``~/.mutt/muttrc``):
 
-.. code-block:: muttrc
+.. code-block::
 
-  set query_command= "khard email --parsable %s"
+  set query_command = "khard email --parsable %s"
   bind editor <Tab> complete-query
   bind editor ^T    complete
 
@@ -24,21 +85,21 @@ mail dialog. If your address books contain hundreds or even thousands of
 contacts and the query process is very slow, you may try the
 ``--search-in-source-files`` option to speed up the search:
 
-.. code-block:: muttrc
+.. code-block::
 
-  set query_command= "khard email --parsable --search-in-source-files %s"
+  set query_command = "khard email --parsable --search-in-source-files %s"
 
 If you want to complete multi-word search strings like "john smith" then you
 may try out the following instead:
 
-.. code-block:: muttrc
+.. code-block::
 
   set query_command = "echo %s | xargs khard email --parsable --"
 
 To add email addresses to khard's address book, you may also add the following
 lines to your muttrc file:
 
-.. code-block:: muttrc
+.. code-block::
 
   macro index,pager A \
     "<pipe-message>khard add-email<return>" \
@@ -56,13 +117,12 @@ Add the following lines to your alot config file:
 .. code-block:: ini
 
   [accounts]
-      [[youraccount]]
-          [[[abook]]]
-              type = shellcommand
-              command = khard email --parsable
-              regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
-              ignorecase = True
-
+    [[youraccount]]
+      [[[abook]]]
+        type = shellcommand
+        command = khard email --parsable
+        regexp = '^(?P<email>[^@]+@[^\t]+)\t+(?P<name>[^\t]+)'
+        ignorecase = True
 
 
 Twinkle

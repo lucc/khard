@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:4.0
+UID:photov4
+FN:with photo v4
+NOTE:The RFC6350 for vCard 4.0 specifies that the value for PHOTO should
+ be a single uri.
+PHOTO:data:image/png;base64\,iVBORw0KGgoAAAANSUhEUgAAAAsAAAALCAQAAAADpb+
+ tAAAAQklEQVQI122PQQ4AMAjCKv//Mzs4M0zmRYKkamEwWQVoRJogk4PuRoOoMC/EK8nYb+
+ l08WGvSxKlNHO5kxnp/WXrAzsSERN1N6q5AAAAAElFTkSuQmCC
+END:VCARD

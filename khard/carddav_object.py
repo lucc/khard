@@ -14,7 +14,7 @@ import os
 import re
 import sys
 import time
-from typing import cast, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -23,10 +23,10 @@ import vobject
 from . import address_book
 from . import helpers
 from .object_type import ObjectType
+from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
-Query = Union[None, str, List[str], List[List[str]]]
 
 
 def convert_to_vcard(name: str, value: Union[str, List[str]],
@@ -1487,7 +1487,7 @@ class CarddavObject(YAMLEditable):
 
     @classmethod
     def from_file(cls, address_book: "address_book.VdirAddressBook",
-                  filename: str, query: Query,
+                  filename: str, query: Query = AnyQuery(),
                   supported_private_objects: Optional[List[str]] = None,
                   localize_dates: bool = False) -> Optional["CarddavObject"]:
         """Load a CarddavObject object from a .vcf file if the plain file
@@ -1506,7 +1506,7 @@ class CarddavObject(YAMLEditable):
         """
         with open(filename, "r") as file:
             contents = file.read()
-        if query is None or cls.match(contents.lower(), query):
+        if query.match(contents):
             try:
                 vcard = vobject.readOne(contents)
             except Exception:
@@ -1514,8 +1514,8 @@ class CarddavObject(YAMLEditable):
                                filename)
                 # if creation fails, try to repair some vcard attributes
                 vcard = vobject.readOne(cls._filter_invalid_tags(contents))
-            return cls(vcard, address_book, filename, supported_private_objects,
-                       None, localize_dates)
+            return cls(vcard, address_book, filename,
+                       supported_private_objects, None, localize_dates)
         return None
 
     @classmethod
@@ -1544,38 +1544,6 @@ class CarddavObject(YAMLEditable):
             localize_dates=localize_dates)
         contact.update(yaml)
         return contact
-
-    @staticmethod
-    def match(string: str, query: Query) -> bool:
-        """Check if the given string matches against the query.  The query is a
-        list of lists of strings.  The inner lists are AND joined and the outer
-        lists are OR joined.
-
-        :param string: the string which to check
-        :param query:
-        """
-        def match_str(q: str, s: str) -> bool:
-            return q.lower() in s
-
-        def match_list1(q: List[str], s: str) -> bool:
-            return all(match_str(qq, s) for qq in q)
-
-        def match_list2(q: List[List[str]], s: str) -> bool:
-            return any(match_list1(qq, s) for qq in q)
-
-        logger.debug('match: %s', [string, query])
-
-        if query is None:
-            return True
-        string = string.lower()
-        if isinstance(query, str):
-            return match_str(query, string)
-        # now query can only be list(str) or list(list(str))
-        if not query:
-            return False
-        if isinstance(query[0], str):
-            return match_list1(cast(List[str], query), string)
-        return match_list2(cast(List[List[str]], query), string)
 
     ######################################
     # overwrite some default class methods
@@ -1678,7 +1646,7 @@ class CarddavObject(YAMLEditable):
             if self.notes:
                 strings += helpers.convert_to_yaml(
                     "Note", self.notes, 4, -1, False)
-        return '\n'.join(strings)
+        return '\n'.join(strings) + '\n'
 
     def write_to_file(self, overwrite: bool = False) -> None:
         # make sure, that every contact contains a uid
@@ -1699,3 +1667,9 @@ class CarddavObject(YAMLEditable):
             os.remove(self.filename)
         except IOError as err:
             logger.error("Can not remove vCard file: %s", err)
+
+    @classmethod
+    def get_properties(cls) -> List[str]:
+        """Return the property names that are defined on this class."""
+        return [name for name in dir(CarddavObject)
+                if isinstance(getattr(CarddavObject, name), property)]

@@ -13,6 +13,48 @@ options:
 
 Beware, that the order of the command line parameters matters.
 
+Filtering contacts
+------------------
+
+Many subcommands of khard accept search terms to narrow the list of contacts
+that the command should work on.  One can simply give some plain search terms
+on the command line or use a more sophisticated query language of khard.
+
+The query language allows the user to search for contacts where a specific term
+matches in a specific field of the contact.  When searching for ``foo`` there
+might be two contacts that match, because one is called "Foo" and the other has
+an email address containing "foo":
+
+.. code-block:: shell
+
+   $ khard list foo
+   Index    Name    Email
+   1        Bar     bar@foo-company.com
+   2        Foo     boss@example.com
+
+But when searching for ``name:foo`` or ``emails:foo`` one would only find one
+of these each time because "foo" only matches in these specific fields of the
+contact.
+
+The available fields are the same as in the YAML format for contacts (an empty
+YAML template can be seen with ``khard template``).  Case does not matter, all
+filed names will be converted to lower case.  For field names with spaces (like
+"Formatted name") the spaces have to be replaced with underscores (like in
+``formatted_name``).  And the five name related fields "Prefix", "First name",
+"Additional", "Last name" and "Suffix" are not available, but a simple
+``name:`` query is possible which will search in *any* name field (including
+nicknames and formatted names).
+
+.. note::
+   Typos in field names result in the query beeing considered as a general
+   search term.  So ``email:foo`` will search for "email:foo" in any field of
+   the contact, because the field is called "emails".
+
+.. note::
+   Nested field names like for the :option:`-F` option of the ``ls`` subcommand
+   are currently not supported in the query syntax.  You can only search with
+   the top level field names.
+
 Show contacts
 -------------
 
@@ -41,24 +83,16 @@ or search for it:
 
 .. code-block:: shell
 
-   khard show [--strict-search] name of contact
+   khard show name of contact
 
-or select the contact by it's uid, which you can find at the contacts table:
-
-.. code-block:: shell
-
-   khard show -u ID
-
-The parameters :option:`-a` and :option:`-u` from the examples above are always
-optional.  They can be given on all subcommands that select one or more
-contacts.  If you don't use them or your input produces unambiguous results,
-you may pick the contacts from a list instead.
+The parameter :option:`-a` from the examples above is always optional.  It can
+be given on all subcommands that select one or more contacts.
 
 The search parameter searches in all data fields. Therefore you aren't limited
 to the contact's name but you also could for example search for a part of a
 phone number, email address or post address. However if you explicitly want to
-narrow your search to the name field, you may use the :option:`--strict-search`
-parameter instead.
+narrow your search down to some fields see the query language described in
+:ref:`Filtering contacts`.
 
 
 Create contact
@@ -128,32 +162,32 @@ Use the following to modify the contact after successful creation:
 
 .. code-block:: shell
 
-   khard edit [-a addr_name] [-u uid|search terms [search terms ...]]
+   khard edit [-a addr_name] [search terms [search terms ...]]
 
 If you want to edit the contact elsewhere, you can export the filled contact template:
 
 .. code-block:: shell
 
-   khard show --format=yaml -o contact.yaml [-a addr_name] [-u uid|search terms [search terms ...]]
+   khard show --format=yaml -o contact.yaml [-a addr_name] [search terms [search terms ...]]
 
 Edit the yaml file and re-import either through stdin:
 
 .. code-block:: shell
 
-   cat contact.yaml | khard edit [-a addr_name] [-u uid|search terms [search terms ...]]
+   cat contact.yaml | khard edit [-a addr_name] [search terms [search terms ...]]
 
 or file name:
 
 .. code-block:: shell
 
-   khard edit -i contact.yaml [-a addr_name] [-u uid|search terms [search terms ...]]
+   khard edit -i contact.yaml [-a addr_name] [search terms [search terms ...]]
 
 If you want to merge contacts use the following to select a first and then a
 second contact:
 
 .. code-block:: shell
 
-   khard merge [-a source_abook] [-u uid|search terms [search terms ...]] [-A target_abook] [-U target_uid|-t target_search_terms]
+   khard merge [-a source_abook] [search terms [search terms ...]] [-A target_abook] [-t target_search_terms]
 
 You will be launched into your ``merge_editor`` (see |khard.conf|_) where you
 can merge all changes from the first selected contact onto the second. Once you
@@ -163,14 +197,14 @@ Copy or move contact:
 
 .. code-block:: shell
 
-   khard copy [-a source_abook] [-u uid|search terms [search terms ...]] [-A target_abook]
-   khard move [-a source_abook] [-u uid|search terms [search terms ...]] [-A target_abook]
+   khard copy [-a source_abook] [search terms [search terms ...]] [-A target_abook]
+   khard move [-a source_abook] [search terms [search terms ...]] [-A target_abook]
 
 Remove contact:
 
 .. code-block:: shell
 
-   khard remove [-a addr_name] [-u uid|search terms [search terms ...]]
+   khard remove [-a addr_name] [search terms [search terms ...]]
 
 .. |khard.conf| replace:: :manpage:`khard.conf`
 .. _khard.conf: man/khard.conf.html

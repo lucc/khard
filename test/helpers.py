@@ -2,24 +2,20 @@
 # pylint: disable=invalid-name
 
 import contextlib
+import io
 import os
 import shutil
-import sys
 import tempfile
-import unittest
+from unittest import mock
 
 import vobject
 
-
-def expectedFailureForVersion(major, minor):
-    "A decorator to mark a test as an expected failure for one python version."
-    if sys.version_info.major == major and sys.version_info.minor == minor:
-        return unittest.expectedFailure
-    return lambda x: x
+from khard import address_book
+from khard import carddav_object
 
 
-def create_test_vcard(**kwargs):
-    """Create a simple vcard for tests."""
+def vCard(**kwargs):
+    """Create a simple vobject.vCard for tests."""
     vcard = vobject.vCard()
     if 'fn' not in kwargs:
         kwargs['fn'] = 'Test vCard'
@@ -30,7 +26,72 @@ def create_test_vcard(**kwargs):
     return vcard
 
 
-class with_vcards(contextlib.ContextDecorator):
+def TestVCardWrapper(**kwargs):
+    """Create a simple VCardWrapper for tests."""
+    return carddav_object.VCardWrapper(vCard(**kwargs))
+
+
+def TestYAMLEditable(**kwargs):
+    """Create a simple YAMLEditable for tests."""
+    return carddav_object.YAMLEditable(vCard(**kwargs))
+
+
+def TestCarddavObject(**kwargs):
+    """Create a siple CarddavObject for tests."""
+    return carddav_object.CarddavObject(vCard(**kwargs), None, None)
+
+
+def mock_stream(name="stdout"):
+    """A context manager to replace a stdio stream with a string buffer.
+
+    >>> with mock_stream() as s:
+    >>>     print("hello world")
+    >>> assert s.getvalue() == "hello world"
+    >>> with mock_stream("stderr") as e:
+    >>>     print("hallo error", file=sys.stderr)
+    >>> assert e.getvalue() == "hello error"
+    """
+    stream = io.StringIO()
+    context_manager = mock.patch('sys.'+name, stream)
+    context_manager.getvalue = stream.getvalue
+    return context_manager
+
+
+def load_contact(path, abook=None):
+    """Load a contact from the fixture directory.
+
+    :param str path: the file name (full, relative to cwd or the fixture dir)
+    :param AddressBook abook:
+    :returns CarddavObject:
+    """
+    if not os.path.exists(path):
+        path = os.path.join("test/fixture/vcards", path)
+    return carddav_object.CarddavObject.from_file(abook, path)
+
+
+class TmpAbook:
+    """Context manager to create a temporary address book folder"""
+
+    def __init__(self, vcards):
+        self.vcards = vcards
+
+    def __enter__(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        for card in self.vcards:
+            shutil.copy(self._card_path(card), self.tempdir.name)
+        return address_book.VdirAddressBook("tmp", self.tempdir.name)
+
+    def __exit__(self, _a, _b, _c):
+        self.tempdir.cleanup()
+
+    @staticmethod
+    def _card_path(card):
+        if os.path.exists(card):
+            return card
+        return os.path.join("test/fixture/vcards", card)
+
+
+class TmpConfig(contextlib.ContextDecorator):
     """Context manager to create a temporary khard configuration.
 
     The given vcards will be copied to the only address book in the
@@ -46,7 +107,7 @@ class with_vcards(contextlib.ContextDecorator):
     def __enter__(self):
         self.tempdir = tempfile.TemporaryDirectory()
         for card in self.vcards:
-            shutil.copy(card, self.tempdir.name)
+            shutil.copy(self._card_path(card), self.tempdir.name)
         with tempfile.NamedTemporaryFile("w", delete=False) as config:
             config.write("""[general]
                             editor = editor
@@ -56,8 +117,7 @@ class with_vcards(contextlib.ContextDecorator):
                             path = {}
                             """.format(self.tempdir.name))
         self.config = config
-        self.mock = unittest.mock.patch.dict('os.environ',
-                                             KHARD_CONFIG=config.name)
+        self.mock = mock.patch.dict('os.environ', KHARD_CONFIG=config.name)
         self.mock.start()
         return self
 
@@ -65,4 +125,9 @@ class with_vcards(contextlib.ContextDecorator):
         self.mock.stop()
         os.unlink(self.config.name)
         self.tempdir.cleanup()
-        return False
+
+    @staticmethod
+    def _card_path(card):
+        if os.path.exists(card):
+            return card
+        return os.path.join("test/fixture/vcards", card)

@@ -8,6 +8,7 @@ from typing import List, Tuple
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config, ConfigError
+from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, TermQuery, parse
 from .version import version as khard_version
 
 
@@ -23,9 +24,7 @@ def field_argument(orignal: str) -> List[str]:
     :throws: argparse.ArgumentTypeError
     """
     special_fields = ['index', 'name', 'phone', 'email']
-    properties = [name for name in dir(CarddavObject)
-                  if isinstance(getattr(CarddavObject, name), property)]
-    choices = sorted(special_fields + properties)
+    choices = sorted(special_fields + CarddavObject.get_properties())
     ret = []
     for candidate in orignal.split(','):
         candidate = candidate.lower()
@@ -37,6 +36,15 @@ def field_argument(orignal: str) -> List[str]:
                 '"{}" is not an accepted field. Accepted fields are {}.'.format(
                     field, ', '.join('"{}"'.format(c) for c in choices)))
     return ret
+
+
+def comma_separated_argument(original: str) -> List[str]:
+    """Return the original string split by commas
+
+    :param original: the value from the command line
+    :returns: the original value split at "," and lower cased
+    """
+    return [f.lower() for f in original.split(",")]
 
 
 def create_parsers() -> Tuple[argparse.ArgumentParser,
@@ -149,12 +157,14 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "to incomplete results.")
     default_search_parser.add_argument(
         "-e", "--strict-search", action="store_true",
-        help="narrow contact search to name field")
+        help="DEPRECATED use the new query syntax instead")
     default_search_parser.add_argument(
-        "-u", "--uid", default="", help="select contact by uid")
+        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
+        help="DEPRECATED use the new query syntax instead")
     default_search_parser.add_argument(
-        "search_terms", nargs="*", metavar="search terms",
-        help="search in all fields to find matching contact")
+        "search_terms", nargs="*", metavar="search terms", type=parse,
+        default=[], help="search in specified or all fields to find matching "
+        "contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
         "-f", "--search-in-source-files", action="store_true",
@@ -163,17 +173,21 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "to incomplete results.")
     merge_search_parser.add_argument(
         "-e", "--strict-search", action="store_true",
-        help="narrow contact search to name fields")
+        help="DEPRECATED use the new query syntax instead")
     merge_search_parser.add_argument(
-        "-t", "--target-contact", "--target", default="",
-        help="search in all fields to find matching target contact")
+        "-t", "--target-contact", "--target", type=parse,
+        help="search for a matching target contact")
     merge_search_parser.add_argument(
-        "-u", "--uid", default="", help="select source contact by uid")
+        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
+        help="DEPRECATED use the new query syntax instead")
     merge_search_parser.add_argument(
-        "-U", "--target-uid", default="", help="select target contact by uid")
+        "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
+        help="DEPRECATED use -t with the new query syntax instead")
     merge_search_parser.add_argument(
-        "source_search_terms", nargs="*", metavar="source",
-        help="search in all fields to find matching source contact")
+        "source_search_terms", nargs="*", metavar="source", type=parse,
+        default=[],
+        help="search in specified or all fields to find matching source "
+        "contact")
 
     # create subparsers for actions
     subparsers = parser.add_subparsers(dest="action")
@@ -273,6 +287,14 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     add_email_parser.add_argument(
         "--vcard-version", choices=("3.0", "4.0"), dest='preferred_version',
         help="Select preferred vcard version for new contact")
+    add_email_parser.add_argument(
+        "-H",
+        "--headers",
+        dest='fields',
+        default=["from"],
+        type=comma_separated_argument,
+        help="Extract contacts from the given comma separated header fields. \
+                `all` searches all headers.")
     subparsers.add_parser(
         "merge",
         aliases=Actions.get_aliases("merge"),
@@ -385,7 +407,6 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     if ("debug" in args and args.debug) or config.debug:
         logging.basicConfig(level=logging.DEBUG)
     logger.debug("first args=%s", args)
-    logger.debug("remainder=%s", remainder)
 
     # Set the default command from the config file if none was given on the
     # command line.
@@ -415,6 +436,40 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         # If an uid was given we require that no search terms where given.
         parser.error("You can not give arbitrary search terms and --uid at the"
                      " same time.")
+    if "target_uid" in args and args.target_uid and args.target_contact:
+        parser.error("You can not give arbitrary target search terms and "
+                     "--target-uid at the same time.")
+    # Deprecation workaround
+    if "strict_search" in args and args.strict_search:
+        logger.error("Deprecated option --strict-search, use the new query "
+                     "syntax instead.")
+        if "search_terms" in args:
+            args.search_terms = [NameQuery(t.get_term()) for t in
+                                 args.search_terms]
+        if "source_search_terms" in args:
+            args.source_search_terms = [NameQuery(t.get_term()) for t in
+                                        args.source_search_terms]
+        if "taget_search_terms" in args:
+            args.taget_search_terms = [NameQuery(t.get_term()) for t in
+                                       args.taget_search_terms]
+
+    # Build conjunctive queries.  If uid was given the list of search terms
+    # will be empty.  If no uid was given it will be None.
+    if "source_search_terms" in args:
+        args.source_search_terms = AndQuery.reduce(args.source_search_terms,
+                                                   args.uid)
+    if "search_terms" in args:
+        args.search_terms = AndQuery.reduce(args.search_terms, args.uid)
+    if "target_contact" in args:
+        # Only one of target_contact or target_uid can be set.
+        args.target_contact = args.target_contact or args.target_uid \
+            or AnyQuery()
+    # Remove uid values from the args Namespace.  They have been merged into
+    # the search terms above.
+    if "uid" in args:
+        del args.uid
+    if "target_uid" in args:
+        del args.target_uid
 
     # Normalize all deprecated subcommands and emit warnings.
     if args.action == "export":

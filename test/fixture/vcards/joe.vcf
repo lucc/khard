@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:4.0
+UID:6exhjr32bt783wwlr9u0sr8lfqse5x7zqc8y
+FN:Joe Citizen
+N:Citizen;Joe;;;
+NICKNAME:horrible_human_being
+EMAIL;TYPE=pref:jcitizen@foo.com
+REV:20200411T072429Z
+END:VCARD

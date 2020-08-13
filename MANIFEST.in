@@ -1,6 +1,4 @@
+# https://packaging.python.org/guides/using-manifest-in/
 include AUTHORS
 include CHANGES
-include LICENSE
-include README.md
 recursive-include misc *
-recursive-include test *

@@ -50,6 +50,7 @@ del update_template_file
 extensions = [
     'autoapi.extension',
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx_autodoc_typehints',
 ]
@@ -71,7 +72,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'khard'
-copyright = '2019, Eric Scheibler'
+copyright = '2020, Eric Scheibler'
 author = 'Eric Scheibler'
 
 # The version info for the project you're documenting, acts as replacement for

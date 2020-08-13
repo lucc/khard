@@ -1,19 +1,20 @@
 """A simple class to load and manage the vcard files from disk."""
 
 import abc
+import binascii
 import glob
 import logging
 import os
 import re
-from typing import cast, Dict, Generator, Iterator, List, Optional, Union
+from typing import Dict, Generator, Iterator, List, Optional, Union
 
 import vobject.base
 
 from . import carddav_object
+from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
-Query = Union[None, str, List[str], List[List[str]]]
 
 
 class AddressBookParseError(Exception):
@@ -66,80 +67,24 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def _search_all(self, query: Union[None, str, List[str]]) -> Generator[
-            "carddav_object.CarddavObject", None, None]:
-        """Search in all fields for contacts matching query.
-
-        :param query: the query to search for
-        :yields: all found contacts
-        """
-        for contact in self.contacts.values():
-            # search in all contact fields
-            contact_details = contact.pretty().lower()
-            if contact.match(contact_details, query):
-                yield contact
-            else:
-                # find phone numbers with special chars like /
-                clean_contact_details = re.sub("[^a-zA-Z0-9\n]", "",
-                                               contact_details)
-                if contact.match(clean_contact_details, query):
-                    yield contact
-
-    def _search_names(self, query) -> Generator["carddav_object.CarddavObject",
+    def search(self, query: Query) -> Generator["carddav_object.CarddavObject",
                                                 None, None]:
-        """Search in the name filed for contacts matching query.
-
-        :param query: the query to search for
-        :yields: all found contacts
-        """
-        for contact in self.contacts.values():
-            # only search in contact name
-            if contact.match(contact.formatted_name, query):
-                yield contact
-
-    def _search_uid(self, query: str) -> Generator[
-            "carddav_object.CarddavObject", None, None]:
-        """Search for contacts with a matching uid.
-
-        :param query: the query to search for
-        :yields: all found contacts
-        """
-        try:
-            # First we treat the argument as a full UID and try to match it
-            # exactly.
-            yield self.contacts[query]
-        except KeyError:
-            # If that failed we look for all contacts whos UID start with the
-            # given query.
-            for uid in self.contacts:
-                if uid.startswith(query):
-                    yield self.contacts[uid]
-
-    def search(self, query: Union[None, str, List[str]], method: str = "all"
-               ) -> Generator["carddav_object.CarddavObject", None, None]:
         """Search this address book for contacts matching the query.
 
-        The method can be one of "all", "name" and "uid".  The backend for this
-        address book migth be load()ed if needed.
+        The backend for this address book migth be load()ed if needed.
 
         :param query: the query to search for
-        :param method: the type of fileds to use when seaching
-        :returns: all found contacts
+        :yields: all found contacts
         """
         logger.debug('address book %s, searching with %s', self.name, query)
         if not self._loaded:
             self.load(query)
-        if method == "all":
-            return self._search_all(query)
-        if method == "name":
-            return self._search_names(query)
-        if method == "uid":
-            return self._search_uid(cast(str, query))
-        raise ValueError(
-            'Only the search methods "all", "name" and "uid" are supported.')
+        for contact in self.contacts.values():
+            if query.match(contact):
+                yield contact
 
-    def get_short_uid_dict(self, query: Optional[str] = None
-                           ) -> Dict[str, "carddav_object.CarddavObject"]:
+    def get_short_uid_dict(self, query: Query = AnyQuery()) -> Dict[
+            str, "carddav_object.CarddavObject"]:
         """Create a dictionary of shortend UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
@@ -150,7 +95,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         if self._short_uids is None:
             if not self._loaded:
-                self.load([query] if query is not None else None)
+                self.load(query)
             if not self.contacts:
                 self._short_uids = {}
             elif len(self.contacts) == 1:
@@ -189,7 +134,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         return ""
 
     @abc.abstractmethod
-    def load(self, query: Query = None) -> None:
+    def load(self, query: Query = AnyQuery()) -> None:
         """Load the vCards from the backing store.
 
         If a query is given loading is limited to entries which match the
@@ -215,10 +160,10 @@ class VdirAddressBook(AddressBook):
         :param path: the path to the backing structure on disk
         :param private_objects: the names of private vCard extension fields to
             load
-        :param localize_dates: wheater to display dates in the local format
+        :param localize_dates: whether to display dates in the local format
         :param skip: skip unparsable vCard files
         """
-        self.path = os.path.expanduser(path)
+        self.path = os.path.expanduser(os.path.expandvars(path))
         if not os.path.isdir(self.path):
             raise FileNotFoundError("[Errno 2] The path {} to the address book"
                                     " {} does not exist.".format(path, name))
@@ -227,14 +172,14 @@ class VdirAddressBook(AddressBook):
         self._skip = skip
         super().__init__(name)
 
-    def load(self, query: Query = None,
+    def load(self, query: Query = AnyQuery(),
              search_in_source_files: bool = False) -> None:
         """Load all vcard files in this address book from disk.
 
         If a search string is given only files which contents match that will
         be loaded.
 
-        :param query: a regular expression to limit the results
+        :param query: query to limit the vcards that should be parsed
         :param search_in_source_files: apply search regexp directly on the .vcf
             files to speed up parsing (less accurate)
         :throws: AddressBookParseError
@@ -246,14 +191,15 @@ class VdirAddressBook(AddressBook):
         for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
                 card = carddav_object.CarddavObject.from_file(
-                    self, filename, query if search_in_source_files else None,
+                    self, filename,
+                    query if search_in_source_files else AnyQuery(),
                     self._private_objects, self._localize_dates)
                 if card is None:
                     continue
-            except (IOError, vobject.base.ParseError) as err:
+            except (IOError, vobject.base.ParseError, binascii.Error) as err:
                 verb = "open" if isinstance(err, IOError) else "parse"
-                logger.debug("Error: Could not %s file %s\n%s", verb,
-                             filename, err)
+                logger.error("Error: Could not %s file %s\n%s", verb, filename,
+                             err)
                 if self._skip:
                     errors += 1
                 else:
@@ -284,9 +230,9 @@ class AddressBookCollection(AddressBook):
     """A collection of several address books.
 
     This represents a temporary merege of the contact collections provided by
-    the underlying adress books.  On load all contacts from all subadressbooks
-    are copied into a dict in this address book.  This allow this class to use
-    all other methods from the parent AddressBook class.
+    the underlying address books.  On load, all contacts from all
+    subaddressbooks are copied into a dict in this address book.  This allows
+    this class to use all other methods from the parent AddressBook class.
     """
 
     def __init__(self, name: str, abooks: List[VdirAddressBook]) -> None:
@@ -297,12 +243,12 @@ class AddressBookCollection(AddressBook):
         super().__init__(name)
         self._abooks = {ab.name: ab for ab in abooks}
 
-    def load(self, query: Query = None) -> None:
+    def load(self, query: Query = AnyQuery()) -> None:
         """Load the wrapped address books with the given parameters
 
         All parameters will be handed to VdirAddressBook.load.
 
-        :param query: a regular expression to limit the results
+        :param query: a query to limit the vcards that should be parsed
         :throws: AddressBookParseError
         """
         if self._loaded:
