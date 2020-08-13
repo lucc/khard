@@ -78,8 +78,6 @@ These subcommands display detailed information about one subcommand.
 show
   display detailed information about one contact, supported output formats
   are "pretty", "yaml" and "vcard"
-export
-  DEPRECATED, use ``show --format=yaml`` instead
 
 Modifying subcommands
 ~~~~~~~~~~~~~~~~~~~~~
@@ -102,8 +100,6 @@ move
   move a contact to a different addressbook
 remove
   remove a contact
-source
-  DEPRECATED, use ``edit --format=vcard`` instead
 
 Other subcommands
 ~~~~~~~~~~~~~~~~~

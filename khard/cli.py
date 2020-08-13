@@ -348,21 +348,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         description="list filenames of all matching contacts",
         help="list filenames of all matching contacts")
 
-    # Deprecated subcommands:  They can be removed after the next release
-    # (v0.17)
-    export_parser = subparsers.add_parser(
-        "export", aliases=Actions.get_aliases("export"), parents=[
-            default_addressbook_parser, default_search_parser, sort_parser],
-        description="DEPRECATED use 'show --format=yaml'",
-        help="DEPRECATED use 'show --format=yaml'")
-    export_parser.add_argument("-o", "--output-file", default=sys.stdout,
-                               type=argparse.FileType("w"))
-    subparsers.add_parser(
-        "source", aliases=Actions.get_aliases("source"), parents=[
-            default_addressbook_parser, default_search_parser, sort_parser],
-        description="DEPRECATED use 'edit --format=vcard'",
-        help="DEPRECATED use 'edit --format=vcard'")
-
     # Replace the print_help method of the first parser with the print_help
     # method of the main parser.  This makes it possible to have the first
     # parser handle the help option so that command line help can be printed
@@ -470,16 +455,6 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         del args.uid
     if "target_uid" in args:
         del args.target_uid
-
-    # Normalize all deprecated subcommands and emit warnings.
-    if args.action == "export":
-        logger.error("Deprecated subcommand: use 'show --format=yaml'.")
-        args.action = "show"
-        args.format = "yaml"
-    elif args.action == "source":
-        logger.error("Deprecated subcommand: use 'edit --format=vcard'.")
-        args.action = "edit"
-        args.format = "vcard"
 
     return args, config
 
