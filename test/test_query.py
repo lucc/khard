@@ -43,6 +43,12 @@ class TestAndQuery(unittest.TestCase):
         q = AndQuery(q1, q2)
         self.assertFalse(q.match("ac"))
 
+    def test_order_does_not_matter(self):
+        q1 = TermQuery("a")
+        q2 = TermQuery("b")
+        q = AndQuery(q1, q2)
+        self.assertTrue(q.match("ab"))
+        self.assertTrue(q.match("ba"))
 
 class TestOrQuery(unittest.TestCase):
 
@@ -58,6 +64,13 @@ class TestOrQuery(unittest.TestCase):
         q = OrQuery(q1, q2)
         self.assertFalse(q.match("cd"))
 
+    def test_order_does_not_matter(self):
+        q1 = TermQuery("a")
+        q2 = TermQuery("b")
+        q = OrQuery(q1, q2)
+        self.assertTrue(q.match("ab"))
+        self.assertTrue(q.match("ba"))
+
 
 class TestEquality(unittest.TestCase):
 
@@ -72,7 +85,7 @@ class TestEquality(unittest.TestCase):
         any = AnyQuery()
         term = TermQuery("foo")
         field = FieldQuery("x", "y")
-        first = OrQuery(null, any , term, field)
+        first = OrQuery(null, any, term, field)
         second = OrQuery(any, null, field, term)
         self.assertEqual(first, second)
 
@@ -81,7 +94,7 @@ class TestEquality(unittest.TestCase):
         any = AnyQuery()
         term = TermQuery("foo")
         field = FieldQuery("x", "y")
-        first = AndQuery(null, any , term, field)
+        first = AndQuery(null, any, term, field)
         second = AndQuery(any, null, field, term)
         self.assertEqual(first, second)
 
