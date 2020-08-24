@@ -475,5 +475,26 @@ class Merge(unittest.TestCase):
         self.assertEqual('contact2.vcf', second)
 
 
+class AddEmail(unittest.TestCase):
+
+    @TmpConfig(["contact1.vcf", "contact2.vcf"])
+    def test_contact_is_found_if_name_matches(self):
+        email = [
+            "From: third <third@example.com>\n",
+            "To: anybody@example.com\n",
+            "\n",
+            "text\n"
+        ]
+        with tempfile.NamedTemporaryFile("w") as tmp:
+            tmp.writelines(email)
+            tmp.flush()
+            with mock.patch("khard.khard.confirm", lambda x: True):
+                with mock.patch("builtins.input", lambda x: None):
+                    run_main("add-email", "--input-file", tmp.name)
+        stdout = run_main("list", "--fields=emails.internet.0")
+        addr = stdout.getvalue().splitlines()[-1].strip()
+        self.assertEqual(addr, "third@example.com")
+
+
 if __name__ == "__main__":
     unittest.main()
