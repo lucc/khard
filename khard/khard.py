@@ -399,32 +399,29 @@ def get_contact_list_by_user_selection(
         address_books: Union[VdirAddressBook, AddressBookCollection],
         query: Query) -> List[CarddavObject]:
     """Find contacts in the given address book grouped, sorted and reversed
-    acording to the loaded configuration .
+    acording to the loaded configuration.
 
     :param address_books: the address book to search
     :param query: the query to use when searching
     :returns: list of found CarddavObject objects
     """
-    return get_contacts(address_books, query, config.reverse,
-                        config.group_by_addressbook, config.sort)
+    contacts = address_books.search(query)
+    return sort_contacts(contacts, config.reverse, config.group_by_addressbook,
+                         config.sort)
 
 
-def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
-                 query: Query, reverse: bool = False, group: bool = False,
-                 sort: str = "first_name") -> List[CarddavObject]:
-    """Get a list of contacts from one or more address books.
+def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
+                  group: bool = False, sort: str = "first_name") -> List[
+                      CarddavObject]:
+    """Sort a list of contacts
 
-    :param address_book: the address book to search
-    :param query: a search query to select contacts
+    :param contacts: the contact list to sort
     :param reverse: reverse the order of the returned contacts
     :param group: group results by address book
     :param sort: the field to use for sorting, one of "first_name",
         "last_name", "formatted_name"
-    :returns: contacts from the address_book that match the query
+    :returns: sorted contact list
     """
-    # Search for the contacts in all address books.
-    contacts = address_book.search(query)
-    # Sort the contacts.
     if group:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
