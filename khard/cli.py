@@ -190,7 +190,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "contact")
 
     # create subparsers for actions
-    subparsers = parser.add_subparsers(dest="action")
+    subparsers = parser.add_subparsers(dest="action", metavar="SUBCOMMAND")
     list_parser = subparsers.add_parser(
         "list",
         aliases=Actions.get_aliases("list"),
@@ -203,7 +203,8 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
-        help="Comma separated list of fields to show")
+        help="Comma separated list of fields to show "
+        "(use -F help for a list of top level fields)")
     show_parser = subparsers.add_parser(
         "show",
         aliases=Actions.get_aliases("show"),
