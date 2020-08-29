@@ -30,7 +30,7 @@ class FieldsArgument:
             designate nested fields and only the first component (seperated by
             a dot) must match on of the choices
         """
-        self._choices = choices
+        self._choices = sorted(choices)
         self._nested = nested
 
     def __call__(self, argument) -> List[str]:
@@ -201,9 +201,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
-    field_argument = FieldsArgument(
-        *sorted(['index', 'name', 'phone', 'email'] +
-                CarddavObject.get_properties()), nested=True)
+    field_argument = FieldsArgument('index', 'name', 'phone', 'email',
+                                    *CarddavObject.get_properties(),
+                                    nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
         help="Comma separated list of fields to show "
