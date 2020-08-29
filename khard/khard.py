@@ -6,6 +6,7 @@ from email import message_from_string
 from email.policy import SMTP as SMTP_POLICY
 from email.headerregistry import Address, AddressHeader, Group
 import logging
+import operator
 import os
 import subprocess
 import sys
@@ -422,31 +423,20 @@ def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
         "last_name", "formatted_name"
     :returns: sorted contact list
     """
+    keys = []
     if group:
-        if sort == "first_name":
-            return sorted(contacts, reverse=reverse, key=lambda x: (
-                unidecode(x.address_book.name).lower(),
-                unidecode(x.get_first_name_last_name()).lower()))
-        if sort == "last_name":
-            return sorted(contacts, reverse=reverse, key=lambda x: (
-                unidecode(x.address_book.name).lower(),
-                unidecode(x.get_last_name_first_name()).lower()))
-        if sort == "formatted_name":
-            return sorted(contacts, reverse=reverse, key=lambda x: (
-                unidecode(x.address_book.name).lower(),
-                unidecode(x.formatted_name.lower())))
+        keys.append(operator.attrgetter("address_book.name"))
+    if sort == "first_name":
+        keys.append(operator.methodcaller("get_first_name_last_name"))
+    elif sort == "last_name":
+        keys.append(operator.methodcaller("get_last_name_first_name"))
+    elif sort == "formatted_name":
+        keys.append(operator.attrgetter("formatted_name"))
     else:
-        if sort == "first_name":
-            return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.get_first_name_last_name()).lower())
-        if sort == "last_name":
-            return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.get_last_name_first_name()).lower())
-        if sort == "formatted_name":
-            return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.formatted_name.lower()))
-    raise ValueError('sort must be "first_name", "last_name" or '
-                     '"formatted_name" not {}.'.format(sort))
+        raise ValueError('sort must be "first_name", "last_name" or '
+                         '"formatted_name" not {}.'.format(sort))
+    return sorted(contacts, reverse=reverse,
+                  key=lambda x: [unidecode(key(x)).lower() for key in keys])
 
 
 def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
