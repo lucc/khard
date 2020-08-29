@@ -15,36 +15,37 @@ from .version import version as khard_version
 logger = logging.getLogger(__name__)
 
 
-def field_argument(orignal: str) -> List[str]:
-    """Ensure the fields specified for `ls -F` are proper field names.
-    Nested attribute names are not checked.
+class FieldsArgument:
+    """A factory to create callable objects for add_argument's type= parameter.
 
-    :param orignal: the value from the command line
-    :returns: the orignal value split at "," if the fields are spelled correctly
-    :throws: argparse.ArgumentTypeError
+    The object can parse comma seperated strings into list of strings, and can
+    also check if the single elements are spelled correctly.
     """
-    special_fields = ['index', 'name', 'phone', 'email']
-    choices = sorted(special_fields + CarddavObject.get_properties())
-    ret = []
-    for candidate in orignal.split(','):
-        candidate = candidate.lower()
-        field = candidate.split('.')[0]
-        if field in choices:
-            ret.append(candidate)
-        else:
-            raise argparse.ArgumentTypeError(
-                '"{}" is not an accepted field. Accepted fields are {}.'.format(
-                    field, ', '.join('"{}"'.format(c) for c in choices)))
-    return ret
 
+    def __init__(self, *choices: List[str], nested: bool = False) -> None:
+        """Initialize the factory
 
-def comma_separated_argument(original: str) -> List[str]:
-    """Return the original string split by commas
+        :param choices: the comma seperated strings must be one of these
+        :param nested: if this is true the comma seperated strings may
+            designate nested fields and only the first component (seperated by
+            a dot) must match on of the choices
+        """
+        self._choices = choices
+        self._nested = nested
 
-    :param original: the value from the command line
-    :returns: the original value split at "," and lower cased
-    """
-    return [f.lower() for f in original.split(",")]
+    def __call__(self, argument) -> List[str]:
+        ret = []
+        for candidate in argument.split(","):
+            candidate = candidate.lower()
+            test = candidate.split('.')[0] if self._nested else candidate
+            if test in self._choices:
+                ret.append(candidate)
+            else:
+                choices = ', '.join('"{}"'.format(c) for c in self._choices)
+                raise argparse.ArgumentTypeError(
+                    '"{}" is not an accepted field. Accepted fields are {}.'
+                    .format(test, choices))
+        return ret
 
 
 def create_parsers() -> Tuple[argparse.ArgumentParser,
@@ -57,7 +58,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     further options and arguments.
 
     :returns: the two parsers for the first and the second parsing pass
-    :rtype: (argparse.ArgumentParser, argparse.ArgumentParser)
     """
     # Create the base argument parser.  It will be reused for the first and
     # second round of argument parsing.
@@ -201,6 +201,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
+    field_argument = FieldsArgument(
+        *sorted(['index', 'name', 'phone', 'email'] +
+                CarddavObject.get_properties()), nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
         help="Comma separated list of fields to show "
@@ -289,13 +292,10 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "--vcard-version", choices=("3.0", "4.0"), dest='preferred_version',
         help="Select preferred vcard version for new contact")
     add_email_parser.add_argument(
-        "-H",
-        "--headers",
-        dest='fields',
-        default=["from"],
-        type=comma_separated_argument,
-        help="Extract contacts from the given comma separated header fields. \
-                `all` searches all headers.")
+        "-H", "--headers", default=["from"],
+        type=lambda x: [y.lower() for y in x.split(",")],
+        help="Extract contacts from the given comma separated header fields. "
+        "`all` searches all headers.")
     subparsers.add_parser(
         "merge",
         aliases=Actions.get_aliases("merge"),

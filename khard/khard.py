@@ -1124,7 +1124,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
                        args.open_editor)
     elif args.action == "add-email":
         add_email_subcommand(input_from_stdin_or_file,
-                             args.addressbook, args.fields)
+                             args.addressbook, args.headers)
     elif args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
