@@ -346,9 +346,9 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
     return interactive.select(vcard_list, True)
 
 
-def get_contact_list_by_user_selection(
-        address_books: Union[VdirAddressBook, AddressBookCollection],
-        query: Query) -> List[CarddavObject]:
+def get_contact_list(address_books: Union[VdirAddressBook,
+                                          AddressBookCollection],
+                     query: Query) -> List[CarddavObject]:
     """Find contacts in the given address book grouped, sorted and reversed
     acording to the loaded configuration.
 
@@ -441,8 +441,7 @@ def generate_contact_list(args: Namespace) -> List[CarddavObject]:
         # It is simpler to handle subcommand that do not have and need search
         # terms here than conditionally calling generate_contact_list().
         return []
-    return get_contact_list_by_user_selection(args.addressbook,
-                                              args.search_terms)
+    return get_contact_list(args.addressbook, args.search_terms)
 
 
 def new_subcommand(selected_address_books: AddressBookCollection,
@@ -497,7 +496,7 @@ def add_email_to_contact(name: str, email_address: str,
     # search for an existing contact
     selected_vcard = choose_vcard_from_list(
         "Select contact for the found e-mail address",
-        get_contact_list_by_user_selection(abooks, TermQuery(name)))
+        get_contact_list(abooks, TermQuery(name)))
 
     if selected_vcard is None:
         if not name:
@@ -901,7 +900,7 @@ def merge_subcommand(vcard_list: List[CarddavObject],
     :param search_terms: the search terms to find the target contact
     """
     # Find possible target contacts.
-    target_vcards = get_contact_list_by_user_selection(abooks, search_terms)
+    target_vcards = get_contact_list(abooks, search_terms)
     # get the source vcard, from which to merge
     source_vcard = choose_vcard_from_list("Select contact from which to merge",
                                           vcard_list)
@@ -959,8 +958,8 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
-        get_contact_list_by_user_selection(
-            target_abook, TermQuery(source_vcard.formatted_name)), True)
+        get_contact_list(target_abook, TermQuery(source_vcard.formatted_name)),
+        True)
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
