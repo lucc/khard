@@ -8,10 +8,9 @@ from email.headerregistry import Address, AddressHeader, Group
 import logging
 import operator
 import os
-import subprocess
 import sys
 from tempfile import NamedTemporaryFile
-from typing import cast, Dict, Iterable, List, Optional, TypeVar, Union
+from typing import cast, Dict, Iterable, List, Optional, Union
 
 from unidecode import unidecode
 
@@ -22,59 +21,14 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
+from .helpers import interactive
+from .helpers.interactive import confirm
 from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 
 logger = logging.getLogger(__name__)
 config: Config
-T = TypeVar("T")
-
-
-def confirm(message: str) -> bool:
-    """Ask the user for confirmation on the terminal.
-
-    :param message: the question to print
-    :returns: the answer of the user
-    """
-    while True:
-        answer = input(message + ' (y/N) ')
-        answer = answer.lower()
-        if answer == 'y':
-            return True
-        if answer in ['', 'n', 'q']:
-            return False
-        print('Please answer with "y" for yes or "n" for no.')
-
-
-def select(items: List[T], include_none: bool = False) -> Optional[T]:
-    """Ask the user to select an item from a list.
-
-    The list should be displayed to the user before calling this function and
-    should be indexed starting with 1.  This function might exit if the user
-    selects "q".
-
-    :param items: the list from which to select
-    :param include_none: whether to allow the selection of no item
-    :returns: None or the selected item
-    """
-    while True:
-        try:
-            answer = input("Enter Index ({}q to quit): ".format(
-                "0 for None, " if include_none else ""))
-            answer = answer.lower()
-            if answer in ["", "q"]:
-                print("Canceled")
-                return None
-            index = int(answer)
-            if include_none and index == 0:
-                return None
-            if index > 0:
-                return items[index - 1]
-        except (EOFError, IndexError, ValueError):
-            pass
-        print("Please enter an index value between 1 and {} or q to exit."
-              .format(len(items)))
 
 
 def write_temp_file(text: str = "") -> str:
@@ -91,10 +45,7 @@ def write_temp_file(text: str = "") -> str:
 def edit(*filenames: str, merge: bool = False) -> None:
     """Edit the given files with the configured editor or merge editor"""
     editor = config.merge_editor if merge else config.editor
-    editor = [editor] if isinstance(editor, str) else editor
-    editor.extend(filenames)
-    child = subprocess.Popen(editor)
-    child.communicate()
+    return interactive.edit(editor, *filenames)
 
 
 def create_new_contact(address_book: VdirAddressBook) -> None:
@@ -380,7 +331,7 @@ def choose_address_book_from_list(header_string: str,
     list_address_books(address_books)
     # For all intents and purposes of select() an AddressBookCollection can
     # also be considered a List[VdirAddressBook].
-    return select(cast(List[VdirAddressBook], address_books))
+    return interactive.select(cast(List[VdirAddressBook], address_books))
 
 
 def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
@@ -392,7 +343,7 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
         return vcard_list[0]
     print(header_string)
     list_contacts(vcard_list)
-    return select(vcard_list, True)
+    return interactive.select(vcard_list, True)
 
 
 def get_contact_list_by_user_selection(

@@ -489,7 +489,7 @@ class AddEmail(unittest.TestCase):
             tmp.writelines(email)
             tmp.flush()
             with mock.patch("khard.khard.confirm", lambda x: True):
-                with mock.patch("builtins.input", lambda x: None):
+                with mock.patch("builtins.input", lambda x: ""):
                     run_main("add-email", "--input-file", tmp.name)
         stdout = run_main("list", "--fields=emails.internet.0")
         addr = stdout.getvalue().splitlines()[-1].strip()

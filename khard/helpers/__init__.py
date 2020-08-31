@@ -197,6 +197,6 @@ def get_new_contact_template(
         for object in supported_private_objects:
             formatted_private_objects += convert_to_yaml(
                 object, "", 12, len(longest_key)+1, True)
-    template = pathlib.Path(__file__).parent / 'data' / 'template.yaml'
+    template = pathlib.Path(__file__).parent.parent / 'data' / 'template.yaml'
     with template.open() as temp:
         return temp.read().format('\n'.join(formatted_private_objects))
