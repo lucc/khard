@@ -567,6 +567,14 @@ class VCardWrapper:
             return helpers.list_to_string(first_and_additional_names, " ")
         return self.formatted_name
 
+    @property
+    def first_name(self) -> str:
+        return helpers.list_to_string(self._get_first_names(), " ")
+
+    @property
+    def last_name(self) -> str:
+        return helpers.list_to_string(self._get_last_names(), " ")
+
     def _add_name(self, prefix: Union[str, List[str]],
                   first_name: Union[str, List[str]],
                   additional_name: Union[str, List[str]],
