@@ -3,6 +3,7 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
   - "nightly"
   - "pypy3" # this is 3.6
 env:
@@ -10,10 +11,10 @@ env:
 
 jobs:
   include:
-    - python: "3.8"
+    - python: "3.9"
       env:
         - JOB=check
-    - python: "3.8"
+    - python: "3.9"
       env:
         - JOB=docs
   allow_failures:
