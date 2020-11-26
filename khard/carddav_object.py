@@ -115,7 +115,7 @@ class VCardWrapper:
         elif self.version not in self._supported_versions:
             logger.warning("Wrapping vCard with unsupported version %s, this "
                            "might change any incompatible attributes.",
-                           version)
+                           self.version)
 
     def __str__(self) -> str:
         return self.formatted_name
