@@ -50,7 +50,7 @@ general
   This section allows one to configure some general features about khard.  The
   following keys are available in this section:
 
-  - *debug*: a boolean indication weather the logging level should be set to
+  - *debug*: a boolean indication whether the logging level should be set to
     *debug* by default (same effect as the :option:`--debug` option on the
     command line)
   - *default_action*: the default action/subcommand to use if the first non
@@ -66,22 +66,22 @@ contact table
 
   - *display*: which part of the name to use in listings; this can be one of
     ``first_name``, ``last_name`` or ``formatted_name``
-  - *group_by_addressbook*: weather or not to group contacts by address book in
+  - *group_by_addressbook*: whether or not to group contacts by address book in
     listings
-  - *localize_dates*: weather to localize dates or to use ISO date formats
+  - *localize_dates*: whether to localize dates or to use ISO date formats
   - *preferred_email_address_type*: labels of email addresses to prefer
   - *preferred_phone_number_type*: labels of telephone numbers to prefer
-  - *reverse*: weather to reverse the order of contact listings or not
-  - *show_nicknames*: weather to show nick names
-  - *show_uids*: weather to show uids
+  - *reverse*: whether to reverse the order of contact listings or not
+  - *show_nicknames*: whether to show nick names
+  - *show_uids*: whether to show uids
   - *sort*: field by which to sort contact listings
 
 vcard
   - *private_objects*: a list of strings, these are the names of private vCard
     fields (starting with ``X-``)  that will be loaded and displayed by khard
-  - *search_in_source_files*: weather to search in the vcard files before
+  - *search_in_source_files*: whether to search in the vcard files before
     parsing them in order to speed up searches
-  - *skip_unparsable*: weather to skip unparsable vcards, otherwise khard exits
+  - *skip_unparsable*: whether to skip unparsable vcards, otherwise khard exits
     on the first unparsable card it encounters
   - *preferred_version*: the preferred vcard version to use for new cards
 
