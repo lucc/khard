@@ -298,7 +298,7 @@ class VCardWrapper:
     @property
     def birthday(self) -> Union[None, str, datetime.datetime]:
         """Return the birthday as a datetime object or a string depending on
-        weather it is of type text or not.  If no birthday is present in the
+        whether it is of type text or not.  If no birthday is present in the
         vcard None is returned.
 
         :returns: contacts birthday or None if not available
@@ -447,7 +447,7 @@ class VCardWrapper:
 
         :param date: the date like value to be stored
         :type date: datetime.datetime or str
-        :returns: the object to set as the .value for the attribute and weather
+        :returns: the object to set as the .value for the attribute and whether
             it should be stored as plain text
         :rtype: tuple(str,bool)
         """

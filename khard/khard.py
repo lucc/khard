@@ -54,7 +54,7 @@ def select(items: List[T], include_none: bool = False) -> Optional[T]:
     selects "q".
 
     :param items: the list from which to select
-    :param include_none: weather to allow the selection of no item
+    :param include_none: whether to allow the selection of no item
     :returns: None or the selected item
     """
     while True:
