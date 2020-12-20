@@ -22,7 +22,7 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
-from .query import AndQuery, AnyQuery, NameQuery, OrQuery, Query, TermQuery
+from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 

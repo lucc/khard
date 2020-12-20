@@ -1,6 +1,6 @@
 """Formatting and sorting of contacts"""
 
-from typing import cast, Dict, List
+from typing import Dict, List
 
 from .carddav_object import CarddavObject
 

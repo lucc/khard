@@ -8,7 +8,7 @@ from typing import List, Tuple
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config, ConfigError
-from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, TermQuery, parse
+from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, parse
 from .version import version as khard_version
 
 
