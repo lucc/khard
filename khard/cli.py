@@ -22,7 +22,7 @@ class FieldsArgument:
     also check if the single elements are spelled correctly.
     """
 
-    def __init__(self, *choices: List[str], nested: bool = False) -> None:
+    def __init__(self, *choices: str, nested: bool = False) -> None:
         """Initialize the factory
 
         :param choices: the comma seperated strings must be one of these
