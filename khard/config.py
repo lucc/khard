@@ -9,7 +9,7 @@ import shlex
 from typing import Iterable, Dict, List, Optional, Union
 
 import configobj
-import validate
+from configobj import validate
 
 from .actions import Actions
 from .address_book import AddressBookCollection, AddressBookNameError, \
