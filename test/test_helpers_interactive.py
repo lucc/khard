@@ -61,8 +61,10 @@ class Confirm(unittest.TestCase):
 
     def test_full_word_yes_is_not_accepted(self):
         with mock.patch("builtins.input", mock.Mock(side_effect=["yes", "n"])):
-            self.assertFalse(interactive.confirm(""))
+            with mock_stream():
+                self.assertFalse(interactive.confirm(""))
 
     def test_full_word_no_is_not_accepted(self):
         with mock.patch("builtins.input", mock.Mock(side_effect=["no", "y"])):
-            self.assertTrue(interactive.confirm(""))
+            with mock_stream():
+                self.assertTrue(interactive.confirm(""))
