@@ -7,8 +7,11 @@ import string
 from datetime import datetime
 from typing import List, Optional, Union
 
+from .typing import list_to_string
 
-def pretty_print(table: List[List[str]], justify: str = "L") -> str:
+
+def pretty_print(table: List[List[str]], justify: str = "L"
+                 ) -> str:
     """Converts a list of lists into a string formatted like a table
     with spaces separating fields and newlines separating rows"""
     # support for multiline columns
@@ -54,50 +57,6 @@ def pretty_print(table: List[List[str]], justify: str = "L") -> str:
             single_row_list.append(formated_column)
         table_row_list.append(' '.join(single_row_list))
     return '\n'.join(table_row_list)
-
-
-def list_to_string(input: Union[str, List], delimiter: str) -> str:
-    """converts list to string recursively so that nested lists are supported
-
-    :param input: a list of strings and lists of strings (and so on recursive)
-    :param delimiter: the deimiter to use when joining the items
-    :returns: the recursively joined list
-    """
-    if isinstance(input, list):
-        return delimiter.join(
-            list_to_string(item, delimiter) for item in input)
-    return input
-
-
-def string_to_list(input: Union[str, List[str]], delimiter: str) -> List[str]:
-    if isinstance(input, list):
-        return input
-    return [x.strip() for x in input.split(delimiter)]
-
-
-def string_to_date(string: str) -> datetime:
-    """Convert a date string into a date object.
-
-    :param string: the date string to parse
-    :returns: the parsed datetime object
-    """
-    # try date formats --mmdd, --mm-dd, yyyymmdd, yyyy-mm-dd and datetime
-    # formats yyyymmddThhmmss, yyyy-mm-ddThh:mm:ss, yyyymmddThhmmssZ,
-    # yyyy-mm-ddThh:mm:ssZ.
-    for fmt in ("--%m%d", "--%m-%d", "%Y%m%d", "%Y-%m-%d", "%Y%m%dT%H%M%S",
-                "%Y-%m-%dT%H:%M:%S", "%Y%m%dT%H%M%SZ", "%Y-%m-%dT%H:%M:%SZ"):
-        try:
-            return datetime.strptime(string, fmt)
-        except ValueError:
-            continue  # with the next format
-    # try datetime formats yyyymmddThhmmsstz and yyyy-mm-ddThh:mm:sstz where tz
-    # may look like -06:00.
-    for fmt in ("%Y%m%dT%H%M%S%z", "%Y-%m-%dT%H:%M:%S%z"):
-        try:
-            return datetime.strptime(''.join(string.rsplit(":", 1)), fmt)
-        except ValueError:
-            continue  # with the next format
-    raise ValueError
 
 
 def get_random_uid() -> str:

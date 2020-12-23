@@ -22,7 +22,8 @@ import vobject
 
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
-from .helpers.typing import convert_to_vcard, Date, ObjectType, StrList
+from .helpers.typing import (convert_to_vcard, Date, ObjectType, StrList,
+                             list_to_string, string_to_date, string_to_list)
 from .query import AnyQuery, Query
 
 
@@ -280,7 +281,7 @@ class VCardWrapper:
             pass
         # else try to convert to a datetime object
         try:
-            return helpers.string_to_date(self.vcard.bday.value)
+            return string_to_date(self.vcard.bday.value)
         except (AttributeError, ValueError):
             pass
         return None
@@ -313,11 +314,11 @@ class VCardWrapper:
             pass
         # else try to convert to a datetime object
         try:
-            return helpers.string_to_date(self.vcard.anniversary.value)
+            return string_to_date(self.vcard.anniversary.value)
         except (AttributeError, ValueError):
             # vcard 3.0: x-anniversary (private object)
             try:
-                return helpers.string_to_date(self.vcard.x_anniversary.value)
+                return string_to_date(self.vcard.x_anniversary.value)
             except (AttributeError, ValueError):
                 pass
         return None
@@ -468,7 +469,7 @@ class VCardWrapper:
             names = [self._get_name_prefixes(), self._get_first_names(),
                      self._get_last_names(), self._get_name_suffixes()]
             names = [x for x in names if x]
-            final = helpers.list_to_string(names, " ")
+            final = list_to_string(names, " ")
         else:  # add an empty FN
             final = ""
         self.vcard.add("FN").value = final
@@ -511,7 +512,7 @@ class VCardWrapper:
         names = self._get_first_names() + self._get_additional_names() + \
             self._get_last_names()
         if names:
-            return helpers.list_to_string(names, " ")
+            return list_to_string(names, " ")
         return self.formatted_name
 
     def get_last_name_first_name(self) -> str:
@@ -525,21 +526,21 @@ class VCardWrapper:
             self._get_additional_names()
         if last_names and first_and_additional_names:
             return "{}, {}".format(
-                helpers.list_to_string(last_names, " "),
-                helpers.list_to_string(first_and_additional_names, " "))
+                list_to_string(last_names, " "),
+                list_to_string(first_and_additional_names, " "))
         if last_names:
-            return helpers.list_to_string(last_names, " ")
+            return list_to_string(last_names, " ")
         if first_and_additional_names:
-            return helpers.list_to_string(first_and_additional_names, " ")
+            return list_to_string(first_and_additional_names, " ")
         return self.formatted_name
 
     @property
     def first_name(self) -> str:
-        return helpers.list_to_string(self._get_first_names(), " ")
+        return list_to_string(self._get_first_names(), " ")
 
     @property
     def last_name(self) -> str:
-        return helpers.list_to_string(self._get_last_names(), " ")
+        return list_to_string(self._get_last_names(), " ")
 
     def _add_name(self, prefix: StrList, first_name: StrList,
                   additional_name: StrList, last_name: StrList,
@@ -580,7 +581,7 @@ class VCardWrapper:
             first_org = self.organisations[0]
             if isinstance(first_org, dict):
                 first_org = list(first_org.values())[0]
-            org_value = helpers.list_to_string(first_org, ", ")
+            org_value = list_to_string(first_org, ", ")
             self.formatted_name = org_value.replace("\n", " ").replace("\\",
                                                                        "")
             showas_obj = self.vcard.add('x-abshowas')
@@ -651,7 +652,7 @@ class VCardWrapper:
         for child in self.vcard.getChildren():
             if child.name == "TEL":
                 # phone types
-                type = helpers.list_to_string(
+                type = list_to_string(
                     self._get_types_for_vcard_object(child, "voice"), ", ")
                 if type not in phone_dict:
                     phone_dict[type] = []
@@ -673,7 +674,7 @@ class VCardWrapper:
 
     def _add_phone_number(self, type: str, number: str) -> None:
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), self.phone_types_v4 if
+            string_to_list(type, ","), self.phone_types_v4 if
             self.version == "4.0" else self.phone_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for phone number " + number +
@@ -681,7 +682,7 @@ class VCardWrapper:
         if len(custom_types) > 1:
             raise ValueError("Error: phone number " + number + " got more "
                              "than one custom label: " +
-                             helpers.list_to_string(custom_types, ", "))
+                             list_to_string(custom_types, ", "))
         phone_obj = self.vcard.add('tel')
         if self.version == "4.0":
             phone_obj.value = "tel:{}".format(
@@ -716,7 +717,7 @@ class VCardWrapper:
         email_dict: Dict[str, List[str]] = {}
         for child in self.vcard.getChildren():
             if child.name == "EMAIL":
-                type = helpers.list_to_string(
+                type = list_to_string(
                     self._get_types_for_vcard_object(child, "internet"), ", ")
                 if type not in email_dict:
                     email_dict[type] = []
@@ -728,7 +729,7 @@ class VCardWrapper:
 
     def add_email(self, type: str, address: str) -> None:
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","), self.email_types_v4 if
+            string_to_list(type, ","), self.email_types_v4 if
             self.version == "4.0" else self.email_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for email address " + address +
@@ -736,7 +737,7 @@ class VCardWrapper:
         if len(custom_types) > 1:
             raise ValueError("Error: email address " + address + " got more "
                              "than one custom label: " +
-                             helpers.list_to_string(custom_types, ", "))
+                             list_to_string(custom_types, ", "))
         email_obj = self.vcard.add('email')
         email_obj.value = convert_to_vcard("email address", address,
                                            ObjectType.str)
@@ -768,7 +769,7 @@ class VCardWrapper:
         post_adr_dict: Dict[str, List[Dict[str, Union[List, str]]]] = {}
         for child in self.vcard.getChildren():
             if child.name == "ADR":
-                type = helpers.list_to_string(self._get_types_for_vcard_object(
+                type = list_to_string(self._get_types_for_vcard_object(
                     child, "home"), ", ")
                 if type not in post_adr_dict:
                     post_adr_dict[type] = []
@@ -782,21 +783,21 @@ class VCardWrapper:
         # sort post address lists
         for post_adr_list in post_adr_dict.values():
             post_adr_list.sort(key=lambda x: (
-                helpers.list_to_string(x['city'], " ").lower(),
-                helpers.list_to_string(x['street'], " ").lower()))
+                list_to_string(x['city'], " ").lower(),
+                list_to_string(x['street'], " ").lower()))
         return post_adr_dict
 
     def get_formatted_post_addresses(self) -> Dict[str, List[str]]:
-        list2str = helpers.list_to_string
         formatted_post_adr_dict: Dict[str, List[str]] = {}
         for type, post_adr_list in self.post_addresses.items():
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
-                get: Callable[[str], str] = lambda name: list2str(
+                get: Callable[[str], str] = lambda name: list_to_string(
                     post_adr.get(name, ""), " ")
                 strings = []
                 if "street" in post_adr:
-                    strings.append(list2str(post_adr.get("street", ""), "\n"))
+                    strings.append(list_to_string(
+                        post_adr.get("street", ""), "\n"))
                 if "box" in post_adr and "extended" in post_adr:
                     strings.append("{} {}".format(get("box"), get("extended")))
                 elif "box" in post_adr:
@@ -822,16 +823,15 @@ class VCardWrapper:
     def _add_post_address(self, type, box, extended, street, code, city,
                           region, country):
         standard_types, custom_types, pref = self._parse_type_value(
-            helpers.string_to_list(type, ","),
-            self.address_types_v4 if self.version == "4.0" else
-            self.address_types_v3)
+            string_to_list(type, ","), self.address_types_v4
+            if self.version == "4.0" else self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
             raise ValueError("Error: label for post address " + street +
                              " is missing.")
         if len(custom_types) > 1:
             raise ValueError("Error: post address " + street + " got more "
                              "than one custom " "label: " +
-                             helpers.list_to_string(custom_types, ", "))
+                             list_to_string(custom_types, ", "))
         adr_obj = self.vcard.add('adr')
         adr_obj.value = vobject.vcard.Address(
             box=convert_to_vcard("box address field", box, ObjectType.both),
@@ -1018,7 +1018,7 @@ class YAMLEditable(VCardWrapper):
                 "vcard version 4.0. You may use 1900 as placeholder, if "
                 "the year is unknown.".format(key))
         try:
-            v2 = helpers.string_to_date(new)
+            v2 = string_to_date(new)
             if v2:
                 setattr(self, target, v2)
             return
@@ -1530,8 +1530,7 @@ class CarddavObject(YAMLEditable):
             names = self._get_name_prefixes() + self._get_first_names() + \
                 self._get_additional_names() + self._get_last_names() + \
                 self._get_name_suffixes()
-            strings.append("Full name: {}".format(
-                helpers.list_to_string(names, " ")))
+            strings.append("Full name: {}".format(list_to_string(names, " ")))
         # organisation
         if self.organisations:
             strings += helpers.convert_to_yaml(
