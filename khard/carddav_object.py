@@ -20,7 +20,7 @@ from atomicwrites import atomic_write
 from ruamel import yaml
 import vobject
 
-from . import address_book  # pylint: disable=unused-import, for type checking
+from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
 from .object_type import ObjectType
 from .query import AnyQuery, Query
