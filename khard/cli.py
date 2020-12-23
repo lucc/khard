@@ -33,7 +33,7 @@ class FieldsArgument:
         self._choices = sorted(choices)
         self._nested = nested
 
-    def __call__(self, argument) -> List[str]:
+    def __call__(self, argument: str) -> List[str]:
         ret = []
         for candidate in argument.split(","):
             candidate = candidate.lower()

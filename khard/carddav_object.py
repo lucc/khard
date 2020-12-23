@@ -14,7 +14,7 @@ import os
 import re
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union, Sequence
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -178,7 +178,7 @@ class VCardWrapper:
             self.vcard.remove(item)
 
     @staticmethod
-    def _parse_type_value(types: List[str], supported_types: List[str]
+    def _parse_type_value(types: Sequence[str], supported_types: Sequence[str]
                           ) -> Tuple[List[str], List[str], int]:
         """Parse type value of phone numbers, email and post addresses.
 
@@ -709,7 +709,7 @@ class VCardWrapper:
             number_list.sort()
         return phone_dict
 
-    def _add_phone_number(self, type, number):
+    def _add_phone_number(self, type: str, number: str) -> None:
         standard_types, custom_types, pref = self._parse_type_value(
             helpers.string_to_list(type, ","), self.phone_types_v4 if
             self.version == "4.0" else self.phone_types_v3)
@@ -764,7 +764,7 @@ class VCardWrapper:
             email_list.sort()
         return email_dict
 
-    def add_email(self, type, address):
+    def add_email(self, type: str, address: str) -> None:
         standard_types, custom_types, pref = self._parse_type_value(
             helpers.string_to_list(type, ","), self.email_types_v4 if
             self.version == "4.0" else self.email_types_v3)
@@ -830,7 +830,8 @@ class VCardWrapper:
         for type, post_adr_list in self.post_addresses.items():
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
-                get = lambda name: list2str(post_adr.get(name, ""), " ")
+                get: Callable[[str], str] = lambda name: list2str(
+                    post_adr.get(name, ""), " ")
                 strings = []
                 if "street" in post_adr:
                     strings.append(list2str(post_adr.get("street", ""), "\n"))
