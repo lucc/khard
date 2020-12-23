@@ -27,8 +27,7 @@ def select(items: List[T], include_none: bool = False) -> Optional[T]:
     """Ask the user to select an item from a list.
 
     The list should be displayed to the user before calling this function and
-    should be indexed starting with 1.  This function might exit if the user
-    selects "q".
+    should be indexed starting with 1.
 
     :param items: the list from which to select
     :param include_none: whether to allow the selection of no item
@@ -49,7 +48,7 @@ def select(items: List[T], include_none: bool = False) -> Optional[T]:
                 return items[index - 1]
         except (EOFError, IndexError, ValueError):
             pass
-        print("Please enter an index value between 1 and {} or q to exit."
+        print("Please enter an index value between 1 and {} or q to quit."
               .format(len(items)))
 
 
