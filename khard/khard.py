@@ -21,7 +21,7 @@ from . import cli
 from .config import Config
 from .formatter import Formatter
 from .helpers import interactive
-from .helpers.interactive import confirm
+from .helpers.interactive import confirm, EditState
 from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
@@ -38,12 +38,9 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
             address_book, config.preferred_vcard_version,
             helpers.get_new_contact_template(config.private_objects))
     temp_file_name = editor.write_temp_file(template)
-    temp_file_creation = helpers.file_modification_date(temp_file_name)
 
     while True:
-        editor.edit_files(temp_file_name)
-        if temp_file_creation == helpers.file_modification_date(
-                temp_file_name):
+        if editor.edit_files(temp_file_name) == EditState.unmodified:
             new_contact = None
             os.remove(temp_file_name)
             break
@@ -84,12 +81,8 @@ def modify_existing_contact(old_contact: CarddavObject) -> None:
             old_contact, old_contact.address_book, old_contact.version,
             old_contact.to_yaml()))
 
-    temp_file_creation = helpers.file_modification_date(temp_file_name)
-
     while True:
-        editor.edit_files(temp_file_name)
-        if temp_file_creation == helpers.file_modification_date(
-                temp_file_name):
+        if editor.edit_files(temp_file_name) == EditState.unmodified:
             new_contact = None
             os.remove(temp_file_name)
             break
@@ -149,12 +142,9 @@ def merge_existing_contacts(source_contact: CarddavObject,
             target_contact, target_contact.address_book,
             target_contact.version, target_contact.to_yaml()))
 
-    target_temp_file_creation = helpers.file_modification_date(
-        target_temp_file_name)
     while True:
-        editor.edit_files(source_temp_file_name, target_temp_file_name)
-        if target_temp_file_creation == helpers.file_modification_date(
-                target_temp_file_name):
+        if editor.edit_files(source_temp_file_name, target_temp_file_name) == \
+                EditState.unmodified:
             merged_contact = None
             os.remove(source_temp_file_name)
             os.remove(target_temp_file_name)

@@ -21,6 +21,7 @@ from ruamel.yaml import YAML
 
 from khard import cli
 from khard import config
+from khard.helpers.interactive import EditState, Editor
 from khard import khard
 
 from .helpers import TmpConfig, mock_stream
@@ -379,11 +380,15 @@ class MiscCommands(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
-        with mock.patch('subprocess.Popen') as popen:
+        editor = mock.Mock()
+        editor.edit_files = mock.Mock(return_value=EditState.unmodified)
+        editor.write_temp_file = Editor.write_temp_file
+        with mock.patch('khard.khard.interactive.Editor',
+                        mock.Mock(return_value=editor)):
             run_main("edit", "uid1")
         # The editor is called with a temp file so how to we check this more
         # precisely?
-        popen.assert_called_once()
+        editor.edit_files.assert_called_once()
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf',
                      EDITOR='editor')

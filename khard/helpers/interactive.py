@@ -1,11 +1,11 @@
 """Helper functions for user interaction."""
 
+from datetime import datetime
 from enum import Enum
+import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
 from typing import List, Optional, TypeVar, Union
-
-from . import file_modification_date
 
 
 T = TypeVar("T")
@@ -83,6 +83,10 @@ class Editor:
             tmp.write(text)
             return tmp.name
 
+    @staticmethod
+    def _mtime(filename: str) -> datetime:
+        return datetime.fromtimestamp(os.path.getmtime(filename))
+
     def edit_files(self, file1: str, file2: Optional[str] = None) -> EditState:
         """Edit the given files
 
@@ -99,11 +103,11 @@ class Editor:
             command = self.editor + [file1]
         else:
             command = self.merge_editor + [file1, file2]
-        timestamp = file_modification_date(command[-1])
+        timestamp = self._mtime(command[-1])
         child = subprocess.Popen(command)
         child.communicate()
         if child.returncode != 0:
             return EditState.aborted
-        if timestamp == file_modification_date(command[-1]):
+        if timestamp == self._mtime(command[-1]):
             return EditState.unmodified
         return EditState.modified

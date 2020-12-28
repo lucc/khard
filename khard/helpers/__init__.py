@@ -1,10 +1,8 @@
 """Some helper functions for khard"""
 
-import os
 import pathlib
 import random
 import string
-from datetime import datetime
 from typing import List, Optional, Union
 
 from .typing import list_to_string
@@ -62,10 +60,6 @@ def pretty_print(table: List[List[str]], justify: str = "L"
 def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
-
-
-def file_modification_date(filename: str) -> datetime:
-    return datetime.fromtimestamp(os.path.getmtime(filename))
 
 
 def convert_to_yaml(name: str, value: Union[None, str, List], indentation: int,
