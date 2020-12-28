@@ -1,11 +1,12 @@
 """Helper functions for user interaction."""
 
+import contextlib
 from datetime import datetime
 from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, TypeVar, Union
+from typing import Generator, List, Optional, TypeVar, Union
 
 
 T = TypeVar("T")
@@ -73,7 +74,8 @@ class Editor:
             else merge_editor
 
     @staticmethod
-    def write_temp_file(text: str = "") -> str:
+    @contextlib.contextmanager
+    def write_temp_file(text: str = "") -> Generator[str, None, None]:
         """Create a new temporary file and write some initial text to it.
 
         :param text: the text to write to the temp file
@@ -81,7 +83,7 @@ class Editor:
         """
         with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
             tmp.write(text)
-            return tmp.name
+            yield tmp.name
 
     @staticmethod
     def _mtime(filename: str) -> datetime:
