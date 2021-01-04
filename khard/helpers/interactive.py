@@ -64,6 +64,8 @@ class EditState(Enum):
 
 class Editor:
 
+    """Wrapper around subprocess.Popen to edit and merge files."""
+
     def __init__(self, editor: Union[str, List[str]],
                  merge_editor: Union[str, List[str]]) -> None:
         self.editor = [editor] if isinstance(editor, str) else editor
