@@ -21,13 +21,27 @@ from . import cli
 from .config import Config
 from .formatter import Formatter
 from .helpers import interactive
-from .helpers.interactive import confirm, EditState
+from .helpers.interactive import confirm
 from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 
 logger = logging.getLogger(__name__)
 config: Config
+
+
+def version_check(contact: CarddavObject, description: str) -> bool:
+    if contact.version not in config.supported_vcard_versions:
+        print("Warning:\nThe {} is based on vcard version {} but khard only "
+              "supports the modification of vcards with version 3.0 and 4.0.\n"
+              "If you proceed, the contact will be converted to vcard version "
+              "{} but beware: This could corrupt the contact file or cause "
+              "data loss.".format(description, contact.version,
+                                  config.preferred_vcard_version))
+        if not confirm("Do you want to proceed anyway?"):
+            print("Canceled")
+            return False
+    return True
 
 
 def create_new_contact(address_book: VdirAddressBook) -> None:
@@ -72,16 +86,8 @@ def merge_existing_contacts(source_contact: CarddavObject,
                             target_contact: CarddavObject,
                             delete_source_contact: bool) -> None:
     # show warning, if target vcard version is not 3.0 or 4.0
-    if target_contact.version not in config.supported_vcard_versions:
-        print("Warning:\nThe target contact in which to merge is based on "
-              "vcard version {} but khard only supports the modification of "
-              "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
-              "will be converted to vcard version {} but beware: This could "
-              "corrupt the contact file or cause data loss.".format(
-                  target_contact.version, config.preferred_vcard_version))
-        if not confirm("Do you want to proceed anyway?"):
-            print("Canceled")
-            sys.exit(0)
+    if not version_check(target_contact, "target contact in which to merge"):
+        return
     # create temp files for each vcard
     editor = interactive.Editor(config.editor, config.merge_editor)
     src_text = ("# merge from {}\n# Address book: {}\n# Vcard version: {}\n"
@@ -740,16 +746,8 @@ def modify_subcommand(selected_vcard: CarddavObject,
         editor.edit_files(selected_vcard.filename)
         return
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
-    if selected_vcard.version not in config.supported_vcard_versions:
-        print("Warning:\nThe selected contact is based on vcard version {} "
-              "but khard only supports the creation and modification of vcards"
-              " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
-              " converted to vcard version {} but beware: This could corrupt "
-              "the contact file or cause data loss.".format(
-                  selected_vcard.version, config.preferred_vcard_version))
-        if not confirm("Do you want to proceed anyway?"):
-            print("Canceled")
-            return
+    if not version_check(selected_vcard, "selected contact"):
+        return
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
