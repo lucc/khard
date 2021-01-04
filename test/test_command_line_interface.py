@@ -381,14 +381,14 @@ class MiscCommands(unittest.TestCase):
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
         editor = mock.Mock()
-        editor.edit_files = mock.Mock(return_value=EditState.unmodified)
+        editor.edit_templates = mock.Mock(return_value=None)
         editor.write_temp_file = Editor.write_temp_file
         with mock.patch('khard.khard.interactive.Editor',
                         mock.Mock(return_value=editor)):
             run_main("edit", "uid1")
         # The editor is called with a temp file so how to we check this more
         # precisely?
-        editor.edit_files.assert_called_once()
+        editor.edit_templates.assert_called_once()
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf',
                      EDITOR='editor')

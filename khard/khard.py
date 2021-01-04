@@ -37,31 +37,12 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
         "{}\n# if you want to cancel, exit without saving\n\n{}".format(
             address_book, config.preferred_vcard_version,
             helpers.get_new_contact_template(config.private_objects))
-    with editor.write_temp_file(template) as temp_file_name:
-        while True:
-            if editor.edit_files(temp_file_name) == EditState.unmodified:
-                new_contact = None
-                break
-
-            # read temp file contents after editing
-            with open(temp_file_name, "r") as tmp:
-                new_contact_yaml = tmp.read()
-
-            # try to create new contact
-            try:
-                new_contact = CarddavObject.from_yaml(
-                    address_book, new_contact_yaml, config.private_objects,
-                    config.preferred_vcard_version, config.localize_dates)
-            except ValueError as err:
-                print("\n{}\n".format(err))
-                if not confirm("Do you want to open the editor again?"):
-                    print("Canceled")
-                    sys.exit(0)
-            else:
-                break
+    new_contact = editor.edit_templates(lambda t: CarddavObject.from_yaml(
+        address_book, t, config.private_objects,
+        config.preferred_vcard_version, config.localize_dates), template)
 
     # create carddav object from temp file
-    if new_contact is None or template == new_contact_yaml:
+    if new_contact is None:
         print("Canceled")
     else:
         new_contact.write_to_file()
@@ -75,27 +56,9 @@ def modify_existing_contact(old_contact: CarddavObject) -> None:
             "# if you want to cancel, exit without saving\n\n{}".format(
                 old_contact, old_contact.address_book, old_contact.version,
                 old_contact.to_yaml()))
-    with editor.write_temp_file(text) as temp_file_name:
-        while True:
-            if editor.edit_files(temp_file_name) == EditState.unmodified:
-                new_contact = None
-                break
-
-            # read temp file contents after editing
-            with open(temp_file_name, "r") as tmp:
-                new_contact_template = tmp.read()
-
-            # try to create contact from user input
-            try:
-                new_contact = CarddavObject.clone_with_yaml_update(
-                    old_contact, new_contact_template, config.localize_dates)
-            except ValueError as err:
-                print("\n{}\n".format(err))
-                if not confirm("Do you want to open the editor again?"):
-                    print("Canceled")
-                    sys.exit(0)
-            else:
-                break
+    new_contact = editor.edit_templates(
+        lambda t: CarddavObject.clone_with_yaml_update(
+            old_contact, t, config.localize_dates), text)
 
     # check if the user changed anything
     if new_contact is None or old_contact == new_contact:
@@ -129,31 +92,9 @@ def merge_existing_contacts(source_contact: CarddavObject,
                    "# if you want to cancel, exit without saving\n\n{}".format(
                        target_contact, target_contact.address_book,
                        target_contact.version, target_contact.to_yaml()))
-    with editor.write_temp_file(src_text) as source_temp_file_name:
-        with editor.write_temp_file(target_text) as target_temp_file_name:
-            while True:
-                if EditState.unmodified == editor.edit_files(
-                        source_temp_file_name, target_temp_file_name):
-                    merged_contact = None
-                    break
-
-                # load target template contents
-                with open(target_temp_file_name, "r") as target_tf:
-                    merged_contact_template = target_tf.read()
-
-                # try to create contact from user input
-                try:
-                    merged_contact = CarddavObject.clone_with_yaml_update(
-                        target_contact, merged_contact_template,
-                        config.localize_dates)
-                except ValueError as err:
-                    print("\n{}\n".format(err))
-                    if not confirm("Do you want to open the editor again?"):
-                        print("Canceled")
-                        return
-                else:
-                    break
-
+    merged_contact = editor.edit_templates(
+        lambda t: CarddavObject.clone_with_yaml_update(
+            target_contact, t, config.localize_dates), src_text, target_text)
     # compare them
     if merged_contact is None or target_contact == merged_contact:
         print("Target contact unmodified\n\n{}".format(

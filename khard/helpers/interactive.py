@@ -6,7 +6,9 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Generator, List, Optional, TypeVar, Union
+from typing import Callable, Generator, List, Optional, TypeVar, Union
+
+from ..carddav_object import CarddavObject
 
 
 T = TypeVar("T")
@@ -113,3 +115,39 @@ class Editor:
         if timestamp == self._mtime(command[-1]):
             return EditState.unmodified
         return EditState.modified
+
+    def edit_templates(self, yaml2card: Callable[[str], CarddavObject],
+                       template1: str, template2: Optional[str] = None
+                       ) -> Optional[CarddavObject]:
+        """Edit YAML templates of contacts and parse them back
+
+        :param yaml2card: a function to convert the modified YAML templates
+            into a CarddavObject
+        :param template1: the first template
+        :param template2: the second template (optional, for merges)
+        :returns: the parsed CarddavObject or None
+        """
+        with contextlib.ExitStack() as stack:
+            templates = [t for t in (template1, template2) if t is not None]
+            files = [stack.enter_context(self.write_temp_file(t))
+                     for t in templates]
+            # Try to edit the files until we detect a modivication or the user
+            # aborts
+            while True:
+                if self.edit_files(*files) == EditState.unmodified:
+                    return None
+                # read temp file contents after editing
+                with open(files[-1], "r") as tmp:
+                    modified_template = tmp.read()
+                # No actual modification was done
+                if modified_template == templates[-1]:
+                    return None
+                # try to create contact from user input
+                try:
+                    return yaml2card(modified_template)
+                except ValueError as err:
+                    print("\n{}\n".format(err))
+                    if not confirm("Do you want to open the editor again?"):
+                        print("Canceled")
+                        return None
+        return None  # only for mypy
