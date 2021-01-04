@@ -1,7 +1,11 @@
 """Helper functions for user interaction."""
 
+from enum import Enum
 import subprocess
+from tempfile import NamedTemporaryFile
 from typing import List, Optional, TypeVar, Union
+
+from . import file_modification_date
 
 
 T = TypeVar("T")
@@ -52,9 +56,52 @@ def select(items: List[T], include_none: bool = False) -> Optional[T]:
               .format(len(items)))
 
 
-def edit(editor: Union[str, List[str]], *filenames: str) -> None:
-    """Edit the given files"""
-    editor = [editor] if isinstance(editor, str) else editor
-    editor.extend(filenames)
-    child = subprocess.Popen(editor)
-    child.communicate()
+class EditState(Enum):
+    modified = 1
+    unmodified = 2
+    aborted = 3
+
+
+class Editor:
+
+    def __init__(self, editor: Union[str, List[str]],
+                 merge_editor: Union[str, List[str]]) -> None:
+        self.editor = [editor] if isinstance(editor, str) else editor
+        self.merge_editor = [merge_editor] if isinstance(merge_editor, str) \
+            else merge_editor
+
+    @staticmethod
+    def write_temp_file(text: str = "") -> str:
+        """Create a new temporary file and write some initial text to it.
+
+        :param text: the text to write to the temp file
+        :returns: the file name of the newly created temp file
+        """
+        with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
+            tmp.write(text)
+            return tmp.name
+
+    def edit_files(self, file1: str, file2: Optional[str] = None) -> EditState:
+        """Edit the given files
+
+        If only one file is given the timestamp of this file is checked, if two
+        files are given the timestamp of the second file is checked for
+        modification.
+
+        :param file1: the first file (checked for modification if file2 not
+            present)
+        :param file2: the second file (checked for modification of present)
+        :returns: the result of the modification
+        """
+        if file2 is None:
+            command = self.editor + [file1]
+        else:
+            command = self.merge_editor + [file1, file2]
+        timestamp = file_modification_date(command[-1])
+        child = subprocess.Popen(command)
+        child.communicate()
+        if child.returncode != 0:
+            return EditState.aborted
+        if timestamp == file_modification_date(command[-1]):
+            return EditState.unmodified
+        return EditState.modified

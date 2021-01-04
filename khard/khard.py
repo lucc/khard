@@ -9,7 +9,6 @@ import logging
 import operator
 import os
 import sys
-from tempfile import NamedTemporaryFile
 from typing import cast, Dict, Iterable, List, Optional, Union
 
 from unidecode import unidecode
@@ -31,34 +30,18 @@ logger = logging.getLogger(__name__)
 config: Config
 
 
-def write_temp_file(text: str = "") -> str:
-    """Create a new temporary file and write some initial text to it.
-
-    :param text: the text to write to the temp file
-    :returns: the file name of the newly created temp file
-    """
-    with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
-        tmp.write(text)
-        return tmp.name
-
-
-def edit(*filenames: str, merge: bool = False) -> None:
-    """Edit the given files with the configured editor or merge editor"""
-    editor = config.merge_editor if merge else config.editor
-    return interactive.edit(editor, *filenames)
-
-
 def create_new_contact(address_book: VdirAddressBook) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file
     template = "# create new contact\n# Address book: {}\n# Vcard version: " \
         "{}\n# if you want to cancel, exit without saving\n\n{}".format(
             address_book, config.preferred_vcard_version,
             helpers.get_new_contact_template(config.private_objects))
-    temp_file_name = write_temp_file(template)
+    temp_file_name = editor.write_temp_file(template)
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
     while True:
-        edit(temp_file_name)
+        editor.edit_files(temp_file_name)
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
             new_contact = None
@@ -93,8 +76,9 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
 
 
 def modify_existing_contact(old_contact: CarddavObject) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file and open it with the specified text editor
-    temp_file_name = write_temp_file(
+    temp_file_name = editor.write_temp_file(
         "# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
         "# if you want to cancel, exit without saving\n\n{}".format(
             old_contact, old_contact.address_book, old_contact.version,
@@ -103,7 +87,7 @@ def modify_existing_contact(old_contact: CarddavObject) -> None:
     temp_file_creation = helpers.file_modification_date(temp_file_name)
 
     while True:
-        edit(temp_file_name)
+        editor.edit_files(temp_file_name)
         if temp_file_creation == helpers.file_modification_date(
                 temp_file_name):
             new_contact = None
@@ -151,14 +135,15 @@ def merge_existing_contacts(source_contact: CarddavObject,
             print("Canceled")
             sys.exit(0)
     # create temp files for each vcard
+    editor = interactive.Editor(config.editor, config.merge_editor)
     # source vcard
-    source_temp_file_name = write_temp_file(
+    source_temp_file_name = editor.write_temp_file(
         "# merge from {}\n# Address book: {}\n# Vcard version: {}\n"
         "# if you want to cancel, exit without saving\n\n{}".format(
             source_contact, source_contact.address_book,
             source_contact.version, source_contact.to_yaml()))
     # target vcard
-    target_temp_file_name = write_temp_file(
+    target_temp_file_name = editor.write_temp_file(
         "# merge into {}\n# Address book: {}\n# Vcard version: {}\n"
         "# if you want to cancel, exit without saving\n\n{}".format(
             target_contact, target_contact.address_book,
@@ -167,7 +152,7 @@ def merge_existing_contacts(source_contact: CarddavObject,
     target_temp_file_creation = helpers.file_modification_date(
         target_temp_file_name)
     while True:
-        edit(source_temp_file_name, target_temp_file_name, merge=True)
+        editor.edit_files(source_temp_file_name, target_temp_file_name)
         if target_temp_file_creation == helpers.file_modification_date(
                 target_temp_file_name):
             merged_contact = None
@@ -836,7 +821,8 @@ def modify_subcommand(selected_vcard: CarddavObject,
     :param source: edit the source file or a yaml version?
     """
     if source:
-        edit(selected_vcard.filename)
+        editor = interactive.Editor(config.editor, config.merge_editor)
+        editor.edit_files(selected_vcard.filename)
         return
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
     if selected_vcard.version not in config.supported_vcard_versions:
