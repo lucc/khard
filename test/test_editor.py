@@ -59,3 +59,16 @@ class EditFiles(unittest.TestCase):
                             mock.Mock(side_effect=[self.t1, self.t1])):
                 actual = self.editor.edit_files("file")
         self.assertEqual(actual, EditState.unmodified)
+
+    def test_editing_templates(self):
+        def edit_files(self, *files):
+            for f in files:
+                with open(f, "r") as fp:
+                    lines = fp.readlines()
+                with open(f, "w") as fp:
+                    fp.writelines(sorted(lines))
+        t1 = "some: yaml\ndocument: true\n"
+        with mock.patch("khard.helpers.interactive.Editor.edit_files",
+                        edit_files):
+            actual = self.editor.edit_templates(lambda x: x, t1)
+        self.assertEqual(actual, "document: true\nsome: yaml\n")

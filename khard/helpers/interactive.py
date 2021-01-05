@@ -83,8 +83,9 @@ class Editor:
         :param text: the text to write to the temp file
         :returns: the file name of the newly created temp file
         """
-        with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
+        with NamedTemporaryFile(mode='w+t', suffix='.yml') as tmp:
             tmp.write(text)
+            tmp.flush()
             yield tmp.name
 
     @staticmethod
@@ -127,8 +128,8 @@ class Editor:
         :param template2: the second template (optional, for merges)
         :returns: the parsed CarddavObject or None
         """
+        templates = [t for t in (template1, template2) if t is not None]
         with contextlib.ExitStack() as stack:
-            templates = [t for t in (template1, template2) if t is not None]
             files = [stack.enter_context(self.write_temp_file(t))
                      for t in templates]
             # Try to edit the files until we detect a modivication or the user
