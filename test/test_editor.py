@@ -7,6 +7,8 @@ from unittest import mock
 
 from khard.helpers.interactive import Editor, EditState
 
+from .helpers import mock_stream
+
 
 class EditFiles(unittest.TestCase):
 
@@ -24,6 +26,19 @@ class EditFiles(unittest.TestCase):
         Popen = mock.Mock(return_value=child_process)
         with mock.patch("subprocess.Popen", Popen) as popen:
             yield popen
+
+    @staticmethod
+    def _edit_files(write="changed"):
+        """Mock function for khar.helpers.interactive.Editor.edit_files
+
+        Create a function that will write the specified text to all files
+        passed as arguments.
+        """
+        def edit_files(self, *files):
+            for f in files:
+                with open(f, "w") as fp:
+                    fp.write(write)
+        return edit_files
 
     def test_calls_subprocess_popen_with_editor_for_one_args(self):
         with self._mock_popen() as popen:
@@ -61,14 +76,20 @@ class EditFiles(unittest.TestCase):
         self.assertEqual(actual, EditState.unmodified)
 
     def test_editing_templates(self):
-        def edit_files(self, *files):
-            for f in files:
-                with open(f, "r") as fp:
-                    lines = fp.readlines()
-                with open(f, "w") as fp:
-                    fp.writelines(sorted(lines))
         t1 = "some: yaml\ndocument: true\n"
         with mock.patch("khard.helpers.interactive.Editor.edit_files",
-                        edit_files):
+                        self._edit_files()):
             actual = self.editor.edit_templates(lambda x: x, t1)
-        self.assertEqual(actual, "document: true\nsome: yaml\n")
+        self.assertEqual(actual, "changed")
+
+    def test_exception_from_yaml_conversion_is_caught(self):
+        t1 = "key: value\n"
+        with mock.patch("khard.helpers.interactive.Editor.edit_files",
+                        self._edit_files()):
+            with mock.patch("khard.helpers.interactive.confirm",
+                            mock.Mock(return_value=False)) as confirm:
+                with mock_stream():  # hide stdout in test
+                    actual = self.editor.edit_templates(
+                        mock.Mock(side_effect=ValueError), t1)
+        self.assertIsNone(actual)
+        confirm.assert_called_once()
