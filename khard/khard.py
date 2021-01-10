@@ -9,7 +9,6 @@ import logging
 import operator
 import os
 import sys
-from tempfile import NamedTemporaryFile
 from typing import cast, Dict, Iterable, List, Optional, Union
 
 from unidecode import unidecode
@@ -31,61 +30,33 @@ logger = logging.getLogger(__name__)
 config: Config
 
 
-def write_temp_file(text: str = "") -> str:
-    """Create a new temporary file and write some initial text to it.
-
-    :param text: the text to write to the temp file
-    :returns: the file name of the newly created temp file
-    """
-    with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
-        tmp.write(text)
-        return tmp.name
-
-
-def edit(*filenames: str, merge: bool = False) -> None:
-    """Edit the given files with the configured editor or merge editor"""
-    editor = config.merge_editor if merge else config.editor
-    return interactive.edit(editor, *filenames)
+def version_check(contact: CarddavObject, description: str) -> bool:
+    if contact.version not in config.supported_vcard_versions:
+        print("Warning:\nThe {} is based on vcard version {} but khard only "
+              "supports the modification of vcards with version 3.0 and 4.0.\n"
+              "If you proceed, the contact will be converted to vcard version "
+              "{} but beware: This could corrupt the contact file or cause "
+              "data loss.".format(description, contact.version,
+                                  config.preferred_vcard_version))
+        if not confirm("Do you want to proceed anyway?"):
+            print("Canceled")
+            return False
+    return True
 
 
 def create_new_contact(address_book: VdirAddressBook) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file
     template = "# create new contact\n# Address book: {}\n# Vcard version: " \
         "{}\n# if you want to cancel, exit without saving\n\n{}".format(
             address_book, config.preferred_vcard_version,
             helpers.get_new_contact_template(config.private_objects))
-    temp_file_name = write_temp_file(template)
-    temp_file_creation = helpers.file_modification_date(temp_file_name)
-
-    while True:
-        edit(temp_file_name)
-        if temp_file_creation == helpers.file_modification_date(
-                temp_file_name):
-            new_contact = None
-            os.remove(temp_file_name)
-            break
-
-        # read temp file contents after editing
-        with open(temp_file_name, "r") as tmp:
-            new_contact_yaml = tmp.read()
-
-        # try to create new contact
-        try:
-            new_contact = CarddavObject.from_yaml(
-                address_book, new_contact_yaml, config.private_objects,
-                config.preferred_vcard_version, config.localize_dates)
-        except ValueError as err:
-            print("\n{}\n".format(err))
-            if not confirm("Do you want to open the editor again?"):
-                print("Canceled")
-                os.remove(temp_file_name)
-                sys.exit(0)
-        else:
-            os.remove(temp_file_name)
-            break
+    new_contact = editor.edit_templates(lambda t: CarddavObject.from_yaml(
+        address_book, t, config.private_objects,
+        config.preferred_vcard_version, config.localize_dates), template)
 
     # create carddav object from temp file
-    if new_contact is None or template == new_contact_yaml:
+    if new_contact is None:
         print("Canceled")
     else:
         new_contact.write_to_file()
@@ -93,40 +64,15 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
 
 
 def modify_existing_contact(old_contact: CarddavObject) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file and open it with the specified text editor
-    temp_file_name = write_temp_file(
-        "# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
-        "# if you want to cancel, exit without saving\n\n{}".format(
-            old_contact, old_contact.address_book, old_contact.version,
-            old_contact.to_yaml()))
-
-    temp_file_creation = helpers.file_modification_date(temp_file_name)
-
-    while True:
-        edit(temp_file_name)
-        if temp_file_creation == helpers.file_modification_date(
-                temp_file_name):
-            new_contact = None
-            os.remove(temp_file_name)
-            break
-
-        # read temp file contents after editing
-        with open(temp_file_name, "r") as tmp:
-            new_contact_template = tmp.read()
-
-        # try to create contact from user input
-        try:
-            new_contact = CarddavObject.clone_with_yaml_update(
-                old_contact, new_contact_template, config.localize_dates)
-        except ValueError as err:
-            print("\n{}\n".format(err))
-            if not confirm("Do you want to open the editor again?"):
-                print("Canceled")
-                os.remove(temp_file_name)
-                sys.exit(0)
-        else:
-            os.remove(temp_file_name)
-            break
+    text = ("# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
+            "# if you want to cancel, exit without saving\n\n{}".format(
+                old_contact, old_contact.address_book, old_contact.version,
+                old_contact.to_yaml()))
+    new_contact = editor.edit_templates(
+        lambda t: CarddavObject.clone_with_yaml_update(
+            old_contact, t, config.localize_dates), text)
 
     # check if the user changed anything
     if new_contact is None or old_contact == new_contact:
@@ -140,61 +86,21 @@ def merge_existing_contacts(source_contact: CarddavObject,
                             target_contact: CarddavObject,
                             delete_source_contact: bool) -> None:
     # show warning, if target vcard version is not 3.0 or 4.0
-    if target_contact.version not in config.supported_vcard_versions:
-        print("Warning:\nThe target contact in which to merge is based on "
-              "vcard version {} but khard only supports the modification of "
-              "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
-              "will be converted to vcard version {} but beware: This could "
-              "corrupt the contact file or cause data loss.".format(
-                  target_contact.version, config.preferred_vcard_version))
-        if not confirm("Do you want to proceed anyway?"):
-            print("Canceled")
-            sys.exit(0)
+    if not version_check(target_contact, "target contact in which to merge"):
+        return
     # create temp files for each vcard
-    # source vcard
-    source_temp_file_name = write_temp_file(
-        "# merge from {}\n# Address book: {}\n# Vcard version: {}\n"
-        "# if you want to cancel, exit without saving\n\n{}".format(
-            source_contact, source_contact.address_book,
-            source_contact.version, source_contact.to_yaml()))
-    # target vcard
-    target_temp_file_name = write_temp_file(
-        "# merge into {}\n# Address book: {}\n# Vcard version: {}\n"
-        "# if you want to cancel, exit without saving\n\n{}".format(
-            target_contact, target_contact.address_book,
-            target_contact.version, target_contact.to_yaml()))
-
-    target_temp_file_creation = helpers.file_modification_date(
-        target_temp_file_name)
-    while True:
-        edit(source_temp_file_name, target_temp_file_name, merge=True)
-        if target_temp_file_creation == helpers.file_modification_date(
-                target_temp_file_name):
-            merged_contact = None
-            os.remove(source_temp_file_name)
-            os.remove(target_temp_file_name)
-            break
-
-        # load target template contents
-        with open(target_temp_file_name, "r") as target_tf:
-            merged_contact_template = target_tf.read()
-
-        # try to create contact from user input
-        try:
-            merged_contact = CarddavObject.clone_with_yaml_update(
-                target_contact, merged_contact_template, config.localize_dates)
-        except ValueError as err:
-            print("\n{}\n".format(err))
-            if not confirm("Do you want to open the editor again?"):
-                print("Canceled")
-                os.remove(source_temp_file_name)
-                os.remove(target_temp_file_name)
-                return
-        else:
-            os.remove(source_temp_file_name)
-            os.remove(target_temp_file_name)
-            break
-
+    editor = interactive.Editor(config.editor, config.merge_editor)
+    src_text = ("# merge from {}\n# Address book: {}\n# Vcard version: {}\n"
+                "# if you want to cancel, exit without saving\n\n{}".format(
+                    source_contact, source_contact.address_book,
+                    source_contact.version, source_contact.to_yaml()))
+    target_text = ("# merge into {}\n# Address book: {}\n# Vcard version: {}\n"
+                   "# if you want to cancel, exit without saving\n\n{}".format(
+                       target_contact, target_contact.address_book,
+                       target_contact.version, target_contact.to_yaml()))
+    merged_contact = editor.edit_templates(
+        lambda t: CarddavObject.clone_with_yaml_update(
+            target_contact, t, config.localize_dates), src_text, target_text)
     # compare them
     if merged_contact is None or target_contact == merged_contact:
         print("Target contact unmodified\n\n{}".format(
@@ -836,19 +742,12 @@ def modify_subcommand(selected_vcard: CarddavObject,
     :param source: edit the source file or a yaml version?
     """
     if source:
-        edit(selected_vcard.filename)
+        editor = interactive.Editor(config.editor, config.merge_editor)
+        editor.edit_files(selected_vcard.filename)
         return
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
-    if selected_vcard.version not in config.supported_vcard_versions:
-        print("Warning:\nThe selected contact is based on vcard version {} "
-              "but khard only supports the creation and modification of vcards"
-              " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
-              " converted to vcard version {} but beware: This could corrupt "
-              "the contact file or cause data loss.".format(
-                  selected_vcard.version, config.preferred_vcard_version))
-        if not confirm("Do you want to proceed anyway?"):
-            print("Canceled")
-            return
+    if not version_check(selected_vcard, "selected contact"):
+        return
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
