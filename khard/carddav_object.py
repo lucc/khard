@@ -962,7 +962,8 @@ class YAMLEditable(VCardWrapper):
         # parse user input string
         try:
             contact_data = yaml_parser.load(input)
-        except (yaml.parser.ParserError, yaml.scanner.ScannerError) as err:
+        except (yaml.parser.ParserError, yaml.scanner.ScannerError,
+                yaml.constructor.DuplicateKeyError) as err:
             raise ValueError(err)
         else:
             if not contact_data:
