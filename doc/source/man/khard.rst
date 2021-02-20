@@ -4,6 +4,14 @@ khard
 Synopsis
 --------
 
+.. argparse::
+  :module: khard.cli
+  :func: _sphinxarg_helper
+  :prog: khard
+
+Synopsis
+--------
+
 :program:`khard` [:option:`-c` CONFIG] [:option:`--debug`] [:option:`--skip-unparsable`] SUBCOMMAND ...
 
 :program:`khard` :option:`-h` | :option:`--help`
