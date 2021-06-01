@@ -14,10 +14,11 @@ from ..carddav_object import CarddavObject
 T = TypeVar("T")
 
 
-def confirm(message: str) -> bool:
+def confirm(message: str, accept_enter_key: bool = True) -> bool:
     """Ask the user for confirmation on the terminal.
 
     :param message: the question to print
+    :param accept_enter_key: Accept ENTER as alternative for "n"
     :returns: the answer of the user
     """
     while True:
@@ -25,7 +26,9 @@ def confirm(message: str) -> bool:
         answer = answer.lower()
         if answer == 'y':
             return True
-        if answer in ['', 'n', 'q']:
+        if answer == 'n':
+            return False
+        if answer == '' and accept_enter_key:
             return False
         print('Please answer with "y" for yes or "n" for no.')
 

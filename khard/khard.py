@@ -9,6 +9,7 @@ import logging
 import operator
 import os
 import sys
+import textwrap
 from typing import cast, Dict, Iterable, List, Optional, Union
 
 from unidecode import unidecode
@@ -387,69 +388,218 @@ def new_subcommand(selected_address_books: AddressBookCollection,
 
 
 def add_email_to_contact(name: str, email_address: str,
-                         abooks: AddressBookCollection) -> None:
+        abooks: AddressBookCollection, skip_already_added: bool) -> None:
     """Add a new email address to the given contact,
     creating the contact if necessary.
 
     :param name: name of the contact
     :param email_address: email address of the contact
     :param abooks: the addressbooks that were selected on the command line
+    :param skip_already_added: skip if email_address is part of one or more contacts
     """
-    print("Email address: {}".format(email_address))
+
+    # email address
+    # search in contacts
+    matching_contact_list = get_contact_list(abooks, TermQuery(email_address))
+    if matching_contact_list:
+        matching_contact_list_to_string = ', '.join(
+                str(i) for i in matching_contact_list)
+        if skip_already_added:
+            print("Skipping email address {}: Is already part of {}"
+                  .format(email_address, matching_contact_list_to_string))
+            return
+        if not confirm("Email address: {}, Found in contacts: {}. Select anyway?"
+                       .format(email_address, matching_contact_list_to_string)):
+            return
+    else:
+        if name:
+            name_and_email = '"{}" <{}>'.format(name, email_address)
+        else:
+            name_and_email = email_address
+        if not confirm("New address: {}. Select?".format(name_and_email)):
+            return
+
+    # name
     if not name:
+        # ask for name
         name = input("Contact's name: ")
+    else:
+        # remove chars: " '
+        name = name.replace('"', '').replace('\'', '')
+    # backup name for the "create new contact" function part below
+    original_name = name
 
-    # search for an existing contact
-    selected_vcard = choose_vcard_from_list(
-        "Select contact for the found e-mail address",
-        get_contact_list(abooks, TermQuery(name)))
+    # select contact
+    previous_name = name
+    previous_selected_vcard = None
+    manual_search = False
+    while True:
+        # search for an existing contact
+        name_parts = name.replace(',', '').split()
+        if len(name_parts) == 0:
+            query = AnyQuery()
+        elif len(name_parts) == 1:
+            query = TermQuery(name)
+        else:
+            term_query_list = [ TermQuery(part) for part in name_parts ]
+            query = AndQuery(
+                    term_query_list[0], term_query_list[1], *term_query_list[2:])
+        found_vcard_list = get_contact_list(abooks, query)
 
+        # select contact from list
+        if manual_search:
+            selected_vcard = choose_vcard_from_list(
+                    "Select contact for the search term: {}".format(name),
+                    found_vcard_list, include_none=True)
+            if found_vcard_list and not selected_vcard:
+                # contact selection cancelled
+                # restore previous data
+                name = previous_name
+                selected_vcard = previous_selected_vcard
+            manual_search = False
+        else:
+            selected_vcard = choose_vcard_from_list(
+                    "Select contact for the found e-mail address",
+                    found_vcard_list)
+
+        break_outer = False
+        while True:
+            if selected_vcard is None:
+                if found_vcard_list:
+                    answer = input("Contact selection cancelled (c/s/q): ")
+                else:
+                    answer = input("Nothing found for '{}' (c/s/q): "
+                                   .format(name))
+                error_message = ('Please answer with "c" to create a new '
+                                 'contact, "s" to search for an existing '
+                                 'contact or "q" to quit')
+            else:
+                answer = input("Contact selected: {} (y/c/d/s/q): "
+                               .format(selected_vcard))
+                error_message = ('Please answer with "y" to proceed, '
+                                 '"c" to create a new contact, "d" for details '
+                                 'of the selected contact, "s" to search '
+                                 'for an existing contact or "q" to quit')
+            answer = answer.lower()
+
+            if selected_vcard:
+                if answer == 'y':
+                    break_outer = True
+                    break
+                if answer == 'd':
+                    print("\n{}".format(selected_vcard.pretty()))
+                    continue
+            if answer == 'c':
+                selected_vcard = None
+                break_outer = True
+                break
+            if answer == 's':
+                # save data
+                previous_name = name
+                previous_selected_vcard = selected_vcard
+                # enter search string
+                if original_name:
+                    name = input("Search for contact [ENTER='{}' or -='']: "
+                                 .format(original_name)) or original_name
+                    if name == "-":
+                        name = ""
+                else:
+                    name = input("Search for contact: ")
+                manual_search = True
+                break
+            if answer == 'q':
+                print("Cancelled")
+                return
+            print(error_message)
+
+        if break_outer:
+            # restore name
+            name = original_name
+            break
+
+    # create new contact
     if selected_vcard is None:
-        if not name:
-            return
-
-        # create new contact
-        if not confirm("Contact '{}' does not exist. Do you want to create it?"
-                       .format(name)):
-            print("Cancelled")
-            return
-        # ask for address book, in which to create the new contact
-        selected_address_book = choose_address_book_from_list(
-            "Select address book for new contact", config.abooks)
-        if selected_address_book is None:
-            sys.exit("Error: address book list is empty")
-
+        # first and last name variables
         name_parts = name.split()
-        first = name_parts[0] if len(name_parts) > 0 else ""
+        # detect format: last_name, first_name in name variable
+        if name.count(",") == 1 \
+                and len(name_parts) > 1 \
+                and name_parts[0].endswith(","):
+            # remove "," from presumed last name
+            name_parts[0] = name_parts[0].replace(',', '')
+            # put last_name to the list end
+            name_parts.append(name_parts.pop(0))
+        # fill variables
+        first = name_parts[0] if len(name_parts) > 0 else name
         last = name_parts[-1] if len(name_parts) > 1 else ""
+
+        # ask for address book, in which to create the new contact
+        if not config.abooks:
+            sys.exit("Error: address book list is empty")
+        else:
+            selected_address_book = choose_address_book_from_list(
+                    "Select address book for new contact", config.abooks)
+            if selected_address_book is None:
+                print("No address book selected")
+                return
 
         # ask for name and organisation of new contact
         while True:
             if first:
-                first_name = input("First name [empty for '{}']: ".format(first))
-                if not first_name:
-                    first_name = first
+                first_name = input("First name [ENTER='{}' or -='']: "
+                                   .format(first)) or first
+                if first_name == "-":
+                    first_name = ""
             else:
                 first_name = input("First name: ")
 
             if last:
-                last_name = input("Last name [empty for '{}']: ".format(last))
-                if not last_name:
-                    last_name = last
+                last_name = input("Last name [ENTER='{}' or -='']: "
+                                  .format(last)) or last
+                if last_name == "-":
+                    last_name = ""
             else:
                 last_name = input("Last name: ")
 
-            organisation = input("Organisation: ")
+            if name and not first_name and not last_name:
+                # first and last names are empty, maybe it's an organisation
+                organisation = input("Organisation [ENTER='{}' or -='']: "
+                                     .format(name)) or name
+                if organisation == "-":
+                    organisation = ""
+            else:
+                organisation = input("Organisation: ")
+
             if not first_name and not last_name and not organisation:
                 print("Error: All fields are empty.")
             else:
+                print("")
                 break
+
+        # create contact
+        #
+        # build template
+        template_data = list()
+        if first_name:
+            template_data.append("First name   : {}".format(first_name))
+        if last_name:
+            template_data.append("Last name    : {}".format(last_name))
+        if organisation:
+            template_data.append("Organisation : {}".format(organisation))
+        # confirm contact creation
+        print("Verify input data\n{}"
+              .format(textwrap.indent('\n'.join(template_data), 2*' ')))
+        if not confirm("Create contact?", False):
+            print("Cancelled")
+            return
         selected_vcard = CarddavObject.from_yaml(
-            selected_address_book,
-            "First name : {}\nLast name : {}\nOrganisation : {}".format(
-                first_name, last_name, organisation),
-            config.private_objects, config.preferred_vcard_version,
-            config.localize_dates)
+                selected_address_book, '\n'.join(template_data),
+                config.private_objects, config.preferred_vcard_version,
+                config.localize_dates)
+        if not selected_vcard:
+            print("Could not create contact")
+            return
+        print("Contact created successfully")
 
     # check if the contact already contains the email address
     for _, email_list in sorted(selected_vcard.emails.items(),
@@ -459,12 +609,6 @@ def add_email_to_contact(name: str, email_address: str,
                 print("The contact {} already contains the email address {}"
                       .format(selected_vcard, email_address))
                 return
-
-    # ask for confirmation again
-    if not confirm("Do you want to add the email address {} to the contact {}?"
-                   .format(email_address, selected_vcard)):
-        print("Cancelled")
-        return
 
     # ask for the email label
     print("\nAdding email address {} to contact {}\n"
@@ -516,12 +660,14 @@ def find_email_addresses(text: str, fields: List[str]) -> List[Address]:
 def add_email_subcommand(
         text: str,
         abooks: AddressBookCollection,
-        fields: List[str]) -> None:
+        fields: List[str],
+        skip_already_added: bool) -> None:
     """Add a new email address to contacts, creating new contacts if necessary.
 
     :param text: the input text to search for the new email
     :param abooks: the addressbooks that were selected on the command line
     :param field: the header field to extract contacts from
+    :param skip_already_added: skip already known email addresses
     """
     email_addresses = find_email_addresses(text, fields)
     if not email_addresses:
@@ -533,7 +679,7 @@ def add_email_subcommand(
         name = email_address.display_name
         address = email_address.addr_spec
 
-        add_email_to_contact(name, address, abooks)
+        add_email_to_contact(name, address, abooks, skip_already_added)
 
         print()
 
@@ -972,7 +1118,8 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
                        args.open_editor)
     elif args.action == "add-email":
         add_email_subcommand(input_from_stdin_or_file,
-                             args.addressbook, args.headers)
+                             args.addressbook, args.headers,
+                             args.skip_already_added)
     elif args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":

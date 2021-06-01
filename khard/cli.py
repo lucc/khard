@@ -296,6 +296,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         type=lambda x: [y.lower() for y in x.split(",")],
         help="Extract contacts from the given comma separated header fields. "
         "`all` searches all headers.")
+    add_email_parser.add_argument(
+        "--skip-already-added", action="store_true",
+        help="Skip already added email addresses")
     subparsers.add_parser(
         "merge",
         aliases=Actions.get_aliases("merge"),
