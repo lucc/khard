@@ -1,6 +1,7 @@
 # Every contact must contain a formatted name, it will be autofilled
 # from the full name below if not given.
 Formatted name : 
+Sort as        : 
 
 # name components
 # every entry may contain a string or a list of strings

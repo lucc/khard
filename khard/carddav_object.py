@@ -538,6 +538,18 @@ class VCardWrapper:
     def _get_name_suffixes(self) -> List[str]:
         return self._get_names_part("suffix")
 
+    def _get_name_sort_as(self) -> str:
+        """Get the SORT-AS param of the "N" entry in the vCard as a string
+
+        :returns: the SORT-AS param
+        """
+        try:
+            the_str = getattr(self.vcard, "n").sort_as_param
+        except AttributeError:
+            return ""
+        else:
+            return the_str
+
     def get_first_name_last_name(self) -> str:
         """Compute the full name of the contact by joining first, additional
         and last names together
@@ -571,7 +583,8 @@ class VCardWrapper:
                   first_name: Union[str, List[str]],
                   additional_name: Union[str, List[str]],
                   last_name: Union[str, List[str]],
-                  suffix: Union[str, List[str]]) -> None:
+                  suffix: Union[str, List[str]],
+                  sort_as: str) -> None:
         """Add an N entry to the vCard. No old entries are affected.
 
         :param prefix:
@@ -579,6 +592,7 @@ class VCardWrapper:
         :param additional_name:
         :param last_name:
         :param suffix:
+        :param sort_as:
         """
         name_obj = self.vcard.add('n')
         stringlist = ObjectType.string_or_list_with_strings
@@ -589,6 +603,7 @@ class VCardWrapper:
                                         stringlist),
             family=convert_to_vcard("last name", last_name, stringlist),
             suffix=convert_to_vcard("name suffix", suffix, stringlist))
+        name_obj.sort_as_param = sort_as
 
     @property
     def organisations(self) -> List[Union[List[str], Dict[str, List[str]]]]:
@@ -1080,9 +1095,12 @@ class YAMLEditable(VCardWrapper):
         # the vobject library throws an exception, if it doesn't exist
         # so add the name regardless if it's empty or not
         self._add_name(
-            contact_data.get("Prefix", ""), contact_data.get("First name", ""),
+            contact_data.get("Prefix", ""),
+            contact_data.get("First name", ""),
             contact_data.get("Additional", ""),
-            contact_data.get("Last name", ""), contact_data.get("Suffix", ""))
+            contact_data.get("Last name", ""),
+            contact_data.get("Suffix", ""),
+            contact_data.get("Sort as", ""))
         if "Formatted name" in contact_data:
             self.formatted_name = contact_data.get("Formatted name", "")
         if not self.formatted_name:
@@ -1276,6 +1294,9 @@ class YAMLEditable(VCardWrapper):
             elif line.lower().startswith("formatted name"):
                 strings += helpers.convert_to_yaml(
                     "Formatted name", self.formatted_name, 0, 15, True)
+            elif line.lower().startswith("sort as"):
+                strings += helpers.convert_to_yaml(
+                    "Sort as", self._get_name_sort_as(), 0, 15, True)
             elif line.lower().startswith("prefix"):
                 strings += helpers.convert_to_yaml(
                     "Prefix", self._get_name_prefixes(), 0, 11, True)
@@ -1568,6 +1589,10 @@ class CarddavObject(YAMLEditable):
                 self._get_name_suffixes()
             strings.append("Full name: {}".format(
                 helpers.list_to_string(names, " ")))
+        if self._get_name_sort_as():
+            strings += helpers.convert_to_yaml(
+                "Sort as", self._get_name_sort_as(), 0, -1, False)
+
         # organisation
         if self.organisations:
             strings += helpers.convert_to_yaml(
