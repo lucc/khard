@@ -477,6 +477,13 @@ class VCardWrapper:
                 fmt = "%F"
         return date.strftime(fmt), False
 
+    def formatted_name_for_sort(self) -> str:
+        """Gets the formatted name, possibly overridden by the SORT-AS param.
+        """
+        if self._get_name_sort_as() != "":
+            return self._get_name_sort_as()
+        return self.formatted_name
+
     @property
     def formatted_name(self) -> str:
         return self._get_string_field("fn")
@@ -550,6 +557,14 @@ class VCardWrapper:
         else:
             return the_str
 
+    def get_first_name_last_name_for_sort(self) -> str:
+        """Compute the full name of the contact by joining first, additional
+        and last names together
+        """
+        if self._get_name_sort_as() != "":
+            return self._get_name_sort_as()
+        return self.get_first_name_last_name()
+
     def get_first_name_last_name(self) -> str:
         """Compute the full name of the contact by joining first, additional
         and last names together
@@ -559,6 +574,14 @@ class VCardWrapper:
         if names:
             return helpers.list_to_string(names, " ")
         return self.formatted_name
+
+    def get_last_name_first_name_for_sort(self) -> str:
+        """Compute the full name of the contact by joining the last names and
+        then after a comma the first and additional names together
+        """
+        if self._get_name_sort_as() != "":
+            return self._get_name_sort_as()
+        return self.get_last_name_first_name()
 
     def get_last_name_first_name(self) -> str:
         """Compute the full name of the contact by joining the last names and

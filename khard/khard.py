@@ -429,25 +429,25 @@ def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
-                unidecode(x.get_first_name_last_name()).lower()))
+                unidecode(x.get_first_name_last_name_for_sort()).lower()))
         if sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
-                unidecode(x.get_last_name_first_name()).lower()))
+                unidecode(x.get_last_name_first_name_for_sort()).lower()))
         if sort == "formatted_name":
             return sorted(contacts, reverse=reverse, key=lambda x: (
                 unidecode(x.address_book.name).lower(),
-                unidecode(x.formatted_name.lower())))
+                unidecode(x.formatted_name_for_sort()).lower()))
     else:
         if sort == "first_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.get_first_name_last_name()).lower())
+                          unidecode(x.get_first_name_last_name_for_sort()).lower())
         if sort == "last_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.get_last_name_first_name()).lower())
+                          unidecode(x.get_last_name_first_name_for_sort()).lower())
         if sort == "formatted_name":
             return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.formatted_name.lower()))
+                          unidecode(x.formatted_name_for_sort()).lower())
     raise ValueError('sort must be "first_name", "last_name" or '
                      '"formatted_name" not {}.'.format(sort))
 
