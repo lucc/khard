@@ -1577,7 +1577,6 @@ class CarddavObject(YAMLEditable):
                 self._get_additional_names() + self._get_last_names() + \
                 self._get_name_suffixes()
             strings.append("Full name: {}".format(list_to_string(names, " ")))
-                helpers.list_to_string(names, " ")))
         if self._get_name_sort_as():
             strings += helpers.convert_to_yaml(
                 "Sort as", self._get_name_sort_as(), 0, -1, False)
