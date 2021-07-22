@@ -6,11 +6,11 @@ from email import message_from_string
 from email.policy import SMTP as SMTP_POLICY
 from email.headerregistry import Address, AddressHeader, Group
 import logging
+import operator
 import os
-import subprocess
 import sys
-from tempfile import NamedTemporaryFile
-from typing import cast, Dict, Iterable, List, Optional, TypeVar, Union
+import textwrap
+from typing import cast, Dict, Iterable, List, Optional, Union
 
 from unidecode import unidecode
 
@@ -21,119 +21,43 @@ from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
 from .formatter import Formatter
-from .query import AndQuery, AnyQuery, NameQuery, OrQuery, Query, TermQuery
+from .helpers import interactive
+from .helpers.interactive import confirm
+from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 
 logger = logging.getLogger(__name__)
 config: Config
-T = TypeVar("T")
 
 
-def confirm(message: str) -> bool:
-    """Ask the user for confirmation on the terminal.
-
-    :param message: the question to print
-    :returns: the answer of the user
-    """
-    while True:
-        answer = input(message + ' (y/N) ')
-        answer = answer.lower()
-        if answer == 'y':
-            return True
-        if answer in ['', 'n', 'q']:
+def version_check(contact: CarddavObject, description: str) -> bool:
+    if contact.version not in config.supported_vcard_versions:
+        print("Warning:\nThe {} is based on vcard version {} but khard only "
+              "supports the modification of vcards with version 3.0 and 4.0.\n"
+              "If you proceed, the contact will be converted to vcard version "
+              "{} but beware: This could corrupt the contact file or cause "
+              "data loss.".format(description, contact.version,
+                                  config.preferred_vcard_version))
+        if not confirm("Do you want to proceed anyway?"):
+            print("Canceled")
             return False
-        print('Please answer with "y" for yes or "n" for no.')
-
-
-def select(items: List[T], include_none: bool = False) -> Optional[T]:
-    """Ask the user to select an item from a list.
-
-    The list should be displayed to the user before calling this function and
-    should be indexed starting with 1.  This function might exit if the user
-    selects "q".
-
-    :param items: the list from which to select
-    :param include_none: weather to allow the selection of no item
-    :returns: None or the selected item
-    """
-    while True:
-        try:
-            answer = input("Enter Index ({}q to quit): ".format(
-                "0 for None, " if include_none else ""))
-            answer = answer.lower()
-            if answer in ["", "q"]:
-                print("Canceled")
-                return None
-            index = int(answer)
-            if include_none and index == 0:
-                return None
-            if index > 0:
-                return items[index - 1]
-        except (EOFError, IndexError, ValueError):
-            pass
-        print("Please enter an index value between 1 and {} or q to exit."
-              .format(len(items)))
-
-
-def write_temp_file(text: str = "") -> str:
-    """Create a new temporary file and write some initial text to it.
-
-    :param text: the text to write to the temp file
-    :returns: the file name of the newly created temp file
-    """
-    with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) as tmp:
-        tmp.write(text)
-        return tmp.name
-
-
-def edit(*filenames: str, merge: bool = False) -> None:
-    """Edit the given files with the configured editor or merge editor"""
-    editor = config.merge_editor if merge else config.editor
-    editor = [editor] if isinstance(editor, str) else editor
-    editor.extend(filenames)
-    child = subprocess.Popen(editor)
-    child.communicate()
+    return True
 
 
 def create_new_contact(address_book: VdirAddressBook) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file
     template = "# create new contact\n# Address book: {}\n# Vcard version: " \
         "{}\n# if you want to cancel, exit without saving\n\n{}".format(
             address_book, config.preferred_vcard_version,
             helpers.get_new_contact_template(config.private_objects))
-    temp_file_name = write_temp_file(template)
-    temp_file_creation = helpers.file_modification_date(temp_file_name)
-
-    while True:
-        edit(temp_file_name)
-        if temp_file_creation == helpers.file_modification_date(
-                temp_file_name):
-            new_contact = None
-            os.remove(temp_file_name)
-            break
-
-        # read temp file contents after editing
-        with open(temp_file_name, "r") as tmp:
-            new_contact_yaml = tmp.read()
-
-        # try to create new contact
-        try:
-            new_contact = CarddavObject.from_yaml(
-                address_book, new_contact_yaml, config.private_objects,
-                config.preferred_vcard_version, config.localize_dates)
-        except ValueError as err:
-            print("\n{}\n".format(err))
-            if not confirm("Do you want to open the editor again?"):
-                print("Canceled")
-                os.remove(temp_file_name)
-                sys.exit(0)
-        else:
-            os.remove(temp_file_name)
-            break
+    new_contact = editor.edit_templates(lambda t: CarddavObject.from_yaml(
+        address_book, t, config.private_objects,
+        config.preferred_vcard_version, config.localize_dates), template)
 
     # create carddav object from temp file
-    if new_contact is None or template == new_contact_yaml:
+    if new_contact is None:
         print("Canceled")
     else:
         new_contact.write_to_file()
@@ -141,40 +65,15 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
 
 
 def modify_existing_contact(old_contact: CarddavObject) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file and open it with the specified text editor
-    temp_file_name = write_temp_file(
-        "# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
-        "# if you want to cancel, exit without saving\n\n{}".format(
-            old_contact, old_contact.address_book, old_contact.version,
-            old_contact.to_yaml()))
-
-    temp_file_creation = helpers.file_modification_date(temp_file_name)
-
-    while True:
-        edit(temp_file_name)
-        if temp_file_creation == helpers.file_modification_date(
-                temp_file_name):
-            new_contact = None
-            os.remove(temp_file_name)
-            break
-
-        # read temp file contents after editing
-        with open(temp_file_name, "r") as tmp:
-            new_contact_template = tmp.read()
-
-        # try to create contact from user input
-        try:
-            new_contact = CarddavObject.clone_with_yaml_update(
-                old_contact, new_contact_template, config.localize_dates)
-        except ValueError as err:
-            print("\n{}\n".format(err))
-            if not confirm("Do you want to open the editor again?"):
-                print("Canceled")
-                os.remove(temp_file_name)
-                sys.exit(0)
-        else:
-            os.remove(temp_file_name)
-            break
+    text = ("# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
+            "# if you want to cancel, exit without saving\n\n{}".format(
+                old_contact, old_contact.address_book, old_contact.version,
+                old_contact.to_yaml()))
+    new_contact = editor.edit_templates(
+        lambda t: CarddavObject.clone_with_yaml_update(
+            old_contact, t, config.localize_dates), text)
 
     # check if the user changed anything
     if new_contact is None or old_contact == new_contact:
@@ -188,61 +87,21 @@ def merge_existing_contacts(source_contact: CarddavObject,
                             target_contact: CarddavObject,
                             delete_source_contact: bool) -> None:
     # show warning, if target vcard version is not 3.0 or 4.0
-    if target_contact.version not in config.supported_vcard_versions:
-        print("Warning:\nThe target contact in which to merge is based on "
-              "vcard version {} but khard only supports the modification of "
-              "vcards with version 3.0 and 4.0.\nIf you proceed, the contact "
-              "will be converted to vcard version {} but beware: This could "
-              "corrupt the contact file or cause data loss.".format(
-                  target_contact.version, config.preferred_vcard_version))
-        if not confirm("Do you want to proceed anyway?"):
-            print("Canceled")
-            sys.exit(0)
+    if not version_check(target_contact, "target contact in which to merge"):
+        return
     # create temp files for each vcard
-    # source vcard
-    source_temp_file_name = write_temp_file(
-        "# merge from {}\n# Address book: {}\n# Vcard version: {}\n"
-        "# if you want to cancel, exit without saving\n\n{}".format(
-            source_contact, source_contact.address_book,
-            source_contact.version, source_contact.to_yaml()))
-    # target vcard
-    target_temp_file_name = write_temp_file(
-        "# merge into {}\n# Address book: {}\n# Vcard version: {}\n"
-        "# if you want to cancel, exit without saving\n\n{}".format(
-            target_contact, target_contact.address_book,
-            target_contact.version, target_contact.to_yaml()))
-
-    target_temp_file_creation = helpers.file_modification_date(
-        target_temp_file_name)
-    while True:
-        edit(source_temp_file_name, target_temp_file_name, merge=True)
-        if target_temp_file_creation == helpers.file_modification_date(
-                target_temp_file_name):
-            merged_contact = None
-            os.remove(source_temp_file_name)
-            os.remove(target_temp_file_name)
-            break
-
-        # load target template contents
-        with open(target_temp_file_name, "r") as target_tf:
-            merged_contact_template = target_tf.read()
-
-        # try to create contact from user input
-        try:
-            merged_contact = CarddavObject.clone_with_yaml_update(
-                target_contact, merged_contact_template, config.localize_dates)
-        except ValueError as err:
-            print("\n{}\n".format(err))
-            if not confirm("Do you want to open the editor again?"):
-                print("Canceled")
-                os.remove(source_temp_file_name)
-                os.remove(target_temp_file_name)
-                return
-        else:
-            os.remove(source_temp_file_name)
-            os.remove(target_temp_file_name)
-            break
-
+    editor = interactive.Editor(config.editor, config.merge_editor)
+    src_text = ("# merge from {}\n# Address book: {}\n# Vcard version: {}\n"
+                "# if you want to cancel, exit without saving\n\n{}".format(
+                    source_contact, source_contact.address_book,
+                    source_contact.version, source_contact.to_yaml()))
+    target_text = ("# merge into {}\n# Address book: {}\n# Vcard version: {}\n"
+                   "# if you want to cancel, exit without saving\n\n{}".format(
+                       target_contact, target_contact.address_book,
+                       target_contact.version, target_contact.to_yaml()))
+    merged_contact = editor.edit_templates(
+        lambda t: CarddavObject.clone_with_yaml_update(
+            target_contact, t, config.localize_dates), src_text, target_text)
     # compare them
     if merged_contact is None or target_contact == merged_contact:
         print("Target contact unmodified\n\n{}".format(
@@ -308,16 +167,15 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
         if contact.address_book not in selected_address_books:
             selected_address_books.append(contact.address_book)
     table = []
-    # table header
-    if len(selected_address_books) == 1:
-        if not parsable:
-            print("Address book: {}".format(selected_address_books[0]))
-        table_header = ["index", "name", "phone", "email"]
-    else:
-        if not parsable:
-            print("Address books: {}".format(', '.join(
-                [str(book) for book in selected_address_books])))
-        table_header = ["index", "name", "phone", "email", "address_book"]
+    # default table header
+    table_header = ["index", "name", "phone", "email"]
+    plural = ""
+    if len(selected_address_books) > 1:
+        plural = "s"
+        table_header.append("address_book")
+    if not parsable:
+        print("Address book{}: {}".format(plural, ', '.join(
+                str(book) for book in selected_address_books)))
     if config.show_uids:
         table_header.append("uid")
 
@@ -380,7 +238,7 @@ def choose_address_book_from_list(header_string: str,
     list_address_books(address_books)
     # For all intents and purposes of select() an AddressBookCollection can
     # also be considered a List[VdirAddressBook].
-    return select(cast(List[VdirAddressBook], address_books))
+    return interactive.select(cast(List[VdirAddressBook], address_books))
 
 
 def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
@@ -392,64 +250,50 @@ def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
         return vcard_list[0]
     print(header_string)
     list_contacts(vcard_list)
-    return select(vcard_list, True)
+    return interactive.select(vcard_list, True)
 
 
-def get_contact_list_by_user_selection(
-        address_books: Union[VdirAddressBook, AddressBookCollection],
-        query: Query) -> List[CarddavObject]:
+def get_contact_list(address_books: Union[VdirAddressBook,
+                                          AddressBookCollection],
+                     query: Query) -> List[CarddavObject]:
     """Find contacts in the given address book grouped, sorted and reversed
-    acording to the loaded configuration .
+    acording to the loaded configuration.
 
     :param address_books: the address book to search
     :param query: the query to use when searching
     :returns: list of found CarddavObject objects
     """
-    return get_contacts(address_books, query, config.reverse,
-                        config.group_by_addressbook, config.sort)
+    contacts = address_books.search(query)
+    return sort_contacts(contacts, config.reverse, config.group_by_addressbook,
+                         config.sort)
 
 
-def get_contacts(address_book: Union[VdirAddressBook, AddressBookCollection],
-                 query: Query, reverse: bool = False, group: bool = False,
-                 sort: str = "first_name") -> List[CarddavObject]:
-    """Get a list of contacts from one or more address books.
+def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
+                  group: bool = False, sort: str = "first_name") -> List[
+                      CarddavObject]:
+    """Sort a list of contacts
 
-    :param address_book: the address book to search
-    :param query: a search query to select contacts
+    :param contacts: the contact list to sort
     :param reverse: reverse the order of the returned contacts
     :param group: group results by address book
     :param sort: the field to use for sorting, one of "first_name",
         "last_name", "formatted_name"
-    :returns: contacts from the address_book that match the query
+    :returns: sorted contact list
     """
-    # Search for the contacts in all address books.
-    contacts = address_book.search(query)
-    # Sort the contacts.
+    keys = []
     if group:
-        if sort == "first_name":
-            return sorted(contacts, reverse=reverse, key=lambda x: (
-                unidecode(x.address_book.name).lower(),
-                unidecode(x.get_first_name_last_name_for_sort()).lower()))
-        if sort == "last_name":
-            return sorted(contacts, reverse=reverse, key=lambda x: (
-                unidecode(x.address_book.name).lower(),
-                unidecode(x.get_last_name_first_name_for_sort()).lower()))
-        if sort == "formatted_name":
-            return sorted(contacts, reverse=reverse, key=lambda x: (
-                unidecode(x.address_book.name).lower(),
-                unidecode(x.formatted_name_for_sort()).lower()))
+        keys.append(operator.attrgetter("address_book.name"))
+    if sort == "first_name":
+        keys.append(operator.methodcaller("get_first_name_last_name_for_sort"))
+    elif sort == "last_name":
+        keys.append(operator.methodcaller("get_last_name_first_name_for_sort"))
+    elif sort == "formatted_name":
+        keys.append(operator.attrgetter("formatted_name_for_sort"))
     else:
-        if sort == "first_name":
-            return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.get_first_name_last_name_for_sort()).lower())
-        if sort == "last_name":
-            return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.get_last_name_first_name_for_sort()).lower())
-        if sort == "formatted_name":
-            return sorted(contacts, reverse=reverse, key=lambda x:
-                          unidecode(x.formatted_name_for_sort()).lower())
-    raise ValueError('sort must be "first_name", "last_name" or '
-                     '"formatted_name" not {}.'.format(sort))
+        raise ValueError('sort must be "first_name", "last_name" or '
+                         '"formatted_name" not {}.'.format(sort))
+    return sorted(contacts, reverse=reverse,
+                  key=lambda x: [unidecode(key(x)).lower() for key in keys])
 
 
 def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
@@ -504,8 +348,7 @@ def generate_contact_list(args: Namespace) -> List[CarddavObject]:
         # It is simpler to handle subcommand that do not have and need search
         # terms here than conditionally calling generate_contact_list().
         return []
-    return get_contact_list_by_user_selection(args.addressbook,
-                                              args.search_terms)
+    return get_contact_list(args.addressbook, args.search_terms)
 
 
 def new_subcommand(selected_address_books: AddressBookCollection,
@@ -545,69 +388,218 @@ def new_subcommand(selected_address_books: AddressBookCollection,
 
 
 def add_email_to_contact(name: str, email_address: str,
-                         abooks: AddressBookCollection) -> None:
+        abooks: AddressBookCollection, skip_already_added: bool) -> None:
     """Add a new email address to the given contact,
     creating the contact if necessary.
 
     :param name: name of the contact
     :param email_address: email address of the contact
     :param abooks: the addressbooks that were selected on the command line
+    :param skip_already_added: skip if email_address is part of one or more contacts
     """
-    print("Email address: {}".format(email_address))
+
+    # email address
+    # search in contacts
+    matching_contact_list = get_contact_list(abooks, TermQuery(email_address))
+    if matching_contact_list:
+        matching_contact_list_to_string = ', '.join(
+                str(i) for i in matching_contact_list)
+        if skip_already_added:
+            print("Skipping email address {}: Is already part of {}"
+                  .format(email_address, matching_contact_list_to_string))
+            return
+        if not confirm("Email address: {}, Found in contacts: {}. Select anyway?"
+                       .format(email_address, matching_contact_list_to_string)):
+            return
+    else:
+        if name:
+            name_and_email = '"{}" <{}>'.format(name, email_address)
+        else:
+            name_and_email = email_address
+        if not confirm("New address: {}. Select?".format(name_and_email)):
+            return
+
+    # name
     if not name:
+        # ask for name
         name = input("Contact's name: ")
+    else:
+        # remove chars: " '
+        name = name.replace('"', '').replace('\'', '')
+    # backup name for the "create new contact" function part below
+    original_name = name
 
-    # search for an existing contact
-    selected_vcard = choose_vcard_from_list(
-        "Select contact for the found e-mail address",
-        get_contact_list_by_user_selection(abooks, TermQuery(name)))
+    # select contact
+    previous_name = name
+    previous_selected_vcard = None
+    manual_search = False
+    while True:
+        # search for an existing contact
+        name_parts = name.replace(',', '').split()
+        if len(name_parts) == 0:
+            query = AnyQuery()
+        elif len(name_parts) == 1:
+            query = TermQuery(name)
+        else:
+            term_query_list = [ TermQuery(part) for part in name_parts ]
+            query = AndQuery(
+                    term_query_list[0], term_query_list[1], *term_query_list[2:])
+        found_vcard_list = get_contact_list(abooks, query)
 
+        # select contact from list
+        if manual_search:
+            selected_vcard = choose_vcard_from_list(
+                    "Select contact for the search term: {}".format(name),
+                    found_vcard_list, include_none=True)
+            if found_vcard_list and not selected_vcard:
+                # contact selection cancelled
+                # restore previous data
+                name = previous_name
+                selected_vcard = previous_selected_vcard
+            manual_search = False
+        else:
+            selected_vcard = choose_vcard_from_list(
+                    "Select contact for the found e-mail address",
+                    found_vcard_list)
+
+        break_outer = False
+        while True:
+            if selected_vcard is None:
+                if found_vcard_list:
+                    answer = input("Contact selection cancelled (c/s/q): ")
+                else:
+                    answer = input("Nothing found for '{}' (c/s/q): "
+                                   .format(name))
+                error_message = ('Please answer with "c" to create a new '
+                                 'contact, "s" to search for an existing '
+                                 'contact or "q" to quit')
+            else:
+                answer = input("Contact selected: {} (y/c/d/s/q): "
+                               .format(selected_vcard))
+                error_message = ('Please answer with "y" to proceed, '
+                                 '"c" to create a new contact, "d" for details '
+                                 'of the selected contact, "s" to search '
+                                 'for an existing contact or "q" to quit')
+            answer = answer.lower()
+
+            if selected_vcard:
+                if answer == 'y':
+                    break_outer = True
+                    break
+                if answer == 'd':
+                    print("\n{}".format(selected_vcard.pretty()))
+                    continue
+            if answer == 'c':
+                selected_vcard = None
+                break_outer = True
+                break
+            if answer == 's':
+                # save data
+                previous_name = name
+                previous_selected_vcard = selected_vcard
+                # enter search string
+                if original_name:
+                    name = input("Search for contact [ENTER='{}' or -='']: "
+                                 .format(original_name)) or original_name
+                    if name == "-":
+                        name = ""
+                else:
+                    name = input("Search for contact: ")
+                manual_search = True
+                break
+            if answer == 'q':
+                print("Cancelled")
+                return
+            print(error_message)
+
+        if break_outer:
+            # restore name
+            name = original_name
+            break
+
+    # create new contact
     if selected_vcard is None:
-        if not name:
-            return
-
-        # create new contact
-        if not confirm("Contact '{}' does not exist. Do you want to create it?"
-                       .format(name)):
-            print("Cancelled")
-            return
-        # ask for address book, in which to create the new contact
-        selected_address_book = choose_address_book_from_list(
-            "Select address book for new contact", config.abooks)
-        if selected_address_book is None:
-            sys.exit("Error: address book list is empty")
-
+        # first and last name variables
         name_parts = name.split()
-        first = name_parts[0] if len(name_parts) > 0 else ""
+        # detect format: last_name, first_name in name variable
+        if name.count(",") == 1 \
+                and len(name_parts) > 1 \
+                and name_parts[0].endswith(","):
+            # remove "," from presumed last name
+            name_parts[0] = name_parts[0].replace(',', '')
+            # put last_name to the list end
+            name_parts.append(name_parts.pop(0))
+        # fill variables
+        first = name_parts[0] if len(name_parts) > 0 else name
         last = name_parts[-1] if len(name_parts) > 1 else ""
+
+        # ask for address book, in which to create the new contact
+        if not config.abooks:
+            sys.exit("Error: address book list is empty")
+        else:
+            selected_address_book = choose_address_book_from_list(
+                    "Select address book for new contact", config.abooks)
+            if selected_address_book is None:
+                print("No address book selected")
+                return
 
         # ask for name and organisation of new contact
         while True:
             if first:
-                first_name = input("First name [empty for '{}']: ".format(first))
-                if not first_name:
-                    first_name = first
+                first_name = input("First name [ENTER='{}' or -='']: "
+                                   .format(first)) or first
+                if first_name == "-":
+                    first_name = ""
             else:
                 first_name = input("First name: ")
 
             if last:
-                last_name = input("Last name [empty for '{}']: ".format(last))
-                if not last_name:
-                    last_name = last
+                last_name = input("Last name [ENTER='{}' or -='']: "
+                                  .format(last)) or last
+                if last_name == "-":
+                    last_name = ""
             else:
                 last_name = input("Last name: ")
 
-            organisation = input("Organisation: ")
+            if name and not first_name and not last_name:
+                # first and last names are empty, maybe it's an organisation
+                organisation = input("Organisation [ENTER='{}' or -='']: "
+                                     .format(name)) or name
+                if organisation == "-":
+                    organisation = ""
+            else:
+                organisation = input("Organisation: ")
+
             if not first_name and not last_name and not organisation:
                 print("Error: All fields are empty.")
             else:
+                print("")
                 break
+
+        # create contact
+        #
+        # build template
+        template_data = list()
+        if first_name:
+            template_data.append("First name   : {}".format(first_name))
+        if last_name:
+            template_data.append("Last name    : {}".format(last_name))
+        if organisation:
+            template_data.append("Organisation : {}".format(organisation))
+        # confirm contact creation
+        print("Verify input data\n{}"
+              .format(textwrap.indent('\n'.join(template_data), 2*' ')))
+        if not confirm("Create contact?", False):
+            print("Cancelled")
+            return
         selected_vcard = CarddavObject.from_yaml(
-            selected_address_book,
-            "First name : {}\nLast name : {}\nOrganisation : {}".format(
-                first_name, last_name, organisation),
-            config.private_objects, config.preferred_vcard_version,
-            config.localize_dates)
+                selected_address_book, '\n'.join(template_data),
+                config.private_objects, config.preferred_vcard_version,
+                config.localize_dates)
+        if not selected_vcard:
+            print("Could not create contact")
+            return
+        print("Contact created successfully")
 
     # check if the contact already contains the email address
     for _, email_list in sorted(selected_vcard.emails.items(),
@@ -617,12 +609,6 @@ def add_email_to_contact(name: str, email_address: str,
                 print("The contact {} already contains the email address {}"
                       .format(selected_vcard, email_address))
                 return
-
-    # ask for confirmation again
-    if not confirm("Do you want to add the email address {} to the contact {}?"
-                   .format(email_address, selected_vcard)):
-        print("Cancelled")
-        return
 
     # ask for the email label
     print("\nAdding email address {} to contact {}\n"
@@ -674,12 +660,14 @@ def find_email_addresses(text: str, fields: List[str]) -> List[Address]:
 def add_email_subcommand(
         text: str,
         abooks: AddressBookCollection,
-        fields: List[str]) -> None:
+        fields: List[str],
+        skip_already_added: bool) -> None:
     """Add a new email address to contacts, creating new contacts if necessary.
 
     :param text: the input text to search for the new email
     :param abooks: the addressbooks that were selected on the command line
     :param field: the header field to extract contacts from
+    :param skip_already_added: skip already known email addresses
     """
     email_addresses = find_email_addresses(text, fields)
     if not email_addresses:
@@ -691,7 +679,7 @@ def add_email_subcommand(
         name = email_address.display_name
         address = email_address.addr_spec
 
-        add_email_to_contact(name, address, abooks)
+        add_email_to_contact(name, address, abooks, skip_already_added)
 
         print()
 
@@ -900,19 +888,12 @@ def modify_subcommand(selected_vcard: CarddavObject,
     :param source: edit the source file or a yaml version?
     """
     if source:
-        edit(selected_vcard.filename)
+        editor = interactive.Editor(config.editor, config.merge_editor)
+        editor.edit_files(selected_vcard.filename)
         return
     # show warning, if vcard version of selected contact is not 3.0 or 4.0
-    if selected_vcard.version not in config.supported_vcard_versions:
-        print("Warning:\nThe selected contact is based on vcard version {} "
-              "but khard only supports the creation and modification of vcards"
-              " with version 3.0 and 4.0.\nIf you proceed, the contact will be"
-              " converted to vcard version {} but beware: This could corrupt "
-              "the contact file or cause data loss.".format(
-                  selected_vcard.version, config.preferred_vcard_version))
-        if not confirm("Do you want to proceed anyway?"):
-            print("Canceled")
-            return
+    if not version_check(selected_vcard, "selected contact"):
+        return
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
@@ -964,7 +945,7 @@ def merge_subcommand(vcard_list: List[CarddavObject],
     :param search_terms: the search terms to find the target contact
     """
     # Find possible target contacts.
-    target_vcards = get_contact_list_by_user_selection(abooks, search_terms)
+    target_vcards = get_contact_list(abooks, search_terms)
     # get the source vcard, from which to merge
     source_vcard = choose_vcard_from_list("Select contact from which to merge",
                                           vcard_list)
@@ -1022,8 +1003,8 @@ def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
         "Select target contact to overwrite (or None to add a new entry)",
-        get_contact_list_by_user_selection(
-            target_abook, TermQuery(source_vcard.formatted_name)), True)
+        get_contact_list(target_abook, TermQuery(source_vcard.formatted_name)),
+        True)
     # If the target contact doesn't exist, move or copy the source contact into
     # the target address book without further questions.
     if target_vcard is None:
@@ -1137,7 +1118,8 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
                        args.open_editor)
     elif args.action == "add-email":
         add_email_subcommand(input_from_stdin_or_file,
-                             args.addressbook, args.fields)
+                             args.addressbook, args.headers,
+                             args.skip_already_added)
     elif args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":

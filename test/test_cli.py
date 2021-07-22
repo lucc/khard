@@ -1,5 +1,6 @@
 """Tests for the cli module"""
 
+from argparse import ArgumentTypeError
 import unittest
 from unittest import mock
 
@@ -7,6 +8,32 @@ from khard import cli
 from khard import query
 
 from .helpers import mock_stream
+
+
+class TestFieldsArgument(unittest.TestCase):
+
+    def test_works_when_choices_match(self):
+        t = cli.FieldsArgument("a", "b")
+        actual = t("a,b")
+        expected = ["a", "b"]
+        self.assertListEqual(actual, expected)
+
+    def test_raises_exception_when_choices_dont_match(self):
+        t = cli.FieldsArgument("a", "b")
+        with self.assertRaises(ArgumentTypeError):
+            t("a,c")
+
+    def test_case_does_not_matter(self):
+        t = cli.FieldsArgument("a", "b")
+        actual = t("a,B")
+        expected = ["a", "b"]
+        self.assertListEqual(actual, expected)
+
+    def test_only_first_component_must_match_choices_with_nested(self):
+        t = cli.FieldsArgument("a", "b", nested=True)
+        actual = t("a.c,b")
+        expected = ["a.c", "b"]
+        self.assertListEqual(actual, expected)
 
 
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
@@ -80,27 +107,27 @@ class TestParseArgs(unittest.TestCase):
 
     def test_add_email_defaults_to_from_lowercase(self):
         args, _config = cli.parse_args(["add-email"])
-        actual = args.fields
+        actual = args.headers
         self.assertEqual(["from"], actual)
 
     def test_add_email_from_field(self):
         args, _config = cli.parse_args(["add-email", "-H", "from"])
-        actual = args.fields
+        actual = args.headers
         self.assertEqual(["from"], actual)
 
     def test_add_email_another_field(self):
         args, _config = cli.parse_args(["add-email", "-H", "OtHer"])
-        actual = args.fields
+        actual = args.headers
         self.assertEqual(["other"], actual)
 
     def test_add_email_multiple_headers_separate_args_takes_last(self):
         args, _config = cli.parse_args(
             ["add-email", "-H", "OtHer", "-H", "myfield"])
-        actual = args.fields
+        actual = args.headers
         self.assertEqual(["myfield"], actual)
 
     def test_add_email_multiple_headers_comma_separated(self):
         args, _config = cli.parse_args(
             ["add-email", "-H", "OtHer,myfield,from"])
-        actual = args.fields
+        actual = args.headers
         self.assertEqual(["other", "myfield", "from"], actual)

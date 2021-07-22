@@ -36,6 +36,9 @@ manually you can use the release from `PyPi`_:
 If you want to help the development or need more advanced installation
 instructions see :doc:`contributing`.
 
+If you need a tarball use the one from `PyPi`_ and not from the Github release
+page.  These are missing an auto generated python file.
+
 .. _PyPi: https://pypi.python.org/pypi/khard/
 
 Configuration

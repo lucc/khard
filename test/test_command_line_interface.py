@@ -21,6 +21,7 @@ from ruamel.yaml import YAML
 
 from khard import cli
 from khard import config
+from khard.helpers.interactive import EditState, Editor
 from khard import khard
 
 from .helpers import TmpConfig, mock_stream
@@ -379,11 +380,15 @@ class MiscCommands(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
-        with mock.patch('subprocess.Popen') as popen:
+        editor = mock.Mock()
+        editor.edit_templates = mock.Mock(return_value=None)
+        editor.write_temp_file = Editor.write_temp_file
+        with mock.patch('khard.khard.interactive.Editor',
+                        mock.Mock(return_value=editor)):
             run_main("edit", "uid1")
         # The editor is called with a temp file so how to we check this more
         # precisely?
-        popen.assert_called_once()
+        editor.edit_templates.assert_called_once()
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf',
                      EDITOR='editor')
@@ -473,6 +478,27 @@ class Merge(unittest.TestCase):
         second = pathlib.Path(second.filename).name
         self.assertEqual('contact1.vcf', first)
         self.assertEqual('contact2.vcf', second)
+
+
+class AddEmail(unittest.TestCase):
+
+    @TmpConfig(["contact1.vcf", "contact2.vcf"])
+    def test_contact_is_found_if_name_matches(self):
+        email = [
+            "From: third <third@example.com>\n",
+            "To: anybody@example.com\n",
+            "\n",
+            "text\n"
+        ]
+        with tempfile.NamedTemporaryFile("w") as tmp:
+            tmp.writelines(email)
+            tmp.flush()
+            with mock.patch("khard.khard.confirm", lambda x: True):
+                with mock.patch("builtins.input", lambda x: ""):
+                    run_main("add-email", "--input-file", tmp.name)
+        stdout = run_main("list", "--fields=emails.internet.0")
+        addr = stdout.getvalue().splitlines()[-1].strip()
+        self.assertEqual(addr, "third@example.com")
 
 
 if __name__ == "__main__":

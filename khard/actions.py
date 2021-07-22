@@ -14,7 +14,6 @@ class Actions:
         "birthdays":    ["bdays"],
         "copy":         ["cp"],
         "email":        [],
-        "export":       [],
         "filename":     ["file"],
         "list":         ["ls"],
         "merge":        [],
@@ -25,7 +24,6 @@ class Actions:
         "postaddress":  ["post", "postaddr"],
         "remove":       ["delete", "del", "rm"],
         "show":         ["details"],
-        "source":       ["src"],
         "template":     [],
     }
 

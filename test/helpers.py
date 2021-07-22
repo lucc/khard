@@ -72,14 +72,15 @@ def load_contact(path, abook=None):
 class TmpAbook:
     """Context manager to create a temporary address book folder"""
 
-    def __init__(self, vcards):
+    def __init__(self, vcards, name="tmp"):
         self.vcards = vcards
+        self.name = name
 
     def __enter__(self):
         self.tempdir = tempfile.TemporaryDirectory()
         for card in self.vcards:
             shutil.copy(self._card_path(card), self.tempdir.name)
-        return address_book.VdirAddressBook("tmp", self.tempdir.name)
+        return address_book.VdirAddressBook(self.name, self.tempdir.name)
 
     def __exit__(self, _a, _b, _c):
         self.tempdir.cleanup()
