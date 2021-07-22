@@ -626,7 +626,9 @@ class VCardWrapper:
                                         stringlist),
             family=convert_to_vcard("last name", last_name, stringlist),
             suffix=convert_to_vcard("name suffix", suffix, stringlist))
-        name_obj.sort_as_param = sort_as
+
+        if sort_as != "":
+            name_obj.sort_as_param = sort_as
 
     @property
     def organisations(self) -> List[Union[List[str], Dict[str, List[str]]]]:
