@@ -794,6 +794,12 @@ class VCardWrapper:
             for post_adr in post_adr_list:
                 get: Callable[[str], str] = lambda name: list_to_string(
                     post_adr.get(name, ""), " ")
+
+                # remove empty fields to avoid empty lines
+                for x in list(post_adr.keys()):
+                    if post_adr.get(x) == "":
+                        del post_adr[x]
+
                 strings = []
                 if "street" in post_adr:
                     strings.append(list_to_string(
