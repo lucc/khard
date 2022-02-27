@@ -1,15 +1,16 @@
 """Some helper functions for khard"""
 
+from datetime import datetime
 import pathlib
 import random
+from ruamel.yaml.scalarstring import LiteralScalarString
 import string
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 
 from .typing import list_to_string
 
 
-def pretty_print(table: List[List[str]], justify: str = "L"
-                 ) -> str:
+def pretty_print(table: List[List[str]], justify: str = "L") -> str:
     """Converts a list of lists into a string formatted like a table
     with spaces separating fields and newlines separating rows"""
     # support for multiline columns
@@ -60,6 +61,101 @@ def pretty_print(table: List[List[str]], justify: str = "L"
 def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
+
+def yaml_clean(value: Union[str, List]) -> Optional[Union[List[str], str]]:
+    """
+    sanitize yaml values according to some simple principles:
+      1. empty values are none, so ruamel does not print an empty list/str
+      2. list with only one item become this item
+      3. multiline strings use the YAML literal style:
+         https://yaml.org/spec/1.2.2/#literal-style
+    
+    :param value: the value to be sanitized
+    :returns: the sanitized value
+    """
+    # special case for empty values
+    if not value:
+        value = None
+    if isinstance(value, list):
+        # special case for single item lists:
+        if len(value) == 1 and isinstance(value[0], str):
+            value = value[0]
+    elif isinstance(value, str):
+        if "\n" in value:
+            value = LiteralScalarString(value)
+
+    return value
+
+
+def yaml_dicts(
+        data: Optional[Dict[str, Any]], 
+        defaults: Union[Dict[str, Any], List[str]] = None
+    ) -> Optional[Dict[str, Any]]:
+    """
+    format a dict according to template, if empty use specified defaults
+
+    :param data: dict of contact data with keys as types and values as values.
+    :param defaults: default dict to be used if data is empty.
+    :returns: dict of types and values.
+    """
+    if not data:
+        if isinstance(defaults, list):
+            return dict((key, None) for key in defaults)
+       
+        return defaults
+
+    data_dict = {}
+    for t, nlist in sorted(data.items(), key=lambda k: k[0].lower()):
+        data_dict[t] = nlist[0] if len(nlist) == 1 else nlist
+    
+    return data_dict
+
+
+def yaml_addresses(addresses: Optional[Dict[str, Any]],
+                     address_properties: List[str],
+                     defaults: List[str] = []
+                    ) -> Dict[str, Any]:
+    if not addresses:
+        address_fields = dict((key, None) for key in address_properties)
+        return {address_type: address_fields for address_type in defaults}
+
+    address_dict = {}
+    for address_type, address in addresses.items():
+        if isinstance(address, list):
+            address = address[0]
+        address_dict[address_type] = (
+            {k: yaml_clean(address.get(f"{k[0].lower()}{k[1:]}"))
+                for k in address_properties})
+    return address_dict
+
+
+def yaml_anniversary(anniversary: Union[str, datetime],
+                       version: str) -> Optional[str]:
+    if not anniversary:
+        return None
+
+    if isinstance(anniversary, str):
+        string = anniversary
+    
+    elif isinstance(anniversary, datetime):
+        if (version == "4.0" and anniversary.year == 1900 
+                             and anniversary.month != 0 
+                             and anniversary.day != 0
+                             and anniversary.hour == 0
+                             and anniversary.minute == 0
+                             and anniversary.second == 0):
+            return anniversary.strftime("--%m-%d")
+
+        tz = anniversary.tzname()
+        if ((tz and tz[3:]) 
+                or anniversary.hour != 0 
+                or anniversary.minute != 0
+                or anniversary.second != 0):
+            string = anniversary.isoformat()
+        else:
+            string = anniversary.strftime("%F")
+
+    return string
 
 
 def convert_to_yaml(name: str, value: Union[None, str, List], indentation: int,
