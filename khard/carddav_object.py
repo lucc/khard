@@ -1270,9 +1270,9 @@ class YAMLEditable(VCardWrapper):
         yaml.top_level_colon_align = True
         yaml.indent(mapping=4, sequence=4, offset=2)
         template_obj = yaml.load(template)
-        for k in template_obj:
-            v = translation_table.get(k, None)
-            template_obj[k] = helpers.yaml_clean(v)
+        for key in template_obj:
+            value = translation_table.get(key, None)
+            template_obj[key] = helpers.yaml_clean(value)
 
         if self.supported_private_objects:
             template_obj["Private"] = helpers.yaml_clean(
