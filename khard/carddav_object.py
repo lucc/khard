@@ -18,6 +18,7 @@ import time
 from typing import Callable, Dict, List, Optional, Tuple, Union, Sequence
 
 from atomicwrites import atomic_write
+from ruamel import yaml
 from ruamel.yaml import YAML
 import vobject
 
@@ -1257,9 +1258,9 @@ class YAMLEditable(VCardWrapper):
             "Categories": self.categories,
             "Note": self.notes,
             "Webpage": self.webpages,
-            "Anniversary": 
+            "Anniversary":
                 helpers.yaml_anniversary(self.anniversary, self.version),
-            "Birthday": 
+            "Birthday":
                 helpers.yaml_anniversary(self.birthday, self.version),
             "Address": helpers.yaml_addresses(
                 self.post_addresses, ["Box", "Extended", "Street", "Code",

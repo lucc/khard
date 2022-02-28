@@ -4,7 +4,7 @@ from datetime import datetime
 import pathlib
 import random
 import string
-from typing import List, Optional, Union, Dict, Any
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 from ruamel.yaml.scalarstring import LiteralScalarString
 from .typing import list_to_string
@@ -62,7 +62,9 @@ def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
 
-def yaml_clean(value: Union[str, List]) -> Optional[Union[List[str], str]]:
+def yaml_clean(value: Optional[Union[str, List, Dict[str, Any], Sequence]]
+              ) -> Optional[Union[Sequence, List, str, Dict[str, Any],
+                                  LiteralScalarString]]:
     """
     sanitize yaml values according to some simple principles:
       1. empty values are none, so ruamel does not print an empty list/str
@@ -115,7 +117,7 @@ def yaml_dicts(
 def yaml_addresses(addresses: Optional[Dict[str, Any]],
                    address_properties: List[str],
                    defaults: Optional[List[str]] = None
-                  ) -> Dict[str, Any]:
+                  ) -> Optional[Dict[str, Any]]:
     """
     build a dict from an address, using a list of properties, an address has.
 
