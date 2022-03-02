@@ -2,7 +2,7 @@ khard
 =====
 
 Khard is an address book for the Unix console. It creates, reads, modifies and
-removes carddav address book entries at your local machine. Khard is also
+removes vCard address book entries at your local machine. Khard is also
 compatible to the email clients mutt and alot and the SIP client twinkle. You
 can find more information about khard and the whole synchronization process
 [here][blog].
