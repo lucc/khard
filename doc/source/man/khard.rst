@@ -14,8 +14,8 @@ Description
 -----------
 
 :program:`khard` is an address book for the Unix command line.  It can read, create,
-modify and delete carddav address book entries.  :program:`khard` only works with a local
-store of VCARD files.  It is intended to be used in conjunction with other
+modify and delete vCard address book entries.  :program:`khard` only works with a local
+store of vCard files.  It is intended to be used in conjunction with other
 programs like an email client, text editor, vdir synchronizer or VOIP client.
 
 Options

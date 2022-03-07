@@ -15,11 +15,11 @@ setup(
     author='Eric Scheibler',
     author_email='email@eric-scheibler.de',
     url='https://github.com/scheibler/khard/',
-    description='A console carddav client',
+    description='A console address book manager',
     long_description=readme,
     long_description_content_type='text/markdown',
     license='GPL',
-    keywords='Carddav console addressbook',
+    keywords='vcard console addressbook',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

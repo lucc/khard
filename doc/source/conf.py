@@ -134,7 +134,7 @@ htmlhelp_basename = 'kharddoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/khard', 'khard', 'Console carddav client', '', 1),
+    ('man/khard', 'khard', 'Console address book manager', '', 1),
     ('man/khard.conf', 'khard.conf', 'configuration file for khard', '', 5),
 ]
 
