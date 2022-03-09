@@ -8,6 +8,7 @@ which can be found here:
 
 import copy
 import datetime
+import io
 import locale
 import logging
 import os
@@ -18,6 +19,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union, Sequence
 
 from atomicwrites import atomic_write
 from ruamel import yaml
+from ruamel.yaml import YAML
 import vobject
 
 from . import address_book  # pylint: disable=unused-import # for type checking
@@ -964,7 +966,7 @@ class YAMLEditable(VCardWrapper):
         :returns: the parsed datastructure
         :rtype: dict
         """
-        yaml_parser = yaml.YAML(typ='base')
+        yaml_parser = YAML(typ='base')
         # parse user input string
         try:
             contact_data = yaml_parser.load(input)
@@ -1237,180 +1239,52 @@ class YAMLEditable(VCardWrapper):
 
         :returns: a YAML representation of this contact
         """
-        strings = []
-        for line in helpers.get_new_contact_template().splitlines():
-            if line.startswith("#"):
-                strings.append(line)
-            elif line == "":
-                strings.append(line)
 
-            elif line.lower().startswith("formatted name"):
-                strings += helpers.convert_to_yaml(
-                    "Formatted name", self.formatted_name, 0, 15, True)
-            elif line.lower().startswith("prefix"):
-                strings += helpers.convert_to_yaml(
-                    "Prefix", self._get_name_prefixes(), 0, 11, True)
-            elif line.lower().startswith("first name"):
-                strings += helpers.convert_to_yaml(
-                    "First name", self._get_first_names(), 0, 11, True)
-            elif line.lower().startswith("additional"):
-                strings += helpers.convert_to_yaml(
-                    "Additional", self._get_additional_names(), 0, 11, True)
-            elif line.lower().startswith("last name"):
-                strings += helpers.convert_to_yaml(
-                    "Last name", self._get_last_names(), 0, 11, True)
-            elif line.lower().startswith("suffix"):
-                strings += helpers.convert_to_yaml(
-                    "Suffix", self._get_name_suffixes(), 0, 11, True)
-            elif line.lower().startswith("nickname"):
-                strings += helpers.convert_to_yaml(
-                    "Nickname", self.nicknames, 0, 9, True)
+        translation_table = {
+            "Formatted name": self.formatted_name,
+            "Prefix": self._get_name_prefixes(),
+            "First name": self._get_first_names(),
+            "Additional": self._get_additional_names(),
+            "Last name": self._get_last_names(),
+            "Suffix": self._get_name_suffixes(),
+            "Nickname": self.nicknames,
+            "Organisation": self.organisations,
+            "Title": self.titles,
+            "Role": self.roles,
+            "Phone": helpers.yaml_dicts(
+                self.phone_numbers, defaults=["cell", "home"]),
+            "Email": helpers.yaml_dicts(
+                self.emails, defaults=["home", "work"]),
+            "Categories": self.categories,
+            "Note": self.notes,
+            "Webpage": self.webpages,
+            "Anniversary":
+                helpers.yaml_anniversary(self.anniversary, self.version),
+            "Birthday":
+                helpers.yaml_anniversary(self.birthday, self.version),
+            "Address": helpers.yaml_addresses(
+                self.post_addresses, ["Box", "Extended", "Street", "Code",
+                    "City", "Region", "Country"], defaults=["home"])
+        }
+        template = helpers.get_new_contact_template()
+        yaml = YAML()
+        yaml.indent(mapping=4, sequence=4, offset=2)
+        template_obj = yaml.load(template)
+        for key in template_obj:
+            value = translation_table.get(key, None)
+            template_obj[key] = helpers.yaml_clean(value)
 
-            elif line.lower().startswith("organisation"):
-                strings += helpers.convert_to_yaml(
-                    "Organisation", self.organisations, 0, 13, True)
-            elif line.lower().startswith("title"):
-                strings += helpers.convert_to_yaml(
-                    "Title", self.titles, 0, 6, True)
-            elif line.lower().startswith("role"):
-                strings += helpers.convert_to_yaml(
-                    "Role", self.roles, 0, 6, True)
+        if self.supported_private_objects:
+            template_obj["Private"] = helpers.yaml_clean(
+                helpers.yaml_dicts(
+                    self._get_private_objects(),
+                    self.supported_private_objects
+                ))
 
-            elif line.lower().startswith("phone"):
-                strings.append("Phone :")
-                if not self.phone_numbers:
-                    strings.append("    cell : ")
-                    strings.append("    home : ")
-                else:
-                    longest_key = max(self.phone_numbers.keys(), key=len)
-                    for type, number_list in sorted(
-                            self.phone_numbers.items(),
-                            key=lambda k: k[0].lower()):
-                        strings += helpers.convert_to_yaml(
-                            type, number_list, 4, len(longest_key) + 1, True)
-
-            elif line.lower().startswith("email"):
-                strings.append("Email :")
-                if not self.emails:
-                    strings.append("    home : ")
-                    strings.append("    work : ")
-                else:
-                    longest_key = max(self.emails.keys(), key=len)
-                    for type, email_list in sorted(self.emails.items(),
-                                                   key=lambda k: k[0].lower()):
-                        strings += helpers.convert_to_yaml(
-                            type, email_list, 4, len(longest_key) + 1, True)
-
-            elif line.lower().startswith("address"):
-                strings.append("Address :")
-                if not self.post_addresses:
-                    strings.append("    home :")
-                    strings.append("        Box      : ")
-                    strings.append("        Extended : ")
-                    strings.append("        Street   : ")
-                    strings.append("        Code     : ")
-                    strings.append("        City     : ")
-                    strings.append("        Region   : ")
-                    strings.append("        Country  : ")
-                else:
-                    for type, post_adr_list in sorted(
-                            self.post_addresses.items(),
-                            key=lambda k: k[0].lower()):
-                        strings.append("    {}:".format(type))
-                        for post_adr in post_adr_list:
-                            indentation = 8
-                            if len(post_adr_list) > 1:
-                                indentation += 4
-                                strings.append("        -")
-                            strings += helpers.convert_to_yaml(
-                                "Box", post_adr.get("box"), indentation, 9,
-                                True)
-                            strings += helpers.convert_to_yaml(
-                                "Extended", post_adr.get("extended"),
-                                indentation, 9, True)
-                            strings += helpers.convert_to_yaml(
-                                "Street", post_adr.get("street"), indentation,
-                                9, True)
-                            strings += helpers.convert_to_yaml(
-                                "Code", post_adr.get("code"), indentation, 9,
-                                True)
-                            strings += helpers.convert_to_yaml(
-                                "City", post_adr.get("city"), indentation, 9,
-                                True)
-                            strings += helpers.convert_to_yaml(
-                                "Region", post_adr.get("region"), indentation,
-                                9, True)
-                            strings += helpers.convert_to_yaml(
-                                "Country", post_adr.get("country"),
-                                indentation, 9, True)
-
-            elif line.lower().startswith("private"):
-                strings.append("Private :")
-                if self.supported_private_objects:
-                    longest_key = max(self.supported_private_objects, key=len)
-                    for object in self.supported_private_objects:
-                        strings += helpers.convert_to_yaml(
-                            object,
-                            self._get_private_objects().get(object, ""), 4,
-                            len(longest_key) + 1, True)
-
-            elif line.lower().startswith("anniversary"):
-                anniversary = self.anniversary
-                if anniversary:
-                    if isinstance(anniversary, str):
-                        strings.append("Anniversary : text= {}".format(
-                            anniversary))
-                    elif (anniversary.year == 1900 and anniversary.month != 0
-                          and anniversary.day != 0 and anniversary.hour == 0
-                          and anniversary.minute == 0
-                          and anniversary.second == 0
-                          and self.version == "4.0"):
-                        strings.append(
-                            anniversary.strftime("Anniversary : --%m-%d"))
-                    else:
-                        tz = anniversary.tzname()
-                        if ((tz and tz[3:]) or anniversary.hour != 0
-                                or anniversary.minute != 0
-                                or anniversary.second != 0):
-                            strings.append("Anniversary : {}".format(
-                                anniversary.isoformat()))
-                        else:
-                            strings.append(
-                                anniversary.strftime("Anniversary : %F"))
-                else:
-                    strings.append("Anniversary : ")
-            elif line.lower().startswith("birthday"):
-                birthday = self.birthday
-                if birthday:
-                    if isinstance(birthday, str):
-                        strings.append("Birthday : text= {}".format(birthday))
-                    elif birthday.year == 1900 and birthday.month != 0 and \
-                            birthday.day != 0 and birthday.hour == 0 and \
-                            birthday.minute == 0 and birthday.second == 0 and \
-                            self.version == "4.0":
-                        strings.append(birthday.strftime("Birthday : --%m-%d"))
-                    else:
-                        tz = birthday.tzname()
-                        if (tz and tz[3:] or birthday.hour != 0
-                                or birthday.minute != 0
-                                or birthday.second != 0):
-                            strings.append(
-                                "Birthday : {}".format(birthday.isoformat()))
-                        else:
-                            strings.append(birthday.strftime("Birthday : %F"))
-                else:
-                    strings.append("Birthday : ")
-            elif line.lower().startswith("categories"):
-                strings += helpers.convert_to_yaml(
-                    "Categories", self.categories, 0, 11, True)
-            elif line.lower().startswith("note"):
-                strings += helpers.convert_to_yaml(
-                    "Note", self.notes, 0, 5, True)
-            elif line.lower().startswith("webpage"):
-                strings += helpers.convert_to_yaml(
-                    "Webpage", self.webpages, 0, 8, True)
+        stream = io.StringIO()
+        yaml.dump(template_obj, stream)
         # posix standard: eof char must be \n
-        return '\n'.join(strings) + "\n"
+        return stream.getvalue() + "\n"
 
 
 class CarddavObject(YAMLEditable):
