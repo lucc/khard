@@ -62,9 +62,9 @@ def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
 
-def yaml_clean(value: Optional[Union[str, List, Dict[str, Any], Sequence]]
-              ) -> Optional[Union[Sequence, List, str, Dict[str, Any],
-                                  LiteralScalarString]]:
+def yaml_clean(value: Union[str, Sequence, Dict[str, Any], None]
+              ) -> Union[Sequence, str, Dict[str, Any], LiteralScalarString,
+                         None]:
     """
     sanitize yaml values according to some simple principles:
       1. empty values are none, so ruamel does not print an empty list/str
@@ -92,7 +92,7 @@ def yaml_clean(value: Optional[Union[str, List, Dict[str, Any], Sequence]]
 
 def yaml_dicts(
         data: Optional[Dict[str, Any]],
-        defaults: Optional[Union[Dict[str, Any], List[str]]] = None
+        defaults: Union[Dict[str, Any], List[str], None] = None
     ) -> Optional[Dict[str, Any]]:
     """
     format a dict according to template, if empty use specified defaults

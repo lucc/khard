@@ -1268,7 +1268,6 @@ class YAMLEditable(VCardWrapper):
         }
         template = helpers.get_new_contact_template()
         yaml = YAML()
-        yaml.top_level_colon_align = True
         yaml.indent(mapping=4, sequence=4, offset=2)
         template_obj = yaml.load(template)
         for key in template_obj:
