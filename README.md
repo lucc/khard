@@ -49,9 +49,9 @@ Development
 
 [![Build Status][travis-badge]][travis]
 
-Khard is developed [on GitHub](https://github.com/scheibler/khard) where you
-are welcome to post [bug reports](https://github.com/scheibler/khard/issues)
-and [feature requests](https://github.com/scheibler/khard/pulls).  Also see the
+Khard is developed [on GitHub](https://github.com/lucc/khard) where you
+are welcome to post [bug reports](https://github.com/lucc/khard/issues)
+and [feature requests](https://github.com/lucc/khard/pulls).  Also see the
 [notes for contributors](CONTRIBUTING.rst).
 
 Authors
@@ -59,14 +59,14 @@ Authors
 
 Khard was started by [Eric Scheibler](http://eric-scheibler.de) and is
 currently maintained by @lucc.  [Several
-people](https://github.com/scheibler/khard/graphs/contributors) have
+people](https://github.com/lucc/khard/graphs/contributors) have
 contributed over the years.
 
 Related projects
 ----------------
 
 If you need a console based calendar too, try out
-[khal](https://github.com/geier/khal).
+[khal](https://github.com/pimutils/khal).
 
   [blog]: http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/
   [sad]: http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/

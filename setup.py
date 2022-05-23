@@ -14,7 +14,7 @@ setup(
     name='khard',
     author='Eric Scheibler',
     author_email='email@eric-scheibler.de',
-    url='https://github.com/scheibler/khard/',
+    url='https://github.com/lucc/khard/',
     description='A console carddav client',
     long_description=readme,
     long_description_content_type='text/markdown',
