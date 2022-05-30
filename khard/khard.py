@@ -10,7 +10,7 @@ import operator
 import os
 import sys
 import textwrap
-from typing import cast, Dict, Iterable, List, Optional, Union
+from typing import cast, Callable, Dict, Iterable, List, Optional, Union
 
 from unidecode import unidecode
 
@@ -280,7 +280,7 @@ def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
         "last_name", "formatted_name"
     :returns: sorted contact list
     """
-    keys = []
+    keys: List[Callable] = []
     if group:
         keys.append(operator.attrgetter("address_book.name"))
     if sort == "first_name":
@@ -434,6 +434,7 @@ def add_email_to_contact(name: str, email_address: str,
     previous_selected_vcard = None
     manual_search = False
     while True:
+        query: Query
         # search for an existing contact
         name_parts = name.replace(',', '').split()
         if len(name_parts) == 0:
