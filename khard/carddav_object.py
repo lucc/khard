@@ -457,7 +457,7 @@ class VCardWrapper:
         """Set the FN field to the new value.
 
         All previously existing FN fields are deleted.  Version 4 of the specs
-        requires the vCard to only habe one FN field.  For other versions we
+        requires the vCard to only have one FN field.  For other versions we
         enforce this equally.
 
         :param str value: the new formatted name
