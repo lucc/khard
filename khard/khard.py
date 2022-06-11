@@ -168,7 +168,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
             selected_address_books.append(contact.address_book)
     table = []
     # default table header
-    table_header = ["index", "name", "phone", "email"]
+    table_header = ["index", "name", "phone", "email", "kind"]
     plural = ""
     if len(selected_address_books) > 1:
         plural = "s"
@@ -194,13 +194,14 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
     # table body
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames, parsable)
+                          config.preferred_kind, config.show_nicknames,
+                          parsable)
     for index, vcard in enumerate(vcard_list):
         row = []
         for field in table_header:
             if field == 'index':
                 row.append(str(index + 1))
-            elif field in ['name', 'phone', 'email']:
+            elif field in ['name', 'phone', 'email', 'kind']:
                 row.append(formatter.get_special_field(vcard, field))
             elif field == 'uid':
                 if parsable:
@@ -776,7 +777,8 @@ def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames, parsable)
+                          config.preferred_kind, config.show_nicknames,
+                          parsable)
     addresses = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
