@@ -35,8 +35,9 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install .
         python -m pip install mypy
+        python -m pip install types-atomicwrites
     - name: Run the type checker
-      run: mypy --install-types --ignore-missing-imports khard
+      run: mypy --ignore-missing-imports khard
 
   docs:
     runs-on: ubuntu-latest
