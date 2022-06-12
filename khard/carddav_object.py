@@ -1093,6 +1093,10 @@ class YAMLEditable(VCardWrapper):
         self._set_string_list(self._add_organisation, "Organisation",
                               contact_data)
 
+        # kind
+        self._delete_vcard_object("KIND")
+        self.kind = contact_data["Kind"]
+
         # role
         self._delete_vcard_object("ROLE")
         self._set_string_list(self._add_role, "Role", contact_data)
@@ -1427,6 +1431,11 @@ class CarddavObject(YAMLEditable):
                 self._get_additional_names() + self._get_last_names() + \
                 self._get_name_suffixes()
             strings.append("Full name: {}".format(list_to_string(names, " ")))
+
+        # kind
+        if self.kind:
+            strings.append("Kind: {}".format(self.kind))
+
         # organisation
         if self.organisations:
             strings += helpers.convert_to_yaml(

@@ -148,6 +148,13 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "-s", "--sort", choices=("first_name", "last_name", "formatted_name"),
         help="Sort contact table by first or last name")
 
+    # create kind subparsers
+    kind_parser = argparse.ArgumentParser(add_help=False)
+    kind_parser.add_argument(
+        "-k", "--kind", choices=("individual", "group", "organization",
+            "location", "application"),
+        help="Show only contacts of given kind")
+
     # create search subparsers
     default_search_parser = argparse.ArgumentParser(add_help=False)
     default_search_parser.add_argument(
@@ -180,7 +187,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "list",
         aliases=Actions.get_aliases("list"),
         parents=[default_addressbook_parser, default_search_parser,
-                 sort_parser],
+                 sort_parser, kind_parser],
         description="list all (selected) contacts",
         help="list all (selected) contacts")
     list_parser.add_argument(
