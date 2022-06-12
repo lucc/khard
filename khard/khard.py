@@ -23,7 +23,7 @@ from .config import Config
 from .formatter import Formatter
 from .helpers import interactive
 from .helpers.interactive import confirm
-from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
+from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery, parse
 from .version import version as khard_version
 
 
@@ -345,6 +345,8 @@ def generate_contact_list(args: Namespace) -> List[CarddavObject]:
     if "source_search_terms" in args:
         # exception for merge command
         args.search_terms = args.source_search_terms or AnyQuery()
+    if "kind" in args:
+        args.search_terms = parse(args.kind) if args.kind else AnyQuery()
     if "search_terms" not in args:
         # It is simpler to handle subcommand that do not have and need search
         # terms here than conditionally calling generate_contact_list().
@@ -707,7 +709,8 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
     birthday_list = []
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames, parsable)
+                          config.preferred_kind, config.show_nicknames,
+                          parsable)
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         if parsable:
@@ -742,7 +745,8 @@ def phone_subcommand(vcard_list: List[CarddavObject], parsable: bool) -> None:
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames, parsable)
+                          config.preferred_kind, config.show_nicknames,
+                          parsable)
     numbers = []
     for vcard in vcard_list:
         for type, number_list in sorted(vcard.phone_numbers.items(),
@@ -830,7 +834,8 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.show_nicknames, parsable)
+                          config.preferred_kind, config.show_nicknames,
+                          parsable)
     emails = []
     for vcard in vcard_list:
         for type, email_list in sorted(vcard.emails.items(),
