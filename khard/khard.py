@@ -194,8 +194,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
     # table body
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.preferred_kind, config.show_nicknames,
-                          parsable)
+                          config.show_nicknames, parsable)
     for index, vcard in enumerate(vcard_list):
         row = []
         for field in table_header:
@@ -777,8 +776,7 @@ def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.preferred_kind, config.show_nicknames,
-                          parsable)
+                          config.show_nicknames, parsable)
     addresses = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")

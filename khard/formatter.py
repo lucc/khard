@@ -18,12 +18,12 @@ class Formatter:
     FORMAT = "formatted_name"
 
     def __init__(self, display: str, preferred_email: List[str],
-                 preferred_phone: List[str], preferred_kind: str,
-                 show_nicknames: bool, parsable: bool) -> None:
+                 preferred_phone: List[str], show_nicknames: bool,
+                 parsable: bool) -> None:
         self._display = display
         self._preferred_email = preferred_email
         self._preferred_phone = preferred_phone
-        self._preferred_kind = preferred_kind
+        self._default_kind = "individual"
         self._show_nicknames = show_nicknames
         self._parsable = parsable
 
@@ -73,7 +73,7 @@ class Formatter:
                 return self.format_labeled_field(vcard.emails,
                                                  self._preferred_email)
         if field == 'kind':
-            return vcard.kind if vcard.kind else self._preferred_kind
+            return vcard.kind if vcard.kind else self._default_kind
         return ""
 
     @staticmethod
