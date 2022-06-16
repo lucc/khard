@@ -4,9 +4,13 @@ import abc
 from datetime import datetime
 from functools import reduce
 from operator import and_, or_
+import re
 from typing import cast, Any, Dict, List, Optional, Union
 
 from . import carddav_object
+
+# constants
+FIELD_PHONE_NUMBERS = "phone_numbers"
 
 
 class Query(metaclass=abc.ABCMeta):
@@ -250,6 +254,59 @@ class NameQuery(TermQuery):
         return 'name:{}'.format(self._term)
 
 
+class PhoneNumberQuery(FieldQuery):
+
+    """A special query to match against phone numbers."""
+
+    def __init__(self, value: str) -> None:
+        super().__init__(FIELD_PHONE_NUMBERS, self._strip_phone_number(value))
+
+    def _match_union(self, value: Dict) -> bool:
+        if isinstance(value, dict):
+            for key in value:
+                if isinstance(value, str):
+                    if self._match_phone_number(
+                            self._strip_phone_number(value)):
+                        return True
+                if isinstance(value[key], list):
+                    for number in value[key]:
+                        if self._match_phone_number(
+                                self._strip_phone_number(number)):
+                            return True
+            return False
+        # this should actually be a type error
+        return False
+
+    def _match_phone_number(self, number: str) -> bool:
+        if self._term.startswith("+") and number.startswith("+"):
+            # _term: +49123456789
+            # number: +49123456789
+            return self._term == number
+        elif self._term.startswith("+"):
+            # _term: +49123456789
+            if number.startswith("0"):
+                # number: 0123456789
+                return number[1:] in self._term
+        elif number.startswith("+"):
+            # number: +49123456789
+            if self._term.startswith("0") and len(self._term) >= 6:
+                # _term: 0123456789
+                return self._term[1:] in number
+        return self._term in number
+
+    def _strip_phone_number(self, number: str) -> bool:
+        return re.sub("[^0-9+]", "", number)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, PhoneNumberQuery) and self._term == other._term
+
+    def __hash__(self) -> int:
+        return hash((PhoneNumberQuery, self._term))
+
+    def __str__(self) -> str:
+        return 'phone numbers:{}'.format(self._term)
+
+
 def parse(string: str) -> Union[TermQuery, FieldQuery]:
     """Parse a string into a query object
 
@@ -267,6 +324,8 @@ def parse(string: str) -> Union[TermQuery, FieldQuery]:
         field, term = string.split(":", maxsplit=1)
         if field == "name":
             return NameQuery(term)
+        if field == FIELD_PHONE_NUMBERS:
+            return PhoneNumberQuery(term)
         if field in carddav_object.CarddavObject.get_properties():
             return FieldQuery(field, term)
     return TermQuery(string)
