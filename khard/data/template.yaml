@@ -3,7 +3,7 @@
 Formatted name : 
 
 # kind (requires vcard >= 4.0)
-# one of: individual, group, organization, location, application
+# one of: individual, group, org, location, application, device
 Kind : 
 
 # name components

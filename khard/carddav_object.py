@@ -464,6 +464,10 @@ class VCardWrapper:
         kind = self.get_first("kind", self._default_kind)
         return kind if kind != "org" else "organisation"
 
+    @kind.setter
+    def kind(self, value: str) -> None:
+        self.vcard.add("KIND").value = value
+
     @property
     def formatted_name(self) -> str:
         return self.get_first("fn")
@@ -1095,7 +1099,10 @@ class YAMLEditable(VCardWrapper):
 
         # kind
         self._delete_vcard_object("KIND")
-        self.kind = contact_data["Kind"]
+        try:
+            self.kind = contact_data["Kind"]
+        except KeyError:
+            self.kind = self._default_kind
 
         # role
         self._delete_vcard_object("ROLE")
