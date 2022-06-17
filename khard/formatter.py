@@ -23,7 +23,6 @@ class Formatter:
         self._display = display
         self._preferred_email = preferred_email
         self._preferred_phone = preferred_phone
-        self._default_kind = "individual"
         self._show_nicknames = show_nicknames
         self._parsable = parsable
 
@@ -73,7 +72,7 @@ class Formatter:
                 return self.format_labeled_field(vcard.emails,
                                                  self._preferred_email)
         if field == 'kind':
-            return vcard.kind if vcard.kind else self._default_kind
+            return vcard.kind
         return ""
 
     @staticmethod

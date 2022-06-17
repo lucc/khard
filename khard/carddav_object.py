@@ -57,6 +57,7 @@ class VCardWrapper:
     by the vobject library are enforced here.
     """
 
+    _default_kind = "individual"
     _default_version = "3.0"
     _supported_versions = ("3.0", "4.0")
 
@@ -450,7 +451,11 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        return self._get_string_field("kind")
+        return self._get_string_field("kind") or self._default_kind
+
+    @kind.setter
+    def kind(self, value: str) -> None:
+        self.vcard.add("KIND").value = value
 
     @property
     def formatted_name(self) -> str:
@@ -1078,7 +1083,10 @@ class YAMLEditable(VCardWrapper):
 
         # kind
         self._delete_vcard_object("KIND")
-        self.kind = contact_data["Kind"]
+        try:
+            self.kind = contact_data["Kind"]
+        except KeyError:
+            self.kind = self._default_kind
 
         # role
         self._delete_vcard_object("ROLE")
