@@ -452,10 +452,6 @@ class VCardWrapper:
     def kind(self) -> str:
         return self._get_string_field("kind")
 
-    @kind.setter
-    def kind(self, value: str) -> None:
-        self.vcard.add("KIND").value = value
-
     @property
     def formatted_name(self) -> str:
         return self._get_string_field("fn")
