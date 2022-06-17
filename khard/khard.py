@@ -194,8 +194,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
     # table body
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.preferred_kind, config.show_nicknames,
-                          parsable)
+                          config.show_nicknames, parsable)
     for index, vcard in enumerate(vcard_list):
         row = []
         for field in table_header:
@@ -258,7 +257,7 @@ def get_contact_list(address_books: Union[VdirAddressBook,
                                           AddressBookCollection],
                      query: Query) -> List[CarddavObject]:
     """Find contacts in the given address book grouped, sorted and reversed
-    acording to the loaded configuration.
+    according to the loaded configuration.
 
     :param address_books: the address book to search
     :param query: the query to use when searching
@@ -300,7 +299,7 @@ def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
 def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
     """Prepare the search query string from the given command line args.
 
-    Each address book can get a search query string to filter vcards befor
+    Each address book can get a search query string to filter vcards before
     loading them.  Depending on the question if the address book is used for
     source or target searches different queries have to be combined.
 
@@ -781,8 +780,7 @@ def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
     """
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
-                          config.preferred_kind, config.show_nicknames,
-                          parsable)
+                          config.show_nicknames, parsable)
     addresses = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")

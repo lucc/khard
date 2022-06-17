@@ -221,7 +221,7 @@ class VdirAddressBook(AddressBook):
             logger.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
-        logger.debug('Loded %s contacts from address book %s.',
+        logger.debug('Loaded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
 

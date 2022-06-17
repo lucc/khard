@@ -160,7 +160,6 @@ class Config:
         self.show_nicknames = table['show_nicknames']
         self.preferred_email_address_type = table['preferred_email_address_type']
         self.preferred_phone_number_type = table['preferred_phone_number_type']
-        self.preferred_kind = table['preferred_kind']
         self.show_uids = table['show_uids']
 
     def init_address_books(self) -> None:
