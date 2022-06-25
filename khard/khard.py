@@ -173,7 +173,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
     # default table header
     table_header = ["index", "name", "phone", "email"]
     plural = ""
-    if len(selected_kinds) > 1:
+    if len(selected_kinds) > 1 or CarddavObject._default_kind not in selected_kinds:
         table_header.append("kind")
     if len(selected_address_books) > 1:
         plural = "s"
