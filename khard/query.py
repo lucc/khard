@@ -258,15 +258,33 @@ class PhoneNumberQuery(FieldQuery):
 
     """A special query to match against phone numbers."""
 
-    def __init__(self, value: str) -> None:
-        super().__init__(FIELD_PHONE_NUMBERS, self._strip_phone_number(value))
+    @staticmethod
+    def _strip_phone_number(number: str) -> str:
+        return re.sub("[^0-9+]", "", number)
 
-    def _match_union(self, value: Dict) -> bool:
+    def __init__(self, value: str) -> None:
+        super().__init__(FIELD_PHONE_NUMBERS, value)
+        self._term_only_digits = self._strip_phone_number(value)
+
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
+        if isinstance(thing, str):
+            return self._match_union(thing)
+        else:
+            return super().match(thing)
+
+    def _match_union(self, value: Union[str, datetime, List, Dict[str, Any]]
+                     ) -> bool:
+        if isinstance(value, str):
+            if self._term in value.lower() \
+                    or self._match_phone_number(self._strip_phone_number(value)):
+                return True
         if isinstance(value, dict):
             for key in value:
-                if isinstance(value, str):
+                if self._term in str(key).lower():
+                    return True
+                if isinstance(value[key], str):
                     if self._match_phone_number(
-                            self._strip_phone_number(value)):
+                            self._strip_phone_number(value[key])):
                         return True
                 if isinstance(value[key], list):
                     for number in value[key]:
@@ -278,24 +296,28 @@ class PhoneNumberQuery(FieldQuery):
         return False
 
     def _match_phone_number(self, number: str) -> bool:
-        if self._term.startswith("+") and number.startswith("+"):
-            # _term: +49123456789
+        if self._term_only_digits.startswith("+") and number.startswith("+"):
+            # _term_only_digits: +49123456789
             # number: +49123456789
-            return self._term == number
-        elif self._term.startswith("+"):
-            # _term: +49123456789
-            if number.startswith("0"):
-                # number: 0123456789
-                return number[1:] in self._term
-        elif number.startswith("+"):
+            return self._term_only_digits in number
+        elif self._term_only_digits.startswith("+") and number.startswith("0"):
+            # asume, that _term_only_digits contains a complete phone number
+            # _term_only_digits: +49123456789
+            # number: 0123456789
+            return number[1:] in self._term_only_digits
+        elif self._term_only_digits.startswith("0") and number.startswith("+"):
+            # can't asume, that _term_only_digits contains a complete phone number
+            # _term_only_digits: 0123456789
             # number: +49123456789
-            if self._term.startswith("0") and len(self._term) >= 6:
-                # _term: 0123456789
-                return self._term[1:] in number
-        return self._term in number
-
-    def _strip_phone_number(self, number: str) -> bool:
-        return re.sub("[^0-9+]", "", number)
+            if len(self._term_only_digits) >= 5:
+                # don't strip the leading "0" if the search term is too short
+                # otherwise you may get false positives
+                # _term could contain the latter part of a phone number instead
+                return self._term_only_digits[1:] in number
+        # end of special cases
+        if self._term_only_digits:
+            return self._term_only_digits in number
+        return False
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, PhoneNumberQuery) and self._term == other._term

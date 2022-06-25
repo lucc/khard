@@ -27,6 +27,8 @@ reverse = no
 show_nicknames = no
 # show uid table column: yes / no
 show_uids = yes
+# show kind table column: yes / no
+show_kinds = no
 # sort by first or last name: first_name / last_name / formatted_name
 sort = last_name
 # localize dates: yes / no

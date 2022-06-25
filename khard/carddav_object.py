@@ -451,7 +451,8 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        return self._get_string_field("kind") or self._default_kind
+        kind = self._get_string_field("kind") or self._default_kind
+        return kind if kind != "org" else "organisation"
 
     @kind.setter
     def kind(self, value: str) -> None:
@@ -1441,6 +1442,10 @@ class CarddavObject(YAMLEditable):
         # address book name
         if verbose:
             strings.append("Address book: {}".format(self.address_book))
+
+        # kind
+        if self.kind is not None:
+            strings.append("Kind: {}".format(self.kind))
 
         # person related information
         if (self.birthday is not None or self.anniversary is not None

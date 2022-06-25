@@ -74,6 +74,7 @@ contact table
   - *reverse*: whether to reverse the order of contact listings or not
   - *show_nicknames*: whether to show nick names
   - *show_uids*: whether to show uids
+  - *show_kinds*: whether to show kinds
   - *sort*: field by which to sort contact listings
 
 vcard

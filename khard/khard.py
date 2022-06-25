@@ -163,13 +163,18 @@ def list_address_books(address_books: Union[AddressBookCollection,
 def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
                   parsable: bool = False) -> None:
     selected_address_books: List[VdirAddressBook] = []
+    selected_kinds = set()
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
             selected_address_books.append(contact.address_book)
+        if contact.kind not in selected_kinds:
+            selected_kinds.add(contact.kind)
     table = []
     # default table header
-    table_header = ["index", "name", "phone", "email", "kind"]
+    table_header = ["index", "name", "phone", "email"]
     plural = ""
+    if config.show_kinds or len(selected_kinds) > 1 or CarddavObject._default_kind not in selected_kinds:
+        table_header.append("kind")
     if len(selected_address_books) > 1:
         plural = "s"
         table_header.append("address_book")
@@ -732,9 +737,12 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
         sys.exit(1)
 
 
-def phone_subcommand(vcard_list: List[CarddavObject], parsable: bool) -> None:
+def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
+        parsable: bool) -> None:
     """Print a phone application friendly contact table.
 
+    :param search_terms: used as search term to filter the contacts before
+        printing
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -742,7 +750,8 @@ def phone_subcommand(vcard_list: List[CarddavObject], parsable: bool) -> None:
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    numbers = []
+    all_numbers = []
+    matched_numbers = []
     for vcard in vcard_list:
         for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
@@ -754,8 +763,13 @@ def phone_subcommand(vcard_list: List[CarddavObject], parsable: bool) -> None:
                 else:
                     # else: start with name
                     fields = name, type, number
-                numbers.append("\t".join(fields))
-    if numbers:
+                fields_serialized = "\t".join(fields)
+                all_numbers.append(fields_serialized)
+                if search_terms and search_terms.match(fields_serialized):
+                    matched_numbers.append(fields_serialized)
+    logger.debug("phone numbers: all=%d, matched=%d", len(all_numbers), len(matched_numbers))
+    if all_numbers:
+        numbers = matched_numbers if matched_numbers else all_numbers
         if parsable:
             print('\n'.join(numbers))
         else:
@@ -766,10 +780,13 @@ def phone_subcommand(vcard_list: List[CarddavObject], parsable: bool) -> None:
         sys.exit(1)
 
 
-def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
+def post_address_subcommand(search_terms: Query,
+        vcard_list: List[CarddavObject], parsable: bool
                             ) -> None:
     """Print a contact table. with all postal / mailing addresses
 
+    :param search_terms: used as search term to filter the contacts before
+        printing
     :param vcard_list: the vcards to search for matching entries which should
         be printed
     :param parsable: machine readable output: columns devided by tabulator (\t)
@@ -777,7 +794,8 @@ def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    addresses = []
+    all_addresses = []
+    matched_addresses = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         # create post address line list
@@ -793,9 +811,14 @@ def post_address_subcommand(vcard_list: List[CarddavObject], parsable: bool
                     key=lambda k: k[0].lower()):
                 for address in sorted(formatted_addresses):
                     contact_addresses.append([name, type, address])
-        for addr in contact_addresses:
-            addresses.append("\t".join(addr))
-    if addresses:
+        for fields in contact_addresses:
+            fields_serialized = "\t".join(fields)
+            all_addresses.append(fields_serialized)
+            if search_terms and search_terms.match(fields_serialized):
+                matched_addresses.append(fields_serialized)
+    logger.debug("post addresses: all=%d, matched=%d", len(all_addresses), len(matched_addresses))
+    if all_addresses:
+        addresses = matched_addresses if matched_addresses else all_addresses
         if parsable:
             print('\n'.join(addresses))
         else:
@@ -829,7 +852,8 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    emails = []
+    all_emails = []
+    matched_emails = []
     for vcard in vcard_list:
         for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
@@ -841,8 +865,13 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                 else:
                     # else: start with name
                     fields = name, type, email
-                emails.append("\t".join(fields))
-    if emails:
+                fields_serialized = "\t".join(fields)
+                all_emails.append(fields_serialized)
+                if search_terms and search_terms.match(fields_serialized):
+                    matched_emails.append(fields_serialized)
+    logger.debug("email addresses: all=%d, matched=%d", len(all_emails), len(matched_emails))
+    if all_emails:
+        emails = matched_emails if matched_emails else all_emails
         if parsable:
             if not remove_first_line:
                 # at least mutt requires that line
@@ -1123,9 +1152,9 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
     elif args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
-        phone_subcommand(vcard_list, args.parsable)
+        phone_subcommand(args.search_terms, vcard_list, args.parsable)
     elif args.action == "postaddress":
-        post_address_subcommand(vcard_list, args.parsable)
+        post_address_subcommand(args.search_terms, vcard_list, args.parsable)
     elif args.action == "email":
         email_subcommand(args.search_terms, vcard_list,
                          args.parsable, args.remove_first_line)
