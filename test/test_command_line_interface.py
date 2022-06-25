@@ -67,13 +67,13 @@ class ListingCommands(unittest.TestCase):
         expected = [
             "Address book: foo",
             "Index    Name              Phone                "
-            "Email                     Kind          Uid",
+            "Email                     Uid",
             "1        second contact    voice: 0123456789    "
-            "home: user@example.com    individual    testuid1",
+            "home: user@example.com    testuid1",
             "2        text birthday                          "
-            "                          individual    testuid3",
+            "                          testuid3",
             "3        third contact                          "
-            "                          individual    testuid2"]
+            "                          testuid2"]
         self.assertListEqual(text, expected)
 
     def test_ls_fields_like_email(self):
@@ -144,9 +144,9 @@ class ListingCommands(unittest.TestCase):
         expected = [
             "Address book: foo",
             "Index    Name              Phone                "
-            "Email                     Kind          Uid",
+            "Email                     Uid",
             "1        second contact    voice: 0123456789    "
-            "home: user@example.com    individual    testuid1"]
+            "home: user@example.com    testuid1"]
         self.assertListEqual(text1, expected)
         self.assertListEqual(text2, expected)
 
@@ -158,9 +158,9 @@ class ListingCommands(unittest.TestCase):
         expected = [
             "Address book: foo",
             "Index    Name              Phone                "
-            "Email                     Kind          Uid",
+            "Email                     Uid",
             "1        second contact    voice: 0123456789    "
-            "home: user@example.com    individual    testuid1"]
+            "home: user@example.com    testuid1"]
         self.assertListEqual(text1, expected)
         self.assertListEqual(text2, expected)
 
@@ -230,8 +230,8 @@ class ListingCommands2(unittest.TestCase):
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = [
             "Address book: tmp",
-            "Index    Name       Phone             Email    Kind          Uid",
-            "1        bug 195    cell: 67545678             individual    b"]
+            "Index    Name       Phone             Email    Uid",
+            "1        bug 195    cell: 67545678             b"]
         self.assertListEqual(text, expect)
 
     def test_list_bug_243_part_1(self):
@@ -242,9 +242,9 @@ class ListingCommands2(unittest.TestCase):
         expect = [
             "Address book: tmp",
             "Index    Name                     Phone    "
-            "Email                        Kind          Uid",
+            "Email                        Uid",
             "1        contact with category             "
-            "internet: foo@example.org    individual    c",
+            "internet: foo@example.org    c",
         ]
         self.assertListEqual(text, expect)
 
@@ -267,11 +267,11 @@ class ListingCommands2(unittest.TestCase):
         text = [line.strip() for line in stdout.getvalue().splitlines()]
         expect = ['Address book: tmp',
                   'Index    Name             Phone    Email                   '
-                  'Kind          Uid',
+                  'Uid',
                   '1        Michael Smith             pref: ms@example.org    '
-                  'individual    issue251part1',
+                  'issue251part1',
                   '2        Mike Jones                pref: mj@example.org    '
-                  'individual    issue251part2']
+                  'issue251part2']
         self.assertListEqual(text, expect)
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/nick.conf')
