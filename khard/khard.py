@@ -171,7 +171,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
             selected_kinds.add(contact.kind)
     table = []
     # default table header
-    table_header = ["index", "name", "phone", "email", "kind"]
+    table_header = ["index", "name", "phone", "email"]
     plural = ""
     if len(selected_kinds) > 1:
         table_header.append("kind")
