@@ -94,6 +94,10 @@ class Defaults(unittest.TestCase):
         c = config.Config("test/fixture/minimal.conf")
         self.assertTrue(c.show_uids)
 
+    def test_show_kinds_defaults_to_false(self):
+        c = config.Config("test/fixture/minimal.conf")
+        self.assertFalse(c.show_kinds)
+
     def test_sort_defaults_to_first_name(self):
         c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.sort, 'first_name')
