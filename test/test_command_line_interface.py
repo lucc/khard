@@ -216,9 +216,9 @@ class ListingCommands(unittest.TestCase):
         text = [line.rstrip() for line in stdout.getvalue().splitlines()]
         expected = [
             "Address book: tmp",
-            "Index    Name              Phone    Email    Uid",
-            "1        ACME Inc.                           4",
-            "2        Wile E. Coyote                      1"]
+            "Index    Name              Phone    Email    Kind            Uid",
+            "1        ACME Inc.                           organisation    4",
+            "2        Wile E. Coyote                      individual      1"]
         self.assertListEqual(expected, text)
 
 
