@@ -45,6 +45,6 @@ setup(
     entry_points={'console_scripts': ['khard = khard.khard:main']},
     test_suite="test",
     # we use type annotations of unset variables which needs 3.6
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     include_package_data=True,
 )
