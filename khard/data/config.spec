@@ -13,6 +13,7 @@ preferred_phone_number_type = string_list(default=list('pref'))
 reverse = boolean(default=False)
 show_nicknames = boolean(default=False)
 show_uids = boolean(default=True)
+show_kinds = boolean(default=False)
 sort = option('first_name', 'last_name', 'formatted_name', default='first_name')
 
 [vcard]

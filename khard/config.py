@@ -161,6 +161,7 @@ class Config:
         self.preferred_email_address_type = table['preferred_email_address_type']
         self.preferred_phone_number_type = table['preferred_phone_number_type']
         self.show_uids = table['show_uids']
+        self.show_kinds = table['show_kinds']
 
     def init_address_books(self) -> None:
         """Initialize the internal address book collection.

@@ -71,6 +71,8 @@ class Formatter:
             if vcard.emails:
                 return self.format_labeled_field(vcard.emails,
                                                  self._preferred_email)
+        if field == 'kind':
+            return vcard.kind
         return ""
 
     @staticmethod

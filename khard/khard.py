@@ -163,13 +163,18 @@ def list_address_books(address_books: Union[AddressBookCollection,
 def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
                   parsable: bool = False) -> None:
     selected_address_books: List[VdirAddressBook] = []
+    selected_kinds = set()
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
             selected_address_books.append(contact.address_book)
+        if contact.kind not in selected_kinds:
+            selected_kinds.add(contact.kind)
     table = []
     # default table header
     table_header = ["index", "name", "phone", "email"]
     plural = ""
+    if config.show_kinds or len(selected_kinds) > 1 or CarddavObject._default_kind not in selected_kinds:
+        table_header.append("kind")
     if len(selected_address_books) > 1:
         plural = "s"
         table_header.append("address_book")
@@ -200,7 +205,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
         for field in table_header:
             if field == 'index':
                 row.append(str(index + 1))
-            elif field in ['name', 'phone', 'email']:
+            elif field in ['name', 'phone', 'email', 'kind']:
                 row.append(formatter.get_special_field(vcard, field))
             elif field == 'uid':
                 if parsable:

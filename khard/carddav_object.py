@@ -57,6 +57,7 @@ class VCardWrapper:
     by the vobject library are enforced here.
     """
 
+    _default_kind = "individual"
     _default_version = "3.0"
     _supported_versions = ("3.0", "4.0")
 
@@ -447,6 +448,11 @@ class VCardWrapper:
             else:
                 fmt = "%F"
         return date.strftime(fmt), False
+
+    @property
+    def kind(self) -> str:
+        kind = self._get_string_field("kind") or self._default_kind
+        return kind if kind != "org" else "organisation"
 
     @property
     def formatted_name(self) -> str:
@@ -1420,6 +1426,10 @@ class CarddavObject(YAMLEditable):
         # address book name
         if verbose:
             strings.append("Address book: {}".format(self.address_book))
+
+        # kind
+        if self.kind is not None:
+            strings.append("Kind: {}".format(self.kind))
 
         # person related information
         if (self.birthday is not None or self.anniversary is not None

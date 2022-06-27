@@ -210,6 +210,27 @@ class ListingCommands(unittest.TestCase):
                   '                             SomeState, HomeCountry']
         self.assertListEqual(expect, text)
 
+    def test_mixed_kinds(self):
+        with TmpConfig(["org.vcf", "individual.vcf"]):
+            stdout = run_main("list", "organisations:acme")
+        text = [line.rstrip() for line in stdout.getvalue().splitlines()]
+        expected = [
+            "Address book: tmp",
+            "Index    Name              Phone    Email    Kind            Uid",
+            "1        ACME Inc.                           organisation    4",
+            "2        Wile E. Coyote                      individual      1"]
+        self.assertListEqual(expected, text)
+
+    def test_non_individual_kind(self):
+        with TmpConfig(["org.vcf"]):
+            stdout = run_main("list")
+        text = [line.rstrip() for line in stdout.getvalue().splitlines()]
+        expected = [
+            "Address book: tmp",
+            "Index    Name         Phone    Email    Kind            Uid",
+            "1        ACME Inc.                      organisation    4"]
+        self.assertListEqual(expected, text)
+
 
 class ListingCommands2(unittest.TestCase):
 
