@@ -264,7 +264,7 @@ class AddressBookCollection(AddressBook):
                 else:
                     self.contacts[uid] = abook.contacts[uid]
         self._loaded = True
-        logger.debug('Loded %s contacts from address book %s.',
+        logger.debug('Loaded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
     def __getitem__(self, key: Union[int, str]) -> VdirAddressBook:
