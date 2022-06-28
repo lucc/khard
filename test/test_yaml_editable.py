@@ -1,9 +1,6 @@
 """Tests for the carddav_object.YAMLEditable class"""
 
 import unittest
-from unittest import mock
-
-from khard.carddav_object import YAMLEditable
 
 from .helpers import TestYAMLEditable
 

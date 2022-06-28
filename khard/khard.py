@@ -10,7 +10,7 @@ import operator
 import os
 import sys
 import textwrap
-from typing import cast, Dict, Iterable, List, Optional, Union
+from typing import cast, Callable, Dict, Iterable, List, Optional, Union
 
 from unidecode import unidecode
 
@@ -285,7 +285,7 @@ def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
         "last_name", "formatted_name"
     :returns: sorted contact list
     """
-    keys = []
+    keys: List[Callable] = []
     if group:
         keys.append(operator.attrgetter("address_book.name"))
     if sort == "first_name":
@@ -439,6 +439,7 @@ def add_email_to_contact(name: str, email_address: str,
     previous_selected_vcard = None
     manual_search = False
     while True:
+        query: Query
         # search for an existing contact
         name_parts = name.replace(',', '').split()
         if len(name_parts) == 0:
@@ -852,9 +853,10 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    all_emails = []
-    matched_emails = []
+    emails = []
     for vcard in vcard_list:
+        matched_emails = []
+        fallback_all_emails = []
         for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
@@ -866,12 +868,13 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                     # else: start with name
                     fields = name, type, email
                 fields_serialized = "\t".join(fields)
-                all_emails.append(fields_serialized)
+                fallback_all_emails.append(fields_serialized)
                 if search_terms and search_terms.match(fields_serialized):
                     matched_emails.append(fields_serialized)
-    logger.debug("email addresses: all=%d, matched=%d", len(all_emails), len(matched_emails))
-    if all_emails:
-        emails = matched_emails if matched_emails else all_emails
+        logger.debug("email addresses for %s: all=%d, matched=%d",
+                str(vcard), len(fallback_all_emails), len(matched_emails))
+        emails += matched_emails if matched_emails else fallback_all_emails
+    if emails:
         if parsable:
             if not remove_first_line:
                 # at least mutt requires that line
