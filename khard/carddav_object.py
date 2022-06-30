@@ -356,9 +356,9 @@ class VCardWrapper:
             anniversary.params['VALUE'] = ['text']
             anniversary.value = value
         elif self.version == "4.0":
-            self.vcard.add('anniversary').value = value
+            self.vcard.add('ANNIVERSARY').value = value
         else:
-            self.vcard.add('x-anniversary').value = value
+            self.vcard.add('X-ANNIVERSARY').value = value
 
     def _get_ablabel(self, item: vobject.base.ContentLine) -> str:
         """Get an ABLABEL for a specified item in the vCard.
