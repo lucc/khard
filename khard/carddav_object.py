@@ -451,13 +451,16 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        kind = self._get_string_field("kind") or self._default_kind
+        kind = self._get_string_field(self._kind_attribute_name().lower()) or self._default_kind
         return kind if kind != "org" else "organisation"
 
     @kind.setter
     def kind(self, value: str) -> None:
-        attr_prefix = "" if self.version == "4.0" else "X-"
-        self.vcard.add(f'{attr_prefix}KIND').value = value
+        value = value if value != "organisation" else "org"
+        self.vcard.add(self._kind_attribute_name()).value = value
+
+    def _kind_attribute_name(self) -> str:
+        return "{}KIND".format("" if self.version == "4.0" else "X-")
 
     @property
     def formatted_name(self) -> str:
@@ -1084,7 +1087,7 @@ class YAMLEditable(VCardWrapper):
                               contact_data)
 
         # kind
-        self._delete_vcard_object("KIND")
+        self._delete_vcard_object(self._kind_attribute_name())
         try:
             self.kind = contact_data["Kind"]
         except KeyError:
