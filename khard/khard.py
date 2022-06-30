@@ -23,7 +23,7 @@ from .config import Config
 from .formatter import Formatter
 from .helpers import interactive
 from .helpers.interactive import confirm
-from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery, parse
+from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
 
 

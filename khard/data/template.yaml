@@ -2,7 +2,7 @@
 # from the full name below if not given.
 Formatted name : 
 
-# kind (requires vcard >= 4.0)
+# kind (requires vcard 4.0)
 # one of: individual, group, org, location, application, device
 Kind : 
 
