@@ -751,9 +751,9 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    all_numbers = []
-    matched_numbers = []
+    numbers = []
     for vcard in vcard_list:
+        field_line_list = []
         for type, number_list in sorted(vcard.phone_numbers.items(),
                                         key=lambda k: k[0].lower()):
             for number in sorted(number_list):
@@ -764,13 +764,10 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                 else:
                     # else: start with name
                     fields = name, type, number
-                fields_serialized = "\t".join(fields)
-                all_numbers.append(fields_serialized)
-                if search_terms and search_terms.match(fields_serialized):
-                    matched_numbers.append(fields_serialized)
-    logger.debug("phone numbers: all=%d, matched=%d", len(all_numbers), len(matched_numbers))
-    if all_numbers:
-        numbers = matched_numbers if matched_numbers else all_numbers
+                field_line_list.append("\t".join(fields))
+        numbers += _filter_email_post_or_phone_number_results(
+                search_terms, field_line_list)
+    if numbers:
         if parsable:
             print('\n'.join(numbers))
         else:
@@ -795,31 +792,27 @@ def post_address_subcommand(search_terms: Query,
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    all_addresses = []
-    matched_addresses = []
+    addresses = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         # create post address line list
-        contact_addresses = []
+        field_line_list = []
         if parsable:
             for type, post_addresses in sorted(vcard.post_addresses.items(),
                                                key=lambda k: k[0].lower()):
                 for post_address in post_addresses:
-                    contact_addresses.append([str(post_address), name, type])
+                    field_line_list.append(
+                            "\t".join([ str(post_address), name, type ]))
         else:
             for type, formatted_addresses in sorted(
                     vcard.get_formatted_post_addresses().items(),
                     key=lambda k: k[0].lower()):
                 for address in sorted(formatted_addresses):
-                    contact_addresses.append([name, type, address])
-        for fields in contact_addresses:
-            fields_serialized = "\t".join(fields)
-            all_addresses.append(fields_serialized)
-            if search_terms and search_terms.match(fields_serialized):
-                matched_addresses.append(fields_serialized)
-    logger.debug("post addresses: all=%d, matched=%d", len(all_addresses), len(matched_addresses))
-    if all_addresses:
-        addresses = matched_addresses if matched_addresses else all_addresses
+                    field_line_list.append(
+                            "\t".join([ name, type, address ]))
+        addresses += _filter_email_post_or_phone_number_results(
+                search_terms, field_line_list)
+    if addresses:
         if parsable:
             print('\n'.join(addresses))
         else:
@@ -855,8 +848,7 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                           config.show_nicknames, parsable)
     emails = []
     for vcard in vcard_list:
-        matched_emails = []
-        fallback_all_emails = []
+        field_line_list = []
         for type, email_list in sorted(vcard.emails.items(),
                                        key=lambda k: k[0].lower()):
             for email in sorted(email_list):
@@ -867,13 +859,9 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
                 else:
                     # else: start with name
                     fields = name, type, email
-                fields_serialized = "\t".join(fields)
-                fallback_all_emails.append(fields_serialized)
-                if search_terms and search_terms.match(fields_serialized):
-                    matched_emails.append(fields_serialized)
-        logger.debug("email addresses for %s: all=%d, matched=%d",
-                str(vcard), len(fallback_all_emails), len(matched_emails))
-        emails += matched_emails if matched_emails else fallback_all_emails
+                field_line_list.append("\t".join(fields))
+        emails += _filter_email_post_or_phone_number_results(
+                search_terms, field_line_list)
     if emails:
         if parsable:
             if not remove_first_line:
@@ -888,6 +876,23 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
         elif not remove_first_line:
             print("searching for '{}' ...".format(search_terms))
         sys.exit(1)
+
+
+def _filter_email_post_or_phone_number_results(search_terms: Query,
+        field_line_list: List[str]) -> List[str]:
+    """Filter the created output of phone_subcommand, post_address_subcommand
+    and email_subcommand by the given search term again.
+    If no match is found, return the complete input list
+
+    :param search_terms: used as search term to filter the contacts before
+        printing
+    :param field_line_list: The line-by-line output of the commands listed above
+    """
+    matched_line_list = []
+    for line in field_line_list:
+        if search_terms and search_terms.match(line):
+            matched_line_list.append(line)
+    return matched_line_list if matched_line_list else field_line_list
 
 
 def list_subcommand(vcard_list: List[CarddavObject], parsable: bool,
