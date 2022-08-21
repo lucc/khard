@@ -140,7 +140,9 @@ class Config:
         """Set the attributes from the internal config instance on self."""
         general = self.config["general"]
         self.debug = general["debug"]
-        self.editor = general["editor"] or os.environ.get("EDITOR", "vim")
+        self.editor = (
+            general["editor"] or shlex.split(os.environ.get("EDITOR", "vim"))
+        )
         self.merge_editor = general["merge_editor"] \
             or os.environ.get("MERGE_EDITOR", "vimdiff")
         self.default_action = general["default_action"]
