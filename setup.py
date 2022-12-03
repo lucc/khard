@@ -41,7 +41,8 @@ setup(
                             'sphinx-autodoc-typehints']},
     use_scm_version={'write_to': 'khard/version.py'},
     setup_requires=['setuptools_scm'],
-    packages=['khard'],
+    packages=['khard', 'khard.helpers'],
+    package_data={'khard': ['data/*']},
     entry_points={'console_scripts': ['khard = khard.khard:main']},
     test_suite="test",
     # we use type annotations of unset variables which needs 3.6
