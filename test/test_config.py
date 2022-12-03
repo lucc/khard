@@ -52,7 +52,7 @@ class LoadingConfigFile(unittest.TestCase):
     @mock.patch.dict('os.environ', EDITOR='editor', MERGE_EDITOR='meditor')
     def test_load_minimal_file_by_name(self):
         cfg = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(cfg.editor, "editor")
+        self.assertEqual(cfg.editor, ["editor"])
         self.assertEqual(cfg.merge_editor, "meditor")
 
 
@@ -137,7 +137,7 @@ class Defaults(unittest.TestCase):
     @mock.patch.dict('os.environ', clear=True)
     def test_editor_defaults_to_vim(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(c.editor, 'vim')
+        self.assertEqual(c.editor, ['vim'])
 
     @mock.patch.dict('os.environ', clear=True)
     def test_merge_editor_defaults_to_vimdiff(self):
