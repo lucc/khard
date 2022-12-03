@@ -24,11 +24,13 @@ class Action(unittest.TestCase):
     def test_get_aliases_reverse_resolves_aliases(self):
         self.assertEqual([alias], actions.Actions.get_aliases(action))
 
-    def test_get_aliases_returns_none_for_aliases(self):
-        self.assertIsNone(actions.Actions.get_aliases(alias))
+    def test_get_aliases_throws_keyerror_for_aliases(self):
+        with self.assertRaises(KeyError):
+            actions.Actions.get_aliases(alias)
 
-    def test_get_aliases_returns_none_for_unknown(self):
-        self.assertIsNone(actions.Actions.get_aliases(unknown))
+    def test_get_aliases_throws_keyerror_for_unknown(self):
+        with self.assertRaises(KeyError):
+            actions.Actions.get_aliases(unknown)
 
     def test_get_actions_returns_actions(self):
         self.assertIn(action, actions.Actions.get_actions())

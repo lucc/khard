@@ -33,7 +33,7 @@ class Actions:
         asociated with the given alias, None is returned.
 
         :param alias: the alias to look up
-        :rturns: the name of the corresponding action or None
+        :returns: the name of the corresponding action or None
 
         """
         for action, alias_list in cls.action_map.items():
@@ -42,7 +42,7 @@ class Actions:
         return None
 
     @classmethod
-    def get_aliases(cls, action: str) -> Optional[List[str]]:
+    def get_aliases(cls, action: str) -> List[str]:
         """Find all aliases for the given action.  If there is no such action,
         None is returned.
 
@@ -50,7 +50,7 @@ class Actions:
         :returns: the list of aliases corresponding to the action or None
 
         """
-        return cls.action_map.get(action)
+        return cls.action_map[action]
 
     @classmethod
     def get_actions(cls) -> Iterable[str]:

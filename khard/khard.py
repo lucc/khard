@@ -381,7 +381,7 @@ def new_subcommand(selected_address_books: AddressBookCollection,
                 config.private_objects, config.preferred_vcard_version,
                 config.localize_dates)
         except ValueError as err:
-            sys.exit(err)
+            sys.exit(str(err))
         else:
             new_contact.write_to_file()
         if open_editor:
@@ -939,7 +939,7 @@ def modify_subcommand(selected_vcard: CarddavObject,
                 selected_vcard, input_from_stdin_or_file,
                 config.localize_dates)
         except ValueError as err:
-            sys.exit(err)
+            sys.exit(str(err))
         if selected_vcard == new_contact:
             print("Nothing changed\n\n{}".format(new_contact.pretty()))
         else:
@@ -1117,7 +1117,7 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
         sys.exit("{}\nUse --debug for more information or --skip-unparsable "
                  "to proceed".format(err))
     except AddressBookNameError as err:
-        sys.exit(err)
+        sys.exit(str(err))
 
     vcard_list = generate_contact_list(args)
 
