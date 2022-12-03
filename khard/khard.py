@@ -1133,21 +1133,21 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
             try:
                 with open(args.input_file, "r") as infile:
                     input_from_stdin_or_file = infile.read()
-            except IOError as err:
+            except OSError as err:
                 sys.exit("Error: {}\n       File: {}".format(err.strerror,
                                                              err.filename))
         elif not sys.stdin.isatty():
             # try to read from stdin
             try:
                 input_from_stdin_or_file = sys.stdin.read()
-            except IOError:
+            except OSError:
                 sys.exit("Error: Can't read from stdin")
             # try to reopen console
             # otherwise further user interaction is not possible (for example
             # selecting a contact from the contact table)
             try:
                 sys.stdin = open('/dev/tty')
-            except IOError:
+            except OSError:
                 pass
 
     if args.action == "new":

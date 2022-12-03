@@ -180,7 +180,7 @@ class Config:
             self.abooks = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
                         for name in section])
-        except IOError as err:
+        except OSError as err:
             raise ConfigError(str(err))
 
     def get_address_books(self, names: Iterable[str], queries: Dict[str, Query]

@@ -1519,7 +1519,7 @@ class CarddavObject(YAMLEditable):
     def delete_vcard_file(self) -> None:
         try:
             os.remove(self.filename)
-        except IOError as err:
+        except OSError as err:
             logger.error("Can not remove vCard file: %s", err)
 
     @classmethod

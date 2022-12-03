@@ -16,7 +16,7 @@ class LoadingConfigFile(unittest.TestCase):
 
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
-        with self.assertRaises(IOError) as cm:
+        with self.assertRaises(OSError) as cm:
             config.Config._load_config_file(filename)
         self.assertTrue(str(cm.exception).startswith('Config file not found:'))
 
