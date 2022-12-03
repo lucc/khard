@@ -389,6 +389,8 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         config = Config(args.config)
     except ConfigError as err:
         parser.exit(3, "Error in config file: {}\n".format(err))
+    except OSError as err:
+        parser.exit(3, "Error reading config file: {}\n".format(err))
     logger.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with
@@ -497,4 +499,7 @@ def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
-    return args, merge_args_into_config(args, conf)
+    try:
+        return args, merge_args_into_config(args, conf)
+    except ConfigError as err:
+        sys.exit(str(err))
