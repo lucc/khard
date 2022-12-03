@@ -1,6 +1,7 @@
 """Tests for the cli module"""
 
 from argparse import ArgumentTypeError
+import tempfile
 import unittest
 from unittest import mock
 
@@ -131,3 +132,20 @@ class TestParseArgs(unittest.TestCase):
             ["add-email", "-H", "OtHer,myfield,from"])
         actual = args.headers
         self.assertEqual(["other", "myfield", "from"], actual)
+
+    def test_exit_user_friendly_without_config_file(self):
+        with self.assertRaises(SystemExit):
+            cli.parse_args(["-c", "/this file should hopefully never exist."])
+
+    def test_exit_user_friendly_without_contacts_folder(self):
+        with tempfile.NamedTemporaryFile("w", delete=False) as config:
+            config.write("""[general]
+                            editor = editor
+                            merge_editor = merge_editor
+                            [addressbooks]
+                            [[tmp]]
+                            path = /this file should hopefully never exist.
+                            """)
+            config.flush()
+            with self.assertRaises(SystemExit):
+                cli.init(["-c", config.name, "ls"])
