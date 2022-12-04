@@ -48,11 +48,11 @@ del update_template_file
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'autoapi.extension',
-    'sphinx.ext.autodoc',
+    'autoapi.extension',  # https://sphinx-autoapi.readthedocs.io/en/latest/
+    'sphinx.ext.autodoc',  # https://pypi.org/project/sphinx-autodoc-typehints/
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
-    'sphinx_autodoc_typehints',
+    'sphinx_autodoc_typehints',  # https://pypi.org/project/sphinx-autodoc-typehints/
 ]
 
 autoapi_type = 'python'
