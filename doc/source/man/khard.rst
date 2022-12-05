@@ -8,9 +8,7 @@ Synopsis
   :module: khard.cli
   :func: _sphinxarg_helper
   :prog: khard
-
-Synopsis
---------
+  :nosubcommands: true
 
 :program:`khard` [:option:`-c` CONFIG] [:option:`--debug`] [:option:`--skip-unparsable`] SUBCOMMAND ...
 
@@ -54,6 +52,8 @@ Subcommands
 
 The functionality of khard is divided into several subcommands.  All of these
 have their own help text which can be seen with ``khard SUBCOMMAND --help``.
+The full list of subcommands and all options can be found in
+:manpage:`khard-subcommands(1)`.
 
 Many subcommands accept search terms to limit the number of contacts they
 should work on, display or present for selection.  The syntax is described in

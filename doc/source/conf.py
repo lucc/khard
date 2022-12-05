@@ -136,6 +136,7 @@ htmlhelp_basename = 'kharddoc'
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('man/khard', 'khard', 'Console address book manager', '', 1),
+    ('man/khard-subcommands', 'khard-subcommands', 'Subcommands of khard', '', 1),
     ('man/khard.conf', 'khard.conf', 'configuration file for khard', '', 5),
 ]
 
