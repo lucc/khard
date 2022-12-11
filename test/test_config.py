@@ -16,7 +16,7 @@ class LoadingConfigFile(unittest.TestCase):
 
     def test_load_non_existing_file_fails(self):
         filename = "I hope this file never exists"
-        with self.assertRaises(IOError) as cm:
+        with self.assertRaises(OSError) as cm:
             config.Config._load_config_file(filename)
         self.assertTrue(str(cm.exception).startswith('Config file not found:'))
 
@@ -52,7 +52,7 @@ class LoadingConfigFile(unittest.TestCase):
     @mock.patch.dict('os.environ', EDITOR='editor', MERGE_EDITOR='meditor')
     def test_load_minimal_file_by_name(self):
         cfg = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(cfg.editor, "editor")
+        self.assertEqual(cfg.editor, ["editor"])
         self.assertEqual(cfg.merge_editor, "meditor")
 
 
@@ -94,6 +94,10 @@ class Defaults(unittest.TestCase):
         c = config.Config("test/fixture/minimal.conf")
         self.assertTrue(c.show_uids)
 
+    def test_show_kinds_defaults_to_false(self):
+        c = config.Config("test/fixture/minimal.conf")
+        self.assertFalse(c.show_kinds)
+
     def test_sort_defaults_to_first_name(self):
         c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.sort, 'first_name')
@@ -133,7 +137,7 @@ class Defaults(unittest.TestCase):
     @mock.patch.dict('os.environ', clear=True)
     def test_editor_defaults_to_vim(self):
         c = config.Config("test/fixture/minimal.conf")
-        self.assertEqual(c.editor, 'vim')
+        self.assertEqual(c.editor, ['vim'])
 
     @mock.patch.dict('os.environ', clear=True)
     def test_merge_editor_defaults_to_vimdiff(self):

@@ -40,52 +40,62 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
 
     def test_empty_birthday_in_yaml_input(self):
         empty_birthday = "First name: foo\nBirthday:"
-        x = parse_yaml(empty_birthday)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_birthday)
         self.assertIsNone(x.birthday)
 
     def test_only_spaces_in_birthday_in_yaml_input(self):
         spaces_birthday = "First name: foo\nBirthday:  "
-        x = parse_yaml(spaces_birthday)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(spaces_birthday)
         self.assertIsNone(x.birthday)
 
     def test_empty_anniversary_in_yaml_input(self):
         empty_anniversary = "First name: foo\nAnniversary:"
-        x = parse_yaml(empty_anniversary)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_anniversary)
         self.assertIsNone(x.anniversary)
 
     def test_empty_organisation_in_yaml_input(self):
         empty_organisation = "First name: foo\nOrganisation:"
-        x = parse_yaml(empty_organisation)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_organisation)
         self.assertListEqual(x.organisations, [])
 
     def test_empty_nickname_in_yaml_input(self):
         empty_nickname = "First name: foo\nNickname:"
-        x = parse_yaml(empty_nickname)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_nickname)
         self.assertListEqual(x.nicknames, [])
 
     def test_empty_role_in_yaml_input(self):
         empty_role = "First name: foo\nRole:"
-        x = parse_yaml(empty_role)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_role)
         self.assertListEqual(x.roles, [])
 
     def test_empty_title_in_yaml_input(self):
         empty_title = "First name: foo\nTitle:"
-        x = parse_yaml(empty_title)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_title)
         self.assertListEqual(x.titles, [])
 
     def test_empty_categories_in_yaml_input(self):
         empty_categories = "First name: foo\nCategories:"
-        x = parse_yaml(empty_categories)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_categories)
         self.assertListEqual(x.categories, [])
 
     def test_empty_webpage_in_yaml_input(self):
         empty_webpage = "First name: foo\nWebpage:"
-        x = parse_yaml(empty_webpage)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_webpage)
         self.assertListEqual(x.webpages, [])
 
     def test_empty_note_in_yaml_input(self):
         empty_note = "First name: foo\nNote:"
-        x = parse_yaml(empty_note)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_note)
         self.assertListEqual(x.notes, [])
 
 
@@ -94,7 +104,8 @@ class yaml_ablabel(unittest.TestCase):
     def test_ablabelled_url_in_yaml_input(self):
         ablabel_url = "First name: foo\nWebpage:\n - http://example.com\n" \
                       " - github: https://github.com/scheibler/khard"
-        x = parse_yaml(ablabel_url)
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(ablabel_url)
         self.assertListEqual(x.webpages, [
             'http://example.com',
             {'github': 'https://github.com/scheibler/khard'}])

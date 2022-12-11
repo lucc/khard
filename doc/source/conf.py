@@ -48,11 +48,11 @@ del update_template_file
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'autoapi.extension',
-    'sphinx.ext.autodoc',
+    'autoapi.extension',  # https://sphinx-autoapi.readthedocs.io/en/latest/
+    'sphinx.ext.autodoc',  # https://pypi.org/project/sphinx-autodoc-typehints/
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
-    'sphinx_autodoc_typehints',
+    'sphinx_autodoc_typehints',  # https://pypi.org/project/sphinx-autodoc-typehints/
 ]
 
 autoapi_type = 'python'
@@ -89,7 +89,7 @@ release = original_version
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -134,7 +134,7 @@ htmlhelp_basename = 'kharddoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/khard', 'khard', 'Console carddav client', '', 1),
+    ('man/khard', 'khard', 'Console address book manager', '', 1),
     ('man/khard.conf', 'khard.conf', 'configuration file for khard', '', 5),
 ]
 

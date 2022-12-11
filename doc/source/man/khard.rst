@@ -14,8 +14,8 @@ Description
 -----------
 
 :program:`khard` is an address book for the Unix command line.  It can read, create,
-modify and delete carddav address book entries.  :program:`khard` only works with a local
-store of VCARD files.  It is intended to be used in conjunction with other
+modify and delete vCard address book entries.  :program:`khard` only works with a local
+store of vCard files.  It is intended to be used in conjunction with other
 programs like an email client, text editor, vdir synchronizer or VOIP client.
 
 Options
@@ -78,8 +78,6 @@ These subcommands display detailed information about one subcommand.
 show
   display detailed information about one contact, supported output formats
   are "pretty", "yaml" and "vcard"
-export
-  DEPRECATED, use ``show --format=yaml`` instead
 
 Modifying subcommands
 ~~~~~~~~~~~~~~~~~~~~~
@@ -102,8 +100,6 @@ move
   move a contact to a different addressbook
 remove
   remove a contact
-source
-  DEPRECATED, use ``edit --format=vcard`` instead
 
 Other subcommands
 ~~~~~~~~~~~~~~~~~

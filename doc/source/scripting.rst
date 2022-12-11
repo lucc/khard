@@ -105,6 +105,14 @@ lines to your muttrc file:
     "<pipe-message>khard add-email<return>" \
     "add the sender email address to khard"
 
+If you want to search for email addresses in specific header fields, append the "--header" parameter:
+
+.. code-block::
+
+  macro index,pager A \
+    "<pipe-message>khard add-email --headers=from,cc --skip-already-added<return>" \
+    "add the sender and cc email addresses to khard"
+
 Then navigate to an email message in mutt's index view and press "A" to start
 the address import dialog.
 

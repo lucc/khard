@@ -41,7 +41,7 @@ Please stick to the following standards when you open pull requests:
 - Khard has a test suite, please provide tests for bugs that you fix and also
   for new code and new features that are introduced.
 - Please verify *all* tests pass before sending a pull request, they will be
-  checked again by travis but it might be a lot faster to check locally first:
+  checked again in CI but it might be a lot faster to check locally first:
   |travis|
 
 Development
@@ -71,9 +71,9 @@ to do so.
 .. _master: https://github.com/lucc/khard/tree/master
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
 .. _pylint: https://pylint.readthedocs.io/en/latest/
-.. |travis| image:: https://travis-ci.org/scheibler/khard.svg?branch=develop
-   :target: https://travis-ci.org/scheibler/khard
-   :alt: build status
+.. |travis| image:: https://github.com/lucc/khard/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/lucc/khard/actions/workflows/ci.yml
+   :alt: ci status
 .. _Vincent's branching model:
    http://nvie.com/posts/a-successful-git-branching-model/
 .. _virtualenv: https://virtualenv.pypa.io/en/stable/

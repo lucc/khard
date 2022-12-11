@@ -8,43 +8,44 @@ from typing import List, Tuple
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config, ConfigError
-from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, TermQuery, parse
+from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, parse
 from .version import version as khard_version
 
 
 logger = logging.getLogger(__name__)
 
 
-def field_argument(orignal: str) -> List[str]:
-    """Ensure the fields specified for `ls -F` are proper field names.
-    Nested attribute names are not checked.
+class FieldsArgument:
+    """A factory to create callable objects for add_argument's type= parameter.
 
-    :param orignal: the value from the command line
-    :returns: the orignal value split at "," if the fields are spelled correctly
-    :throws: argparse.ArgumentTypeError
+    The object can parse comma seperated strings into list of strings, and can
+    also check if the single elements are spelled correctly.
     """
-    special_fields = ['index', 'name', 'phone', 'email']
-    choices = sorted(special_fields + CarddavObject.get_properties())
-    ret = []
-    for candidate in orignal.split(','):
-        candidate = candidate.lower()
-        field = candidate.split('.')[0]
-        if field in choices:
-            ret.append(candidate)
-        else:
-            raise argparse.ArgumentTypeError(
-                '"{}" is not an accepted field. Accepted fields are {}.'.format(
-                    field, ', '.join('"{}"'.format(c) for c in choices)))
-    return ret
 
+    def __init__(self, *choices: str, nested: bool = False) -> None:
+        """Initialize the factory
 
-def comma_separated_argument(original: str) -> List[str]:
-    """Return the original string split by commas
+        :param choices: the comma seperated strings must be one of these
+        :param nested: if this is true the comma seperated strings may
+            designate nested fields and only the first component (seperated by
+            a dot) must match on of the choices
+        """
+        self._choices = sorted(choices)
+        self._nested = nested
 
-    :param original: the value from the command line
-    :returns: the original value split at "," and lower cased
-    """
-    return [f.lower() for f in original.split(",")]
+    def __call__(self, argument: str) -> List[str]:
+        ret = []
+        for candidate in argument.split(","):
+            candidate = candidate.lower()
+            test = candidate.split('.')[0] if self._nested else candidate
+            if test in self._choices:
+                ret.append(candidate)
+            else:
+                choices = ', '.join('"{}"'.format(c) for c in self._choices)
+                raise argparse.ArgumentTypeError(
+                    '"{}" is not an accepted field. Accepted fields are {}.'
+                    .format(test, choices))
+        return ret
 
 
 def create_parsers() -> Tuple[argparse.ArgumentParser,
@@ -57,7 +58,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     further options and arguments.
 
     :returns: the two parsers for the first and the second parsing pass
-    :rtype: (argparse.ArgumentParser, argparse.ArgumentParser)
     """
     # Create the base argument parser.  It will be reused for the first and
     # second round of argument parsing.
@@ -190,7 +190,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "contact")
 
     # create subparsers for actions
-    subparsers = parser.add_subparsers(dest="action")
+    subparsers = parser.add_subparsers(dest="action", metavar="SUBCOMMAND")
     list_parser = subparsers.add_parser(
         "list",
         aliases=Actions.get_aliases("list"),
@@ -201,9 +201,13 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
+    field_argument = FieldsArgument('index', 'name', 'phone', 'email',
+                                    *CarddavObject.get_properties(),
+                                    nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
-        help="Comma separated list of fields to show")
+        help="Comma separated list of fields to show "
+        "(use -F help for a list of top level fields)")
     show_parser = subparsers.add_parser(
         "show",
         aliases=Actions.get_aliases("show"),
@@ -288,13 +292,13 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "--vcard-version", choices=("3.0", "4.0"), dest='preferred_version',
         help="Select preferred vcard version for new contact")
     add_email_parser.add_argument(
-        "-H",
-        "--headers",
-        dest='fields',
-        default=["from"],
-        type=comma_separated_argument,
-        help="Extract contacts from the given comma separated header fields. \
-                `all` searches all headers.")
+        "-H", "--headers", default=["from"],
+        type=lambda x: [y.lower() for y in x.split(",")],
+        help="Extract contacts from the given comma separated header fields. "
+        "`all` searches all headers.")
+    add_email_parser.add_argument(
+        "--skip-already-added", action="store_true",
+        help="Skip already added email addresses")
     subparsers.add_parser(
         "merge",
         aliases=Actions.get_aliases("merge"),
@@ -348,21 +352,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         description="list filenames of all matching contacts",
         help="list filenames of all matching contacts")
 
-    # Deprecated subcommands:  They can be removed after the next release
-    # (v0.17)
-    export_parser = subparsers.add_parser(
-        "export", aliases=Actions.get_aliases("export"), parents=[
-            default_addressbook_parser, default_search_parser, sort_parser],
-        description="DEPRECATED use 'show --format=yaml'",
-        help="DEPRECATED use 'show --format=yaml'")
-    export_parser.add_argument("-o", "--output-file", default=sys.stdout,
-                               type=argparse.FileType("w"))
-    subparsers.add_parser(
-        "source", aliases=Actions.get_aliases("source"), parents=[
-            default_addressbook_parser, default_search_parser, sort_parser],
-        description="DEPRECATED use 'edit --format=vcard'",
-        help="DEPRECATED use 'edit --format=vcard'")
-
     # Replace the print_help method of the first parser with the print_help
     # method of the main parser.  This makes it possible to have the first
     # parser handle the help option so that command line help can be printed
@@ -400,6 +389,8 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         config = Config(args.config)
     except ConfigError as err:
         parser.exit(3, "Error in config file: {}\n".format(err))
+    except OSError as err:
+        parser.exit(3, "Error reading config file: {}\n".format(err))
     logger.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with
@@ -471,16 +462,6 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     if "target_uid" in args:
         del args.target_uid
 
-    # Normalize all deprecated subcommands and emit warnings.
-    if args.action == "export":
-        logger.error("Deprecated subcommand: use 'show --format=yaml'.")
-        args.action = "show"
-        args.format = "yaml"
-    elif args.action == "source":
-        logger.error("Deprecated subcommand: use 'edit --format=vcard'.")
-        args.action = "edit"
-        args.format = "vcard"
-
     return args, config
 
 
@@ -518,4 +499,7 @@ def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
-    return args, merge_args_into_config(args, conf)
+    try:
+        return args, merge_args_into_config(args, conf)
+    except ConfigError as err:
+        sys.exit(str(err))

@@ -2,7 +2,7 @@ khard
 =====
 
 Khard is an address book for the Unix console. It creates, reads, modifies and
-removes carddav address book entries at your local machine. Khard is also
+removes vCard address book entries at your local machine. Khard is also
 compatible to the email clients mutt and alot and the SIP client twinkle. You
 can find more information about khard and the whole synchronization process
 [here][blog].
@@ -47,7 +47,7 @@ the `doc` directory.
 Development
 -----------
 
-[![Build Status][travis-badge]][travis]
+[![ci-badge]][ci]
 
 Khard is developed [on GitHub](https://github.com/lucc/khard) where you
 are welcome to post [bug reports](https://github.com/lucc/khard/issues)
@@ -74,5 +74,5 @@ If you need a console based calendar too, try out
   [repos-badge]: https://repology.org/badge/tiny-repos/khard.svg
   [docs]: https://khard.readthedocs.io/en/latest/
   [docs-badge]: https://readthedocs.org/projects/khard/badge/?version=latest
-  [travis]: https://travis-ci.org/scheibler/khard
-  [travis-badge]: https://travis-ci.org/scheibler/khard.svg?branch=develop
+  [ci]: https://github.com/lucc/khard/actions/workflows/ci.yml
+  [ci-badge]: https://github.com/lucc/khard/actions/workflows/ci.yml/badge.svg

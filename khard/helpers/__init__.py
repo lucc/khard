@@ -1,11 +1,13 @@
 """Some helper functions for khard"""
 
-import os
+from datetime import datetime
 import pathlib
 import random
 import string
-from datetime import datetime
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
+
+from ruamel.yaml.scalarstring import LiteralScalarString
+from .typing import list_to_string
 
 
 def pretty_print(table: List[List[str]], justify: str = "L") -> str:
@@ -56,57 +58,124 @@ def pretty_print(table: List[List[str]], justify: str = "L") -> str:
     return '\n'.join(table_row_list)
 
 
-def list_to_string(input: Union[str, List], delimiter: str) -> str:
-    """converts list to string recursively so that nested lists are supported
-
-    :param input: a list of strings and lists of strings (and so on recursive)
-    :param delimiter: the deimiter to use when joining the items
-    :returns: the recursively joined list
-    """
-    if isinstance(input, list):
-        return delimiter.join(
-            list_to_string(item, delimiter) for item in input)
-    return input
-
-
-def string_to_list(input: Union[str, List[str]], delimiter: str) -> List[str]:
-    if isinstance(input, list):
-        return input
-    return [x.strip() for x in input.split(delimiter)]
-
-
-def string_to_date(string: str) -> datetime:
-    """Convert a date string into a date object.
-
-    :param string: the date string to parse
-    :returns: the parsed datetime object
-    """
-    # try date formats --mmdd, --mm-dd, yyyymmdd, yyyy-mm-dd and datetime
-    # formats yyyymmddThhmmss, yyyy-mm-ddThh:mm:ss, yyyymmddThhmmssZ,
-    # yyyy-mm-ddThh:mm:ssZ.
-    for fmt in ("--%m%d", "--%m-%d", "%Y%m%d", "%Y-%m-%d", "%Y%m%dT%H%M%S",
-                "%Y-%m-%dT%H:%M:%S", "%Y%m%dT%H%M%SZ", "%Y-%m-%dT%H:%M:%SZ"):
-        try:
-            return datetime.strptime(string, fmt)
-        except ValueError:
-            continue  # with the next format
-    # try datetime formats yyyymmddThhmmsstz and yyyy-mm-ddThh:mm:sstz where tz
-    # may look like -06:00.
-    for fmt in ("%Y%m%dT%H%M%S%z", "%Y-%m-%dT%H:%M:%S%z"):
-        try:
-            return datetime.strptime(''.join(string.rsplit(":", 1)), fmt)
-        except ValueError:
-            continue  # with the next format
-    raise ValueError
-
-
 def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
 
+def yaml_clean(value: Union[str, Sequence, Dict[str, Any], None]
+              ) -> Union[Sequence, str, Dict[str, Any], LiteralScalarString,
+                         None]:
+    """
+    sanitize yaml values according to some simple principles:
+      1. empty values are none, so ruamel does not print an empty list/str
+      2. list with only one item become this item
+      3. multiline strings use the YAML literal style:
+         https://yaml.org/spec/1.2.2/#literal-style
 
-def file_modification_date(filename: str) -> datetime:
-    return datetime.fromtimestamp(os.path.getmtime(filename))
+    :param value: the value to be sanitized
+    :returns: the sanitized value
+    """
+    # special case for empty values
+    if not value:
+        return None
+
+    if isinstance(value, list):
+        # special case for single item lists:
+        if len(value) == 1 and isinstance(value[0], str):
+            return value[0]
+    elif isinstance(value, str):
+        if "\n" in value:
+            return LiteralScalarString(value)
+
+    return value
+
+
+def yaml_dicts(
+        data: Optional[Dict[str, Any]],
+        defaults: Union[Dict[str, Any], List[str], None] = None
+    ) -> Optional[Dict[str, Any]]:
+    """
+    format a dict according to template, if empty use specified defaults
+
+    :param data: dict of contact data with keys as types and values as values.
+    :param defaults: default dict to be used if data is empty.
+    :returns: dict of types and values.
+    """
+    if not data:
+        if isinstance(defaults, list):
+            return {key: None for key in defaults}
+
+        return defaults
+
+    data_dict = {}
+    for key, value_list in sorted(data.items(), key=lambda k: k[0].lower()):
+        data_dict[key] = value_list[0] if len(value_list) == 1 else value_list
+
+    return data_dict
+
+
+def yaml_addresses(addresses: Optional[Dict[str, Any]],
+                   address_properties: List[str],
+                   defaults: Optional[List[str]] = None
+                  ) -> Optional[Dict[str, Any]]:
+    """
+    build a dict from an address, using a list of properties, an address has.
+
+    :param addresses: dict of addresses with existing properties
+    :param address_properties: list of properties that make up an address
+    :param defaults: list of address types
+    :returns: dict of address types with all properties
+    """
+    if not addresses:
+        if not defaults:
+            return None
+
+        address_fields = {key: None for key in address_properties}
+        return {address_type: address_fields for address_type in defaults}
+
+    address_dict = {}
+    for address_type, address in addresses.items():
+        if isinstance(address, list):
+            address = address[0]
+        address_dict[address_type] = {
+            key: yaml_clean(address.get(f"{key[0].lower()}{key[1:]}"))
+            for key in address_properties
+        }
+    return address_dict
+
+
+def yaml_anniversary(anniversary: Union[str, datetime, None],
+                     version: str) -> Optional[str]:
+    """
+    format an anniversary according to its contents and the VCard version.
+
+    :param anniversary: a string or a datetime object, that is the anniversary
+    :param version: the VCard version to format for
+    :returns: the formatted date string
+    """
+    if not anniversary:
+        return None
+
+    if isinstance(anniversary, datetime):
+        if (version == "4.0" and anniversary.year == 1900
+                             and anniversary.month != 0
+                             and anniversary.day != 0
+                             and anniversary.hour == 0
+                             and anniversary.minute == 0
+                             and anniversary.second == 0):
+            return anniversary.strftime("--%m-%d")
+
+        time_zone = anniversary.tzname()
+        if ((time_zone and time_zone[3:])
+                or anniversary.hour != 0
+                or anniversary.minute != 0
+                or anniversary.second != 0):
+            return anniversary.isoformat()
+
+        return anniversary.strftime("%F")
+
+    # default case: anniversary is a string
+    return anniversary
 
 
 def convert_to_yaml(name: str, value: Union[None, str, List], indentation: int,
@@ -197,6 +266,6 @@ def get_new_contact_template(
         for object in supported_private_objects:
             formatted_private_objects += convert_to_yaml(
                 object, "", 12, len(longest_key)+1, True)
-    template = pathlib.Path(__file__).parent / 'data' / 'template.yaml'
+    template = pathlib.Path(__file__).parent.parent / 'data' / 'template.yaml'
     with template.open() as temp:
         return temp.read().format('\n'.join(formatted_private_objects))

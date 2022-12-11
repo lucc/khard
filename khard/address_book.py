@@ -5,7 +5,6 @@ import binascii
 import glob
 import logging
 import os
-import re
 from typing import Dict, Generator, Iterator, List, Optional, Union
 
 import vobject.base
@@ -196,8 +195,8 @@ class VdirAddressBook(AddressBook):
                     self._private_objects, self._localize_dates)
                 if card is None:
                     continue
-            except (IOError, vobject.base.ParseError, binascii.Error) as err:
-                verb = "open" if isinstance(err, IOError) else "parse"
+            except (OSError, vobject.base.ParseError, binascii.Error) as err:
+                verb = "open" if isinstance(err, OSError) else "parse"
                 logger.error("Error: Could not %s file %s\n%s", verb, filename,
                              err)
                 if self._skip:
@@ -222,7 +221,7 @@ class VdirAddressBook(AddressBook):
             logger.warning(
                 "%d of %d vCard files of address book %s could not be parsed.",
                 errors, len(self.contacts) + errors, self)
-        logger.debug('Loded %s contacts from address book %s.',
+        logger.debug('Loaded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
 
@@ -265,7 +264,7 @@ class AddressBookCollection(AddressBook):
                 else:
                     self.contacts[uid] = abook.contacts[uid]
         self._loaded = True
-        logger.debug('Loded %s contacts from address book %s.',
+        logger.debug('Loaded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
     def __getitem__(self, key: Union[int, str]) -> VdirAddressBook:

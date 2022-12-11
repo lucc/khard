@@ -9,7 +9,11 @@ import shlex
 from typing import Iterable, Dict, List, Optional, Union
 
 import configobj
-import validate
+try:
+    # since configobj 5.1
+    from configobj import validate
+except ImportError:
+    import validate
 
 from .actions import Actions
 from .address_book import AddressBookCollection, AddressBookNameError, \
@@ -136,7 +140,9 @@ class Config:
         """Set the attributes from the internal config instance on self."""
         general = self.config["general"]
         self.debug = general["debug"]
-        self.editor = general["editor"] or os.environ.get("EDITOR", "vim")
+        self.editor = (
+            general["editor"] or shlex.split(os.environ.get("EDITOR", "vim"))
+        )
         self.merge_editor = general["merge_editor"] \
             or os.environ.get("MERGE_EDITOR", "vimdiff")
         self.default_action = general["default_action"]
@@ -157,6 +163,7 @@ class Config:
         self.preferred_email_address_type = table['preferred_email_address_type']
         self.preferred_phone_number_type = table['preferred_phone_number_type']
         self.show_uids = table['show_uids']
+        self.show_kinds = table['show_kinds']
 
     def init_address_books(self) -> None:
         """Initialize the internal address book collection.
@@ -173,7 +180,7 @@ class Config:
             self.abooks = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
                         for name in section])
-        except IOError as err:
+        except OSError as err:
             raise ConfigError(str(err))
 
     def get_address_books(self, names: Iterable[str], queries: Dict[str, Query]

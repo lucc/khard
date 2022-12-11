@@ -13,8 +13,8 @@ Welcome to khard's documentation!
    indices
 
 Khard is an address book for the Unix command line.  It can read, create,
-modify and delete carddav address book entries.  Khard only works with a local
-store of VCARD files.  It is intended to be used in conjunction with other
+modify and delete vCard address book entries.  Khard only works with a local
+store of vCard files.  It is intended to be used in conjunction with other
 programs like an email client, text editor, vdir synchronizer or VOIP client.
 
 
@@ -35,6 +35,9 @@ manually you can use the release from `PyPi`_:
 
 If you want to help the development or need more advanced installation
 instructions see :doc:`contributing`.
+
+If you need a tarball use the one from `PyPi`_ and not from the Github release
+page.  These are missing an auto generated python file.
 
 .. _PyPi: https://pypi.python.org/pypi/khard/
 

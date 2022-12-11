@@ -4,9 +4,13 @@ import abc
 from datetime import datetime
 from functools import reduce
 from operator import and_, or_
+import re
 from typing import cast, Any, Dict, List, Optional, Union
 
 from . import carddav_object
+
+# constants
+FIELD_PHONE_NUMBERS = "phone_numbers"
 
 
 class Query(metaclass=abc.ABCMeta):
@@ -250,6 +254,81 @@ class NameQuery(TermQuery):
         return 'name:{}'.format(self._term)
 
 
+class PhoneNumberQuery(FieldQuery):
+
+    """A special query to match against phone numbers."""
+
+    @staticmethod
+    def _strip_phone_number(number: str) -> str:
+        return re.sub("[^0-9+]", "", number)
+
+    def __init__(self, value: str) -> None:
+        super().__init__(FIELD_PHONE_NUMBERS, value)
+        self._term_only_digits = self._strip_phone_number(value)
+
+    def match(self, thing: Union[str, "carddav_object.CarddavObject"]) -> bool:
+        if isinstance(thing, str):
+            return self._match_union(thing)
+        else:
+            return super().match(thing)
+
+    def _match_union(self, value: Union[str, datetime, List, Dict[str, Any]]
+                     ) -> bool:
+        if isinstance(value, str):
+            if self._term in value.lower() \
+                    or self._match_phone_number(self._strip_phone_number(value)):
+                return True
+        if isinstance(value, dict):
+            for key in value:
+                if self._term in str(key).lower():
+                    return True
+                if isinstance(value[key], str):
+                    if self._match_phone_number(
+                            self._strip_phone_number(value[key])):
+                        return True
+                if isinstance(value[key], list):
+                    for number in value[key]:
+                        if self._match_phone_number(
+                                self._strip_phone_number(number)):
+                            return True
+            return False
+        # this should actually be a type error
+        return False
+
+    def _match_phone_number(self, number: str) -> bool:
+        if self._term_only_digits.startswith("+") and number.startswith("+"):
+            # _term_only_digits: +49123456789
+            # number: +49123456789
+            return self._term_only_digits in number
+        elif self._term_only_digits.startswith("+") and number.startswith("0"):
+            # asume, that _term_only_digits contains a complete phone number
+            # _term_only_digits: +49123456789
+            # number: 0123456789
+            return number[1:] in self._term_only_digits
+        elif self._term_only_digits.startswith("0") and number.startswith("+"):
+            # can't asume, that _term_only_digits contains a complete phone number
+            # _term_only_digits: 0123456789
+            # number: +49123456789
+            if len(self._term_only_digits) >= 5:
+                # don't strip the leading "0" if the search term is too short
+                # otherwise you may get false positives
+                # _term could contain the latter part of a phone number instead
+                return self._term_only_digits[1:] in number
+        # end of special cases
+        if self._term_only_digits:
+            return self._term_only_digits in number
+        return False
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, PhoneNumberQuery) and self._term == other._term
+
+    def __hash__(self) -> int:
+        return hash((PhoneNumberQuery, self._term))
+
+    def __str__(self) -> str:
+        return 'phone numbers:{}'.format(self._term)
+
+
 def parse(string: str) -> Union[TermQuery, FieldQuery]:
     """Parse a string into a query object
 
@@ -267,6 +346,8 @@ def parse(string: str) -> Union[TermQuery, FieldQuery]:
         field, term = string.split(":", maxsplit=1)
         if field == "name":
             return NameQuery(term)
+        if field == FIELD_PHONE_NUMBERS:
+            return PhoneNumberQuery(term)
         if field in carddav_object.CarddavObject.get_properties():
             return FieldQuery(field, term)
     return TermQuery(string)
