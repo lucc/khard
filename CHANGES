@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+v0.18.0: 2022-12-10
+- Move project home on GitHub from @scheibler to @lucc
+- Catch exceptions when loading the config (#294)
+- Split $EDITOR env variable on spaces (#314)
+- Add special phone number field query
+- Add-email command improved: Attach email address to an existing contact
+- Add-email command: new option --skip-already-added
+- Add partial support for KIND: search query, display in details and listing (#309)
+- Add show_kinds config option (#309)
+- Add nix flake
+- Remove support for python 3.6
+- Remove deprecated subcommands "export" and "source"
+- Switch from Travis to GitHub CI
+
+
 v0.17.0: 2020-08-13
 - Do not modify (clean up) search query to find more matches (4583efd)
 - Remove special search handling for phone numbers (a570a85)
