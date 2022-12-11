@@ -1,8 +1,6 @@
 ToDo list for khard
 
 1. Add support for vcard attributes kind and member
-    - option to filter contact table (--kind)
     - member action to list all members of an organisation
 
 2. Implement impp attribute, see #105 for more information
-

@@ -51,7 +51,7 @@ In order to start coding you need to fetch the develop branch:
 
 .. code-block:: shell
 
-  git clone https://github.com/scheibler/khard
+  git clone https://github.com/lucc/khard
   cd khard
   python setup.py build  # to generate the version.py file
   python -m khard --help
@@ -63,12 +63,12 @@ Alternatively you can use the ``setup.py`` script directly.  If you want to
 isolate khard from your system Python environment you can use a `virtualenv`_
 to do so.
 
-.. _bug reports: https://github.com/scheibler/khard/issues
+.. _bug reports: https://github.com/lucc/khard/issues
 .. _the Git book: https://www.git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project#_commit_guidelines
-.. _develop: https://github.com/scheibler/khard/tree/develop
-.. _feature requests: https://github.com/scheibler/khard/pulls
-.. _Github: https://github.com/scheibler/khard
-.. _master: https://github.com/scheibler/khard/tree/master
+.. _develop: https://github.com/lucc/khard/tree/develop
+.. _feature requests: https://github.com/lucc/khard/pulls
+.. _Github: https://github.com/lucc/khard
+.. _master: https://github.com/lucc/khard/tree/master
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
 .. _pylint: https://pylint.readthedocs.io/en/latest/
 .. |travis| image:: https://github.com/lucc/khard/actions/workflows/ci.yml/badge.svg
