@@ -11,6 +11,26 @@
         SETUPTOOLS_SCM_PRETEND_VERSION = version;
         src = ./.;
       });
-
+    devShells.x86_64-linux.release =
+      let pkgs = nixpkgs.legacyPackages.x86_64-linux; in
+      pkgs.mkShell {
+        packages = with pkgs; [
+          git
+          twine
+          (python3.withPackages (p: with p; [
+            setuptools setuptools-scm wheel
+          ]))
+        ];
+        shellHook = ''
+        cat <<EOF
+        To publish a tag on pypi
+        0. version=...
+        1. git checkout v$version
+        2. python3 setup.py sdist bdist_wheel
+        3. twine upload -r khardtest dist/khard-$version*
+        4. twine upload -r khard dist/khard-$version*
+        EOF
+        '';
+      };
   };
 }
