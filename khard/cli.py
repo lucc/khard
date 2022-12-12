@@ -155,12 +155,13 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
+    # TODO remove after version 0.19
     default_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true",
-        help="DEPRECATED use the new query syntax instead")
+        "-e", "--strict-search", action="store_true", help=argparse.SUPPRESS)
+    # TODO remove after version 0.19
     default_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use the new query syntax instead")
+        help=argparse.SUPPRESS)
     default_search_parser.add_argument(
         "search_terms", nargs="*", metavar="search terms", type=parse,
         default=[], help="search in specified or all fields to find matching "
@@ -171,18 +172,20 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
+    # TODO remove after version 0.19
     merge_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true",
-        help="DEPRECATED use the new query syntax instead")
+        "-e", "--strict-search", action="store_true", help=argparse.SUPPRESS)
     merge_search_parser.add_argument(
         "-t", "--target-contact", "--target", type=parse,
         help="search for a matching target contact")
+    # TODO remove after version 0.19
     merge_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use the new query syntax instead")
+        help=argparse.SUPPRESS)
+    # TODO remove after version 0.19
     merge_search_parser.add_argument(
         "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use -t with the new query syntax instead")
+        help=argparse.SUPPRESS)
     merge_search_parser.add_argument(
         "source_search_terms", nargs="*", metavar="source", type=parse,
         default=[],
@@ -457,10 +460,15 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
             or AnyQuery()
     # Remove uid values from the args Namespace.  They have been merged into
     # the search terms above.
+    # TODO remove after version 0.19
     if "uid" in args:
         del args.uid
+        logger.error("Deprecated option --uid, use the new query syntax "
+                     "instead.")
     if "target_uid" in args:
         del args.target_uid
+        logger.error("Deprecated option --target-uid, use the new query "
+                     "syntax instead.")
 
     return args, config
 

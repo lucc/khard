@@ -107,16 +107,11 @@ case $state in
     local -a default_search_options merge_search_options
     default_search_options=(
       '(-f)'{-f,--search-in-source-files}'[look into source vcf files to speed up search queries in large address books]'
-      '(-e)'{-e,--strict-search}'[narrow contact search to name field]'
-      '(-u)'{-u+,--uid=}'[select contact by uid]:uid'
       '*: :_guard "^-*" "search term"'
     )
     merge_search_options=(
       '(-f)'{-f,--search-in-source-files}'[look into source vcf files to speed up search queries in large address books]'
-      '(-e)'{-e,--strict-search}'[narrow contact search to name fields]'
       '(-t)'{-t+,--target-contact=}'[search in all fields to find matching target contact]:search string'
-      '(-u)'{-u+,--uid=}'[select source contact by uid]:uid'
-      '(-U)'{-U+,--target-uid=}'[select target contact by uid]:uid'
       '*: :_guard "^-*" "search term"'
     )
 
