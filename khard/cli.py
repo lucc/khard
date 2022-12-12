@@ -462,13 +462,15 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     # the search terms above.
     # TODO remove after version 0.19
     if "uid" in args:
+        if args.uid:
+            logger.error("Deprecated option --uid, use the new query syntax "
+                         "instead.")
         del args.uid
-        logger.error("Deprecated option --uid, use the new query syntax "
-                     "instead.")
     if "target_uid" in args:
+        if args.target_uid:
+            logger.error("Deprecated option --target-uid, use the new query "
+                         "syntax instead.")
         del args.target_uid
-        logger.error("Deprecated option --target-uid, use the new query "
-                     "syntax instead.")
 
     return args, config
 

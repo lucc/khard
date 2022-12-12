@@ -487,8 +487,7 @@ class Merge(unittest.TestCase):
     def test_merge_with_exact_uid_search_terms(self):
         with TmpConfig(["contact1.vcf", "contact2.vcf"]):
             with mock.patch('khard.khard.merge_existing_contacts') as merge:
-                run_main("merge", "--uid", "testuid1", "--target-uid",
-                         "testuid2")
+                run_main("merge", "uid:testuid1", "--target-uid", "testuid2")
         merge.assert_called_once()
         # unpack the call arguments
         call = merge.mock_calls[0]
