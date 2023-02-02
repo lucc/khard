@@ -53,6 +53,22 @@ extension.
 
 .. _vdirsyncer: https://github.com/pimutils/vdirsyncer/
 
+If you already have ``.vcf`` files containing multiple ``VCARD`` entries (i.e.
+from Android/MacOS Contacts app), below are some scripts that 
+generate the corresponding single entry ``.vcf`` files:
+
+* `vcardtool`_ (processes one input file at a time)
+* `vcf-splitter`_ (needs to be used with the ``-u``/``--uid`` flag to generate 
+  the required UID entry)
+
+.. _vcardtool: https://github.com/jakeogh/vcardtool/
+.. _vcf-splitter: https://framagit.org/rogarb/vcf-splitter/
+
+You might need to preparse your ``.vcf`` input files with `vcard2to3`_ if they
+contain ``VERSION:2.1`` entries.
+
+.. _vcard2to3: https://github.com/jowave/vcard2to3
+
 vdirsyncer
 ----------
 
