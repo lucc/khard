@@ -53,7 +53,7 @@ v0.15.0: 2019-10-24
 - handle ABLABELs on most fields
 - add formatted name to the yaml template
 - show formatted name in contact details
-- make it possible to sort by and display formatted name in linstings
+- make it possible to sort by and display formatted name in listings
 - remove the khard-runner.py helper script
 - validate the config file upon loading it
 - internal code refactoring
@@ -64,7 +64,7 @@ v0.14.0: 2019-06-21
 - Allow vcard selections to be aborted explicitly
 - Unify edit and source subcommands
 - Merge export and show subcommands
-- Turn template export into a seperate command
+- Turn template export into a separate command
 - Require python >= 3.5
 - Add html documentation (generated with sphinx)
 - Add man page (generated with sphinx)
@@ -138,7 +138,7 @@ v0.11.0: 2016-07-17
     --skip-unparsable to skip unparsable vcard files (#75)
     --strict-search to narrow the contact search to the name field
 - Added some aliases for program actions (#65)
-- Removed davcontroler module due to the python3 incompatibility (script moved into the misc folder)
+- Removed davcontroller module due to the python3 incompatibility (script moved into the misc folder)
 - Updated zsh completion function and khards example config file
 
 
@@ -183,11 +183,11 @@ v0.7.3: 2016-01-08
 
 
 v0.7.2: 2016-01-03
-- Use of module atomicwrites to securely write vcards to disk
+- Use of module atomicwrites to securely write vCards to disk
 
 
 v0.7.1: 2016-01-01
-- Added support for multiple instances of one vcard attribute
+- Added support for multiple instances of one vCard attribute
 
 
 v0.7.0: 2015-12-18

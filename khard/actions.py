@@ -30,7 +30,7 @@ class Actions:
     @classmethod
     def get_action(cls, alias: str) -> Optional[str]:
         """Find the name of the action for the supplied alias.  If no action is
-        asociated with the given alias, None is returned.
+        associated with the given alias, None is returned.
 
         :param alias: the alias to look up
         :returns: the name of the corresponding action or None

@@ -1,5 +1,5 @@
-Manpages
-========
+Man pages
+=========
 
 The following man pages are available for khard:
 

@@ -140,8 +140,8 @@ Assuming the user had configured the three supported private object "Jabber",
 "Skype", and "Twitter" in their config, the template would look :download:`like
 this <examples/template.yaml>`.
 
-Per default khard creates vcards of version 3.0. If your other contact
-applications support vcards of the more recent version 4.0, you may change this
+Per default khard creates vCards of version 3.0. If your other contact
+applications support vCards of the more recent version 4.0, you may change this
 with the option :option:`--vcard-version`. Example:
 
 .. code-block:: shell
@@ -149,7 +149,7 @@ with the option :option:`--vcard-version`. Example:
    khard new --vcard-version=4.0
 
 For a more permanent solution you may set the preferred_version parameter in
-the vcard section of the khard config file (see the :download:`example config
+the vCard section of the khard config file (see the :download:`example config
 file <examples/khard.conf.example>` for more details).  But beware, that khard
 cannot convert already existing contacts from version 3.0 to 4.0. Therefore
 this setting is not applicable to the modify action.

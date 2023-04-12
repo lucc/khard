@@ -8,13 +8,13 @@ can find more information about khard and the whole synchronization process
 [here][blog].
 
 Warning: If you want to create or modify contacts with khard, beware that the
-vcard standard is very inconsistent and lacks interoperability. Different
+vCard standard is very inconsistent and lacks interoperability. Different
 actors in that sector have defined their own extensions and even produce
 non-standard output. A good example is the type value, which is tied to phone
 numbers, email and post addresses. Khard tries to avoid such incompatibilities
 but if you sync your contacts with an Android or iOS device, expect problems.
 You are on the safe side, if you only use khard to read contacts. For further
-information about the vcard compatibility issues have a look into [this blog
+information about the vCard compatibility issues have a look into [this blog
 post][sad].
 
 Installation

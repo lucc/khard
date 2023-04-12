@@ -147,10 +147,10 @@ def yaml_addresses(addresses: Optional[Dict[str, Any]],
 def yaml_anniversary(anniversary: Union[str, datetime, None],
                      version: str) -> Optional[str]:
     """
-    format an anniversary according to its contents and the VCard version.
+    format an anniversary according to its contents and the vCard version.
 
     :param anniversary: a string or a datetime object, that is the anniversary
-    :param version: the VCard version to format for
+    :param version: the vCard version to format for
     :returns: the formatted date string
     """
     if not anniversary:

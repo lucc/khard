@@ -135,7 +135,7 @@ class Editor:
         with contextlib.ExitStack() as stack:
             files = [stack.enter_context(self.write_temp_file(t))
                      for t in templates]
-            # Try to edit the files until we detect a modivication or the user
+            # Try to edit the files until we detect a modification or the user
             # aborts
             while True:
                 if self.edit_files(*files) == EditState.unmodified:

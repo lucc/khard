@@ -18,12 +18,12 @@ StrList = Union[str, List[str]]
 
 def convert_to_vcard(name: str, value: StrList, constraint: ObjectType
                      ) -> StrList:
-    """converts user input into vcard compatible data structures
+    """converts user input into vCard compatible data structures
 
     :param name: object name, only required for error messages
     :param value: user input
-    :param constraint: set the accepted return type for vcard attribute
-    :returns: cleaned user input, ready for vcard or a ValueError
+    :param constraint: set the accepted return type for vCard attribute
+    :returns: cleaned user input, ready for vCard or a ValueError
     """
     if isinstance(value, str):
         if constraint == ObjectType.list:
@@ -49,7 +49,7 @@ def list_to_string(input: Union[str, List], delimiter: str) -> str:
     """converts list to string recursively so that nested lists are supported
 
     :param input: a list of strings and lists of strings (and so on recursive)
-    :param delimiter: the deimiter to use when joining the items
+    :param delimiter: the delimiter to use when joining the items
     :returns: the recursively joined list
     """
     if isinstance(input, list):

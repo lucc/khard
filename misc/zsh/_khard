@@ -13,7 +13,7 @@
 # More information at http://is.muni.cz/www/xsiska2/2014/08/05/generating-completing-functions.html
 
 
-# Define a helper function to complete addressbook names.
+# Define a helper function to complete address book names.
 function _khard_addressbook_names () {
   local expl
   _sequence _wanted addressbooks expl "addressbook" compadd - \
@@ -39,7 +39,7 @@ _arguments -C -s \
   '(- *)'{-v,--version}'[show version information]' \
   '(-c)'{-c+,--config=}'[config file to use]:config file:_files' \
   '--debug[enable debug output]' \
-  '--skip-unparsable[skip unparsable vcard files]' \
+  '--skip-unparsable[skip unparsable vCard files]' \
   ':subcommand:->subcommand' \
   '*::option:->options' && ret=0
 
@@ -49,16 +49,16 @@ case $state in
     local -a subcommands_array
     subcommands_array=(
       add-email:'add email address from email header to a contact'
-      {addressbooks,abooks}:'list available addressbooks'
+      {addressbooks,abooks}:'list available address books'
       {birthdays,bdays}:'list birthdays'
-      {copy,cp}:'copy a contact to another addressbook'
+      {copy,cp}:'copy a contact to another address book'
       {details,show}:'show details for a contact'
       email:'list email addresses'
       {filename,file}':list internal file names'
       {list,ls}:'list all (selected) contacts'
       merge:'merge two contacts'
       {modify,edit,ed}:'edit a contact'
-      {move,mv}:'move a contact to another addressbook'
+      {move,mv}:'move a contact to another address book'
       {new,add}:'add a new contact'
       phone:'list phone numbers'
       {postaddress,postaddr,post}:'list post addresses'
@@ -73,18 +73,18 @@ case $state in
     # address book options
     local -a default_addressbook_options new_addressbook_options copy_move_addressbook_options merge_addressbook_options
     default_addressbook_options=(
-      '(-a)'{-a+,--addressbook=}'[specify addressbooks to narrow the list of contacts]:addressbook:_khard_addressbook_names'
+      '(-a)'{-a+,--addressbook=}'[specify address books to narrow the list of contacts]:addressbook:_khard_addressbook_names'
     )
     new_addressbook_options=(
-      '(-a)'{-a+,--addressbook=}'[specify addressbook in which to create new contact]:addressbook:_khard_addressbook_names'
+      '(-a)'{-a+,--addressbook=}'[specify address book in which to create new contact]:addressbook:_khard_addressbook_names'
     )
     copy_move_addressbook_options=(
-      '(-a)'{-a+,--addressbook=}'[specify addressbooks to narrow the list of contacts]:addressbook:_khard_addressbook_names'
-      '(-A)'{-A+,--target-addressbook=}'[specify target addressbook in which to copy / move]:addressbook:_khard_addressbook_names'
+      '(-a)'{-a+,--addressbook=}'[specify address books to narrow the list of contacts]:addressbook:_khard_addressbook_names'
+      '(-A)'{-A+,--target-addressbook=}'[specify target address book in which to copy / move]:addressbook:_khard_addressbook_names'
     )
     merge_addressbook_options=(
-      '(-a)'{-a+,--addressbook=}'[specify addressbooks to narrow the list of source contacts]:addressbook:_khard_addressbook_names'
-      '(-A)'{-A+,--target-addressbook=}'[specify addressbooks to narrow the list of target contacts]:addressbook:_khard_addressbook_names'
+      '(-a)'{-a+,--addressbook=}'[specify address books to narrow the list of source contacts]:addressbook:_khard_addressbook_names'
+      '(-A)'{-A+,--target-addressbook=}'[specify address books to narrow the list of target contacts]:addressbook:_khard_addressbook_names'
     )
     # input file options
     local -a email_header_input_options template_file_input_options
@@ -162,12 +162,12 @@ case $state in
       new|add)
     	options+=(
           $new_addressbook_options $template_file_input_options
-          '--vcard-version=[select preferred vcard version for new contact]:version:(3.0 4.0)'
+          '--vcard-version=[select preferred vCard version for new contact]:version:(3.0 4.0)'
         );;
       add-email)
         options+=(
           $default_addressbook_options $email_header_input_options $default_search_options $sort_options
-          '--vcard-version=[select preferred vcard version for new contact]:version:(3.0 4.0)'
+          '--vcard-version=[select preferred vCard version for new contact]:version:(3.0 4.0)'
         );;
       copy|cp|move|mv)
         options+=(

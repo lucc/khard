@@ -23,7 +23,7 @@ easier for maintainers to help:
 - report the version(s) that are affected
 - state the python version you are using
 - if there are stack tracebacks post them with your bug report
-- supply a minimal configuration (config file and vcards) to reproduce the
+- supply a minimal configuration (config file and vCards) to reproduce the
   error
 
 Feature requests
