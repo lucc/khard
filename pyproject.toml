@@ -30,6 +30,9 @@ dependencies = [
     "vobject"
 ]
 
+[project.optional-dependencies]
+doc = ['sphinx', 'sphinx-autoapi', 'sphinx-autodoc-typehints']
+
 [project.urls]
 homepage = "https://github.com/lucc/khard"
 documentation = "https://khard.readthedocs.io/en/latest/"
@@ -42,6 +45,9 @@ khard = "khard.khard:main"
 [build-system]
 requires = ["setuptools>=61.0", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ['khard', 'khard.helpers']
 
 [tool.setuptools_scm]
 write_to = "khard/version.py"
