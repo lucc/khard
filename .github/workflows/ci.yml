@@ -22,7 +22,7 @@ jobs:
         python -m pip install flake8
         python -m pip install .
     - name: Run tests
-      run: python setup.py test
+      run: python3 -m unittest
 
   type-checker:
     runs-on: ubuntu-latest
