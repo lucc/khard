@@ -62,9 +62,10 @@ def get_random_uid() -> str:
     return ''.join([random.choice(string.ascii_lowercase + string.digits)
                     for _ in range(36)])
 
+
 def yaml_clean(value: Union[str, Sequence, Dict[str, Any], None]
-              ) -> Union[Sequence, str, Dict[str, Any], LiteralScalarString,
-                         None]:
+               ) -> Union[Sequence, str, Dict[str, Any], LiteralScalarString,
+                          None]:
     """
     sanitize yaml values according to some simple principles:
       1. empty values are none, so ruamel does not print an empty list/str
@@ -117,7 +118,7 @@ def yaml_dicts(
 def yaml_addresses(addresses: Optional[Dict[str, Any]],
                    address_properties: List[str],
                    defaults: Optional[List[str]] = None
-                  ) -> Optional[Dict[str, Any]]:
+                   ) -> Optional[Dict[str, Any]]:
     """
     build a dict from an address, using a list of properties, an address has.
 

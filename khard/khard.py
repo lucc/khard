@@ -447,7 +447,7 @@ def add_email_to_contact(name: str, email_address: str,
         elif len(name_parts) == 1:
             query = TermQuery(name)
         else:
-            term_query_list = [ TermQuery(part) for part in name_parts ]
+            term_query_list = [TermQuery(part) for part in name_parts]
             query = AndQuery(
                     term_query_list[0], term_query_list[1], *term_query_list[2:])
         found_vcard_list = get_contact_list(abooks, query)
@@ -802,14 +802,14 @@ def post_address_subcommand(search_terms: Query,
                                                key=lambda k: k[0].lower()):
                 for post_address in post_addresses:
                     field_line_list.append(
-                            "\t".join([ str(post_address), name, type ]))
+                            "\t".join([str(post_address), name, type]))
         else:
             for type, formatted_addresses in sorted(
                     vcard.get_formatted_post_addresses().items(),
                     key=lambda k: k[0].lower()):
                 for address in sorted(formatted_addresses):
                     field_line_list.append(
-                            "\t".join([ name, type, address ]))
+                            "\t".join([name, type, address]))
         addresses += _filter_email_post_or_phone_number_results(
                 search_terms, field_line_list)
     if addresses:

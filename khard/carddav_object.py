@@ -343,8 +343,8 @@ class VCardWrapper:
 
     def _get_ablabel(self, item: vobject.base.ContentLine) -> str:
         """Get an ABLABEL for a specified item in the vCard.
-        Will return the ABLABEL only if the item is part of a group with exactly
-        two items, exactly one of which is an ABLABEL.
+        Will return the ABLABEL only if the item is part of a group with
+        exactly two items, exactly one of which is an ABLABEL.
 
         :param item: the item to be labelled
         :returns: the ABLABEL in the circumstances above or an empty string
@@ -365,8 +365,8 @@ class VCardWrapper:
         return label
 
     def _get_new_group(self, group_type: str = "") -> str:
-        """Get an unused group name for adding new groups. Uses the form item123
-         or itemgroup_type123 if a grouptype is specified.
+        """Get an unused group name for adding new groups. Uses the form
+        item123 or itemgroup_type123 if a grouptype is specified.
 
         :param group_type: (Optional) a string to add between "item" and
             the number
