@@ -165,8 +165,8 @@ class VdirAddressBook(AddressBook):
         """
         self.path = os.path.expanduser(os.path.expandvars(path))
         if not os.path.isdir(self.path):
-            raise FileNotFoundError("[Errno 2] The path {} to the address book"
-                                    " {} does not exist.".format(path, name))
+            raise NotADirectoryError("The path {} to the address book {} is "
+                                     "not a directory".format(path, name))
         self._private_objects = private_objects or []
         self._localize_dates = localize_dates
         self._skip = skip
