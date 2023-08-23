@@ -8,7 +8,10 @@
         name = "khard-${version}";
         version = "${oa.version}post-dev+${if self ? shortRev then self.shortRev else "dirty"}";
         SETUPTOOLS_SCM_PRETEND_VERSION = version;
-        postInstall = "cp -r $src/khard/data $out/lib/python*/site-packages/khard";
+        postInstall = ''
+          ${oa.postInstall}
+          cp -r $src/khard/data $out/lib/python*/site-packages/khard
+        '';
         src = ./.;
       });
     devShells.x86_64-linux.release =
