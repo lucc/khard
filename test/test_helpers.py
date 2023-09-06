@@ -20,7 +20,6 @@ class ConvertToYAML(unittest.TestCase):
         result = helpers.convert_to_yaml("Note", "", 0, 5, True)
         self.assertListEqual(result, ["Note : "])
 
-    @unittest.expectedFailure
     def test_preparing_multiple_addresses_with_same_label_for_yaml_conversion_returns_all_entries(self):
         input = {'home': [{'street': 'street 1',
                            'city': 'city1',

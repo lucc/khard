@@ -20,7 +20,6 @@ Private       :
         yaml_dump = yaml_editable.to_yaml()
         self.assertIn("'@khard'", yaml_dump)
 
-    @unittest.expectedFailure
     def test_dumping_multiple_home_addresses_to_yaml(self):
         yaml_editable = TestYAMLEditable()
         yaml_editable._add_post_address("home", "", "", "street 1", "zip1",
