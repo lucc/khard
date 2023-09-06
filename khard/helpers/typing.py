@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Union
+from typing import Dict, List, Union
 
 
 class ObjectType(Enum):
@@ -14,6 +14,7 @@ class ObjectType(Enum):
 # some type aliases
 Date = Union[str, datetime]
 StrList = Union[str, List[str]]
+PostAddress = Dict[str, str]
 
 
 def convert_to_vcard(name: str, value: StrList, constraint: ObjectType

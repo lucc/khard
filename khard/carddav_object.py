@@ -24,8 +24,8 @@ import vobject
 
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
-from .helpers.typing import (convert_to_vcard, Date, ObjectType, StrList,
-                             list_to_string, string_to_date, string_to_list)
+from .helpers.typing import (Date, ObjectType, PostAddress, StrList,
+    convert_to_vcard, list_to_string, string_to_date, string_to_list)
 from .query import AnyQuery, Query
 
 
@@ -770,11 +770,11 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
-    def post_addresses(self) -> Dict[str, List[Dict[str, Union[List, str]]]]:
+    def post_addresses(self) -> Dict[str, List[PostAddress]]:
         """
         :returns: dict of type and post address list
         """
-        post_adr_dict: Dict[str, List[Dict[str, Union[List, str]]]] = {}
+        post_adr_dict: Dict[str, List[PostAddress]] = {}
         for child in self.vcard.getChildren():
             if child.name == "ADR":
                 type = list_to_string(self._get_types_for_vcard_object(
