@@ -47,21 +47,32 @@ Please stick to the following standards when you open pull requests:
 Development
 -----------
 
-In order to start coding you need to fetch the develop branch:
+In order to start coding you need to fetch the ``develop`` branch:
 
 .. code-block:: shell
 
   git clone https://github.com/lucc/khard
   cd khard
-  python setup.py build  # to generate the version.py file
-  python -m khard --help
-  # or
+
+It is recommended to create a `virtualenv`_ to isolate the development
+environment for Khard from your system's Python installation:
+
+.. code-block:: shell
+
+  python3 -m venv khard-dev-venv
+  . khard-dev-venv/bin/activate
+
+The you can install the dependencies with ``pip`` (or directly interact with
+the ``setup.py`` script):
+
+.. code-block:: shell
+
   pip3 install --editable .
   khard --help
 
-Alternatively you can use the ``setup.py`` script directly.  If you want to
-isolate khard from your system Python environment you can use a `virtualenv`_
-to do so.
+If you have the `Nix`_ package manager installed you can use the ``flake.nix``
+that is provided with Khard.  It provides an isolated Python version with all
+dependencies with ``nix develop``.
 
 .. _bug reports: https://github.com/lucc/khard/issues
 .. _the Git book: https://www.git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project#_commit_guidelines
@@ -69,6 +80,7 @@ to do so.
 .. _feature requests: https://github.com/lucc/khard/pulls
 .. _Github: https://github.com/lucc/khard
 .. _master: https://github.com/lucc/khard/tree/master
+.. _Nix: https://nixos.org
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
 .. _pylint: https://pylint.readthedocs.io/en/latest/
 .. |travis| image:: https://github.com/lucc/khard/actions/workflows/ci.yml/badge.svg
