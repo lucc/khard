@@ -51,3 +51,10 @@ packages = ['khard', 'khard.helpers']
 
 [tool.setuptools_scm]
 write_to = "khard/version.py"
+
+[tool.pylint.main]
+py-version = "3.7"
+ignore-paths = ["khard/version.py"]
+
+[tool.pylint."messages control"]
+disable = ["consider-using-f-string"]
