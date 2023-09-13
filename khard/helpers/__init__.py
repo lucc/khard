@@ -7,7 +7,10 @@ import string
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 from ruamel.yaml.scalarstring import LiteralScalarString
-from .typing import list_to_string
+from .typing import list_to_string, PostAddress
+
+
+YamlPostAddresses = Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]
 
 
 def pretty_print(table: List[List[str]], justify: str = "L") -> str:
@@ -115,10 +118,10 @@ def yaml_dicts(
     return data_dict
 
 
-def yaml_addresses(addresses: Optional[Dict[str, Any]],
+def yaml_addresses(addresses: Optional[Dict[str, List[PostAddress]]],
                    address_properties: List[str],
                    defaults: Optional[List[str]] = None
-                   ) -> Optional[Dict[str, Any]]:
+                   ) -> Optional[YamlPostAddresses]:
     """
     build a dict from an address, using a list of properties, an address has.
 
@@ -134,14 +137,17 @@ def yaml_addresses(addresses: Optional[Dict[str, Any]],
         address_fields = {key: None for key in address_properties}
         return {address_type: address_fields for address_type in defaults}
 
-    address_dict = {}
-    for address_type, address in addresses.items():
-        if isinstance(address, list):
-            address = address[0]
-        address_dict[address_type] = {
-            key: yaml_clean(address.get(f"{key[0].lower()}{key[1:]}"))
-            for key in address_properties
-        }
+    address_dict: YamlPostAddresses = {}
+    for address_type, addresses_ in addresses.items():
+        entry = [
+            {key: yaml_clean(address.get(f"{key[0].lower()}{key[1:]}"))
+                for key in address_properties}
+            for address in addresses_
+        ]
+        if len(entry) == 1:
+            address_dict[address_type] = entry[0]
+        else:
+            address_dict[address_type] = entry
     return address_dict
 
 
