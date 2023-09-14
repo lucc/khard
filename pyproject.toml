@@ -52,6 +52,24 @@ packages = ['khard', 'khard.helpers']
 [tool.setuptools_scm]
 write_to = "khard/version.py"
 
+[tool.mypy]
+packages = "khard"
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+# These do not provide type anotations or stub files
+module = [
+    "atomicwrites",
+    "configobj",
+    "configobj.validate",
+    "validate",
+    "vobject",
+    "vobject.base",
+]
+ignore_missing_imports = true
+
 [tool.pylint.main]
 py-version = "3.7"
 ignore-paths = ["khard/version.py"]
