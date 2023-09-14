@@ -6,7 +6,8 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Generator, List, Optional, TypeVar, Union
+from typing import Callable, Generator, List, Optional, Sequence, TypeVar, \
+    Union
 
 from ..carddav_object import CarddavObject
 
@@ -33,7 +34,7 @@ def confirm(message: str, accept_enter_key: bool = True) -> bool:
         print('Please answer with "y" for yes or "n" for no.')
 
 
-def select(items: List[T], include_none: bool = False) -> Optional[T]:
+def select(items: Sequence[T], include_none: bool = False) -> Optional[T]:
     """Ask the user to select an item from a list.
 
     The list should be displayed to the user before calling this function and

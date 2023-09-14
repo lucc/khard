@@ -2,10 +2,11 @@
 
 import abc
 import binascii
+from collections.abc import Mapping, Sequence
 import glob
 import logging
 import os
-from typing import Dict, Generator, Iterator, List, Optional, Union
+from typing import Dict, Generator, Iterator, List, Optional, Union, overload
 
 import vobject.base
 
@@ -226,7 +227,7 @@ class VdirAddressBook(AddressBook):
                      len(self.contacts), self.name)
 
 
-class AddressBookCollection(AddressBook):
+class AddressBookCollection(AddressBook, Mapping, Sequence):
     """A collection of several address books.
 
     This represents a temporary merge of the contact collections provided by
@@ -268,11 +269,16 @@ class AddressBookCollection(AddressBook):
         logger.debug('Loaded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
-    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook:
-        """Get one of the backing address books by name or index
+    @overload
+    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook: ...
+    @overload
+    def __getitem__(self, key: slice) -> List[VdirAddressBook]: ...
+    def __getitem__(self, key: Union[int, str, slice]
+                    ) -> Union[VdirAddressBook, List[VdirAddressBook]]:
+        """Get one or more of the backing address books by name or index
 
         :param key: the name of the address book to get or its index
-        :returns: the matching address book
+        :returns: the matching address book(s)
         :throws: KeyError
         """
         if isinstance(key, str):

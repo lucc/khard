@@ -247,9 +247,7 @@ def choose_address_book_from_list(header_string: str,
         return address_books[0]
     print(header_string)
     list_address_books(address_books)
-    # For all intents and purposes of select() an AddressBookCollection can
-    # also be considered a List[VdirAddressBook].
-    return interactive.select(cast(List[VdirAddressBook], address_books))
+    return interactive.select(address_books)
 
 
 def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
