@@ -35,9 +35,10 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install .
         python -m pip install mypy
-        python -m pip install types-atomicwrites
+        # vobject does fancy dynamic stuff that is hard to type-check
+        python -m pip install types-atomicwrites # types-vobject
     - name: Run the type checker
-      run: mypy --ignore-missing-imports khard
+      run: mypy
 
   docs:
     runs-on: ubuntu-latest
