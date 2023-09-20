@@ -365,30 +365,28 @@ def generate_contact_list(args: Namespace) -> List[CarddavObject]:
     return get_contact_list(args.addressbook, args.search_terms)
 
 
-def new_subcommand(selected_address_books: AddressBookCollection,
-                   input_from_stdin_or_file: str, open_editor: bool) -> None:
+def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
+                   ) -> None:
     """Create a new contact.
 
-    :param selected_address_books: a list of address books that were selected
-        on the command line
-    :param input_from_stdin_or_file: the data for the new contact as a yaml
-        formatted string
+    :param abooks: a list of address books that were selected on the command
+        line
+    :param data: the data for the new contact as a yaml formatted string
     :param open_editor: whether to open the new contact in the editor after
         creation
     """
     # ask for address book, in which to create the new contact
-    selected_address_book = choose_address_book_from_list(
-        "Select address book for new contact", selected_address_books)
-    if selected_address_book is None:
+    abook = choose_address_book_from_list(
+        "Select address book for new contact", abooks)
+    if abook is None:
         sys.exit("Error: address book list is empty")
-    # if there is some data in stdin
-    if input_from_stdin_or_file:
-        # create new contact from stdin
+    # if there is some data in stdin/the input file
+    if data:
+        # create new contact from stdin/the input file
         try:
             new_contact = CarddavObject.from_yaml(
-                selected_address_book, input_from_stdin_or_file,
-                config.private_objects, config.preferred_vcard_version,
-                config.localize_dates)
+                abook, data, config.private_objects,
+                config.preferred_vcard_version, config.localize_dates)
         except ValueError as err:
             sys.exit(str(err))
         else:
@@ -398,7 +396,7 @@ def new_subcommand(selected_address_books: AddressBookCollection,
         else:
             print("Creation successful\n\n{}".format(new_contact.pretty()))
     else:
-        create_new_contact(selected_address_book)
+        create_new_contact(abook)
 
 
 def add_email_to_contact(name: str, email_address: str,
@@ -981,12 +979,12 @@ def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
         selected_vcard.formatted_name))
 
 
-def merge_subcommand(vcard_list: List[CarddavObject],
+def merge_subcommand(vcards: List[CarddavObject],
                      abooks: AddressBookCollection, search_terms: Query
                      ) -> None:
     """Merge two contacts into one.
 
-    :param vcard_list: the vCards from which to choose contacts for merging
+    :param vcards: the vCards from which to choose contacts for merging
     :param abooks: the address books to use to find the target contact
     :param search_terms: the search terms to find the target contact
     """
@@ -994,7 +992,7 @@ def merge_subcommand(vcard_list: List[CarddavObject],
     target_vcards = get_contact_list(abooks, search_terms)
     # get the source vCard, from which to merge
     source_vcard = choose_vcard_from_list("Select contact from which to merge",
-                                          vcard_list)
+                                          vcards)
     if source_vcard is None:
         sys.exit("Found no source contact for merging")
     else:
@@ -1015,18 +1013,18 @@ def merge_subcommand(vcard_list: List[CarddavObject],
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
-def copy_or_move_subcommand(action: str, vcard_list: List[CarddavObject],
+def copy_or_move_subcommand(action: str, vcards: List[CarddavObject],
                             target_address_books: AddressBookCollection
                             ) -> None:
     """Copy or move a contact to a different address book.
 
     :param action: the string "copy" or "move" to indicate what to do
-    :param vcard_list: the contact list from which to select one for the action
+    :param vcards: the contact list from which to select one for the action
     :param target_address_books: the target address books
     """
     # get the source vCard, which to copy or move
     source_vcard = choose_vcard_from_list(
-        "Select contact to {}".format(action.title()), vcard_list)
+        "Select contact to {}".format(action.title()), vcards)
     if source_vcard is None:
         sys.exit("Found no contact")
     else:
