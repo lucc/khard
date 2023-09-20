@@ -235,6 +235,12 @@ def choose_address_book_from_list(header_string: str,
                                   address_books: Union[AddressBookCollection,
                                                        List[VdirAddressBook]]
                                   ) -> Optional[VdirAddressBook]:
+    """Let the user select one of the given address books
+
+    :param header_string: some text to print in front of the list
+    :param address_books: the address books from which to select
+    :returns: the selected address book
+    """
     if not address_books:
         return None
     if len(address_books) == 1:
@@ -249,6 +255,12 @@ def choose_address_book_from_list(header_string: str,
 def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
                            include_none: bool = False
                            ) -> Optional[CarddavObject]:
+    """Let the user select a contact from a list
+
+    :param header_string: some text to print in front of the list
+    :param vcard_list: the contacts from which to select
+    :returns: the selected contact
+    """
     if not vcard_list:
         return None
     if len(vcard_list) == 1 and not include_none:
