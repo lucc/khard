@@ -231,41 +231,40 @@ def list_with_headers(the_list: List[str], *headers: str) -> None:
     print(helpers.pretty_print(table))
 
 
-def choose_address_book_from_list(header_string: str,
-                                  address_books: Union[AddressBookCollection,
-                                                       List[VdirAddressBook]]
+def choose_address_book_from_list(header: str, abooks: Union[
+                                  AddressBookCollection, List[VdirAddressBook]]
                                   ) -> Optional[VdirAddressBook]:
     """Let the user select one of the given address books
 
-    :param header_string: some text to print in front of the list
-    :param address_books: the address books from which to select
+    :param header: some text to print in front of the list
+    :param abooks: the address books from which to select
     :returns: the selected address book
     """
-    if not address_books:
+    if not abooks:
         return None
-    if len(address_books) == 1:
-        return address_books[0]
-    print(header_string)
-    list_address_books(address_books)
-    return interactive.select(address_books)
+    if len(abooks) == 1:
+        return abooks[0]
+    print(header)
+    list_address_books(abooks)
+    return interactive.select(abooks)
 
 
-def choose_vcard_from_list(header_string: str, vcard_list: List[CarddavObject],
+def choose_vcard_from_list(header: str, vcards: List[CarddavObject],
                            include_none: bool = False
                            ) -> Optional[CarddavObject]:
     """Let the user select a contact from a list
 
-    :param header_string: some text to print in front of the list
-    :param vcard_list: the contacts from which to select
+    :param header: some text to print in front of the list
+    :param vcards: the contacts from which to select
     :returns: the selected contact
     """
-    if not vcard_list:
+    if not vcards:
         return None
-    if len(vcard_list) == 1 and not include_none:
-        return vcard_list[0]
-    print(header_string)
-    list_contacts(vcard_list)
-    return interactive.select(vcard_list, True)
+    if len(vcards) == 1 and not include_none:
+        return vcards[0]
+    print(header)
+    list_contacts(vcards)
+    return interactive.select(vcards, True)
 
 
 def get_contact_list(address_books: Union[VdirAddressBook,
