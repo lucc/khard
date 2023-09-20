@@ -224,7 +224,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
         print(helpers.pretty_print(table))
 
 
-def list_with_headers(the_list: List, *headers: str) -> None:
+def list_with_headers(the_list: List[str], *headers: str) -> None:
     table = [list(headers)]
     for row in the_list:
         table.append(row.split("\t"))
@@ -719,7 +719,7 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
                     if isinstance(x.birthday, datetime.datetime)
                     else (0, 0, x.birthday))
     # add to string list
-    birthday_list = []
+    birthday_list: List[str] = []
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
@@ -761,7 +761,7 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    numbers = []
+    numbers: List[str] = []
     for vcard in vcard_list:
         field_line_list = []
         for type, number_list in sorted(vcard.phone_numbers.items(),
@@ -802,7 +802,7 @@ def post_address_subcommand(search_terms: Query,
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    addresses = []
+    addresses: List[str] = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         # create post address line list
@@ -856,7 +856,7 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    emails = []
+    emails: List[str] = []
     for vcard in vcard_list:
         field_line_list = []
         for type, email_list in sorted(vcard.emails.items(),
