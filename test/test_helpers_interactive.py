@@ -54,15 +54,14 @@ class Select(unittest.TestCase):
             actual = self._test(True)
         self.assertIsNone(actual)
 
-    def test_empty_input_cancels(self):
-        with mock.patch("builtins.input", lambda _: ""):
+    def test_empty_input_prints_a_message_and_repeats(self):
+        with mock.patch("builtins.input", mock.Mock(side_effect=["", "2"])):
             with mock_stream() as stdout:
                 actual = self._test()
         stdout = stdout.getvalue()
-        self.assertEqual(stdout, "Canceled\n")
-        self.assertIsNone(actual)
-
-
+        self.assertEqual(stdout, "Please enter an index value between 1 and 3 "
+                         "or q to quit.\n")
+        self.assertEqual(actual, "b")
 
 
 class Confirm(unittest.TestCase):

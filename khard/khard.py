@@ -239,6 +239,7 @@ def choose_address_book_from_list(header: str, abooks: Union[
     :param header: some text to print in front of the list
     :param abooks: the address books from which to select
     :returns: the selected address book
+    :raises interactive.Canceled: when the user canceled the selection
     """
     if not abooks:
         return None
@@ -257,6 +258,7 @@ def choose_vcard_from_list(header: str, vcards: List[CarddavObject],
     :param header: some text to print in front of the list
     :param vcards: the contacts from which to select
     :returns: the selected contact
+    :raises interactive.Canceled: when the user canceled the selection
     """
     if not vcards:
         return None
@@ -374,6 +376,7 @@ def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
     :param data: the data for the new contact as a yaml formatted string
     :param open_editor: whether to open the new contact in the editor after
         creation
+    :raises interactive.Canceled: when the user canceled a selection
     """
     # ask for address book, in which to create the new contact
     abook = choose_address_book_from_list(
@@ -408,6 +411,7 @@ def add_email_to_contact(name: str, email_address: str,
     :param email_address: email address of the contact
     :param abooks: the address books that were selected on the command line
     :param skip_already_added: skip if email_address is part of one or more contacts
+    :raises interactive.Canceled: when the user canceled a selection
     """
 
     # email address
@@ -681,6 +685,7 @@ def add_email_subcommand(
     :param abooks: the address books that were selected on the command line
     :param field: the header field to extract contacts from
     :param skip_already_added: skip already known email addresses
+    :raises interactive.Canceled: when the user canceled a selection
     """
     email_addresses = find_email_addresses(text, fields)
     if not email_addresses:
@@ -987,6 +992,7 @@ def merge_subcommand(vcards: List[CarddavObject],
     :param vcards: the vCards from which to choose contacts for merging
     :param abooks: the address books to use to find the target contact
     :param search_terms: the search terms to find the target contact
+    :raises interactive.Canceled: when the user canceled a selection
     """
     # Find possible target contacts.
     target_vcards = get_contact_list(abooks, search_terms)
@@ -1021,6 +1027,7 @@ def copy_or_move_subcommand(action: str, vcards: List[CarddavObject],
     :param action: the string "copy" or "move" to indicate what to do
     :param vcards: the contact list from which to select one for the action
     :param target_address_books: the target address books
+    :raises interactive.Canceled: when the user canceled a selection
     """
     # get the source vCard, which to copy or move
     source_vcard = choose_vcard_from_list(
@@ -1157,14 +1164,8 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
             except OSError:
                 pass
 
-    if args.action == "new":
-        new_subcommand(args.addressbook, input_from_stdin_or_file,
-                       args.open_editor)
-    elif args.action == "add-email":
-        add_email_subcommand(input_from_stdin_or_file,
-                             args.addressbook, args.headers,
-                             args.skip_already_added)
-    elif args.action == "birthdays":
+    # these listing commands do not require any user interaction
+    if args.action == "birthdays":
         birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
         phone_subcommand(args.search_terms, vcard_list, args.parsable)
@@ -1175,32 +1176,45 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
                          args.parsable, args.remove_first_line)
     elif args.action == "list":
         list_subcommand(vcard_list, args.parsable, args.fields)
-    elif args.action in ["show", "edit", "remove"]:
-        selected_vcard = choose_vcard_from_list(
-            "Select contact for {} action".format(args.action.title()),
-            vcard_list)
-        if selected_vcard is None:
-            sys.exit("Found no contact")
-        if args.action == "show":
-            if args.format == "pretty":
-                output = selected_vcard.pretty()
-            elif args.format == "vcard":
-                output = open(selected_vcard.filename).read()
-            else:
-                output = "# Contact template for khard version {}\n" \
-                         "# Name: {}\n# Vcard version: {}\n\n{}".format(
-                             khard_version, selected_vcard,
-                             selected_vcard.version,
-                             selected_vcard.to_yaml())
-            args.output_file.write(output)
-        elif args.action == "edit":
-            modify_subcommand(selected_vcard, input_from_stdin_or_file,
-                              args.open_editor, args.format == 'vcard')
-        elif args.action == "remove":
-            remove_subcommand(selected_vcard, args.force)
-    elif args.action == "merge":
-        merge_subcommand(vcard_list, args.target_addressbook,
-                         args.target_contact)
-    elif args.action in ["copy", "move"]:
-        copy_or_move_subcommand(
-            args.action, vcard_list, args.target_addressbook)
+
+    else:
+        # these commands require user interaction
+        try:
+            if args.action == "new":
+                new_subcommand(args.addressbook, input_from_stdin_or_file,
+                               args.open_editor)
+            elif args.action == "add-email":
+                add_email_subcommand(input_from_stdin_or_file,
+                                     args.addressbook, args.headers,
+                                     args.skip_already_added)
+            elif args.action in ["show", "edit", "remove"]:
+                selected_vcard = choose_vcard_from_list(
+                    "Select contact for {} action".format(args.action.title()),
+                    vcard_list)
+                if selected_vcard is None:
+                    sys.exit("Found no contact")
+                if args.action == "show":
+                    if args.format == "pretty":
+                        output = selected_vcard.pretty()
+                    elif args.format == "vcard":
+                        output = open(selected_vcard.filename).read()
+                    else:
+                        output = "# Contact template for khard version {}\n" \
+                                 "# Name: {}\n# Vcard version: {}\n\n{}".format(
+                                     khard_version, selected_vcard,
+                                     selected_vcard.version,
+                                     selected_vcard.to_yaml())
+                    args.output_file.write(output)
+                elif args.action == "edit":
+                    modify_subcommand(selected_vcard, input_from_stdin_or_file,
+                                      args.open_editor, args.format == 'vcard')
+                elif args.action == "remove":
+                    remove_subcommand(selected_vcard, args.force)
+            elif args.action == "merge":
+                merge_subcommand(vcard_list, args.target_addressbook,
+                                 args.target_contact)
+            elif args.action in ["copy", "move"]:
+                copy_or_move_subcommand(
+                    args.action, vcard_list, args.target_addressbook)
+        except interactive.Canceled:
+            print("Canceled")

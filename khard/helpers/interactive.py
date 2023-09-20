@@ -15,6 +15,10 @@ from ..carddav_object import CarddavObject
 T = TypeVar("T")
 
 
+class Canceled(Exception):
+    pass
+
+
 def confirm(message: str, accept_enter_key: bool = True) -> bool:
     """Ask the user for confirmation on the terminal.
 
@@ -43,15 +47,16 @@ def select(items: Sequence[T], include_none: bool = False) -> Optional[T]:
     :param items: the list from which to select
     :param include_none: whether to allow the selection of no item
     :returns: None or the selected item
+    :raises Canceled: when the user canceled the selection process
     """
+    prompt = "Enter Index ({}q to quit): ".format("0 for None, "
+                                                  if include_none else "")
     while True:
         try:
-            answer = input("Enter Index ({}q to quit): ".format(
-                "0 for None, " if include_none else ""))
+            answer = input(prompt)
             answer = answer.lower()
-            if answer in ["", "q"]:
-                print("Canceled")
-                return None
+            if answer == "q":
+                raise Canceled()
             index = int(answer)
             if include_none and index == 0:
                 return None
