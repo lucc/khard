@@ -15,7 +15,8 @@ import os
 import re
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union, Sequence
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, \
+    TypeVar, Union, Sequence, overload
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -30,22 +31,27 @@ from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
 
 
-def multi_property_key(item: Union[str, Dict]) -> List:
+@overload
+def multi_property_key(item: str) -> Tuple[Literal[0], str]: ...
+@overload
+def multi_property_key(item: Dict[T, Any]) -> Tuple[Literal[1], T]: ...
+def multi_property_key(item: Union[str, Dict[T, Any]]
+                       ) -> Tuple[int, Union[T, str]]:
     """key function to pass to sorted(), allowing sorting of dicts with lists
     and strings. Dicts will be sorted by their label, after other types.
 
     :param item: member of the list being sorted
     :type item: a dict with a single entry or any sortable type
-    :returns: a list with two members. The first is int(isinstance(item, dict).
+    :returns: a pair, the first item is int(isinstance(item, dict).
         The second is either the key from the dict or the unchanged item if it
         is not a dict.
-    :rtype: list(int, type(item)) or list(int, str)
     """
     if isinstance(item, dict):
-        return [1, list(item)[0]]
-    return [0, item]
+        return (1, list(item)[0])
+    return (0, item)
 
 
 class VCardWrapper:
