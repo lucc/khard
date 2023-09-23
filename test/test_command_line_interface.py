@@ -6,9 +6,8 @@ be converted to proper "unit" tests.
 """
 # pylint: disable=missing-docstring
 
-# TODO We are still missing high level tests for the add-email and merge
-# subcommands.  They depend heavily on user interaction and are hard to test in
-# their current form.
+# TODO We are still missing high level tests for the merge subcommand.  It
+# depends heavily on user interaction and is hard to test in its current form.
 
 import io
 import pathlib
@@ -513,12 +512,49 @@ class AddEmail(unittest.TestCase):
         with tempfile.NamedTemporaryFile("w") as tmp:
             tmp.writelines(email)
             tmp.flush()
-            with mock.patch("khard.khard.confirm", lambda _: True):
-                with mock.patch("builtins.input", mock.Mock(
-                        side_effect=["y", ""])):
-                    run_main("add-email", "--input-file", tmp.name)
+            with mock.patch("builtins.input",
+                            mock.Mock(side_effect=["y", "y", ""])):
+                run_main("add-email", "--input-file", tmp.name)
         emails = khard.config.abooks.get_short_uid_dict()["testuid2"].emails
         self.assertEqual(emails["internet"][0], "third@example.com")
+
+    @TmpConfig(["contact1.vcf", "contact2.vcf"])
+    def test_adding_several_email_addresses(self):
+        email = [
+            "From: third <third@example.com>\n",
+            "To: anybody@example.com\n",
+            "\n",
+            "text\n"
+        ]
+        with tempfile.NamedTemporaryFile("w") as tmp:
+            tmp.writelines(email)
+            tmp.flush()
+            with mock.patch("builtins.input", mock.Mock(side_effect=[
+                    "y", "y", "label1", "y", "third contact", "y", "label2"])):
+                run_main("add-email", "--headers=from,to", "--input-file",
+                         tmp.name)
+        emails = khard.config.abooks.get_short_uid_dict()["testuid2"].emails
+        self.assertEqual(emails["label1"][0], "third@example.com")
+        self.assertEqual(emails["label2"][0], "anybody@example.com")
+
+    @TmpConfig(["contact1.vcf", "contact2.vcf"])
+    def test_email_addresses_can_be_skipped(self):
+        email = [
+            "From: third <third@example.com>\n",
+            "To: anybody@example.com\n",
+            "\n",
+            "text\n"
+        ]
+        with tempfile.NamedTemporaryFile("w") as tmp:
+            tmp.writelines(email)
+            tmp.flush()
+            with mock.patch("builtins.input", lambda _: "n"):
+                run_main("add-email", "--input-file", tmp.name)
+        contacts = khard.config.abooks.get_short_uid_dict().values()
+        emails1 = [c.emails for c in contacts if c.emails]
+        emails2 = [list(e.values()) for e in emails1]
+        emails = [eee for e in emails2 for ee in e for eee in ee]
+        self.assertNotIn("third@example.com", emails)
 
 
 if __name__ == "__main__":
