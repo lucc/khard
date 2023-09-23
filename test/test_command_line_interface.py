@@ -502,9 +502,6 @@ class Merge(unittest.TestCase):
 
 class AddEmail(unittest.TestCase):
 
-    # FIXME the new code from fdc441cf asks for confirmation in
-    # khard.add_email_to_contact on line 419
-    @unittest.skip("unexpected read from stdin blocks the test")
     @TmpConfig(["contact1.vcf", "contact2.vcf"])
     def test_contact_is_found_if_name_matches(self):
         email = [
@@ -516,12 +513,12 @@ class AddEmail(unittest.TestCase):
         with tempfile.NamedTemporaryFile("w") as tmp:
             tmp.writelines(email)
             tmp.flush()
-            with mock.patch("khard.khard.confirm", lambda x: True):
-                with mock.patch("builtins.input", lambda x: ""):
+            with mock.patch("khard.khard.confirm", lambda _: True):
+                with mock.patch("builtins.input", mock.Mock(
+                        side_effect=["y", ""])):
                     run_main("add-email", "--input-file", tmp.name)
-        stdout = run_main("list", "--fields=emails.internet.0")
-        addr = stdout.getvalue().splitlines()[-1].strip()
-        self.assertEqual(addr, "third@example.com")
+        emails = khard.config.abooks.get_short_uid_dict()["testuid2"].emails
+        self.assertEqual(emails["internet"][0], "third@example.com")
 
 
 if __name__ == "__main__":
