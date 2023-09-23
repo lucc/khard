@@ -21,7 +21,7 @@ from ruamel.yaml import YAML
 
 from khard import cli
 from khard import config
-from khard.helpers.interactive import EditState, Editor
+from khard.helpers.interactive import Editor
 from khard import khard
 
 from .helpers import TmpConfig, mock_stream
@@ -39,8 +39,8 @@ class HelpOption(unittest.TestCase):
 
     def _test(self, args, expect):
         """Test the command line args and compare the prefix of the output."""
-        with self.assertRaises(SystemExit):
-            with mock_stream() as stdout:
+        with mock_stream() as stdout:
+            with self.assertRaises(SystemExit):
                 cli.parse_args(args)
         text = stdout.getvalue()
         self.assertRegex(text, expect)
@@ -165,8 +165,8 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text2, expected)
 
     def test_regex_special_chars_are_not_special(self):
-        with self.assertRaises(SystemExit):
-            with mock_stream() as stdout:
+        with mock_stream() as stdout:
+            with self.assertRaises(SystemExit):
                 khard.main(['list', 'uid.'])
         self.assertEqual(stdout.getvalue(), "Found no contacts\n")
 
