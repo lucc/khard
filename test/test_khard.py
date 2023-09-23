@@ -49,7 +49,7 @@ class TestSearchQueryPreparation(unittest.TestCase):
         self.assertEqual(expected, prepared["foo"])
 
 
-class TestAddEmail(unittest.TestCase):
+class TestFindEmailAddress(unittest.TestCase):
 
     def test_find_email_addresses_empty_text_finds_none(self):
         text = ""
