@@ -1,6 +1,7 @@
 """Loading and validation of the configuration file"""
 
 from argparse import Namespace
+import io
 import locale
 import logging
 import os
@@ -22,6 +23,10 @@ from .query import Query
 
 
 logger = logging.getLogger(__name__)
+# This is the type of the config file parameter accepted by the configobj
+# library:
+# https://configobj.readthedocs.io/en/latest/configobj.html#reading-a-config-file
+ConfigFile = Union[str, List[str], io.StringIO]
 
 
 class ConfigError(Exception):
@@ -88,7 +93,7 @@ class Config:
 
     supported_vcard_versions = ("3.0", "4.0")
 
-    def __init__(self, config_file: Optional[str] = None) -> None:
+    def __init__(self, config_file: Optional[ConfigFile] = None) -> None:
         self.config: configobj.ConfigObj
         self.abooks: AddressBookCollection
         locale.setlocale(locale.LC_ALL, '')
@@ -97,7 +102,7 @@ class Config:
         self._set_attributes()
 
     @classmethod
-    def _load_config_file(cls, config_file: Optional[str]
+    def _load_config_file(cls, config_file: Optional[ConfigFile]
                           ) -> configobj.ConfigObj:
         """Find and load the config file.
 
