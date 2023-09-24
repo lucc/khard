@@ -483,34 +483,35 @@ def add_email_to_contact(name: str, email_address: str,
         while True:
             if selected_vcard is None:
                 if found_vcard_list:
-                    answer = input("Contact selection cancelled (c/s/q): ")
+                    message = "Contact selection cancelled"
                 else:
-                    answer = input("Nothing found for '{}' (c/s/q): "
-                                   .format(name))
-                error_message = ('Please answer with "c" to create a new '
-                                 'contact, "s" to search for an existing '
-                                 'contact or "q" to quit')
+                    message = "Nothing found for '{}'".format(name)
+                answer = interactive.ask(message, ["create", "search", "quit"])
             else:
-                answer = input("Contact selected: {} (y/c/d/s/q): "
-                               .format(selected_vcard))
-                error_message = ('Please answer with "y" to proceed, '
-                                 '"c" to create a new contact, "d" for details '
-                                 'of the selected contact, "s" to search '
-                                 'for an existing contact or "q" to quit')
-            answer = answer.lower()
+                answer = interactive.ask(
+                    "Contact selected: {}".format(selected_vcard),
+                    ["yes", "create", "details", "search", "quit"],
+                    """You can enter one of these choices:
+
+                      yes      proceed with selected contact
+                      create   create a new contact
+                      details  show details of selected contact
+                      search   search for a different contect
+                      quit     abort
+                    """)
 
             if selected_vcard:
-                if answer == 'y':
+                if answer == 'yes':
                     break_outer = True
                     break
-                if answer == 'd':
+                if answer == 'details':
                     print("\n{}".format(selected_vcard.pretty()))
                     continue
-            if answer == 'c':
+            if answer == 'create':
                 selected_vcard = None
                 break_outer = True
                 break
-            if answer == 's':
+            if answer == 'search':
                 # save data
                 previous_name = name
                 previous_selected_vcard = selected_vcard
@@ -524,10 +525,9 @@ def add_email_to_contact(name: str, email_address: str,
                     name = input("Search for contact: ")
                 manual_search = True
                 break
-            if answer == 'q':
+            if answer == 'quit':
                 print("Cancelled")
                 return
-            print(error_message)
 
         if break_outer:
             # restore name
@@ -1071,27 +1071,25 @@ def copy_or_move_subcommand(action: str, vcards: List[CarddavObject],
         # source and target contacts are different
         # either overwrite the target one or merge into target contact
         print("The address book {} already contains the contact {}\n\n"
-              "Source\n\n{}\n\nTarget\n\n{}\n\nPossible actions:\n"
-              "  a: {} anyway\n"
-              "  m: Merge from source into target contact\n"
-              "  o: Overwrite target contact\n"
-              "  q: Quit".format(target_vcard.address_book, source_vcard,
-                                 source_vcard.pretty(), target_vcard.pretty(),
-                                 action.title()))
+              "Source\n\n{}\n\nTarget\n\n{}\n\n".format(
+              target_vcard.address_book, source_vcard, source_vcard.pretty(),
+              target_vcard.pretty()))
         while True:
-            input_string = input("Your choice: ")
-            if input_string.lower() == "a":
+            answer = interactive.ask(
+                "Possible actions", [action, "merge", "overwrite", "quit"],
+                "quit")
+            if answer == action:
                 copy_contact(source_vcard, target_abook, action == "move")
                 break
-            if input_string.lower() == "o":
+            if answer == "overwrite":
                 copy_contact(source_vcard, target_abook, action == "move")
                 target_vcard.delete_vcard_file()
                 break
-            if input_string.lower() == "m":
+            if answer == "merge":
                 merge_existing_contacts(source_vcard, target_vcard,
                                         action == "move")
                 break
-            if input_string.lower() in ["", "q"]:
+            if answer == "quit":
                 print("Canceled")
                 break
 
@@ -1216,5 +1214,5 @@ def main(argv: List[str] = sys.argv[1:]) -> None:
             elif args.action in ["copy", "move"]:
                 copy_or_move_subcommand(
                     args.action, vcard_list, args.target_addressbook)
-        except interactive.Canceled:
-            print("Canceled")
+        except interactive.Canceled as ex:
+            sys.exit(str(ex))

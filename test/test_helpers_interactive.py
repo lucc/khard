@@ -8,6 +8,10 @@ from khard.helpers import interactive
 from .helpers import mock_stream
 
 
+class Ask(unittest.TestCase):
+    pass
+
+
 class Select(unittest.TestCase):
 
     def _test(self, include_none=None):
@@ -67,27 +71,27 @@ class Select(unittest.TestCase):
 class Confirm(unittest.TestCase):
 
     def test_y_is_true(self):
-        with mock.patch("builtins.input", lambda x: "y"):
+        with mock.patch("builtins.input", lambda _: "y"):
             self.assertTrue(interactive.confirm(""))
 
     def test_n_is_false(self):
-        with mock.patch("builtins.input", lambda x: "n"):
+        with mock.patch("builtins.input", lambda _: "n"):
             self.assertFalse(interactive.confirm(""))
 
     def test_Y_is_true(self):
-        with mock.patch("builtins.input", lambda x: "Y"):
+        with mock.patch("builtins.input", lambda _: "Y"):
             self.assertTrue(interactive.confirm(""))
 
     def test_N_is_false(self):
-        with mock.patch("builtins.input", lambda x: "N"):
+        with mock.patch("builtins.input", lambda _: "N"):
             self.assertFalse(interactive.confirm(""))
 
-    def test_full_word_yes_is_not_accepted(self):
-        with mock.patch("builtins.input", mock.Mock(side_effect=["yes", "n"])):
+    def test_empty_input_is_no(self):
+        with mock.patch("builtins.input", mock.Mock(side_effect=["", "y"])):
             with mock_stream():
                 self.assertFalse(interactive.confirm(""))
 
-    def test_full_word_no_is_not_accepted(self):
-        with mock.patch("builtins.input", mock.Mock(side_effect=["no", "y"])):
+    def test_empty_input_can_be_forbidden_with_argument(self):
+        with mock.patch("builtins.input", mock.Mock(side_effect=["", "y"])):
             with mock_stream():
-                self.assertTrue(interactive.confirm(""))
+                self.assertTrue(interactive.confirm("", False))
