@@ -6,7 +6,7 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Dict, Generator, List, Optional, Sequence, \
+from typing import Callable, Generator, List, Optional, Sequence, \
     TypeVar, Union
 
 from ..carddav_object import CarddavObject
@@ -38,7 +38,7 @@ def ask(message: str, choices: List[str], default: Optional[str] = None,
 
     :param message: a text to show to the user
     :param choices: the possible answers the user might give, if help is not
-        not None this list must not contain the string "?"
+        None this list must not contain the string "?"
     :param default: the answer that should be selected on empty user input
         (None means empty input is not accepted)
     :parm help: a help text to display to the user if they did not answer
