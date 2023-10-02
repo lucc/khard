@@ -9,7 +9,34 @@ from .helpers import mock_stream
 
 
 class Ask(unittest.TestCase):
-    pass
+
+    def test_accepts_on_of_the_given_options(self):
+        with mock.patch("builtins.input", lambda _: "foo"):
+            actual = interactive.ask("message", ["foo", "bar"])
+        self.assertEqual("foo", actual)
+
+    def test_does_not_accept_answers_not_in_choices(self):
+        with mock.patch("builtins.input", mock.Mock(side_effect=["baz", "foo"])):
+            actual = interactive.ask("message", ["foo", "bar"])
+        self.assertEqual("foo", actual)
+
+    def test_default_is_accepted_on_empty_input(self):
+        with mock.patch("builtins.input", lambda _: ""):
+            actual = interactive.ask("message", ["foo", "bar"], "baz")
+        self.assertEqual("baz", actual)
+
+    def test_accepts_prefix_match(self):
+        with mock.patch("builtins.input", lambda _: "f"):
+            actual = interactive.ask("message", ["foo", "bar"])
+        self.assertEqual("foo", actual)
+
+    def test_only_accepts_unique_prefix_match(self):
+        with mock.patch("builtins.input", mock.Mock(side_effect=["ba", "bar"])):
+            with mock_stream() as stdout:
+                actual = interactive.ask("message", ["baz", "bar"])
+        stdout = stdout.getvalue()
+        self.assertEqual("bar", actual)
+        self.assertIn("not specific enough", stdout)
 
 
 class Select(unittest.TestCase):
