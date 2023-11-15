@@ -496,7 +496,7 @@ def add_email_to_contact(name: str, email_address: str,
                       yes      proceed with selected contact
                       create   create a new contact
                       details  show details of selected contact
-                      search   search for a different contect
+                      search   search for a different contact
                       quit     abort
                     """)
 
