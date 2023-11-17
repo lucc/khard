@@ -21,6 +21,7 @@
           git
           twine
           (python3.withPackages (p: with p; [
+            build
             mypy
             pylint
             setuptools
@@ -33,7 +34,7 @@
           To publish a tag on pypi
           0. version=$(git tag --list --sort=version:refname v\* | tail -n 1)
           1. git checkout v\$version
-          2. python3 setup.py sdist bdist_wheel
+          2. python3 -m build --sdist --wheel
           3. twine upload -r khardtest dist/khard-\$version*
           4. twine upload -r khard dist/khard-\$version*
           EOF

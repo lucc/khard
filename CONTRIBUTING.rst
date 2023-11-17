@@ -62,8 +62,7 @@ environment for Khard from your system's Python installation:
   python3 -m venv khard-dev-venv
   . khard-dev-venv/bin/activate
 
-The you can install the dependencies with ``pip`` (or directly interact with
-the ``setup.py`` script):
+The you can install the dependencies with ``pip``:
 
 .. code-block:: shell
 
