@@ -40,7 +40,7 @@ def multi_property_key(item: str) -> Tuple[Literal[0], str]: ...
 def multi_property_key(item: Dict[T, Any]) -> Tuple[Literal[1], T]: ...
 def multi_property_key(item: Union[str, Dict[T, Any]]
                        ) -> Tuple[int, Union[T, str]]:
-    """key function to pass to sorted(), allowing sorting of dicts with lists
+    """Key function to pass to sorted(), allowing sorting of dicts with lists
     and strings. Dicts will be sorted by their label, after other types.
 
     :param item: member of the list being sorted
@@ -50,7 +50,7 @@ def multi_property_key(item: Union[str, Dict[T, Any]]
         is not a dict.
     """
     if isinstance(item, dict):
-        return (1, list(item)[0])
+        return (1, next(iter(item)))
     return (0, item)
 
 
