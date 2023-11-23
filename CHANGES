@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+v0.19.0: 2023-11-23
+
+- Remove support for python 3.7
+- Run tests on python 3.11 and 3.12 in CI
+- Fix yaml conversion of multiple addresses with same label (#323, #324)
+- Improve error message for address book paths (884f1d9)
+- Add pyproject.toml file and deprecate setup.py
+- Remove deprecated options from --help and zsh completion
+- Internal changes:
+  - Add a general ask() function (#320, #326)
+  - Use an exception to cancle user interactions (#325)
+  - More and stricter type hints
+  - Promote AddressBookCollection to a Sequence
+
+
 v0.18.0: 2022-12-10
 - Move project home on GitHub from @scheibler to @lucc
 - Catch exceptions when loading the config (#294)
