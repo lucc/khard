@@ -32,11 +32,12 @@
         shellHook = ''
           cat <<EOF
           To publish a tag on pypi
-          0. version=$(git tag --list --sort=version:refname v\* | tail -n 1)
+          0. version=$(git tag --list --sort=version:refname v\* | sed -n '$s/^v//p')
           1. git checkout v\$version
-          2. python3 -m build --sdist --wheel
-          3. twine upload -r khardtest dist/khard-\$version*
-          4. twine upload -r khard dist/khard-\$version*
+          2. python3 -m build
+          3. twine check --strict dist/khard-\$version*
+          4. twine upload -r khardtest dist/khard-\$version*
+          5. twine upload -r khard dist/khard-\$version*
           EOF
         '';
       };
