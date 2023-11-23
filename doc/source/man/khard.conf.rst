@@ -41,9 +41,9 @@ addressbooks
   This section contains several subsections, but at least one. Each subsection
   can have an arbitrary name which will be the name of an addressbook known to
   khard.  Each of these subsections **must** have a *path* key with the path to
-  the folder containing the vcard files for that addressbook.  The *path* value
+  the folder containing the vCard files for that addressbook.  The *path* value
   supports environment variables and tilde prefixes.  :program:`khard` expects
-  the vcard files to hold only one VCARD record each and end in a :file:`.vcf`
+  the vCard files to hold only one VCARD record each and end in a :file:`.vcf`
   extension.
 
 general
@@ -80,11 +80,11 @@ contact table
 vcard
   - *private_objects*: a list of strings, these are the names of private vCard
     fields (starting with ``X-``)  that will be loaded and displayed by khard
-  - *search_in_source_files*: whether to search in the vcard files before
+  - *search_in_source_files*: whether to search in the vCard files before
     parsing them in order to speed up searches
-  - *skip_unparsable*: whether to skip unparsable vcards, otherwise khard exits
-    on the first unparsable card it encounters
-  - *preferred_version*: the preferred vcard version to use for new cards
+  - *skip_unparsable*: whether to skip unparsable vCards, otherwise khard
+    exits on the first unparsable card it encounters
+  - *preferred_version*: the preferred vCard version to use for new cards
 
 Example
 -------

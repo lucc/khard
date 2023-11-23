@@ -64,7 +64,7 @@ if "SIP_FROM" in os.environ:
     from_hdr = os.environ["SIP_FROM"]
     # parse the caller ID of the string
     caller_id = get_caller_id(from_hdr)
-    # look into the addressbook
+    # look into the address book
     if caller_id != "":
         caller_id = caller_from_addressbook(caller_id)
     else:

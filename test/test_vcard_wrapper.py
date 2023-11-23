@@ -349,7 +349,6 @@ class TypedProperties(unittest.TestCase):
         wrapper._add_post_address('home', *['home1 ' + c for c in components])
         wrapper._add_post_address('pref,home',
                                   *['home2 ' + c for c in components])
-        expected_work = {item: 'work ' + item for item in components}
         expected_home2 = {item: 'home2 ' + item for item in components}
         expected_home1 = {item: 'home1 ' + item for item in components}
         self.assertDictEqual(

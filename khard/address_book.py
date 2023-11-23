@@ -2,10 +2,11 @@
 
 import abc
 import binascii
+from collections.abc import Mapping, Sequence
 import glob
 import logging
 import os
-from typing import Dict, Generator, Iterator, List, Optional, Union
+from typing import Dict, Generator, Iterator, List, Optional, Union, overload
 
 import vobject.base
 
@@ -62,7 +63,7 @@ class AddressBook(metaclass=abc.ABCMeta):
 
         :param uid1: first uid to compare
         :param uid2: second uid to compare
-        :returns: the length of the shortes unequal initial substrings
+        :returns: the length of the shortest unequal initial substrings
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
@@ -70,7 +71,7 @@ class AddressBook(metaclass=abc.ABCMeta):
                                                 None, None]:
         """Search this address book for contacts matching the query.
 
-        The backend for this address book migth be load()ed if needed.
+        The backend for this address book might be load()ed if needed.
 
         :param query: the query to search for
         :yields: all found contacts
@@ -84,13 +85,14 @@ class AddressBook(metaclass=abc.ABCMeta):
 
     def get_short_uid_dict(self, query: Query = AnyQuery()) -> Dict[
             str, "carddav_object.CarddavObject"]:
-        """Create a dictionary of shortend UIDs for all contacts.
+        """Create a dictionary of shortened UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
         and will just be handed to self.load().
 
         :param query: see self.load()
-        :returns: the contacts mapped by the shortes unique prefix of their UID
+        :returns: the contacts mapped by the shortest unique prefix of their
+            UID
         """
         if self._short_uids is None:
             if not self._loaded:
@@ -104,12 +106,12 @@ class AddressBook(metaclass=abc.ABCMeta):
                 self._short_uids = {}
                 sorted_uids = sorted(self.contacts)
                 # Prepare for the loop; the first and last items are handled
-                # seperatly.
+                # separately.
                 item0, item1 = sorted_uids[:2]
                 same1 = self._compare_uids(item0, item1)
                 self._short_uids[item0[:same1 + 1]] = self.contacts[item0]
                 for item_new in sorted_uids[2:]:
-                    # shift the items and the common prefix lenght one further
+                    # shift the items and the common prefix length one further
                     item0, item1 = item1, item_new
                     same0, same1 = same1, self._compare_uids(item0, item1)
                     # compute the final prefix length for item1
@@ -120,10 +122,10 @@ class AddressBook(metaclass=abc.ABCMeta):
         return self._short_uids
 
     def get_short_uid(self, uid: str) -> str:
-        """Get the shortend UID for the given UID.
+        """Get the shortened UID for the given UID.
 
         :param uid: the full UID to shorten
-        :returns: the shortend uid or the empty string
+        :returns: the shortened uid or the empty string
         """
         if uid:
             short_uids = self.get_short_uid_dict()
@@ -148,7 +150,7 @@ class VdirAddressBook(AddressBook):
     """An AddressBook implementation based on a vdir.
 
     This address book can load contacts from vcard files that reside in one
-    direcotry on disk.
+    directory on disk.
     """
 
     def __init__(self, name: str, path: str,
@@ -164,8 +166,8 @@ class VdirAddressBook(AddressBook):
         """
         self.path = os.path.expanduser(os.path.expandvars(path))
         if not os.path.isdir(self.path):
-            raise FileNotFoundError("[Errno 2] The path {} to the address book"
-                                    " {} does not exist.".format(path, name))
+            raise NotADirectoryError("The path {} to the address book {} is "
+                                     "not a directory".format(path, name))
         self._private_objects = private_objects or []
         self._localize_dates = localize_dates
         self._skip = skip
@@ -225,10 +227,10 @@ class VdirAddressBook(AddressBook):
                      len(self.contacts), self.name)
 
 
-class AddressBookCollection(AddressBook):
+class AddressBookCollection(AddressBook, Mapping, Sequence):
     """A collection of several address books.
 
-    This represents a temporary merege of the contact collections provided by
+    This represents a temporary merge of the contact collections provided by
     the underlying address books.  On load, all contacts from all
     subaddressbooks are copied into a dict in this address book.  This allows
     this class to use all other methods from the parent AddressBook class.
@@ -267,11 +269,16 @@ class AddressBookCollection(AddressBook):
         logger.debug('Loaded %s contacts from address book %s.',
                      len(self.contacts), self.name)
 
-    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook:
-        """Get one of the backing address books by name or index
+    @overload
+    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook: ...
+    @overload
+    def __getitem__(self, key: slice) -> List[VdirAddressBook]: ...
+    def __getitem__(self, key: Union[int, str, slice]
+                    ) -> Union[VdirAddressBook, List[VdirAddressBook]]:
+        """Get one or more of the backing address books by name or index
 
         :param key: the name of the address book to get or its index
-        :returns: the matching address book
+        :returns: the matching address book(s)
         :throws: KeyError
         """
         if isinstance(key, str):

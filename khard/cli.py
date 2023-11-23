@@ -18,16 +18,16 @@ logger = logging.getLogger(__name__)
 class FieldsArgument:
     """A factory to create callable objects for add_argument's type= parameter.
 
-    The object can parse comma seperated strings into list of strings, and can
+    The object can parse comma separated strings into list of strings, and can
     also check if the single elements are spelled correctly.
     """
 
     def __init__(self, *choices: str, nested: bool = False) -> None:
         """Initialize the factory
 
-        :param choices: the comma seperated strings must be one of these
-        :param nested: if this is true the comma seperated strings may
-            designate nested fields and only the first component (seperated by
+        :param choices: the comma separated strings must be one of these
+        :param nested: if this is true the comma separated strings may
+            designate nested fields and only the first component (separated by
             a dot) must match on of the choices
         """
         self._choices = sorted(choices)
@@ -52,7 +52,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
                               argparse.ArgumentParser]:
     """Create two argument parsers.
 
-    The first parser is manly used to find the config file which can than be
+    The first parser is mainly used to find the config file which can than be
     used to set some default values on the second parser.  The second parser
     can parse the remainder of the command line with the subcommand and all
     further options and arguments.
@@ -155,12 +155,13 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
+    # TODO remove after version 0.19
     default_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true",
-        help="DEPRECATED use the new query syntax instead")
+        "-e", "--strict-search", action="store_true", help=argparse.SUPPRESS)
+    # TODO remove after version 0.19
     default_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use the new query syntax instead")
+        help=argparse.SUPPRESS)
     default_search_parser.add_argument(
         "search_terms", nargs="*", metavar="search terms", type=parse,
         default=[], help="search in specified or all fields to find matching "
@@ -171,18 +172,20 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
+    # TODO remove after version 0.19
     merge_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true",
-        help="DEPRECATED use the new query syntax instead")
+        "-e", "--strict-search", action="store_true", help=argparse.SUPPRESS)
     merge_search_parser.add_argument(
         "-t", "--target-contact", "--target", type=parse,
         help="search for a matching target contact")
+    # TODO remove after version 0.19
     merge_search_parser.add_argument(
         "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use the new query syntax instead")
+        help=argparse.SUPPRESS)
+    # TODO remove after version 0.19
     merge_search_parser.add_argument(
         "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use -t with the new query syntax instead")
+        help=argparse.SUPPRESS)
     merge_search_parser.add_argument(
         "source_search_terms", nargs="*", metavar="source", type=parse,
         default=[],
@@ -372,13 +375,13 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     :returns: the namespace parsed from the command line
     """
     first_parser, parser = create_parsers()
-    # Parese the command line with the first argument parser.  It will handle
+    # Parse the command line with the first argument parser.  It will handle
     # the config option (its main job) and also the help, version and debug
     # options as these do not depend on anything else.
     args = first_parser.parse_args(argv)
     remainder = args.remainder
 
-    # Set the loglevel to debug if given on the command line.  This is done
+    # Set the log level to debug if given on the command line.  This is done
     # before parsing the config file to make it possible to debug the parsing
     # of the config file.
     if "debug" in args and args.debug:
@@ -457,9 +460,16 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
             or AnyQuery()
     # Remove uid values from the args Namespace.  They have been merged into
     # the search terms above.
+    # TODO remove after version 0.19
     if "uid" in args:
+        if args.uid:
+            logger.error("Deprecated option --uid, use the new query syntax "
+                         "instead.")
         del args.uid
     if "target_uid" in args:
+        if args.target_uid:
+            logger.error("Deprecated option --target-uid, use the new query "
+                         "syntax instead.")
         del args.target_uid
 
     return args, config
@@ -473,7 +483,7 @@ def merge_args_into_config(args: argparse.Namespace, config: Config) -> Config:
     :returns: the merged config object
     """
     config.merge_args(args)
-    # Now we can savely initialize the address books as all command line
+    # Now we can safely initialize the address books as all command line
     # options have been incorporated into the config object.
     config.init_address_books()
     # If the user could but did not specify address books on the command line

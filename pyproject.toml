@@ -1,0 +1,78 @@
+[project]
+name = "khard"
+dynamic = ["version"]
+authors = [
+    { name = "Eric Scheibler", email = 'email@eric-scheibler.de' },
+]
+description = "A console address book manager"
+readme = "README.md"
+requires-python = ">=3.8"
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Topic :: Utilities",
+    "Topic :: Communications :: Email :: Address Book",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+keywords = ["vcard", "console", "addressbook"]
+license = {text = "GPL"}
+
+dependencies = [
+    "atomicwrites",
+    "configobj",
+    "ruamel.yaml",
+    "unidecode",
+    "vobject"
+]
+
+[project.optional-dependencies]
+doc = ['sphinx', 'sphinx-autoapi', 'sphinx-autodoc-typehints']
+
+[project.urls]
+homepage = "https://github.com/lucc/khard"
+documentation = "https://khard.readthedocs.io/en/latest/"
+repository = "https://github.com/lucc/khard.git"
+changelog = "https://github.com/lucc/khard/blob/develop/CHANGES"
+
+[project.scripts]
+khard = "khard.khard:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ['khard', 'khard.helpers']
+
+[tool.setuptools_scm]
+write_to = "khard/version.py"
+
+[tool.mypy]
+packages = "khard"
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+# These do not provide type anotations or stub files
+module = [
+    "atomicwrites",
+    "configobj",
+    "configobj.validate",
+    "validate",
+    "vobject",
+    "vobject.base",
+]
+ignore_missing_imports = true
+
+[tool.pylint.main]
+py-version = "3.8"
+ignore-paths = ["khard/version.py"]
+
+[tool.pylint."messages control"]
+disable = ["consider-using-f-string"]

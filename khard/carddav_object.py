@@ -15,7 +15,8 @@ import os
 import re
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union, Sequence
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, \
+    TypeVar, Union, Sequence, overload
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -24,28 +25,33 @@ import vobject
 
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
-from .helpers.typing import (convert_to_vcard, Date, ObjectType, StrList,
-                             list_to_string, string_to_date, string_to_list)
+from .helpers.typing import (Date, ObjectType, PostAddress, StrList,
+    convert_to_vcard, list_to_string, string_to_date, string_to_list)
 from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
 
 
-def multi_property_key(item: Union[str, Dict]) -> List:
-    """key function to pass to sorted(), allowing sorting of dicts with lists
+@overload
+def multi_property_key(item: str) -> Tuple[Literal[0], str]: ...
+@overload
+def multi_property_key(item: Dict[T, Any]) -> Tuple[Literal[1], T]: ...
+def multi_property_key(item: Union[str, Dict[T, Any]]
+                       ) -> Tuple[int, Union[T, str]]:
+    """Key function to pass to sorted(), allowing sorting of dicts with lists
     and strings. Dicts will be sorted by their label, after other types.
 
     :param item: member of the list being sorted
     :type item: a dict with a single entry or any sortable type
-    :returns: a list with two members. The first is int(isinstance(item, dict).
+    :returns: a pair, the first item is int(isinstance(item, dict).
         The second is either the key from the dict or the unchanged item if it
         is not a dict.
-    :rtype: list(int, type(item)) or list(int, str)
     """
     if isinstance(item, dict):
-        return [1, list(item)[0]]
-    return [0, item]
+        return (1, next(iter(item)))
+    return (0, item)
 
 
 class VCardWrapper:
@@ -108,14 +114,14 @@ class VCardWrapper:
         """Get a vCard property that can exist more than once.
 
         It does not matter what the individual vcard properties store as their
-        value.  This function returnes them untouched inside an agregating
+        value.  This function returns them untouched inside an aggregating
         list.
 
         If the property is part of a group containing exactly two items, with
         exactly one ABLABEL. the property will be prefixed with that ABLABEL.
 
         :param name: the name of the property (should be UPPER case)
-        :returns: the values from all occurences of the named property
+        :returns: the values from all occurrences of the named property
         """
         values = []
         for child in self.vcard.getChildren():
@@ -343,8 +349,8 @@ class VCardWrapper:
 
     def _get_ablabel(self, item: vobject.base.ContentLine) -> str:
         """Get an ABLABEL for a specified item in the vCard.
-        Will return the ABLABEL only if the item is part of a group with exactly
-        two items, exactly one of which is an ABLABEL.
+        Will return the ABLABEL only if the item is part of a group with
+        exactly two items, exactly one of which is an ABLABEL.
 
         :param item: the item to be labelled
         :returns: the ABLABEL in the circumstances above or an empty string
@@ -365,8 +371,8 @@ class VCardWrapper:
         return label
 
     def _get_new_group(self, group_type: str = "") -> str:
-        """Get an unused group name for adding new groups. Uses the form item123
-         or itemgroup_type123 if a grouptype is specified.
+        """Get an unused group name for adding new groups. Uses the form
+        item123 or itemgroup_type123 if a grouptype is specified.
 
         :param group_type: (Optional) a string to add between "item" and
             the number
@@ -770,11 +776,11 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
-    def post_addresses(self) -> Dict[str, List[Dict[str, Union[List, str]]]]:
+    def post_addresses(self) -> Dict[str, List[PostAddress]]:
         """
         :returns: dict of type and post address list
         """
-        post_adr_dict: Dict[str, List[Dict[str, Union[List, str]]]] = {}
+        post_adr_dict: Dict[str, List[PostAddress]] = {}
         for child in self.vcard.getChildren():
             if child.name == "ADR":
                 type = list_to_string(self._get_types_for_vcard_object(
@@ -878,20 +884,20 @@ class VCardWrapper:
 
 
 class YAMLEditable(VCardWrapper):
-    """Conversion of vcards to YAML and updateing the vcard from YAML"""
+    """Conversion of vcards to YAML and updating the vcard from YAML"""
 
     def __init__(self, vcard: vobject.vCard,
                  supported_private_objects: Optional[List[str]] = None,
                  version: Optional[str] = None, localize_dates: bool = False
                  ) -> None:
-        """Initialize atributes needed for yaml conversions
+        """Initialize attributes needed for yaml conversions
 
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
         :param version: the version of the RFC to use in this card
         :param localize_dates: should the formatted output of anniversary
-            and birthday be localized or should the isoformat be used instead
+            and birthday be localized or should the iso format be used instead
         """
         self.supported_private_objects = supported_private_objects or []
         self.localize_dates = localize_dates
@@ -965,11 +971,11 @@ class YAMLEditable(VCardWrapper):
 
     @staticmethod
     def _parse_yaml(input: str) -> Dict:
-        """Parse a YAML document into a dictinary and validate the data to some
-        degree.
+        """Parse a YAML document into a dictionary and validate the data to
+        some degree.
 
         :param str input: the YAML document to parse
-        :returns: the parsed datastructure
+        :returns: the parsed data structure
         :rtype: dict
         """
         yaml_parser = YAML(typ='base')
@@ -994,7 +1000,8 @@ class YAMLEditable(VCardWrapper):
     @staticmethod
     def _set_string_list(setter: Callable[[Union[str, List]], None], key: str,
                          data: Dict) -> None:
-        """Prepocess a string or list and set each value with the given setter
+        """Pre-process a string or list and set each value with the given
+        setter
 
         :param setter: the setter method to add a value to a card
         :param key:
@@ -1054,7 +1061,7 @@ class YAMLEditable(VCardWrapper):
 
         # name
         self._delete_vcard_object("N")
-        # although the "n" attribute is not explisitely required by the vcard
+        # although the "n" attribute is not explicitly required by the vcard
         # specification,
         # the vobject library throws an exception, if it doesn't exist
         # so add the name regardless if it's empty or not
@@ -1308,10 +1315,10 @@ class CarddavObject(YAMLEditable):
         :param filename: the path to the file where this vcard is stored
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
-            pobject
+            object
         :param vcard_version: the version of the RFC to use
         :param localize_dates: should the formatted output of anniversary and
-            birthday be localized or should the isoformat be used instead
+            birthday be localized or should the iso format be used instead
         """
         self.address_book = address_book
         self.filename = filename
@@ -1350,9 +1357,9 @@ class CarddavObject(YAMLEditable):
             the file unconditionally
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
-            pobject
+            object
         :param localize_dates: should the formatted output of anniversary
-            and birthday be localized or should the isoformat be used instead
+            and birthday be localized or should the iso format be used instead
         :returns: the loaded CarddavObject or None if the file didn't match
         """
         with open(filename, "r") as file:

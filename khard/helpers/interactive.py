@@ -6,12 +6,19 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Generator, List, Optional, TypeVar, Union
+from typing import Callable, Generator, List, Optional, Sequence, \
+    TypeVar, Union
 
 from ..carddav_object import CarddavObject
 
 
 T = TypeVar("T")
+
+
+class Canceled(Exception):
+    """An exception indicating that the user canceled some operation."""
+    def __init__(self, message: str = "Canceled") -> None:
+        super().__init__(message)
 
 
 def confirm(message: str, accept_enter_key: bool = True) -> bool:
@@ -21,19 +28,59 @@ def confirm(message: str, accept_enter_key: bool = True) -> bool:
     :param accept_enter_key: Accept ENTER as alternative for "n"
     :returns: the answer of the user
     """
+    return "yes" == ask(message, ["yes", "no"],
+                        "no" if accept_enter_key else None)
+
+
+def ask(message: str, choices: List[str], default: Optional[str] = None,
+        help: Optional[str] = None) -> str:
+    """Ask the user to select one of the given choices
+
+    :param message: a text to show to the user
+    :param choices: the possible answers the user might give, if help is not
+        None this list must not contain the string "?"
+    :param default: the answer that should be selected on empty user input
+        (None means empty input is not accepted)
+    :parm help: a help text to display to the user if they did not answer
+        correctly
+    :returns: the choice of the user
+    """
+    default = default.lower() if default is not None else None
+    # ensure that the choices are lower case, in order but unique
+    choices = list({c.lower(): None for c in choices})
+    prompt = "/".join("[{}]".format(c) if c == default else c
+                      for c in choices)
+    if help is not None:
+        prompt += " or ? for help"
+    prompt += ": "
+    if len(message) + len(prompt) < 79:
+        prompt = message + " " + prompt
+    else:
+        print(message)
     while True:
-        answer = input(message + ' (y/N) ')
-        answer = answer.lower()
-        if answer == 'y':
-            return True
-        if answer == 'n':
-            return False
-        if answer == '' and accept_enter_key:
-            return False
-        print('Please answer with "y" for yes or "n" for no.')
+        try:
+            answer = input(prompt).lower()
+            if answer == "" and default is not None:
+                return default
+            if answer == "?" and help is not None:
+                print(help)
+                continue
+            if answer in choices:
+                return answer
+            prefixes_matches = [c for c in choices if c.startswith(answer)]
+            if len(prefixes_matches) == 1:
+                return prefixes_matches[0]
+            if len(prefixes_matches) > 1:
+                print("The given prefix is not specific enough.")
+        except (EOFError, IndexError, ValueError):
+            pass
+        except KeyboardInterrupt:
+            raise Canceled
+        if help is not None:
+            print(help)
 
 
-def select(items: List[T], include_none: bool = False) -> Optional[T]:
+def select(items: Sequence[T], include_none: bool = False) -> Optional[T]:
     """Ask the user to select an item from a list.
 
     The list should be displayed to the user before calling this function and
@@ -42,15 +89,16 @@ def select(items: List[T], include_none: bool = False) -> Optional[T]:
     :param items: the list from which to select
     :param include_none: whether to allow the selection of no item
     :returns: None or the selected item
+    :raises Canceled: when the user canceled the selection process
     """
+    prompt = "Enter Index ({}q to quit): ".format("0 for None, "
+                                                  if include_none else "")
     while True:
         try:
-            answer = input("Enter Index ({}q to quit): ".format(
-                "0 for None, " if include_none else ""))
+            answer = input(prompt)
             answer = answer.lower()
-            if answer in ["", "q"]:
-                print("Canceled")
-                return None
+            if answer == "q":
+                raise Canceled
             index = int(answer)
             if include_none and index == 0:
                 return None
@@ -135,7 +183,7 @@ class Editor:
         with contextlib.ExitStack() as stack:
             files = [stack.enter_context(self.write_temp_file(t))
                      for t in templates]
-            # Try to edit the files until we detect a modivication or the user
+            # Try to edit the files until we detect a modification or the user
             # aborts
             while True:
                 if self.edit_files(*files) == EditState.unmodified:

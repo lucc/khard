@@ -4,13 +4,41 @@
   outputs = { self, nixpkgs }: {
 
     packages.x86_64-linux.default =
-      nixpkgs.legacyPackages.x86_64-linux.khard.overrideAttrs (oa: rec {
-        pname = "khard";
+      nixpkgs.legacyPackages.x86_64-linux.khard.overridePythonAttrs (oa: rec {
         name = "khard-${version}";
-        version = "dev-${if self ? shortRev then self.shortRev else "dirty"}";
+        version = "${oa.version}post-dev+${if self ? shortRev then self.shortRev else "dirty"}";
         SETUPTOOLS_SCM_PRETEND_VERSION = version;
+        postInstall = ''
+          ${oa.postInstall}
+          cp -r $src/khard/data $out/lib/python*/site-packages/khard
+        '';
         src = ./.;
       });
-
+    devShells.x86_64-linux.release =
+      let pkgs = nixpkgs.legacyPackages.x86_64-linux; in
+      pkgs.mkShell {
+        packages = with pkgs; [
+          git
+          twine
+          (python3.withPackages (p: with p; [
+            build
+            mypy
+            pylint
+            setuptools
+            setuptools-scm
+            wheel
+          ] ++ self.packages.x86_64-linux.default.propagatedBuildInputs))
+        ];
+        shellHook = ''
+          cat <<EOF
+          To publish a tag on pypi
+          0. version=$(git tag --list --sort=version:refname v\* | tail -n 1)
+          1. git checkout v\$version
+          2. python3 -m build --sdist --wheel
+          3. twine upload -r khardtest dist/khard-\$version*
+          4. twine upload -r khard dist/khard-\$version*
+          EOF
+        '';
+      };
   };
 }
