@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.19.1: 2023-11-26
+
+- Fix documentation builds on https://khard.readthedocs.io/
+
+
 v0.19.0: 2023-11-23
 
 - Remove support for python 3.7
