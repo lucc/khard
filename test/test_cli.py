@@ -124,8 +124,11 @@ class TestParseArgs(unittest.TestCase):
         self.assertEqual(["other", "myfield", "from"], actual)
 
     def test_exit_user_friendly_without_config_file(self):
-        with self.assertRaises(SystemExit):
-            cli.parse_args(["-c", "/this file should hopefully never exist."])
+        with mock_stream("stderr") as stderr:
+            with self.assertRaises(SystemExit):
+                cli.parse_args(["-c", "/this file should hopefully never exist."])
+        self.assertTrue(stderr.getvalue().startswith(
+            "Error reading config file: Config file not found:"))
 
     def test_exit_user_friendly_without_contacts_folder(self):
         with tempfile.NamedTemporaryFile("w", delete=False) as config:
