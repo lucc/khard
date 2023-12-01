@@ -37,7 +37,7 @@ doc = ['sphinx', 'sphinx-autoapi', 'sphinx-autodoc-typehints']
 homepage = "https://github.com/lucc/khard"
 documentation = "https://khard.readthedocs.io/en/latest/"
 repository = "https://github.com/lucc/khard.git"
-changelog = "https://github.com/lucc/khard/blob/develop/CHANGES"
+changelog = "https://github.com/lucc/khard/blob/main/CHANGES"
 
 [project.scripts]
 khard = "khard.khard:main"
