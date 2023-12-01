@@ -46,11 +46,11 @@ jobs:
     - uses: actions/checkout@v3
     - name: Set up Python
       uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install .[doc]
     - name: Build the documentation
-      run: |
-        python setup.py build
-        make -C doc html man
+      run: make -C doc html man
