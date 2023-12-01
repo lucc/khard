@@ -54,3 +54,12 @@ jobs:
         python -m pip install .[doc]
     - name: Build the documentation
       run: make -C doc html man
+
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Nix
+      uses: cachix/install-nix-action@v20
+    - uses: actions/checkout@v3
+    - name: Build the nix derivation (also runs the tests)
+      run: nix build --print-build-logs

@@ -13,6 +13,9 @@
           cp -r $src/khard/data $out/lib/python*/site-packages/khard
         '';
         src = ./.;
+        pyproject = true;
+        doCheck = true;
+        checkPhase = "python -m unittest -v";
       });
     devShells.x86_64-linux.release =
       let pkgs = nixpkgs.legacyPackages.x86_64-linux; in
