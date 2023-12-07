@@ -1,7 +1,6 @@
 """Tests for the address book classes."""
 # pylint: disable=missing-docstring
 
-import os
 import unittest
 from unittest import mock
 

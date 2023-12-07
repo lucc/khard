@@ -806,8 +806,8 @@ class VCardWrapper:
         for type, post_adr_list in self.post_addresses.items():
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
-                get: Callable[[str], str] = lambda name: list_to_string(
-                    post_adr.get(name, ""), " ")
+                def get(name: str) -> str:
+                    return list_to_string(post_adr.get(name, ""), " ")
 
                 # remove empty fields to avoid empty lines
                 for x in list(post_adr.keys()):
