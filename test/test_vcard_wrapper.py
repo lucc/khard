@@ -3,6 +3,7 @@
 
 import datetime
 import unittest
+from typing import Union, List, Dict
 
 import vobject
 
@@ -354,6 +355,39 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(
             wrapper.post_addresses, {'home': [expected_home1],
                                      'home, pref': [expected_home2]})
+
+    def _test_list_of_strings_as(self, key: str) -> None:
+        wrapper = TestVCardWrapper()
+        components = ('box', 'extended', 'street', 'code', 'city', 'region',
+                      'country')
+        expected: Dict[str, Union[str, List[str]]] = {item: item
+                                                      for item in components}
+        expected[key] = ["a", "b"]
+        index = components.index(key)
+        components = (*components[:index], ["a", "b"], *components[index+1:])
+        wrapper._add_post_address('home', *components)
+        self.assertDictEqual(wrapper.post_addresses, {'home': [expected]})
+
+    def test_list_of_strings_as_box(self):
+        self._test_list_of_strings_as("box")
+
+    def test_list_of_strings_as_extended(self):
+        self._test_list_of_strings_as("extended")
+
+    def test_list_of_strings_as_street(self):
+        self._test_list_of_strings_as("street")
+
+    def test_list_of_strings_as_code(self):
+        self._test_list_of_strings_as("code")
+
+    def test_list_of_strings_as_city(self):
+        self._test_list_of_strings_as("city")
+
+    def test_list_of_strings_as_region(self):
+        self._test_list_of_strings_as("region")
+
+    def test_list_of_strings_as_country(self):
+        self._test_list_of_strings_as("country")
 
 
 class OtherProperties(unittest.TestCase):

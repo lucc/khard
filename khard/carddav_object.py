@@ -836,16 +836,17 @@ class VCardWrapper:
                 formatted_post_adr_dict[type].append('\n'.join(strings))
         return formatted_post_adr_dict
 
-    def _add_post_address(self, type, box, extended, street, code, city,
-                          region, country):
+    def _add_post_address(self, type: str, box: StrList, extended: StrList,
+                          street: StrList, code: StrList, city: StrList,
+                          region: StrList, country: StrList) -> None:
         standard_types, custom_types, pref = self._parse_type_value(
             string_to_list(type, ","), self.address_types_v4
             if self.version == "4.0" else self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for post address " + street +
-                             " is missing.")
+            raise ValueError(f"Error: label for post address {street} is "
+                             "missing.")
         if len(custom_types) > 1:
-            raise ValueError("Error: post address " + street + " got more "
+            raise ValueError(f"Error: post address {street} got more "
                              "than one custom " "label: " +
                              list_to_string(custom_types, ", "))
         adr_obj = self.vcard.add('adr')
