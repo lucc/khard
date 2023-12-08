@@ -382,17 +382,50 @@ class OtherProperties(unittest.TestCase):
         wrapper._add_title('Bar')
         self.assertListEqual(wrapper.titles, ['Bar', 'Foo'])
 
+    def test_setting_labeled_title(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_title({"foo": "bar"})
+        wrapper._add_title("BAZ")
+        self.assertListEqual(wrapper.titles, ["BAZ", {"foo": "bar"}])
+
+    def test_setting_multible_labeled_titles_fails(self):
+        wrapper = TestVCardWrapper()
+        with self.assertRaises(ValueError):
+            wrapper._add_title({"foo": "bar", "qux": "qax"})
+
     def test_setting_and_getting_roles(self):
         wrapper = TestVCardWrapper()
         wrapper._add_role('Foo')
         wrapper._add_role('Bar')
         self.assertListEqual(wrapper.roles, ['Bar', 'Foo'])
 
+    def test_setting_labeled_role(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_role({"foo": "bar"})
+        wrapper._add_role("BAZ")
+        self.assertListEqual(wrapper.roles, ["BAZ", {"foo": "bar"}])
+
+    def test_setting_multible_labeled_roles_fails(self):
+        wrapper = TestVCardWrapper()
+        with self.assertRaises(ValueError):
+            wrapper._add_role({"foo": "bar", "qux": "qax"})
+
     def test_setting_and_getting_nicks(self):
         wrapper = TestVCardWrapper()
         wrapper._add_nickname('Foo')
         wrapper._add_nickname('Bar')
         self.assertListEqual(wrapper.nicknames, ['Bar', 'Foo'])
+
+    def test_setting_labeled_nick(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_nickname({"foo": "bar"})
+        wrapper._add_nickname("BAZ")
+        self.assertListEqual(wrapper.nicknames, ["BAZ", {"foo": "bar"}])
+
+    def test_setting_multible_labeled_nicks_fails(self):
+        wrapper = TestVCardWrapper()
+        with self.assertRaises(ValueError):
+            wrapper._add_nickname({"foo": "bar", "qux": "qax"})
 
     def test_setting_and_getting_notes(self):
         wrapper = TestVCardWrapper()
@@ -401,12 +434,34 @@ class OtherProperties(unittest.TestCase):
         self.assertListEqual(wrapper.notes, ['First long note',
                              'Second long note\nwith newline'])
 
+    def test_setting_labeled_note(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_note({"foo": "bar"})
+        wrapper._add_note("BAZ")
+        self.assertListEqual(wrapper.notes, ["BAZ", {"foo": "bar"}])
+
+    def test_setting_multible_labeled_note_fails(self):
+        wrapper = TestVCardWrapper()
+        with self.assertRaises(ValueError):
+            wrapper._add_note({"foo": "bar", "qux": "qax"})
+
     def test_setting_and_getting_webpages(self):
         wrapper = TestVCardWrapper()
         wrapper._add_webpage('https://github.com/scheibler/khard')
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper.webpages, ['http://example.com',
                              'https://github.com/scheibler/khard'])
+
+    def test_setting_labeled_webpages(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_webpage({"foo": "bar"})
+        wrapper._add_webpage("BAZ")
+        self.assertListEqual(wrapper.webpages, ["BAZ", {"foo": "bar"}])
+
+    def test_setting_multible_labeled_webpage_fails(self):
+        wrapper = TestVCardWrapper()
+        with self.assertRaises(ValueError):
+            wrapper._add_webpage({"foo": "bar", "qux": "qax"})
 
     def test_setting_and_getting_categories(self):
         wrapper = TestVCardWrapper()

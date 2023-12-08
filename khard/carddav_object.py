@@ -601,35 +601,35 @@ class VCardWrapper:
     def titles(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("TITLE")
 
-    def _add_title(self, title) -> None:
+    def _add_title(self, title: Union[str, Dict[str, str]]) -> None:
         self._add_labelled_object("title", title, True)
 
     @property
     def roles(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("ROLE")
 
-    def _add_role(self, role) -> None:
+    def _add_role(self, role: Union[str, Dict[str, str]]) -> None:
         self._add_labelled_object("role", role, True)
 
     @property
     def nicknames(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("NICKNAME")
 
-    def _add_nickname(self, nickname) -> None:
+    def _add_nickname(self, nickname: Union[str, Dict[str, str]]) -> None:
         self._add_labelled_object("nickname", nickname, True)
 
     @property
     def notes(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("NOTE")
 
-    def _add_note(self, note) -> None:
+    def _add_note(self, note: Union[str, Dict[str, str]]) -> None:
         self._add_labelled_object("note", note, True)
 
     @property
     def webpages(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("URL")
 
-    def _add_webpage(self, webpage) -> None:
+    def _add_webpage(self, webpage: Union[str, Dict[str, str]]) -> None:
         self._add_labelled_object("url", webpage, True)
 
     @property
