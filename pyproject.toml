@@ -54,9 +54,11 @@ write_to = "khard/version.py"
 
 [tool.mypy]
 packages = "khard"
+check_untyped_defs = true
+disallow_untyped_calls = true
+warn_redundant_casts = true
 warn_unused_configs = true
 warn_unused_ignores = true
-warn_redundant_casts = true
 
 [[tool.mypy.overrides]]
 # These do not provide type anotations or stub files

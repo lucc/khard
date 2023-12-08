@@ -996,8 +996,8 @@ class YAMLEditable(VCardWrapper):
         return contact_data
 
     @staticmethod
-    def _set_string_list(setter: Callable[[Union[str, List]], None], key: str,
-                         data: Dict) -> None:
+    def _set_string_list(setter: Callable[[str], None], key: str,
+                         data: Dict[str, Union[str, List[str]]]) -> None:
         """Pre-process a string or list and set each value with the given
         setter
 
