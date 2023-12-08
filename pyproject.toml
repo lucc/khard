@@ -53,9 +53,10 @@ packages = ['khard', 'khard.helpers']
 write_to = "khard/version.py"
 
 [tool.mypy]
-packages = "khard"
+packages = ["khard", "test"]
 check_untyped_defs = true
 disallow_untyped_calls = true
+#disallow_untyped_defs = true
 warn_redundant_casts = true
 warn_unused_configs = true
 warn_unused_ignores = true
@@ -69,8 +70,14 @@ module = [
     "validate",
     "vobject",
     "vobject.base",
+    "vobject.vcard",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "test.*"
+check_untyped_defs = false
+disallow_untyped_calls = false
 
 [tool.pylint.main]
 py-version = "3.8"

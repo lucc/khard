@@ -58,16 +58,18 @@ def mock_stream(name="stdout"):
     return context_manager
 
 
-def load_contact(path: str, abook: Optional[address_book.AddressBook] = None
-                 ) -> carddav_object.CarddavObject:
+def load_contact(path: str) -> carddav_object.CarddavObject:
     """Load a contact from the fixture directory.
 
     :param path: the file name (full, relative to cwd or the fixture dir)
-    :param abook:
     """
+    abook = address_book.VdirAddressBook("test", "/tmp")
     if not os.path.exists(path):
         path = os.path.join("test/fixture/vcards", path)
-    return carddav_object.CarddavObject.from_file(abook, path)
+    contact = carddav_object.CarddavObject.from_file(abook, path)
+    if contact is None:
+        raise FileNotFoundError(path)
+    return contact
 
 
 class TmpAbook:

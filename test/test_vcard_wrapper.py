@@ -366,7 +366,7 @@ class TypedProperties(unittest.TestCase):
                                                       for item in components}
         expected[key] = ["a", "b"]
         index = components.index(key)
-        components = (*components[:index], ["a", "b"], *components[index+1:])
+        components = (*components[:index], ["a", "b"], *components[index+1:])  # type: ignore
         wrapper._add_post_address('home', *components)
         self.assertDictEqual(wrapper.post_addresses, {'home': [expected]})
 

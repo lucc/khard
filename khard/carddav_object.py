@@ -581,7 +581,7 @@ class VCardWrapper:
         """
         return self._get_multi_property("ORG")
 
-    def _add_organisation(self, organisation: StrList) -> None:
+    def _add_organisation(self, organisation: Union[StrList, StrListDict]) -> None:
         """Add one ORG entry to the underlying vcard
 
         :param organisation: the value to add
