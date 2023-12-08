@@ -922,7 +922,7 @@ class YAMLEditable(VCardWrapper):
             value.sort(key=multi_property_key)
         return private_objects
 
-    def _add_private_object(self, key: str, value) -> None:
+    def _add_private_object(self, key: str, value: str) -> None:
         self._add_labelled_object('X-' + key.upper(), value)
 
     def get_formatted_anniversary(self) -> str:

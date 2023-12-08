@@ -59,3 +59,27 @@ class ExceptionHandling(unittest.TestCase):
         ye = TestYAMLEditable()
         with self.assertRaises(ValueError):
             ye.update("{[invalid yaml")
+
+
+class PrivateObjects(unittest.TestCase):
+
+    def test_can_add_strings(self) -> None:
+        ye = TestYAMLEditable()
+        ye.supported_private_objects = ["foo"]
+        ye._add_private_object("foo", "bar")
+        self.assertEqual(ye._get_private_objects(), {"foo": ["bar"]})
+
+    def test_can_add_several_strings_under_the_same_label(self) -> None:
+        ye = TestYAMLEditable()
+        ye.supported_private_objects = ["foo"]
+        ye._add_private_object("foo", "bar")
+        ye._add_private_object("foo", "baz")
+        self.assertEqual(ye._get_private_objects(), {"foo": ["bar", "baz"]})
+
+    def test_unsupported_private_objects_can_be_added_but_not_retrieved(self) -> None:
+        ye = TestYAMLEditable()
+        ye.supported_private_objects = ["foo"]
+        ye._add_private_object("foo", "bar")
+        ye._add_private_object("bar", "foo")
+        self.assertEqual(ye._get_private_objects(), {"foo": ["bar"]})
+        self.assertIn("X-BAR:foo", ye.vcard.serialize())
