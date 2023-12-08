@@ -225,7 +225,7 @@ class Config:
     def merge_args(self, args: Namespace) -> None:
         """Merge options from a flat argparse object.
 
-        :param argparse.Namespace args: the parsed arguments to incorporate
+        :param args: the parsed arguments to incorporate
         """
         skel = {'general': ['debug'],
                 'contact table': ['reverse', 'group_by_addressbook',

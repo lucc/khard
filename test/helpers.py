@@ -6,6 +6,7 @@ import io
 import os
 import shutil
 import tempfile
+from typing import Optional
 from unittest import mock
 
 import vobject
@@ -57,12 +58,12 @@ def mock_stream(name="stdout"):
     return context_manager
 
 
-def load_contact(path, abook=None):
+def load_contact(path: str, abook: Optional[address_book.AddressBook] = None
+                 ) -> carddav_object.CarddavObject:
     """Load a contact from the fixture directory.
 
-    :param str path: the file name (full, relative to cwd or the fixture dir)
-    :param AddressBook abook:
-    :returns CarddavObject:
+    :param path: the file name (full, relative to cwd or the fixture dir)
+    :param abook:
     """
     if not os.path.exists(path):
         path = os.path.join("test/fixture/vcards", path)

@@ -23,13 +23,11 @@ def to_yaml(data):
     return stream.getvalue()
 
 
-def parse_yaml(yaml=''):
+def parse_yaml(yaml: str = '') -> CarddavObject:
     """Parse some yaml string into a CarddavObject
 
     :param yaml: the yaml input string to parse
-    :type yaml: str
     :returns: the parsed CarddavObject
-    :rtype: CarddavObject
     """
     return CarddavObject.from_yaml(address_book=mock.Mock(path='foo-path'),
                                    yaml=yaml, supported_private_objects=[],

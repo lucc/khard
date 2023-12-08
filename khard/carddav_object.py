@@ -82,7 +82,7 @@ class VCardWrapper:
                  ) -> None:
         """Initialize the wrapper around the given vcard.
 
-        :param vobject.vCard vcard: the vCard to wrap
+        :param vcard: the vCard to wrap
         :param version: the version of the RFC to use (if the card has none)
         """
         self.vcard = vcard
@@ -267,8 +267,6 @@ class VCardWrapper:
         All vCards should only always have one revision, this is a
         requirement for version 4 but also makes sense for all other
         versions.
-
-        :rtype: NoneType
         """
         self._delete_vcard_object("REV")
         rev = self.vcard.add('rev')
@@ -427,7 +425,6 @@ class VCardWrapper:
         :param date: the date like value to be stored
         :returns: the object to set as the .value for the attribute and whether
             it should be stored as plain text
-        :rtype: tuple(str,bool)
         """
         if isinstance(date, str):
             if self.version == "4.0":
@@ -472,8 +469,7 @@ class VCardWrapper:
         requires the vCard to only have one FN field.  For other versions we
         enforce this equally.
 
-        :param str value: the new formatted name
-        :returns: None
+        :param value: the new formatted name
         """
         self._delete_vcard_object("FN")
         if value:
@@ -974,9 +970,8 @@ class YAMLEditable(VCardWrapper):
         """Parse a YAML document into a dictionary and validate the data to
         some degree.
 
-        :param str input: the YAML document to parse
+        :param input: the YAML document to parse
         :returns: the parsed data structure
-        :rtype: dict
         """
         yaml_parser = YAML(typ='base')
         # parse user input string

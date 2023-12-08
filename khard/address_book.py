@@ -40,7 +40,7 @@ class AddressBook(metaclass=abc.ABCMeta):
     """The base class of all address book implementations."""
 
     def __init__(self, name: str) -> None:
-        """:param str name: the name to identify the address book"""
+        """:param name: the name to identify the address book"""
         self._loaded = False
         self.contacts: Dict[str, "carddav_object.CarddavObject"] = {}
         self._short_uids: Optional[Dict[str,
