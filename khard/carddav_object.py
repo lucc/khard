@@ -26,7 +26,8 @@ import vobject
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
 from .helpers.typing import (Date, ObjectType, PostAddress, StrList,
-    convert_to_vcard, list_to_string, string_to_date, string_to_list)
+    StrListDict, convert_to_vcard, list_to_string, string_to_date,
+    string_to_list)
 from .query import AnyQuery, Query
 
 
@@ -387,14 +388,15 @@ class VCardWrapper:
                 return group_name
 
     def _add_labelled_object(
-            self, obj_type: str, user_input, name_groups: bool = False,
+            self, obj_type: str, user_input: Union[StrList, StrListDict],
+            name_groups: bool = False,
             allowed_object_type: ObjectType = ObjectType.str) -> None:
         """Add an object to the VCARD. If user_input is a dict, the object will
          be added to a group with an ABLABEL created from the key of the dict.
 
         :param obj_type: type of object to add to the VCARD.
-        :param user_input: Contents of the object to add. If a dict
-        :type user_input: str or list(str) or dict(str) or dict(list(str))
+        :param user_input: Contents of the object to add. If a dict, the key
+            will be added as label
         :param name_groups: (Optional) If True, use the obj_type in the
             group name for labelled objects.
         :param allowed_object_type: (Optional) set the accepted return type

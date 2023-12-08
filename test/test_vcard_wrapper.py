@@ -1,6 +1,7 @@
 """Tests for the VCardWrapper class from the carddav module."""
 # pylint: disable=missing-docstring
 
+import contextlib
 import datetime
 import unittest
 from typing import Union, List, Dict
@@ -8,6 +9,7 @@ from typing import Union, List, Dict
 import vobject
 
 from khard.carddav_object import VCardWrapper
+from khard.helpers.typing import ObjectType
 
 from .helpers import vCard, TestVCardWrapper
 
@@ -525,3 +527,50 @@ class ABLabels(unittest.TestCase):
         wrapper._delete_vcard_object("FN")
         wrapper._add_organisation({'Work': ['Test Inc']})
         self.assertEqual(wrapper.formatted_name, 'Test Inc')
+
+
+class AddLabelledObject(unittest.TestCase):
+
+    @contextlib.contextmanager
+    def assertTitle(self, expected):
+        wrapper = TestVCardWrapper()
+        yield wrapper
+        self.assertEqual(wrapper._get_multi_property("TITLE"), expected)
+
+    def test_add_a_string(self):
+        with self.assertTitle(["foo"]) as wrapper:
+            wrapper._add_labelled_object("title", "foo")
+
+    def test_add_several_strings(self):
+        with self.assertTitle(["bar", "foo"]) as wrapper:
+            wrapper._add_labelled_object("title", "foo")
+            wrapper._add_labelled_object("title", "bar")
+
+    def test_add_a_list_of_strings(self):
+        with self.assertTitle([["foo","bar"]]) as wrapper:
+            wrapper._add_labelled_object("title", ["foo", "bar"],
+                                         allowed_object_type=ObjectType.list)
+
+    def test_add_string_with_label(self):
+        with self.assertTitle([{"foo": "bar"}]) as wrapper:
+            wrapper._add_labelled_object("title", {"foo": "bar"})
+
+    def test_add_strings_with_same_label(self):
+        with self.assertTitle([{"foo": "bar"}, {"foo": "baz"}]) as wrapper:
+            wrapper._add_labelled_object("title", {"foo": "bar"})
+            wrapper._add_labelled_object("title", {"foo": "baz"})
+
+    def test_add_strings_with_different_label(self):
+        with self.assertTitle([{"baz": "qux"}, {"foo": "bar"}]) as wrapper:
+            wrapper._add_labelled_object("title", {"foo": "bar"})
+            wrapper._add_labelled_object("title", {"baz": "qux"})
+
+    def test_add_a_list_with_label(self):
+        with self.assertTitle([{"foo": ["bar", "baz"]}]) as wrapper:
+            wrapper._add_labelled_object("title", {"foo": ["bar", "baz"]},
+                                         allowed_object_type=ObjectType.list)
+
+    def test_add_two_labelled_objects_at_once_fails(self):
+        wrapper = TestVCardWrapper()
+        with self.assertRaises(ValueError):
+            wrapper._add_labelled_object("title", {"a": "b", "c": "d"})

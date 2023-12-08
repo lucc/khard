@@ -15,6 +15,7 @@ class ObjectType(Enum):
 Date = Union[str, datetime]
 StrList = Union[str, List[str]]
 PostAddress = Dict[str, str]
+StrListDict = Union[Dict[str, str], Dict[str, List[str]]]
 
 
 def convert_to_vcard(name: str, value: StrList, constraint: ObjectType
