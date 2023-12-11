@@ -26,7 +26,7 @@ import vobject
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
 from .helpers.typing import (Date, ObjectType, PostAddress, StrList,
-    StrListDict, convert_to_vcard, list_to_string, string_to_date,
+    convert_to_vcard, list_to_string, string_to_date,
     string_to_list)
 from .query import AnyQuery, Query
 
@@ -387,38 +387,29 @@ class VCardWrapper:
             else:
                 return group_name
 
-    def _add_labelled_object(
-            self, obj_type: str, user_input: Union[StrList, StrListDict],
+    def _add_labelled_property(
+            self, property: str, value: StrList, label: Optional[str] = None,
             name_groups: bool = False,
             allowed_object_type: ObjectType = ObjectType.str) -> None:
-        """Add an object to the VCARD. If user_input is a dict, the object will
-         be added to a group with an ABLABEL created from the key of the dict.
+        """Add an object to the VCARD. If a label is given it will be added to
+        a group with an ABLABEL.
 
-        :param obj_type: type of object to add to the VCARD.
-        :param user_input: Contents of the object to add. If a dict, the key
-            will be added as label
-        :param name_groups: (Optional) If True, use the obj_type in the
+        :param property: type of object to add to the VCARD.
+        :param value: Contents of the object to add.
+        :param label: an optional label to add to the property
+        :param name_groups: (Optional) If True, use the property in the
             group name for labelled objects.
         :param allowed_object_type: (Optional) set the accepted return type
             for vcard attribute
         """
-        obj = self.vcard.add(obj_type)
-        if isinstance(user_input, dict):
-            if len(user_input) > 1:
-                raise ValueError(
-                    "Error: {} must be a string or a dict containing one "
-                    "key/value pair.".format(obj_type))
-            label = list(user_input)[0]
-            group_name = self._get_new_group(obj_type if name_groups else "")
+        obj = self.vcard.add(property)
+        obj.value = convert_to_vcard(property, value, allowed_object_type)
+        if label:
+            group_name = self._get_new_group(property if name_groups else "")
             obj.group = group_name
-            obj.value = convert_to_vcard(obj_type, user_input[label],
-                                         allowed_object_type)
             ablabel_obj = self.vcard.add('X-ABLABEL')
             ablabel_obj.group = group_name
             ablabel_obj.value = label
-        else:
-            obj.value = convert_to_vcard(obj_type, user_input,
-                                         allowed_object_type)
 
     def _prepare_birthday_value(self, date: Date) -> Tuple[Optional[str],
                                                            bool]:
@@ -581,12 +572,14 @@ class VCardWrapper:
         """
         return self._get_multi_property("ORG")
 
-    def _add_organisation(self, organisation: Union[StrList, StrListDict]) -> None:
+    def _add_organisation(self, organisation: StrList, label: Optional[str] = None) -> None:
         """Add one ORG entry to the underlying vcard
 
         :param organisation: the value to add
+        :param label: an optional label to add
         """
-        self._add_labelled_object("org", organisation, True, ObjectType.list)
+        self._add_labelled_property("org", organisation, label, True,
+                                    ObjectType.list)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
@@ -603,36 +596,36 @@ class VCardWrapper:
     def titles(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("TITLE")
 
-    def _add_title(self, title: Union[str, Dict[str, str]]) -> None:
-        self._add_labelled_object("title", title, True)
+    def _add_title(self, title: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("title", title, label, True)
 
     @property
     def roles(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("ROLE")
 
-    def _add_role(self, role: Union[str, Dict[str, str]]) -> None:
-        self._add_labelled_object("role", role, True)
+    def _add_role(self, role: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("role", role, label, True)
 
     @property
     def nicknames(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("NICKNAME")
 
-    def _add_nickname(self, nickname: Union[str, Dict[str, str]]) -> None:
-        self._add_labelled_object("nickname", nickname, True)
+    def _add_nickname(self, nickname: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("nickname", nickname, label, True)
 
     @property
     def notes(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("NOTE")
 
-    def _add_note(self, note: Union[str, Dict[str, str]]) -> None:
-        self._add_labelled_object("note", note, True)
+    def _add_note(self, note: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("note", note, label, True)
 
     @property
     def webpages(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("URL")
 
-    def _add_webpage(self, webpage: Union[str, Dict[str, str]]) -> None:
-        self._add_labelled_object("url", webpage, True)
+    def _add_webpage(self, webpage: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("url", webpage, label, True)
 
     @property
     def categories(self) -> Union[List[str], List[List[str]]]:
@@ -925,7 +918,7 @@ class YAMLEditable(VCardWrapper):
         return private_objects
 
     def _add_private_object(self, key: str, value: str) -> None:
-        self._add_labelled_object('X-' + key.upper(), value)
+        self._add_labelled_property('X-' + key.upper(), value)
 
     def get_formatted_anniversary(self) -> str:
         return self._format_date_object(self.anniversary, self.localize_dates)
@@ -996,8 +989,9 @@ class YAMLEditable(VCardWrapper):
         return contact_data
 
     @staticmethod
-    def _set_string_list(setter: Callable[[str], None], key: str,
-                         data: Dict[str, Union[str, List[str]]]) -> None:
+    def _set_string_list(setter: Callable[[str, Optional[str]], None],
+                         key: str, data: Dict[str, Union[str, List[str]]]
+                         ) -> None:
         """Pre-process a string or list and set each value with the given
         setter
 
@@ -1008,11 +1002,18 @@ class YAMLEditable(VCardWrapper):
         value = data.get(key)
         if value:
             if isinstance(value, str):
-                setter(value)
+                setter(value, None)
+            elif isinstance(value, dict):
+                label, val = list(value.items())[0]
+                setter(val, label)
             elif isinstance(value, list):
                 for val in value:
                     if val:
-                        setter(val)
+                        if isinstance(val, dict):
+                            label, v = list(val.items())[0]
+                            setter(v, label)
+                        else:
+                            setter(val, None)
             else:
                 raise ValueError(
                     "{} must be a string or a list of strings".format(key))
