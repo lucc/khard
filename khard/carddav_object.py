@@ -79,8 +79,8 @@ class VCardWrapper:
     email_types_v4 = ("home", "internet", "work")
     address_types_v4 = ("home", "work")
 
-    def __init__(self, vcard: vobject.vCard, version: Optional[str] = None
-                 ) -> None:
+    def __init__(self, vcard: vobject.base.Component,
+                 version: Optional[str] = None) -> None:
         """Initialize the wrapper around the given vcard.
 
         :param vcard: the vCard to wrap
@@ -878,7 +878,7 @@ class VCardWrapper:
 class YAMLEditable(VCardWrapper):
     """Conversion of vcards to YAML and updating the vcard from YAML"""
 
-    def __init__(self, vcard: vobject.vCard,
+    def __init__(self, vcard: vobject.base.Component,
                  supported_private_objects: Optional[List[str]] = None,
                  version: Optional[str] = None, localize_dates: bool = False
                  ) -> None:
@@ -1301,7 +1301,7 @@ class YAMLEditable(VCardWrapper):
 
 class CarddavObject(YAMLEditable):
 
-    def __init__(self, vcard: vobject.vCard,
+    def __init__(self, vcard: vobject.base.Component,
                  address_book: "address_book.VdirAddressBook", filename: str,
                  supported_private_objects: Optional[List[str]] = None,
                  vcard_version: Optional[str] = None,
