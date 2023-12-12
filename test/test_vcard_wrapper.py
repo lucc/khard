@@ -564,8 +564,7 @@ class GetFirst(unittest.TestCase):
 
     def test_returns_the_default(self):
         wrapper = TestVCardWrapper()
-        self.assertEqual(wrapper.get_first("title"), "")
-        self.assertEqual(wrapper.get_first("title", "foo"), "foo")
+        self.assertIsNone(wrapper.get_first("title"))
 
     def test_can_return_any_value_contradicting_type_annotation(self):
         """This is discouraged!"""

@@ -105,11 +105,7 @@ class TestEquality(unittest.TestCase):
 
 
 class TestFieldQuery(unittest.TestCase):
-    @unittest.expectedFailure
     def test_empty_field_values_match_if_the_field_is_present(self):
-        # This test currently fails because the Contact class has all
-        # attributes set because they are properties.  So the test in the query
-        # class if an attribute is present never fails.
         uid = "Some Test Uid"
         vcard1 = TestContact(uid=uid)
         vcard2 = TestContact()

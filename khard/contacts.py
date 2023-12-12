@@ -112,12 +112,19 @@ class VCardWrapper:
     def __str__(self) -> str:
         return self.formatted_name
 
-    def get_first(self, property: str, default: str = "") -> str:
+    @overload
+    def get_first(self, property: Literal["n"]) -> Optional[vobject.vcard.Name]: ...
+    @overload
+    def get_first(self, property: Literal["adr"]) -> Optional[vobject.vcard.Address]: ...
+    @overload
+    def get_first(self, property: str) -> Optional[str]: ...
+    def get_first(self, property: str) -> Union[None, str, vobject.vcard.Name,
+                                                vobject.vcard.Address]:
         """Get a property from the underlying vCard.
 
         This method should only be called for properties with cardinality \\*1
         (zero or one).  Otherwise only the first value will be returned. If the
-        property is not present a default will be returned.
+        property is not present None will be retuned.
 
         The type annotation for the return value is str but this is not
         enforced so it is up to the caller to make sure to only call this
@@ -132,7 +139,7 @@ class VCardWrapper:
         try:
             return getattr(self.vcard, property).value
         except AttributeError:
-            return default
+            return None
 
     def _get_multi_property(self, name: str) -> list:
         """Get a vCard property that can exist more than once.
@@ -259,7 +266,7 @@ class VCardWrapper:
         return [default_type]
 
     @property
-    def version(self) -> str:
+    def version(self) -> Optional[str]:
         return self.get_first("version")
 
     @version.setter
@@ -274,7 +281,7 @@ class VCardWrapper:
         version.value = convert_to_vcard("version", value, ObjectType.str)
 
     @property
-    def uid(self) -> str:
+    def uid(self) -> Optional[str]:
         return self.get_first("uid")
 
     @uid.setter
@@ -470,7 +477,7 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        return self.get_first(self._kind_attribute_name().lower(), self._default_kind)
+        return self.get_first(self._kind_attribute_name().lower()) or self._default_kind
 
     @kind.setter
     def kind(self, value: str) -> None:
@@ -487,10 +494,15 @@ class VCardWrapper:
 
     @property
     def formatted_name(self) -> str:
-        return self.get_first("fn")
+        fn = self.get_first("fn")
+        if fn:
+            return fn
+        self.formatted_name = ""
+        return self.get_first("fn") or ""
 
     @formatted_name.setter
     def formatted_name(self, value: str) -> None:
+        # TODO cardinality 1*
         """Set the FN field to the new value.
 
         All previously existing FN fields are deleted.  Version 4 of the specs
@@ -1303,9 +1315,11 @@ class YAMLEditable(VCardWrapper):
             "Note": self.notes,
             "Webpage": self.webpages,
             "Anniversary":
-                helpers.yaml_anniversary(self.anniversary, self.version),
+                helpers.yaml_anniversary(self.anniversary, self.version or
+                                         self._default_version),
             "Birthday":
-                helpers.yaml_anniversary(self.birthday, self.version),
+                helpers.yaml_anniversary(self.birthday, self.version or
+                                         self._default_version),
             "Address": helpers.yaml_addresses(
                 self.post_addresses, ["Box", "Extended", "Street", "Code",
                     "City", "Region", "Country"], defaults=["home"])
