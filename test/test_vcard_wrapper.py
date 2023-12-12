@@ -544,3 +544,33 @@ class AddLabelledObject(unittest.TestCase):
         with self.assertTitle([{"foo": ["bar", "baz"]}]) as wrapper:
             wrapper._add_labelled_property("title", ["bar", "baz"], "foo",
                                          allowed_object_type=ObjectType.list)
+
+
+class GetFirst(unittest.TestCase):
+
+    def test_get_a_property(self):
+        wrapper = TestVCardWrapper()
+        p = wrapper.vcard.add("TITLE")
+        p.value = "bar"
+        self.assertEqual(wrapper.get_first("title"), "bar")
+
+    def test_get_only_the_first_property(self):
+        wrapper = TestVCardWrapper()
+        p = wrapper.vcard.add("TITLE")
+        p.value = "baz"
+        p = wrapper.vcard.add("TITLE")
+        p.value = "bar"
+        self.assertEqual(wrapper.get_first("title"), "baz")
+
+    def test_returnes_the_default(self):
+        wrapper = TestVCardWrapper()
+        self.assertEqual(wrapper.get_first("title"), "")
+        self.assertEqual(wrapper.get_first("title", "foo"), "foo")
+
+    def test_can_return_any_value_contradicting_type_annotation(self):
+        """This is discouraged!"""
+        wrapper = TestVCardWrapper()
+        p = wrapper.vcard.add("N")
+        p.value = vobject.vcard.Name(family='Foo', given='Bar')
+        self.assertEqual(wrapper.get_first("n"),
+                         vobject.vcard.Name(family='Foo', given='Bar'))

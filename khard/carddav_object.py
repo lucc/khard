@@ -100,16 +100,27 @@ class VCardWrapper:
     def __str__(self) -> str:
         return self.formatted_name
 
-    def _get_string_field(self, field: str) -> str:
-        """Get a string field from the underlying vCard.
+    def get_first(self, property: str, default: str = "") -> str:
+        """Get a property from the underlying vCard.
 
-        :param field: the field value to get
-        :returns: the field value or the empty string
+        This method should only be called for properties with cardinality *1
+        (zero or one).  Otherwise only the first value will be returned. If the
+        property is not present a default will be returned.
+
+        The type annotation for the return value is str but this is not
+        enforced so it is up to the caller to make sure to only call this
+        method for properties where the underlying vobject library returns a
+        str.
+
+        :param property: the field value to get
+        :param default: the value to return if the vCard does not have this
+            property
+        :returns: the property value or the default
         """
         try:
-            return getattr(self.vcard, field).value
+            return getattr(self.vcard, property).value
         except AttributeError:
-            return ""
+            return default
 
     def _get_multi_property(self, name: str) -> List:
         """Get a vCard property that can exist more than once.
@@ -237,7 +248,7 @@ class VCardWrapper:
 
     @property
     def version(self) -> str:
-        return self._get_string_field("version")
+        return self.get_first("version")
 
     @version.setter
     def version(self, value: str) -> None:
@@ -252,7 +263,7 @@ class VCardWrapper:
 
     @property
     def uid(self) -> str:
-        return self._get_string_field("uid")
+        return self.get_first("uid")
 
     @uid.setter
     def uid(self, value: str) -> None:
@@ -447,12 +458,12 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        kind = self._get_string_field("kind") or self._default_kind
+        kind = self.get_first("kind", self._default_kind)
         return kind if kind != "org" else "organisation"
 
     @property
     def formatted_name(self) -> str:
-        return self._get_string_field("fn")
+        return self.get_first("fn")
 
     @formatted_name.setter
     def formatted_name(self, value: str) -> None:
