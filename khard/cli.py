@@ -186,9 +186,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
-    field_argument = FieldsArgument('index', 'name', 'phone', 'email',
-                                    *CarddavObject.get_properties(),
-                                    nested=True)
+    field_argument = FieldsArgument(
+        'index', 'name', 'phone', 'email', 'address_book',
+        *CarddavObject.get_properties(), nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
         help="Comma separated list of fields to show "
