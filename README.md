@@ -69,7 +69,7 @@ If you need a console based calendar too, try out
 [khal](https://github.com/pimutils/khal).
 
   [blog]: http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/
-  [sad]: http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/
+  [sad]: https://alessandrorossini.org/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/
   [repos]: https://repology.org/project/khard/versions
   [repos-badge]: https://repology.org/badge/tiny-repos/khard.svg
   [docs]: https://khard.readthedocs.io/en/latest/
