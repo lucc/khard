@@ -682,11 +682,10 @@ class VCardWrapper:
             string_to_list(type, ","), self.phone_types_v4 if
             self.version == "4.0" else self.phone_types_v3)
         if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for phone number " + number +
-                             " is missing.")
+            raise ValueError(f"Label for phone number {number} is missing.")
         if len(custom_types) > 1:
-            raise ValueError("Error: phone number " + number + " got more "
-                             "than one custom label: " +
+            raise ValueError(f"Phone number {number} got more than one "
+                             "custom label: " +
                              list_to_string(custom_types, ", "))
         phone_obj = self.vcard.add('tel')
         if self.version == "4.0":
@@ -737,10 +736,9 @@ class VCardWrapper:
             string_to_list(type, ","), self.email_types_v4 if
             self.version == "4.0" else self.email_types_v3)
         if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for email address " + address +
-                             " is missing.")
+            raise ValueError(f"Label for email address {address} is missing.")
         if len(custom_types) > 1:
-            raise ValueError("Error: email address " + address + " got more "
+            raise ValueError(f"Email address {address} got more "
                              "than one custom label: " +
                              list_to_string(custom_types, ", "))
         email_obj = self.vcard.add('email')
@@ -838,12 +836,10 @@ class VCardWrapper:
             string_to_list(type, ","), self.address_types_v4
             if self.version == "4.0" else self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
-            raise ValueError(f"Error: label for post address {street} is "
-                             "missing.")
+            raise ValueError(f"Label for post address {street} is missing.")
         if len(custom_types) > 1:
-            raise ValueError(f"Error: post address {street} got more "
-                             "than one custom " "label: " +
-                             list_to_string(custom_types, ", "))
+            raise ValueError(f"Post address {street} got more than one custom "
+                             "label: " + list_to_string(custom_types, ", "))
         adr_obj = self.vcard.add('adr')
         adr_obj.value = vobject.vcard.Address(
             box=convert_to_vcard("box address field", box, ObjectType.both),
@@ -978,14 +974,13 @@ class YAMLEditable(VCardWrapper):
             raise ValueError(err)
         else:
             if not contact_data:
-                raise ValueError("Error: Found no contact information")
+                raise ValueError("Found no contact information")
 
         # check for available data
         # at least enter name or organisation
         if not (contact_data.get("First name") or contact_data.get("Last name")
                 or contact_data.get("Organisation")):
-            raise ValueError(
-                "Error: You must either enter a name or an organisation")
+            raise ValueError("You must either enter a name or an organisation")
         return contact_data
 
     @staticmethod
@@ -1023,7 +1018,7 @@ class YAMLEditable(VCardWrapper):
         if not new:
             return
         if not isinstance(new, str):
-            raise ValueError("Error: {} must be a string object.".format(key))
+            raise ValueError(f"{key} must be a string object.")
         if re.match(r"^text[\s]*=.*$", new):
             if self.version == "4.0":
                 v1 = ', '.join(x.strip() for x in re.split(r"text[\s]*=", new)
@@ -1031,13 +1026,13 @@ class YAMLEditable(VCardWrapper):
                 if v1:
                     setattr(self, target, v1)
                 return
-            raise ValueError("Error: Free text format for {} only usable with "
-                             "vcard version 4.0.".format(key.lower()))
+            raise ValueError(f"Free text format for {key.lower()} only usable "
+                             "with vcard version 4.0.")
         if re.match(r"^--\d\d-?\d\d$", new) and self.version != "4.0":
             raise ValueError(
-                "Error: {} format --mm-dd and --mmdd only usable with "
+                f"{key} format --mm-dd and --mmdd only usable with "
                 "vcard version 4.0. You may use 1900 as placeholder, if "
-                "the year is unknown.".format(key))
+                "the year is unknown.")
         try:
             v2 = string_to_date(new)
             if v2:
@@ -1045,9 +1040,9 @@ class YAMLEditable(VCardWrapper):
             return
         except ValueError:
             pass
-        raise ValueError("Error: Wrong {} format or invalid date\n"
+        raise ValueError(f"Wrong {key.lower()} format or invalid date\n"
                          "Use format yyyy-mm-dd or "
-                         "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
+                         "yyyy-mm-ddTHH:MM:SS")
 
     def update(self, input: str) -> None:
         """Update this vcard with some yaml input
@@ -1106,11 +1101,10 @@ class YAMLEditable(VCardWrapper):
                                 self._add_phone_number(type, number)
                     else:
                         raise ValueError(
-                            "Error: got no number or list of numbers for the "
-                            "phone number type " + type)
+                            "Got no number or list of numbers for the "
+                            f"phone number type {type}")
             else:
-                raise ValueError(
-                    "Error: missing type value for phone number field")
+                raise ValueError("Missing type value for phone number field")
 
         # email
         self._delete_vcard_object("EMAIL")
@@ -1126,11 +1120,10 @@ class YAMLEditable(VCardWrapper):
                                 self.add_email(type, email)
                     else:
                         raise ValueError(
-                            "Error: got no email or list of emails for the "
-                            "email address type " + type)
+                            "Got no email or list of emails for the "
+                            f"email address type {type}")
             else:
-                raise ValueError(
-                    "Error: missing type value for email address field")
+                raise ValueError("Missing type value for email address field")
 
         # post addresses
         self._delete_vcard_object("ADR")
@@ -1161,16 +1154,13 @@ class YAMLEditable(VCardWrapper):
                                         post_adr.get("Country", ""))
                             else:
                                 raise ValueError(
-                                    "Error: one of the " + type + " type "
-                                    "address list items does not contain an "
-                                    "address")
+                                    f"One of the {type} type address "
+                                    "list items does not contain an address")
                     else:
-                        raise ValueError(
-                            "Error: got no address or list of addresses for "
-                            "the post address type " + type)
+                        raise ValueError("Got no address or list of addresses "
+                                         f"for the post address type {type}")
             else:
-                raise ValueError(
-                    "Error: missing type value for post address field")
+                raise ValueError("Missing type value for post address field")
 
         # categories
         self._delete_vcard_object("CATEGORIES")
@@ -1197,7 +1187,7 @@ class YAMLEditable(VCardWrapper):
                                 self._add_category(sub_category)
             else:
                 raise ValueError(
-                    "Error: category must be a string or a list of strings")
+                    "Category must be a string or a list of strings")
 
         # urls
         self._delete_vcard_object("URL")
@@ -1227,16 +1217,15 @@ class YAMLEditable(VCardWrapper):
                                 if value:
                                     self._add_private_object(key, value)
                         else:
-                            raise ValueError(
-                                "Error: got no value or list of values for "
-                                "the private object " + key)
+                            raise ValueError("Got no value or list of values "
+                                             f"for the private object {key}")
                     else:
                         raise ValueError(
-                            "Error: private object key " + key + " was "
-                            "changed.\nSupported private keys: " + ', '.join(
+                            f"Private object key {key} was changed.\n"
+                            "Supported private keys: " + ', '.join(
                                 self.supported_private_objects))
             else:
-                raise ValueError("Error: private objects must consist of a "
+                raise ValueError("Private objects must consist of a "
                                  "key : value pair.")
 
         # notes

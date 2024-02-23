@@ -32,18 +32,16 @@ def convert_to_vcard(name: str, value: StrList, constraint: ObjectType
         return value.strip()
     if isinstance(value, list):
         if constraint == ObjectType.str:
-            raise ValueError("Error: " + name + " must contain a string.")
+            raise ValueError(f"{name} must contain a string.")
         if not all(isinstance(entry, str) for entry in value):
-            raise ValueError("Error: " + name +
-                             " must not contain a nested list")
+            raise ValueError(f"{name} must not contain a nested list")
         # filter out empty list items and strip leading and trailing space
         return [x.strip() for x in value if x.strip()]
     if constraint == ObjectType.str:
-        raise ValueError("Error: " + name + " must be a string.")
+        raise ValueError(f"{name} must be a string.")
     if constraint == ObjectType.list:
-        raise ValueError("Error: " + name + " must be a list with strings.")
-    raise ValueError("Error: " + name +
-                     " must be a string or a list with strings.")
+        raise ValueError(f"{name} must be a list with strings.")
+    raise ValueError(f"{name} must be a string or a list with strings.")
 
 
 def list_to_string(input: Union[str, List], delimiter: str) -> str:

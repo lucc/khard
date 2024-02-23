@@ -391,7 +391,7 @@ def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
                 abook, data, config.private_objects,
                 config.preferred_vcard_version, config.localize_dates)
         except ValueError as err:
-            sys.exit(str(err))
+            sys.exit(f"Error: {err}")
         else:
             new_contact.write_to_file()
         if open_editor:
@@ -639,7 +639,7 @@ def add_email_to_contact(name: str, email_address: str,
         try:
             selected_vcard.add_email(label, email_address)
         except ValueError as err:
-            print(err)
+            print(f"Error: {err}")
         else:
             break
     # save to disk
@@ -951,7 +951,7 @@ def modify_subcommand(selected_vcard: CarddavObject,
                 selected_vcard, input_from_stdin_or_file,
                 config.localize_dates)
         except ValueError as err:
-            sys.exit(str(err))
+            sys.exit(f"Error: {err}")
         if selected_vcard == new_contact:
             print("Nothing changed\n\n{}".format(new_contact.pretty()))
         else:

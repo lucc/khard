@@ -198,7 +198,7 @@ class Editor:
                 try:
                     return yaml2card(modified_template)
                 except ValueError as err:
-                    print("\n{}\n".format(err))
+                    print(f"\nError: {err}\n")
                     if not confirm("Do you want to open the editor again?"):
                         print("Canceled")
                         return None
