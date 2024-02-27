@@ -96,6 +96,12 @@ class EmptyFieldsAndSpaces(unittest.TestCase):
             x = parse_yaml(empty_note)
         self.assertListEqual(x.notes, [])
 
+    def test_empty_kind_in_yaml_input(self):
+        empty_kind = "First name: foo\nKind:"
+        with mock.patch("khard.carddav_object.logger"):
+            x = parse_yaml(empty_kind)
+        self.assertEqual(x.kind, 'individual')
+
 
 class yaml_ablabel(unittest.TestCase):
 
@@ -223,6 +229,22 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         data = to_yaml(data)
         card.update(data)
         self.assertEqual(card.formatted_name, fn)
+
+    def test_update_kind(self):
+        card = create_test_card(version="4.0")
+        self.assertEqual(card.kind, 'individual')
+        data = {'Kind': 'organisation'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.kind, 'organisation')
+
+    def test_update_kind_on_3_0_card(self):
+        card = create_test_card()
+        self.assertEqual(card.kind, 'individual')
+        data = {'Kind': 'organisation'}
+        data = to_yaml(data)
+        card.update(data)
+        self.assertEqual(card.kind, 'organisation')
 
     def test_parse_field(self):
         """Test round-trip of a field to/from YAML"""

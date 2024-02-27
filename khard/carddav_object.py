@@ -342,9 +342,9 @@ class VCardWrapper:
             anniversary.params['VALUE'] = ['text']
             anniversary.value = value
         elif self.version == "4.0":
-            self.vcard.add('anniversary').value = value
+            self.vcard.add('ANNIVERSARY').value = value
         else:
-            self.vcard.add('x-anniversary').value = value
+            self.vcard.add('X-ANNIVERSARY').value = value
 
     def _get_ablabel(self, item: vobject.base.ContentLine) -> str:
         """Get an ABLABEL for a specified item in the vCard.
@@ -447,8 +447,16 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        kind = self._get_string_field("kind") or self._default_kind
+        kind = self._get_string_field(self._kind_attribute_name().lower()) or self._default_kind
         return kind if kind != "org" else "organisation"
+
+    @kind.setter
+    def kind(self, value: str) -> None:
+        value = value if value != "organisation" else "org"
+        self.vcard.add(self._kind_attribute_name()).value = value
+
+    def _kind_attribute_name(self) -> str:
+        return "{}KIND".format("" if self.version == "4.0" else "X-")
 
     @property
     def formatted_name(self) -> str:
@@ -1079,6 +1087,13 @@ class YAMLEditable(VCardWrapper):
         self._set_string_list(self._add_organisation, "Organisation",
                               contact_data)
 
+        # kind
+        self._delete_vcard_object(self._kind_attribute_name())
+        try:
+            self.kind = contact_data["Kind"]
+        except KeyError:
+            pass
+
         # role
         self._delete_vcard_object("ROLE")
         self._set_string_list(self._add_role, "Role", contact_data)
@@ -1413,6 +1428,11 @@ class CarddavObject(YAMLEditable):
                 self._get_additional_names() + self._get_last_names() + \
                 self._get_name_suffixes()
             strings.append("Full name: {}".format(list_to_string(names, " ")))
+
+        # kind
+        if self.kind:
+            strings.append("Kind: {}".format(self.kind))
+
         # organisation
         if self.organisations:
             strings += helpers.convert_to_yaml(
