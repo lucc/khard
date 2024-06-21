@@ -5,9 +5,10 @@ from datetime import datetime
 from functools import reduce
 from operator import and_, or_
 import re
-from typing import cast, Any, Dict, List, Optional, Union
+from typing import cast, Any, Dict, List, Optional, TYPE_CHECKING, Union
 
-from . import carddav_object
+if TYPE_CHECKING:
+    from . import carddav_object
 
 # constants
 FIELD_PHONE_NUMBERS = "phone_numbers"
@@ -342,6 +343,8 @@ def parse(string: str) -> Union[TermQuery, FieldQuery]:
     :returns: a FieldQuery if the string contains a valid field specifier, a
         TermQuery otherwise
     """
+    from . import carddav_object
+
     if ":" in string:
         field, term = string.split(":", maxsplit=1)
         if field == "name":
