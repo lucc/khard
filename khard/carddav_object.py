@@ -16,19 +16,21 @@ import re
 import sys
 import time
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, \
-    TypeVar, Union, Sequence, overload
+    TYPE_CHECKING, TypeVar, Union, Sequence, overload
 
 from atomicwrites import atomic_write
 from ruamel import yaml
 from ruamel.yaml import YAML
 import vobject
 
-from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
 from .helpers.typing import (Date, ObjectType, PostAddress, StrList,
     convert_to_vcard, list_to_string, string_to_date,
     string_to_list)
 from .query import AnyQuery, Query
+
+if TYPE_CHECKING:
+    from . import address_book
 
 
 logger = logging.getLogger(__name__)
