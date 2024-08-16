@@ -6,8 +6,7 @@
     packages.x86_64-linux.default =
       nixpkgs.legacyPackages.x86_64-linux.khard.overridePythonAttrs (oa: rec {
         name = "khard-${version}";
-        version = "${oa.version}post-dev+${if self ? shortRev then self.shortRev else "dirty"}";
-        SETUPTOOLS_SCM_PRETEND_VERSION = version;
+        version = "${oa.version}post-dev+${self.shortRev or self.dirtyShortRev}";
         postInstall = ''
           ${oa.postInstall}
           cp -r $src/khard/data $out/lib/python*/site-packages/khard
