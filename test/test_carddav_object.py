@@ -80,5 +80,5 @@ class MultiPropertyKey(unittest.TestCase):
 
     def test_all_strings_are_sorted_before_dicts(self) -> None:
         my_list = ["a", {"c": "d"}, "e", {"f": "g"}]
-        my_list.sort(key=multi_property_key)
+        my_list.sort(key=multi_property_key) # type: ignore[arg-type]
         self.assertEqual(my_list, ["a", "e", {"c": "d"}, {"f": "g"}])
