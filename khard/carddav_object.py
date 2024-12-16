@@ -906,9 +906,9 @@ class YAMLEditable(VCardWrapper):
     # getters and setters
     #####################
 
-    def _get_private_objects(self) -> Dict[str, List[str]]:
+    def _get_private_objects(self) -> Dict[str, List[Union[str, Dict[str, str]]]]:
         supported = [x.lower() for x in self.supported_private_objects]
-        private_objects: Dict[str, List[str]] = {}
+        private_objects: Dict[str, List[Union[str, Dict[str, str]]]] = {}
         for child in self.vcard.getChildren():
             lower = child.name.lower()
             if lower.startswith("x-") and lower[2:] in supported:

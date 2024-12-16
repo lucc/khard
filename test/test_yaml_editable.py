@@ -83,3 +83,15 @@ class PrivateObjects(unittest.TestCase):
         ye._add_private_object("bar", "foo")
         self.assertEqual(ye._get_private_objects(), {"foo": ["bar"]})
         self.assertIn("X-BAR:foo", ye.vcard.serialize())
+
+    def test_private_objects_can_have_an_ablabel(self) -> None:
+        ye = TestYAMLEditable()
+        ye.supported_private_objects = ["foo"]
+        foo = ye.vcard.add("X-FOO")
+        foo.value = "bar"
+        foo.group = "1"
+        label = ye.vcard.add("X-ABLABEL")
+        label.value = "baz"
+        label.group = "1"
+        result = ye._get_private_objects()
+        self.assertEqual(result, {"foo": [{"baz": "bar"}]})
