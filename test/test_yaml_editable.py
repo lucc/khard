@@ -95,3 +95,21 @@ class PrivateObjects(unittest.TestCase):
         label.group = "1"
         result = ye._get_private_objects()
         self.assertEqual(result, {"foo": [{"baz": "bar"}]})
+
+    def test_private_objects_with_ablabels_are_sorted_by_ablabel(self) -> None:
+        ye = TestYAMLEditable()
+        ye.supported_private_objects = ["foo"]
+        foo1 = ye.vcard.add("X-FOO")
+        foo1.value = "AAA"
+        foo1.group = "1"
+        label1 = ye.vcard.add("X-ABLABEL")
+        label1.value = "yyy"
+        label1.group = "1"
+        foo2 = ye.vcard.add("X-FOO")
+        foo2.value = "BBB"
+        foo2.group = "2"
+        label2 = ye.vcard.add("X-ABLABEL")
+        label2.value = "xxx"
+        label2.group = "2"
+        result = ye._get_private_objects()
+        self.assertEqual(result, {"foo": [{"xxx": "BBB"}, {"yyy": "AAA"}]})

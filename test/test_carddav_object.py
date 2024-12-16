@@ -6,7 +6,7 @@ import datetime
 import unittest
 from unittest import mock
 
-from khard.carddav_object import CarddavObject
+from khard.carddav_object import CarddavObject, multi_property_key
 
 
 class CarddavObjectFormatDateObject(unittest.TestCase):
@@ -57,3 +57,28 @@ class Photo(unittest.TestCase):
         self.assertEqual(uri_stuff, 'data:image/png;base64')
         data = base64.decodebytes(data.encode())
         self.assertEqual(data[:8], self.PNG_HEADER)
+
+
+class MultiPropertyKey(unittest.TestCase):
+    """Test for the multi_property_key helper function"""
+
+    def test_strings_are_in_the_first_sort_group(self) -> None:
+        group, _key = multi_property_key("some string")
+        self.assertEqual(group, 0)
+
+    def test_dicts_are_in_the_second_sort_group(self) -> None:
+        group, _key = multi_property_key({"some": "dict"})
+        self.assertEqual(group, 1)
+
+    def test_strings_are_their_own_keys(self) -> None:
+        _group, key = multi_property_key("some string")
+        self.assertEqual(key, "some string")
+
+    def test_dicts_are_keyed_by_the_first_key(self) -> None:
+        _group, key = multi_property_key({"some": "dict", "more": "stuff"})
+        self.assertEqual(key, "some")
+
+    def test_all_strings_are_sorted_before_dicts(self) -> None:
+        my_list = ["a", {"c": "d"}, "e", {"f": "g"}]
+        my_list.sort(key=multi_property_key)
+        self.assertEqual(my_list, ["a", "e", {"c": "d"}, {"f": "g"}])
