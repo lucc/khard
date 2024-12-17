@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Union
+from typing import Union
 
 
 class ObjectType(Enum):
@@ -13,8 +13,8 @@ class ObjectType(Enum):
 
 # some type aliases
 Date = Union[str, datetime]
-StrList = Union[str, List[str]]
-PostAddress = Dict[str, str]
+StrList = Union[str, list[str]]
+PostAddress = dict[str, str]
 
 
 def convert_to_vcard(name: str, value: StrList, constraint: ObjectType
@@ -44,7 +44,7 @@ def convert_to_vcard(name: str, value: StrList, constraint: ObjectType
     raise ValueError(f"{name} must be a string or a list with strings.")
 
 
-def list_to_string(input: Union[str, List], delimiter: str) -> str:
+def list_to_string(input: Union[str, list], delimiter: str) -> str:
     """converts list to string recursively so that nested lists are supported
 
     :param input: a list of strings and lists of strings (and so on recursive)
@@ -57,7 +57,7 @@ def list_to_string(input: Union[str, List], delimiter: str) -> str:
     return input
 
 
-def string_to_list(input: Union[str, List[str]], delimiter: str) -> List[str]:
+def string_to_list(input: Union[str, list[str]], delimiter: str) -> list[str]:
     if isinstance(input, list):
         return input
     return [x.strip() for x in input.split(delimiter)]

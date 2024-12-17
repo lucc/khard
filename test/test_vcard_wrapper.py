@@ -4,7 +4,7 @@
 import contextlib
 import datetime
 import unittest
-from typing import Union, List, Dict
+from typing import Union
 
 import vobject
 
@@ -362,7 +362,7 @@ class TypedProperties(unittest.TestCase):
         wrapper = TestVCardWrapper()
         components = ('box', 'extended', 'street', 'code', 'city', 'region',
                       'country')
-        expected: Dict[str, Union[str, List[str]]] = {item: item
+        expected: dict[str, Union[str, list[str]]] = {item: item
                                                       for item in components}
         expected[key] = ["a", "b"]
         index = components.index(key)

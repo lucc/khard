@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import reduce
 from operator import and_, or_
 import re
-from typing import cast, Any, Dict, List, Optional, Union
+from typing import cast, Any, Optional, Union
 
 from . import carddav_object
 
@@ -137,7 +137,7 @@ class FieldQuery(TermQuery):
             return self._match_union(getattr(thing, self._field))
         return False
 
-    def _match_union(self, value: Union[str, datetime, List, Dict[str, Any]]
+    def _match_union(self, value: Union[str, datetime, list, dict[str, Any]]
                      ) -> bool:
         if isinstance(value, str):
             return self.match(value)
@@ -179,7 +179,7 @@ class AndQuery(Query):
         terms = [x.get_term() for x in self._queries]
         if None in terms:
             return None
-        return "".join(cast(List[str], terms))
+        return "".join(cast(list[str], terms))
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, AndQuery) \
@@ -189,7 +189,7 @@ class AndQuery(Query):
         return hash((AndQuery, frozenset(self._queries)))
 
     @staticmethod
-    def reduce(queries: List[Query], start: Optional[Query] = None) -> Query:
+    def reduce(queries: list[Query], start: Optional[Query] = None) -> Query:
         return reduce(and_, queries, start or AnyQuery())
 
     def __str__(self) -> str:
@@ -220,7 +220,7 @@ class OrQuery(Query):
         return hash((OrQuery, frozenset(self._queries)))
 
     @staticmethod
-    def reduce(queries: List[Query], start: Optional[Query] = None) -> Query:
+    def reduce(queries: list[Query], start: Optional[Query] = None) -> Query:
         return reduce(or_, queries, start or NullQuery())
 
     def __str__(self) -> str:
@@ -272,7 +272,7 @@ class PhoneNumberQuery(FieldQuery):
         else:
             return super().match(thing)
 
-    def _match_union(self, value: Union[str, datetime, List, Dict[str, Any]]
+    def _match_union(self, value: Union[str, datetime, list, dict[str, Any]]
                      ) -> bool:
         if isinstance(value, str):
             if self._term in value.lower() \

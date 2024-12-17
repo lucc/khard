@@ -10,7 +10,7 @@ import operator
 import os
 import sys
 import textwrap
-from typing import cast, Callable, Dict, Iterable, List, Optional, Union
+from typing import cast, Callable, Iterable, Optional, Union
 
 from unidecode import unidecode
 
@@ -153,16 +153,16 @@ def copy_contact(contact: CarddavObject, target_address_book: VdirAddressBook,
 
 
 def list_address_books(address_books: Union[AddressBookCollection,
-                                            List[VdirAddressBook]]) -> None:
+                                            list[VdirAddressBook]]) -> None:
     table = [["Index", "Address book"]]
     for index, address_book in enumerate(address_books, 1):
         table.append([cast(str, index), address_book.name])
     print(helpers.pretty_print(table))
 
 
-def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
+def list_contacts(vcard_list: list[CarddavObject], fields: Iterable[str] = (),
                   parsable: bool = False) -> None:
-    selected_address_books: List[VdirAddressBook] = []
+    selected_address_books: list[VdirAddressBook] = []
     selected_kinds = set()
     for contact in vcard_list:
         if contact.address_book not in selected_address_books:
@@ -224,7 +224,7 @@ def list_contacts(vcard_list: List[CarddavObject], fields: Iterable[str] = (),
         print(helpers.pretty_print(table))
 
 
-def list_with_headers(the_list: List[str], *headers: str) -> None:
+def list_with_headers(the_list: list[str], *headers: str) -> None:
     table = [list(headers)]
     for row in the_list:
         table.append(row.split("\t"))
@@ -232,7 +232,7 @@ def list_with_headers(the_list: List[str], *headers: str) -> None:
 
 
 def choose_address_book_from_list(header: str, abooks: Union[
-                                  AddressBookCollection, List[VdirAddressBook]]
+                                  AddressBookCollection, list[VdirAddressBook]]
                                   ) -> Optional[VdirAddressBook]:
     """Let the user select one of the given address books
 
@@ -250,7 +250,7 @@ def choose_address_book_from_list(header: str, abooks: Union[
     return interactive.select(abooks)
 
 
-def choose_vcard_from_list(header: str, vcards: List[CarddavObject],
+def choose_vcard_from_list(header: str, vcards: list[CarddavObject],
                            include_none: bool = False
                            ) -> Optional[CarddavObject]:
     """Let the user select a contact from a list
@@ -271,7 +271,7 @@ def choose_vcard_from_list(header: str, vcards: List[CarddavObject],
 
 def get_contact_list(address_books: Union[VdirAddressBook,
                                           AddressBookCollection],
-                     query: Query) -> List[CarddavObject]:
+                     query: Query) -> list[CarddavObject]:
     """Find contacts in the given address book grouped, sorted and reversed
     according to the loaded configuration.
 
@@ -285,7 +285,7 @@ def get_contact_list(address_books: Union[VdirAddressBook,
 
 
 def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
-                  group: bool = False, sort: str = "first_name") -> List[
+                  group: bool = False, sort: str = "first_name") -> list[
                       CarddavObject]:
     """Sort a list of contacts
 
@@ -296,7 +296,7 @@ def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
         "last_name", "formatted_name"
     :returns: sorted contact list
     """
-    keys: List[Callable] = []
+    keys: list[Callable] = []
     if group:
         keys.append(operator.attrgetter("address_book.name"))
     if sort == "first_name":
@@ -312,7 +312,7 @@ def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
                   key=lambda x: [unidecode(key(x)).lower() for key in keys])
 
 
-def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
+def prepare_search_queries(args: Namespace) -> dict[str, Query]:
     """Prepare the search query string from the given command line args.
 
     Each address book can get a search query string to filter vCards before
@@ -323,8 +323,8 @@ def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
     :returns: a dict mapping abook names to their loading queries
     """
     # get all possible search queries for address book parsing
-    source_queries: List[Query] = []
-    target_queries: List[Query] = []
+    source_queries: list[Query] = []
+    target_queries: list[Query] = []
     if "source_search_terms" in args:
         source_queries.append(args.source_search_terms)
     if "search_terms" in args:
@@ -338,20 +338,20 @@ def prepare_search_queries(args: Namespace) -> Dict[str, Query]:
     # Get all possible search queries for address book parsing, always
     # depending on the fact if the address book is used to find source or
     # target contacts or both.
-    queries: Dict[str, List[Query]] = {
+    queries: dict[str, list[Query]] = {
         abook.name: [] for abook in config.abooks}
     for name in queries:
         if "addressbook" in args and name in args.addressbook:
             queries[name].append(source_query)
         if "target_addressbook" in args and name in args.target_addressbook:
             queries[name].append(target_query)
-    queries2: Dict[str, Query] = {
+    queries2: dict[str, Query] = {
         n: OrQuery.reduce(q) for n, q in queries.items()}
     logger.debug('Created query: %s', queries)
     return queries2
 
 
-def generate_contact_list(args: Namespace) -> List[CarddavObject]:
+def generate_contact_list(args: Namespace) -> list[CarddavObject]:
     """Find the contact list with which we will work later on
 
     :param args: the command line arguments
@@ -647,7 +647,7 @@ def add_email_to_contact(name: str, email_address: str,
     print("Done.\n\n{}".format(selected_vcard.pretty()))
 
 
-def find_email_addresses(text: str, fields: List[str]) -> List[Address]:
+def find_email_addresses(text: str, fields: list[str]) -> list[Address]:
     """Search the text for email addresses in the given fields.
 
     :param text: the text to search for email addresses
@@ -656,7 +656,7 @@ def find_email_addresses(text: str, fields: List[str]) -> List[Address]:
     """
     message = message_from_string(text, policy=SMTP_POLICY)
 
-    def extract_addresses(header) -> List[Address]:
+    def extract_addresses(header) -> list[Address]:
         if header and isinstance(header, (AddressHeader, Group)):
             return list(header.addresses)
         return []
@@ -677,7 +677,7 @@ def find_email_addresses(text: str, fields: List[str]) -> List[Address]:
 def add_email_subcommand(
         text: str,
         abooks: AddressBookCollection,
-        fields: List[str],
+        fields: list[str],
         skip_already_added: bool) -> None:
     """Add a new email address to contacts, creating new contacts if necessary.
 
@@ -704,7 +704,7 @@ def add_email_subcommand(
     print("No more email addresses")
 
 
-def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
+def birthdays_subcommand(vcard_list: list[CarddavObject], parsable: bool
                          ) -> None:
     """Print birthday contact table.
 
@@ -721,7 +721,7 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
                     if isinstance(x.birthday, datetime.datetime)
                     else (0, 0, x.birthday))
     # add to string list
-    birthday_list: List[str] = []
+    birthday_list: list[str] = []
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
@@ -750,7 +750,7 @@ def birthdays_subcommand(vcard_list: List[CarddavObject], parsable: bool
         sys.exit(1)
 
 
-def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
+def phone_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
         parsable: bool) -> None:
     """Print a phone application friendly contact table.
 
@@ -763,7 +763,7 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    numbers: List[str] = []
+    numbers: list[str] = []
     for vcard in vcard_list:
         field_line_list = []
         for type, number_list in sorted(vcard.phone_numbers.items(),
@@ -791,7 +791,7 @@ def phone_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
 
 
 def post_address_subcommand(search_terms: Query,
-        vcard_list: List[CarddavObject], parsable: bool
+        vcard_list: list[CarddavObject], parsable: bool
                             ) -> None:
     """Print a contact table with all postal / mailing addresses
 
@@ -804,7 +804,7 @@ def post_address_subcommand(search_terms: Query,
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    addresses: List[str] = []
+    addresses: list[str] = []
     for vcard in vcard_list:
         name = formatter.get_special_field(vcard, "name")
         # create post address line list
@@ -835,7 +835,7 @@ def post_address_subcommand(search_terms: Query,
         sys.exit(1)
 
 
-def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
+def email_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
                      parsable: bool, remove_first_line: bool) -> None:
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
@@ -858,7 +858,7 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
     formatter = Formatter(config.display, config.preferred_email_address_type,
                           config.preferred_phone_number_type,
                           config.show_nicknames, parsable)
-    emails: List[str] = []
+    emails: list[str] = []
     for vcard in vcard_list:
         field_line_list = []
         for type, email_list in sorted(vcard.emails.items(),
@@ -891,7 +891,7 @@ def email_subcommand(search_terms: Query, vcard_list: List[CarddavObject],
 
 
 def _filter_email_post_or_phone_number_results(search_terms: Query,
-        field_line_list: List[str]) -> List[str]:
+        field_line_list: list[str]) -> list[str]:
     """Filter the created output of phone_subcommand, post_address_subcommand
     and email_subcommand by the given search term again.
     If no match is found, return the complete input list
@@ -907,8 +907,8 @@ def _filter_email_post_or_phone_number_results(search_terms: Query,
     return matched_line_list if matched_line_list else field_line_list
 
 
-def list_subcommand(vcard_list: List[CarddavObject], parsable: bool,
-                    fields: List[str]) -> None:
+def list_subcommand(vcard_list: list[CarddavObject], parsable: bool,
+                    fields: list[str]) -> None:
     """Print a user friendly contacts table.
 
     :param vcard_list: the vCards to print
@@ -984,7 +984,7 @@ def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
         selected_vcard.formatted_name))
 
 
-def merge_subcommand(vcards: List[CarddavObject],
+def merge_subcommand(vcards: list[CarddavObject],
                      abooks: AddressBookCollection, search_terms: Query
                      ) -> None:
     """Merge two contacts into one.
@@ -1019,7 +1019,7 @@ def merge_subcommand(vcards: List[CarddavObject],
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
-def copy_or_move_subcommand(action: str, vcards: List[CarddavObject],
+def copy_or_move_subcommand(action: str, vcards: list[CarddavObject],
                             target_address_books: AddressBookCollection
                             ) -> None:
     """Copy or move a contact to a different address book.
@@ -1094,7 +1094,7 @@ def copy_or_move_subcommand(action: str, vcards: List[CarddavObject],
                 break
 
 
-def main(argv: List[str] = sys.argv[1:]) -> None:
+def main(argv: list[str] = sys.argv[1:]) -> None:
     args, conf = cli.init(argv)
 
     # store the config instance in the module level variable

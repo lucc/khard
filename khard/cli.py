@@ -3,7 +3,6 @@
 import argparse
 import logging
 import sys
-from typing import List, Tuple
 
 from .actions import Actions
 from .carddav_object import CarddavObject
@@ -33,7 +32,7 @@ class FieldsArgument:
         self._choices = sorted(choices)
         self._nested = nested
 
-    def __call__(self, argument: str) -> List[str]:
+    def __call__(self, argument: str) -> list[str]:
         ret = []
         for candidate in argument.split(","):
             candidate = candidate.lower()
@@ -48,7 +47,7 @@ class FieldsArgument:
         return ret
 
 
-def create_parsers() -> Tuple[argparse.ArgumentParser,
+def create_parsers() -> tuple[argparse.ArgumentParser,
                               argparse.ArgumentParser]:
     """Create two argument parsers.
 
@@ -349,7 +348,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     return first_parser, parser
 
 
-def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
+def parse_args(argv: list[str]) -> tuple[argparse.Namespace, Config]:
     """Parse the command line arguments and return the namespace that was
     creates by argparse.ArgumentParser.parse_args().
 
@@ -437,7 +436,7 @@ def merge_args_into_config(args: argparse.Namespace, config: Config) -> Config:
     return config
 
 
-def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
+def init(argv: list[str]) -> tuple[argparse.Namespace, Config]:
     """Initialize khard by parsing the command line and reading the config file
 
     :param argv: the command line arguments

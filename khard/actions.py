@@ -1,6 +1,6 @@
 """Names and aliases for the subcommands on the command line"""
 
-from typing import Dict, Generator, Iterable, List, Optional
+from typing import Generator, Iterable, Optional
 
 
 class Actions:
@@ -8,7 +8,7 @@ class Actions:
     """A class to manage the names and aliases of the command line
     subcommands."""
 
-    action_map: Dict[str, List[str]] = {
+    action_map: dict[str, list[str]] = {
         "add-email":    [],
         "addressbooks": ["abooks"],
         "birthdays":    ["bdays"],
@@ -42,7 +42,7 @@ class Actions:
         return None
 
     @classmethod
-    def get_aliases(cls, action: str) -> List[str]:
+    def get_aliases(cls, action: str) -> list[str]:
         """Find all aliases for the given action.  If there is no such action,
         None is returned.
 

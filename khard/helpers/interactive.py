@@ -6,8 +6,7 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Generator, List, Optional, Sequence, \
-    TypeVar, Union
+from typing import Callable, Generator, Optional, Sequence, TypeVar, Union
 
 from ..carddav_object import CarddavObject
 
@@ -32,7 +31,7 @@ def confirm(message: str, accept_enter_key: bool = True) -> bool:
                         "no" if accept_enter_key else None)
 
 
-def ask(message: str, choices: List[str], default: Optional[str] = None,
+def ask(message: str, choices: list[str], default: Optional[str] = None,
         help: Optional[str] = None) -> str:
     """Ask the user to select one of the given choices
 
@@ -120,8 +119,8 @@ class Editor:
 
     """Wrapper around subprocess.Popen to edit and merge files."""
 
-    def __init__(self, editor: Union[str, List[str]],
-                 merge_editor: Union[str, List[str]]) -> None:
+    def __init__(self, editor: Union[str, list[str]],
+                 merge_editor: Union[str, list[str]]) -> None:
         self.editor = [editor] if isinstance(editor, str) else editor
         self.merge_editor = [merge_editor] if isinstance(merge_editor, str) \
             else merge_editor

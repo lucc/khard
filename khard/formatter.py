@@ -1,7 +1,5 @@
 """Formatting and sorting of contacts"""
 
-from typing import Dict, List
-
 from .carddav_object import CarddavObject
 
 
@@ -17,8 +15,8 @@ class Formatter:
     LAST = "last_name"
     FORMAT = "formatted_name"
 
-    def __init__(self, display: str, preferred_email: List[str],
-                 preferred_phone: List[str], show_nicknames: bool,
+    def __init__(self, display: str, preferred_email: list[str],
+                 preferred_phone: list[str], show_nicknames: bool,
                  parsable: bool) -> None:
         self._display = display
         self._preferred_email = preferred_email
@@ -27,7 +25,7 @@ class Formatter:
         self._parsable = parsable
 
     @staticmethod
-    def format_labeled_field(field: Dict[str, List[str]], preferred: List[str]
+    def format_labeled_field(field: dict[str, list[str]], preferred: list[str]
                              ) -> str:
         """Format a labeled field from a vCard for display, the first entry
         under the preferred label will be returned

@@ -15,8 +15,8 @@ import os
 import re
 import sys
 import time
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, \
-    TypeVar, Union, Sequence, overload
+from typing import Any, Callable, Literal, Optional, TypeVar, Union, \
+    Sequence, overload
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -36,13 +36,13 @@ T = TypeVar("T")
 
 
 @overload
-def multi_property_key(item: str) -> Tuple[Literal[0], str]: ...
+def multi_property_key(item: str) -> tuple[Literal[0], str]: ...
 @overload
-def multi_property_key(item: Dict[T, Any]) -> Tuple[Literal[1], T]: ...
+def multi_property_key(item: dict[T, Any]) -> tuple[Literal[1], T]: ...
 @overload
-def multi_property_key(item: Union[str, Dict[T, Any]]) -> Tuple[Union[Literal[0], Literal[1]], Union[str, T]]: ...
-def multi_property_key(item: Union[str, Dict[T, Any]]
-                       ) -> Tuple[int, Union[T, str]]:
+def multi_property_key(item: Union[str, dict[T, Any]]) -> tuple[Union[Literal[0], Literal[1]], Union[str, T]]: ...
+def multi_property_key(item: Union[str, dict[T, Any]]
+                       ) -> tuple[int, Union[T, str]]:
     """Key function to pass to sorted(), allowing sorting of dicts with lists
     and strings. Dicts will be sorted by their label, after other types.
 
@@ -124,7 +124,7 @@ class VCardWrapper:
         except AttributeError:
             return default
 
-    def _get_multi_property(self, name: str) -> List:
+    def _get_multi_property(self, name: str) -> list:
         """Get a vCard property that can exist more than once.
 
         It does not matter what the individual vcard properties store as their
@@ -172,7 +172,7 @@ class VCardWrapper:
 
     @staticmethod
     def _parse_type_value(types: Sequence[str], supported_types: Sequence[str]
-                          ) -> Tuple[List[str], List[str], int]:
+                          ) -> tuple[list[str], list[str], int]:
         """Parse type value of phone numbers, email and post addresses.
 
         :param types: list of type values
@@ -201,7 +201,7 @@ class VCardWrapper:
         return (standard_types, custom_types, pref)
 
     def _get_types_for_vcard_object(self, object: vobject.base.ContentLine,
-                                    default_type: str) -> List[str]:
+                                    default_type: str) -> list[str]:
         """get list of types for phone number, email or post address
 
         :param object: vcard class object
@@ -424,7 +424,7 @@ class VCardWrapper:
             ablabel_obj.group = group_name
             ablabel_obj.value = label
 
-    def _prepare_birthday_value(self, date: Date) -> Tuple[Optional[str],
+    def _prepare_birthday_value(self, date: Date) -> tuple[Optional[str],
                                                            bool]:
         """Prepare a value to be stored in a BDAY or ANNIVERSARY attribute.
 
@@ -490,7 +490,7 @@ class VCardWrapper:
             final = ""
         self.vcard.add("FN").value = final
 
-    def _get_names_part(self, part: str) -> List[str]:
+    def _get_names_part(self, part: str) -> list[str]:
         """Get some part of the "N" entry in the vCard as a list
 
         :param part: the name to get e.g. "prefix" or "given"
@@ -506,19 +506,19 @@ class VCardWrapper:
                 return []
         return the_list if isinstance(the_list, list) else [the_list]
 
-    def _get_name_prefixes(self) -> List[str]:
+    def _get_name_prefixes(self) -> list[str]:
         return self._get_names_part("prefix")
 
-    def _get_first_names(self) -> List[str]:
+    def _get_first_names(self) -> list[str]:
         return self._get_names_part("given")
 
-    def _get_additional_names(self) -> List[str]:
+    def _get_additional_names(self) -> list[str]:
         return self._get_names_part("additional")
 
-    def _get_last_names(self) -> List[str]:
+    def _get_last_names(self) -> list[str]:
         return self._get_names_part("family")
 
-    def _get_name_suffixes(self) -> List[str]:
+    def _get_name_suffixes(self) -> list[str]:
         return self._get_names_part("suffix")
 
     def get_first_name_last_name(self) -> str:
@@ -535,7 +535,7 @@ class VCardWrapper:
         """Compute the full name of the contact by joining the last names and
         then after a comma the first and additional names together
         """
-        last_names: List[str] = []
+        last_names: list[str] = []
         if self._get_last_names():
             last_names += self._get_last_names()
         first_and_additional_names = self._get_first_names() + \
@@ -579,7 +579,7 @@ class VCardWrapper:
             suffix=convert_to_vcard("name suffix", suffix, ObjectType.both))
 
     @property
-    def organisations(self) -> List[Union[List[str], Dict[str, List[str]]]]:
+    def organisations(self) -> list[Union[list[str], dict[str, list[str]]]]:
         """
         :returns: list of organisations, sorted alphabetically
         """
@@ -606,42 +606,42 @@ class VCardWrapper:
             showas_obj.value = "COMPANY"
 
     @property
-    def titles(self) -> List[Union[str, Dict[str, str]]]:
+    def titles(self) -> list[Union[str, dict[str, str]]]:
         return self._get_multi_property("TITLE")
 
     def _add_title(self, title: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("title", title, label, True)
 
     @property
-    def roles(self) -> List[Union[str, Dict[str, str]]]:
+    def roles(self) -> list[Union[str, dict[str, str]]]:
         return self._get_multi_property("ROLE")
 
     def _add_role(self, role: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("role", role, label, True)
 
     @property
-    def nicknames(self) -> List[Union[str, Dict[str, str]]]:
+    def nicknames(self) -> list[Union[str, dict[str, str]]]:
         return self._get_multi_property("NICKNAME")
 
     def _add_nickname(self, nickname: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("nickname", nickname, label, True)
 
     @property
-    def notes(self) -> List[Union[str, Dict[str, str]]]:
+    def notes(self) -> list[Union[str, dict[str, str]]]:
         return self._get_multi_property("NOTE")
 
     def _add_note(self, note: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("note", note, label, True)
 
     @property
-    def webpages(self) -> List[Union[str, Dict[str, str]]]:
+    def webpages(self) -> list[Union[str, dict[str, str]]]:
         return self._get_multi_property("URL")
 
     def _add_webpage(self, webpage: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("url", webpage, label, True)
 
     @property
-    def categories(self) -> Union[List[str], List[List[str]]]:
+    def categories(self) -> Union[list[str], list[list[str]]]:
         category_list = []
         for child in self.vcard.getChildren():
             if child.name == "CATEGORIES":
@@ -652,7 +652,7 @@ class VCardWrapper:
             return category_list[0]
         return sorted(category_list)
 
-    def _add_category(self, categories: List[str]) -> None:
+    def _add_category(self, categories: list[str]) -> None:
         """Add categories to the vCard
 
         :param categories:
@@ -662,11 +662,11 @@ class VCardWrapper:
                                                 ObjectType.list)
 
     @property
-    def phone_numbers(self) -> Dict[str, List[str]]:
+    def phone_numbers(self) -> dict[str, list[str]]:
         """
         :returns: dict of type and phone number list
         """
-        phone_dict: Dict[str, List[str]] = {}
+        phone_dict: dict[str, list[str]] = {}
         for child in self.vcard.getChildren():
             if child.name == "TEL":
                 # phone types
@@ -727,11 +727,11 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
-    def emails(self) -> Dict[str, List[str]]:
+    def emails(self) -> dict[str, list[str]]:
         """
         :returns: dict of type and email address list
         """
-        email_dict: Dict[str, List[str]] = {}
+        email_dict: dict[str, list[str]] = {}
         for child in self.vcard.getChildren():
             if child.name == "EMAIL":
                 type = list_to_string(
@@ -778,11 +778,11 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
-    def post_addresses(self) -> Dict[str, List[PostAddress]]:
+    def post_addresses(self) -> dict[str, list[PostAddress]]:
         """
         :returns: dict of type and post address list
         """
-        post_adr_dict: Dict[str, List[PostAddress]] = {}
+        post_adr_dict: dict[str, list[PostAddress]] = {}
         for child in self.vcard.getChildren():
             if child.name == "ADR":
                 type = list_to_string(self._get_types_for_vcard_object(
@@ -803,8 +803,8 @@ class VCardWrapper:
                 list_to_string(x['street'], " ").lower()))
         return post_adr_dict
 
-    def get_formatted_post_addresses(self) -> Dict[str, List[str]]:
-        formatted_post_adr_dict: Dict[str, List[str]] = {}
+    def get_formatted_post_addresses(self) -> dict[str, list[str]]:
+        formatted_post_adr_dict: dict[str, list[str]] = {}
         for type, post_adr_list in self.post_addresses.items():
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
@@ -888,7 +888,7 @@ class YAMLEditable(VCardWrapper):
     """Conversion of vcards to YAML and updating the vcard from YAML"""
 
     def __init__(self, vcard: vobject.base.Component,
-                 supported_private_objects: Optional[List[str]] = None,
+                 supported_private_objects: Optional[list[str]] = None,
                  version: Optional[str] = None, localize_dates: bool = False
                  ) -> None:
         """Initialize attributes needed for yaml conversions
@@ -908,9 +908,9 @@ class YAMLEditable(VCardWrapper):
     # getters and setters
     #####################
 
-    def _get_private_objects(self) -> Dict[str, List[Union[str, Dict[str, str]]]]:
+    def _get_private_objects(self) -> dict[str, list[Union[str, dict[str, str]]]]:
         supported = [x.lower() for x in self.supported_private_objects]
-        private_objects: Dict[str, List[Union[str, Dict[str, str]]]] = {}
+        private_objects: dict[str, list[Union[str, dict[str, str]]]] = {}
         for child in self.vcard.getChildren():
             lower = child.name.lower()
             if lower.startswith("x-") and lower[2:] in supported:
@@ -971,7 +971,7 @@ class YAMLEditable(VCardWrapper):
         return contents
 
     @staticmethod
-    def _parse_yaml(input: str) -> Dict:
+    def _parse_yaml(input: str) -> dict:
         """Parse a YAML document into a dictionary and validate the data to
         some degree.
 
@@ -998,7 +998,7 @@ class YAMLEditable(VCardWrapper):
 
     @staticmethod
     def _set_string_list(setter: Callable[[str, Optional[str]], None],
-                         key: str, data: Dict[str, Union[str, List[str]]]
+                         key: str, data: dict[str, Union[str, list[str]]]
                          ) -> None:
         """Pre-process a string or list and set each value with the given
         setter
@@ -1026,7 +1026,7 @@ class YAMLEditable(VCardWrapper):
                 raise ValueError(
                     "{} must be a string or a list of strings".format(key))
 
-    def _set_date(self, target: str, key: str, data: Dict) -> None:
+    def _set_date(self, target: str, key: str, data: dict) -> None:
         new = data.get(key)
         if not new:
             return
@@ -1305,7 +1305,7 @@ class CarddavObject(YAMLEditable):
 
     def __init__(self, vcard: vobject.base.Component,
                  address_book: "address_book.VdirAddressBook", filename: str,
-                 supported_private_objects: Optional[List[str]] = None,
+                 supported_private_objects: Optional[list[str]] = None,
                  vcard_version: Optional[str] = None,
                  localize_dates: bool = False) -> None:
         """Initialize the vcard object.
@@ -1332,7 +1332,7 @@ class CarddavObject(YAMLEditable):
 
     @classmethod
     def new(cls, address_book: "address_book.VdirAddressBook",
-            supported_private_objects: Optional[List[str]] = None,
+            supported_private_objects: Optional[list[str]] = None,
             version: Optional[str] = None, localize_dates: bool = False
             ) -> "CarddavObject":
         """Create a new CarddavObject from scratch"""
@@ -1347,7 +1347,7 @@ class CarddavObject(YAMLEditable):
     @classmethod
     def from_file(cls, address_book: "address_book.VdirAddressBook",
                   filename: str, query: Query = AnyQuery(),
-                  supported_private_objects: Optional[List[str]] = None,
+                  supported_private_objects: Optional[list[str]] = None,
                   localize_dates: bool = False) -> Optional["CarddavObject"]:
         """Load a CarddavObject object from a .vcf file if the plain file
         matches the query.
@@ -1379,7 +1379,7 @@ class CarddavObject(YAMLEditable):
 
     @classmethod
     def from_yaml(cls, address_book: "address_book.VdirAddressBook", yaml: str,
-                  supported_private_objects: Optional[List[str]] = None,
+                  supported_private_objects: Optional[list[str]] = None,
                   version: Optional[str] = None, localize_dates: bool = False
                   ) -> "CarddavObject":
         """Use this if you want to create a new contact from user input."""
@@ -1531,7 +1531,7 @@ class CarddavObject(YAMLEditable):
             logger.error("Can not remove vCard file: %s", err)
 
     @classmethod
-    def get_properties(cls) -> List[str]:
+    def get_properties(cls) -> list[str]:
         """Return the property names that are defined on this class."""
         return [name for name in dir(CarddavObject)
                 if isinstance(getattr(CarddavObject, name), property)]

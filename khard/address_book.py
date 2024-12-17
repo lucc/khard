@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 import glob
 import logging
 import os
-from typing import Dict, Generator, Iterator, List, Optional, Union, overload
+from typing import Generator, Iterator, Optional, Union, overload
 
 import vobject.base
 
@@ -42,8 +42,8 @@ class AddressBook(metaclass=abc.ABCMeta):
     def __init__(self, name: str) -> None:
         """:param name: the name to identify the address book"""
         self._loaded = False
-        self.contacts: Dict[str, "carddav_object.CarddavObject"] = {}
-        self._short_uids: Optional[Dict[str,
+        self.contacts: dict[str, "carddav_object.CarddavObject"] = {}
+        self._short_uids: Optional[dict[str,
                                         "carddav_object.CarddavObject"]] = None
         self.name = name
 
@@ -83,7 +83,7 @@ class AddressBook(metaclass=abc.ABCMeta):
             if query.match(contact):
                 yield contact
 
-    def get_short_uid_dict(self, query: Query = AnyQuery()) -> Dict[
+    def get_short_uid_dict(self, query: Query = AnyQuery()) -> dict[
             str, "carddav_object.CarddavObject"]:
         """Create a dictionary of shortened UIDs for all contacts.
 
@@ -154,7 +154,7 @@ class VdirAddressBook(AddressBook):
     """
 
     def __init__(self, name: str, path: str,
-                 private_objects: Optional[List[str]] = None,
+                 private_objects: Optional[list[str]] = None,
                  localize_dates: bool = True, skip: bool = False) -> None:
         """
         :param name: the name to identify the address book
@@ -236,7 +236,7 @@ class AddressBookCollection(AddressBook, Mapping, Sequence):
     this class to use all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name: str, abooks: List[VdirAddressBook]) -> None:
+    def __init__(self, name: str, abooks: list[VdirAddressBook]) -> None:
         """
         :param name: the name to identify the address book
         :param abooks: a list of address books to combine in this collection
@@ -272,9 +272,9 @@ class AddressBookCollection(AddressBook, Mapping, Sequence):
     @overload
     def __getitem__(self, key: Union[int, str]) -> VdirAddressBook: ...
     @overload
-    def __getitem__(self, key: slice) -> List[VdirAddressBook]: ...
+    def __getitem__(self, key: slice) -> list[VdirAddressBook]: ...
     def __getitem__(self, key: Union[int, str, slice]
-                    ) -> Union[VdirAddressBook, List[VdirAddressBook]]:
+                    ) -> Union[VdirAddressBook, list[VdirAddressBook]]:
         """Get one or more of the backing address books by name or index
 
         :param key: the name of the address book to get or its index
