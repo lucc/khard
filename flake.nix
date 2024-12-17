@@ -1,23 +1,37 @@
 {
   description = "Development flake for khard";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  outputs = { self, nixpkgs }: {
-
-    packages.x86_64-linux.default =
-      nixpkgs.legacyPackages.x86_64-linux.khard.overridePythonAttrs (oa: rec {
-        name = "khard-${version}";
-        version = "${oa.version}post-dev+${self.shortRev or self.dirtyShortRev}";
-        postInstall = ''
-          ${oa.postInstall}
-          cp -r $src/khard/data $out/lib/python*/site-packages/khard
-        '';
-        src = ./.;
-        pyproject = true;
-        doCheck = true;
-        checkPhase = "python -m unittest -v";
-      });
-    devShells.x86_64-linux.release =
-      let pkgs = nixpkgs.legacyPackages.x86_64-linux; in
+  outputs = { self, nixpkgs }: let
+    system = "x86_64-linux";
+    pkgs = nixpkgs.legacyPackages.${system};
+    inherit (builtins) map head split replaceStrings mapAttrs;
+    pyproject = builtins.fromTOML (builtins.readFile ./pyproject.toml);
+    clean = d: replaceStrings ["."] ["-"] (head (split "[^a-zA-Z0-9._-]" d));
+    build = map clean pyproject.build-system.requires;
+    deps = map clean pyproject.project.dependencies;
+    opts = mapAttrs (name: map clean) pyproject.project.optional-dependencies;
+    get = names: pkgs: map (name: pkgs.${name}) names;
+    khard = { python3 }: python3.pkgs.buildPythonApplication {
+      pname = "khard";
+      version = "0.dev+${self.shortRev or self.dirtyShortRev}";
+      pyproject = true;
+      src = ./.;
+      nativeBuildInputs =
+        get (["sphinxHook"] ++ build ++ opts.doc) python3.pkgs;
+      sphinxBuilders = [ "man" ];
+      propagatedBuildInputs = get deps python3.pkgs;
+      postInstall = ''
+        install -D misc/zsh/_khard $out/share/zsh/site-functions/_khard
+        cp -r $src/khard/data $out/lib/python*/site-packages/khard
+      '';
+      # see https://github.com/scheibler/khard/issues/263
+      preCheck = "export COLUMNS=80";
+      pythonImportsCheck = [ "khard" ];
+      checkPhase = "python3 -W error -m unittest -v";
+  };
+  in {
+    packages.${system}.default = pkgs.callPackage khard {};
+    devShells.${system}.release =
       pkgs.mkShell {
         packages = with pkgs; [
           git
@@ -29,7 +43,7 @@
             setuptools
             setuptools-scm
             wheel
-          ] ++ self.packages.x86_64-linux.default.propagatedBuildInputs))
+          ] ++ self.packages.${system}.default.propagatedBuildInputs))
         ];
         shellHook = ''
           cat <<EOF
@@ -43,5 +57,9 @@
           EOF
         '';
       };
+    checks.${system} = {
+      tests-python-311 = pkgs.callPackage khard { python3 = pkgs.python311; };
+      tests-python-312 = pkgs.callPackage khard { python3 = pkgs.python312; };
+    };
   };
 }
