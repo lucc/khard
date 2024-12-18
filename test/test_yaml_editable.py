@@ -6,7 +6,6 @@ from .helpers import TestYAMLEditable
 
 
 class ToYamlConversion(unittest.TestCase):
-
     def test_yaml_quoted_special_characters(self):
         yaml_editable = TestYAMLEditable()
         yaml_editable.supported_private_objects = ["Twitter"]
@@ -22,10 +21,12 @@ Private       :
 
     def test_dumping_multiple_home_addresses_to_yaml(self):
         yaml_editable = TestYAMLEditable()
-        yaml_editable._add_post_address("home", "", "", "street 1", "zip1",
-                                        "city1", "", "")
-        yaml_editable._add_post_address("home", "", "", "street 2", "zip2",
-                                        "city2", "", "")
+        yaml_editable._add_post_address(
+            "home", "", "", "street 1", "zip1", "city1", "", ""
+        )
+        yaml_editable._add_post_address(
+            "home", "", "", "street 2", "zip2", "city2", "", ""
+        )
         yaml_dump = yaml_editable.to_yaml()
         self.assertIn("zip1", yaml_dump)
         self.assertIn("zip2", yaml_dump)
@@ -47,9 +48,7 @@ Private       :
         self.assertIn("home2", yaml_dump)
 
 
-
 class ExceptionHandling(unittest.TestCase):
-
     def test_duplicate_key_errors_are_translated_to_value_errors(self):
         ye = TestYAMLEditable()
         with self.assertRaises(ValueError):
@@ -62,7 +61,6 @@ class ExceptionHandling(unittest.TestCase):
 
 
 class PrivateObjects(unittest.TestCase):
-
     def test_can_add_strings(self) -> None:
         ye = TestYAMLEditable()
         ye.supported_private_objects = ["foo"]
