@@ -8,13 +8,13 @@ can find more information about khard and the whole synchronization process
 [here][blog].
 
 Warning: If you want to create or modify contacts with khard, beware that the
-vcard standard is very inconsistent and lacks interoperability. Different
+vCard standard is very inconsistent and lacks interoperability. Different
 actors in that sector have defined their own extensions and even produce
 non-standard output. A good example is the type value, which is tied to phone
 numbers, email and post addresses. Khard tries to avoid such incompatibilities
 but if you sync your contacts with an Android or iOS device, expect problems.
 You are on the safe side, if you only use khard to read contacts. For further
-information about the vcard compatibility issues have a look into [this blog
+information about the vCard compatibility issues have a look into [this blog
 post][sad].
 
 Installation
@@ -49,9 +49,9 @@ Development
 
 [![ci-badge]][ci]
 
-Khard is developed [on GitHub](https://github.com/scheibler/khard) where you
-are welcome to post [bug reports](https://github.com/scheibler/khard/issues)
-and [feature requests](https://github.com/scheibler/khard/pulls).  Also see the
+Khard is developed [on GitHub](https://github.com/lucc/khard) where you
+are welcome to post [bug reports](https://github.com/lucc/khard/issues)
+and [feature requests](https://github.com/lucc/khard/pulls).  Also see the
 [notes for contributors](CONTRIBUTING.rst).
 
 Authors
@@ -59,17 +59,17 @@ Authors
 
 Khard was started by [Eric Scheibler](http://eric-scheibler.de) and is
 currently maintained by @lucc.  [Several
-people](https://github.com/scheibler/khard/graphs/contributors) have
+people](https://github.com/lucc/khard/graphs/contributors) have
 contributed over the years.
 
 Related projects
 ----------------
 
 If you need a console based calendar too, try out
-[khal](https://github.com/geier/khal).
+[khal](https://github.com/pimutils/khal).
 
   [blog]: http://eric-scheibler.de/en/blog/2014/10/Sync-calendars-and-address-books-between-Linux-and-Android/
-  [sad]: http://alessandrorossini.org/2012/11/15/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/
+  [sad]: https://alessandrorossini.org/the-sad-story-of-the-vcard-format-and-its-lack-of-interoperability/
   [repos]: https://repology.org/project/khard/versions
   [repos-badge]: https://repology.org/badge/tiny-repos/khard.svg
   [docs]: https://khard.readthedocs.io/en/latest/

@@ -7,9 +7,9 @@ from .carddav_object import CarddavObject
 
 class Formatter:
 
-    """A formtter for CarddavObject.
+    """A formatter for CarddavObject.
 
-    It recieves some settings on initialisation which influence the formatting
+    It receives some settings on initialisation which influence the formatting
     of the contact.
     """
 
@@ -29,7 +29,7 @@ class Formatter:
     @staticmethod
     def format_labeled_field(field: Dict[str, List[str]], preferred: List[str]
                              ) -> str:
-        """Format a labeled field from a vcard for display, the first entry
+        """Format a labeled field from a vCard for display, the first entry
         under the preferred label will be returned
 
         :param field: the labeled field, this must not be empty!

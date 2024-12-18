@@ -9,3 +9,4 @@ doc/source/examples/template.yaml
 .pytest_cache
 __pycache__
 khard.egg-info
+result

@@ -6,9 +6,8 @@ be converted to proper "unit" tests.
 """
 # pylint: disable=missing-docstring
 
-# TODO We are still missing high level tests for the add-email and merge
-# subcommands.  They depend heavily on user interaction and are hard to test in
-# their current form.
+# TODO We are still missing high level tests for the merge subcommand.  It
+# depends heavily on user interaction and is hard to test in its current form.
 
 import io
 import pathlib
@@ -21,7 +20,7 @@ from ruamel.yaml import YAML
 
 from khard import cli
 from khard import config
-from khard.helpers.interactive import EditState, Editor
+from khard.helpers.interactive import Editor
 from khard import khard
 
 from .helpers import TmpConfig, mock_stream
@@ -39,8 +38,8 @@ class HelpOption(unittest.TestCase):
 
     def _test(self, args, expect):
         """Test the command line args and compare the prefix of the output."""
-        with self.assertRaises(SystemExit):
-            with mock_stream() as stdout:
+        with mock_stream() as stdout:
+            with self.assertRaises(SystemExit):
                 cli.parse_args(args)
         text = stdout.getvalue()
         self.assertRegex(text, expect)
@@ -165,8 +164,8 @@ class ListingCommands(unittest.TestCase):
         self.assertListEqual(text2, expected)
 
     def test_regex_special_chars_are_not_special(self):
-        with self.assertRaises(SystemExit):
-            with mock_stream() as stdout:
+        with mock_stream() as stdout:
+            with self.assertRaises(SystemExit):
                 khard.main(['list', 'uid.'])
         self.assertEqual(stdout.getvalue(), "Found no contacts\n")
 
@@ -487,8 +486,7 @@ class Merge(unittest.TestCase):
     def test_merge_with_exact_uid_search_terms(self):
         with TmpConfig(["contact1.vcf", "contact2.vcf"]):
             with mock.patch('khard.khard.merge_existing_contacts') as merge:
-                run_main("merge", "--uid", "testuid1", "--target-uid",
-                         "testuid2")
+                run_main("merge", "uid:testuid1", "--target", "uid:testuid2")
         merge.assert_called_once()
         # unpack the call arguments
         call = merge.mock_calls[0]
@@ -503,9 +501,6 @@ class Merge(unittest.TestCase):
 
 class AddEmail(unittest.TestCase):
 
-    # FIXME the new code from fdc441cf asks for confirmation in
-    # khard.add_email_to_contact on line 419
-    @unittest.skip("unexpected read from stdin blocks the test")
     @TmpConfig(["contact1.vcf", "contact2.vcf"])
     def test_contact_is_found_if_name_matches(self):
         email = [
@@ -517,12 +512,49 @@ class AddEmail(unittest.TestCase):
         with tempfile.NamedTemporaryFile("w") as tmp:
             tmp.writelines(email)
             tmp.flush()
-            with mock.patch("khard.khard.confirm", lambda x: True):
-                with mock.patch("builtins.input", lambda x: ""):
-                    run_main("add-email", "--input-file", tmp.name)
-        stdout = run_main("list", "--fields=emails.internet.0")
-        addr = stdout.getvalue().splitlines()[-1].strip()
-        self.assertEqual(addr, "third@example.com")
+            with mock.patch("builtins.input",
+                            mock.Mock(side_effect=["y", "y", ""])):
+                run_main("add-email", "--input-file", tmp.name)
+        emails = khard.config.abooks.get_short_uid_dict()["testuid2"].emails
+        self.assertEqual(emails["internet"][0], "third@example.com")
+
+    @TmpConfig(["contact1.vcf", "contact2.vcf"])
+    def test_adding_several_email_addresses(self):
+        email = [
+            "From: third <third@example.com>\n",
+            "To: anybody@example.com\n",
+            "\n",
+            "text\n"
+        ]
+        with tempfile.NamedTemporaryFile("w") as tmp:
+            tmp.writelines(email)
+            tmp.flush()
+            with mock.patch("builtins.input", mock.Mock(side_effect=[
+                    "y", "y", "label1", "y", "third contact", "y", "label2"])):
+                run_main("add-email", "--headers=from,to", "--input-file",
+                         tmp.name)
+        emails = khard.config.abooks.get_short_uid_dict()["testuid2"].emails
+        self.assertEqual(emails["label1"][0], "third@example.com")
+        self.assertEqual(emails["label2"][0], "anybody@example.com")
+
+    @TmpConfig(["contact1.vcf", "contact2.vcf"])
+    def test_email_addresses_can_be_skipped(self):
+        email = [
+            "From: third <third@example.com>\n",
+            "To: anybody@example.com\n",
+            "\n",
+            "text\n"
+        ]
+        with tempfile.NamedTemporaryFile("w") as tmp:
+            tmp.writelines(email)
+            tmp.flush()
+            with mock.patch("builtins.input", lambda _: "n"):
+                run_main("add-email", "--input-file", tmp.name)
+        contacts = khard.config.abooks.get_short_uid_dict().values()
+        emails1 = [c.emails for c in contacts if c.emails]
+        emails2 = [list(e.values()) for e in emails1]
+        emails = [eee for e in emails2 for ee in e for eee in ee]
+        self.assertNotIn("third@example.com", emails)
 
 
 if __name__ == "__main__":

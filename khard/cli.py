@@ -8,7 +8,7 @@ from typing import List, Tuple
 from .actions import Actions
 from .carddav_object import CarddavObject
 from .config import Config, ConfigError
-from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, parse
+from .query import AndQuery, AnyQuery, parse
 from .version import version as khard_version
 
 
@@ -18,16 +18,16 @@ logger = logging.getLogger(__name__)
 class FieldsArgument:
     """A factory to create callable objects for add_argument's type= parameter.
 
-    The object can parse comma seperated strings into list of strings, and can
+    The object can parse comma separated strings into list of strings, and can
     also check if the single elements are spelled correctly.
     """
 
     def __init__(self, *choices: str, nested: bool = False) -> None:
         """Initialize the factory
 
-        :param choices: the comma seperated strings must be one of these
-        :param nested: if this is true the comma seperated strings may
-            designate nested fields and only the first component (seperated by
+        :param choices: the comma separated strings must be one of these
+        :param nested: if this is true the comma separated strings may
+            designate nested fields and only the first component (separated by
             a dot) must match on of the choices
         """
         self._choices = sorted(choices)
@@ -52,7 +52,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
                               argparse.ArgumentParser]:
     """Create two argument parsers.
 
-    The first parser is manly used to find the config file which can than be
+    The first parser is mainly used to find the config file which can than be
     used to set some default values on the second parser.  The second parser
     can parse the remainder of the command line with the subcommand and all
     further options and arguments.
@@ -156,12 +156,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "large address books. Beware that this option could lead "
         "to incomplete results.")
     default_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true",
-        help="DEPRECATED use the new query syntax instead")
-    default_search_parser.add_argument(
-        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use the new query syntax instead")
-    default_search_parser.add_argument(
         "search_terms", nargs="*", metavar="search terms", type=parse,
         default=[], help="search in specified or all fields to find matching "
         "contact")
@@ -172,17 +166,8 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         "large address books. Beware that this option could lead "
         "to incomplete results.")
     merge_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true",
-        help="DEPRECATED use the new query syntax instead")
-    merge_search_parser.add_argument(
         "-t", "--target-contact", "--target", type=parse,
         help="search for a matching target contact")
-    merge_search_parser.add_argument(
-        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use the new query syntax instead")
-    merge_search_parser.add_argument(
-        "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
-        help="DEPRECATED use -t with the new query syntax instead")
     merge_search_parser.add_argument(
         "source_search_terms", nargs="*", metavar="source", type=parse,
         default=[],
@@ -201,9 +186,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
-    field_argument = FieldsArgument('index', 'name', 'phone', 'email',
-                                    *CarddavObject.get_properties(),
-                                    nested=True)
+    field_argument = FieldsArgument(
+        'index', 'name', 'phone', 'email', 'address_book',
+        *CarddavObject.get_properties(), nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
         help="Comma separated list of fields to show "
@@ -372,13 +357,13 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     :returns: the namespace parsed from the command line
     """
     first_parser, parser = create_parsers()
-    # Parese the command line with the first argument parser.  It will handle
+    # Parse the command line with the first argument parser.  It will handle
     # the config option (its main job) and also the help, version and debug
     # options as these do not depend on anything else.
     args = first_parser.parse_args(argv)
     remainder = args.remainder
 
-    # Set the loglevel to debug if given on the command line.  This is done
+    # Set the log level to debug if given on the command line.  This is done
     # before parsing the config file to make it possible to debug the parsing
     # of the config file.
     if "debug" in args and args.debug:
@@ -389,6 +374,8 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         config = Config(args.config)
     except ConfigError as err:
         parser.exit(3, "Error in config file: {}\n".format(err))
+    except OSError as err:
+        parser.exit(3, "Error reading config file: {}\n".format(err))
     logger.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with
@@ -418,47 +405,14 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     args.skip_unparsable = skip
     logger.debug("second args=%s", args)
 
-    # An integrity check for some options.
-    if "uid" in args and args.uid and (
-            ("search_terms" in args and args.search_terms) or
-            ("source_search_terms" in args and args.source_search_terms)):
-        # If an uid was given we require that no search terms where given.
-        parser.error("You can not give arbitrary search terms and --uid at the"
-                     " same time.")
-    if "target_uid" in args and args.target_uid and args.target_contact:
-        parser.error("You can not give arbitrary target search terms and "
-                     "--target-uid at the same time.")
-    # Deprecation workaround
-    if "strict_search" in args and args.strict_search:
-        logger.error("Deprecated option --strict-search, use the new query "
-                     "syntax instead.")
-        if "search_terms" in args:
-            args.search_terms = [NameQuery(t.get_term()) for t in
-                                 args.search_terms]
-        if "source_search_terms" in args:
-            args.source_search_terms = [NameQuery(t.get_term()) for t in
-                                        args.source_search_terms]
-        if "taget_search_terms" in args:
-            args.taget_search_terms = [NameQuery(t.get_term()) for t in
-                                       args.taget_search_terms]
-
-    # Build conjunctive queries.  If uid was given the list of search terms
-    # will be empty.  If no uid was given it will be None.
+    # Build conjunctive queries.
     if "source_search_terms" in args:
-        args.source_search_terms = AndQuery.reduce(args.source_search_terms,
-                                                   args.uid)
+        args.source_search_terms = AndQuery.reduce(args.source_search_terms)
     if "search_terms" in args:
-        args.search_terms = AndQuery.reduce(args.search_terms, args.uid)
+        args.search_terms = AndQuery.reduce(args.search_terms)
     if "target_contact" in args:
         # Only one of target_contact or target_uid can be set.
-        args.target_contact = args.target_contact or args.target_uid \
-            or AnyQuery()
-    # Remove uid values from the args Namespace.  They have been merged into
-    # the search terms above.
-    if "uid" in args:
-        del args.uid
-    if "target_uid" in args:
-        del args.target_uid
+        args.target_contact = args.target_contact or AnyQuery()
 
     return args, config
 
@@ -471,7 +425,7 @@ def merge_args_into_config(args: argparse.Namespace, config: Config) -> Config:
     :returns: the merged config object
     """
     config.merge_args(args)
-    # Now we can savely initialize the address books as all command line
+    # Now we can safely initialize the address books as all command line
     # options have been incorporated into the config object.
     config.init_address_books()
     # If the user could but did not specify address books on the command line
@@ -497,4 +451,7 @@ def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         # example: "ls" --> "list"
         args.action = Actions.get_action(args.action)
 
-    return args, merge_args_into_config(args, conf)
+    try:
+        return args, merge_args_into_config(args, conf)
+    except ConfigError as err:
+        sys.exit(str(err))

@@ -167,7 +167,7 @@ class FieldQuery(TermQuery):
 
 class AndQuery(Query):
 
-    """A query to combine multible queries with "and"."""
+    """A query to combine multiple queries with "and"."""
 
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
@@ -198,7 +198,7 @@ class AndQuery(Query):
 
 class OrQuery(Query):
 
-    """A query to combine multible queries with "or"."""
+    """A query to combine multiple queries with "or"."""
 
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
@@ -229,7 +229,7 @@ class OrQuery(Query):
 
 class NameQuery(TermQuery):
 
-    """special query to match any kind of name field of a vcard"""
+    """special query to match any kind of name field of a vCard"""
 
     def __init__(self, term: str) -> None:
         super().__init__(term)
@@ -301,12 +301,12 @@ class PhoneNumberQuery(FieldQuery):
             # number: +49123456789
             return self._term_only_digits in number
         elif self._term_only_digits.startswith("+") and number.startswith("0"):
-            # asume, that _term_only_digits contains a complete phone number
+            # assume, that _term_only_digits contains a complete phone number
             # _term_only_digits: +49123456789
             # number: 0123456789
             return number[1:] in self._term_only_digits
         elif self._term_only_digits.startswith("0") and number.startswith("+"):
-            # can't asume, that _term_only_digits contains a complete phone number
+            # can't assume, that _term_only_digits contains a complete phone number
             # _term_only_digits: 0123456789
             # number: +49123456789
             if len(self._term_only_digits) >= 5:

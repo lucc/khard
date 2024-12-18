@@ -15,7 +15,8 @@ import os
 import re
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union, Sequence
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, \
+    TypeVar, Union, Sequence, overload
 
 from atomicwrites import atomic_write
 from ruamel import yaml
@@ -24,28 +25,36 @@ import vobject
 
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
-from .helpers.typing import (convert_to_vcard, Date, ObjectType, StrList,
-                             list_to_string, string_to_date, string_to_list)
+from .helpers.typing import (Date, ObjectType, PostAddress, StrList,
+    convert_to_vcard, list_to_string, string_to_date,
+    string_to_list)
 from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
 
 
-def multi_property_key(item: Union[str, Dict]) -> List:
-    """key function to pass to sorted(), allowing sorting of dicts with lists
+@overload
+def multi_property_key(item: str) -> Tuple[Literal[0], str]: ...
+@overload
+def multi_property_key(item: Dict[T, Any]) -> Tuple[Literal[1], T]: ...
+@overload
+def multi_property_key(item: Union[str, Dict[T, Any]]) -> Tuple[Union[Literal[0], Literal[1]], Union[str, T]]: ...
+def multi_property_key(item: Union[str, Dict[T, Any]]
+                       ) -> Tuple[int, Union[T, str]]:
+    """Key function to pass to sorted(), allowing sorting of dicts with lists
     and strings. Dicts will be sorted by their label, after other types.
 
     :param item: member of the list being sorted
     :type item: a dict with a single entry or any sortable type
-    :returns: a list with two members. The first is int(isinstance(item, dict).
+    :returns: a pair, the first item is int(isinstance(item, dict).
         The second is either the key from the dict or the unchanged item if it
         is not a dict.
-    :rtype: list(int, type(item)) or list(int, str)
     """
     if isinstance(item, dict):
-        return [1, list(item)[0]]
-    return [0, item]
+        return (1, next(iter(item)))
+    return (0, item)
 
 
 class VCardWrapper:
@@ -72,11 +81,11 @@ class VCardWrapper:
     email_types_v4 = ("home", "internet", "work")
     address_types_v4 = ("home", "work")
 
-    def __init__(self, vcard: vobject.vCard, version: Optional[str] = None
-                 ) -> None:
+    def __init__(self, vcard: vobject.base.Component,
+                 version: Optional[str] = None) -> None:
         """Initialize the wrapper around the given vcard.
 
-        :param vobject.vCard vcard: the vCard to wrap
+        :param vcard: the vCard to wrap
         :param version: the version of the RFC to use (if the card has none)
         """
         self.vcard = vcard
@@ -93,29 +102,40 @@ class VCardWrapper:
     def __str__(self) -> str:
         return self.formatted_name
 
-    def _get_string_field(self, field: str) -> str:
-        """Get a string field from the underlying vCard.
+    def get_first(self, property: str, default: str = "") -> str:
+        """Get a property from the underlying vCard.
 
-        :param field: the field value to get
-        :returns: the field value or the empty string
+        This method should only be called for properties with cardinality *1
+        (zero or one).  Otherwise only the first value will be returned. If the
+        property is not present a default will be returned.
+
+        The type annotation for the return value is str but this is not
+        enforced so it is up to the caller to make sure to only call this
+        method for properties where the underlying vobject library returns a
+        str.
+
+        :param property: the field value to get
+        :param default: the value to return if the vCard does not have this
+            property
+        :returns: the property value or the default
         """
         try:
-            return getattr(self.vcard, field).value
+            return getattr(self.vcard, property).value
         except AttributeError:
-            return ""
+            return default
 
     def _get_multi_property(self, name: str) -> List:
         """Get a vCard property that can exist more than once.
 
         It does not matter what the individual vcard properties store as their
-        value.  This function returnes them untouched inside an agregating
+        value.  This function returns them untouched inside an aggregating
         list.
 
         If the property is part of a group containing exactly two items, with
         exactly one ABLABEL. the property will be prefixed with that ABLABEL.
 
         :param name: the name of the property (should be UPPER case)
-        :returns: the values from all occurences of the named property
+        :returns: the values from all occurrences of the named property
         """
         values = []
         for child in self.vcard.getChildren():
@@ -230,7 +250,7 @@ class VCardWrapper:
 
     @property
     def version(self) -> str:
-        return self._get_string_field("version")
+        return self.get_first("version")
 
     @version.setter
     def version(self, value: str) -> None:
@@ -245,7 +265,7 @@ class VCardWrapper:
 
     @property
     def uid(self) -> str:
-        return self._get_string_field("uid")
+        return self.get_first("uid")
 
     @uid.setter
     def uid(self, value: str) -> None:
@@ -261,8 +281,6 @@ class VCardWrapper:
         All vCards should only always have one revision, this is a
         requirement for version 4 but also makes sense for all other
         versions.
-
-        :rtype: NoneType
         """
         self._delete_vcard_object("REV")
         rev = self.vcard.add('rev')
@@ -343,8 +361,8 @@ class VCardWrapper:
 
     def _get_ablabel(self, item: vobject.base.ContentLine) -> str:
         """Get an ABLABEL for a specified item in the vCard.
-        Will return the ABLABEL only if the item is part of a group with exactly
-        two items, exactly one of which is an ABLABEL.
+        Will return the ABLABEL only if the item is part of a group with
+        exactly two items, exactly one of which is an ABLABEL.
 
         :param item: the item to be labelled
         :returns: the ABLABEL in the circumstances above or an empty string
@@ -365,8 +383,8 @@ class VCardWrapper:
         return label
 
     def _get_new_group(self, group_type: str = "") -> str:
-        """Get an unused group name for adding new groups. Uses the form item123
-         or itemgroup_type123 if a grouptype is specified.
+        """Get an unused group name for adding new groups. Uses the form
+        item123 or itemgroup_type123 if a grouptype is specified.
 
         :param group_type: (Optional) a string to add between "item" and
             the number
@@ -382,37 +400,29 @@ class VCardWrapper:
             else:
                 return group_name
 
-    def _add_labelled_object(
-            self, obj_type: str, user_input, name_groups: bool = False,
+    def _add_labelled_property(
+            self, property: str, value: StrList, label: Optional[str] = None,
+            name_groups: bool = False,
             allowed_object_type: ObjectType = ObjectType.str) -> None:
-        """Add an object to the VCARD. If user_input is a dict, the object will
-         be added to a group with an ABLABEL created from the key of the dict.
+        """Add an object to the VCARD. If a label is given it will be added to
+        a group with an ABLABEL.
 
-        :param obj_type: type of object to add to the VCARD.
-        :param user_input: Contents of the object to add. If a dict
-        :type user_input: str or list(str) or dict(str) or dict(list(str))
-        :param name_groups: (Optional) If True, use the obj_type in the
+        :param property: type of object to add to the VCARD.
+        :param value: Contents of the object to add.
+        :param label: an optional label to add to the property
+        :param name_groups: (Optional) If True, use the property in the
             group name for labelled objects.
         :param allowed_object_type: (Optional) set the accepted return type
             for vcard attribute
         """
-        obj = self.vcard.add(obj_type)
-        if isinstance(user_input, dict):
-            if len(user_input) > 1:
-                raise ValueError(
-                    "Error: {} must be a string or a dict containing one "
-                    "key/value pair.".format(obj_type))
-            label = list(user_input)[0]
-            group_name = self._get_new_group(obj_type if name_groups else "")
+        obj = self.vcard.add(property)
+        obj.value = convert_to_vcard(property, value, allowed_object_type)
+        if label:
+            group_name = self._get_new_group(property if name_groups else "")
             obj.group = group_name
-            obj.value = convert_to_vcard(obj_type, user_input[label],
-                                         allowed_object_type)
             ablabel_obj = self.vcard.add('X-ABLABEL')
             ablabel_obj.group = group_name
             ablabel_obj.value = label
-        else:
-            obj.value = convert_to_vcard(obj_type, user_input,
-                                         allowed_object_type)
 
     def _prepare_birthday_value(self, date: Date) -> Tuple[Optional[str],
                                                            bool]:
@@ -421,7 +431,6 @@ class VCardWrapper:
         :param date: the date like value to be stored
         :returns: the object to set as the .value for the attribute and whether
             it should be stored as plain text
-        :rtype: tuple(str,bool)
         """
         if isinstance(date, str):
             if self.version == "4.0":
@@ -451,7 +460,7 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        kind = self._get_string_field(self._kind_attribute_name().lower()) or self._default_kind
+        kind = self.get_first(self._kind_attribute_name().lower(), self._default_kind)
         return kind if kind != "org" else "organisation"
 
     @kind.setter
@@ -464,7 +473,7 @@ class VCardWrapper:
 
     @property
     def formatted_name(self) -> str:
-        return self._get_string_field("fn")
+        return self.get_first("fn")
 
     @formatted_name.setter
     def formatted_name(self, value: str) -> None:
@@ -474,8 +483,7 @@ class VCardWrapper:
         requires the vCard to only have one FN field.  For other versions we
         enforce this equally.
 
-        :param str value: the new formatted name
-        :returns: None
+        :param value: the new formatted name
         """
         self._delete_vcard_object("FN")
         if value:
@@ -585,12 +593,14 @@ class VCardWrapper:
         """
         return self._get_multi_property("ORG")
 
-    def _add_organisation(self, organisation: StrList) -> None:
+    def _add_organisation(self, organisation: StrList, label: Optional[str] = None) -> None:
         """Add one ORG entry to the underlying vcard
 
         :param organisation: the value to add
+        :param label: an optional label to add
         """
-        self._add_labelled_object("org", organisation, True, ObjectType.list)
+        self._add_labelled_property("org", organisation, label, True,
+                                    ObjectType.list)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
@@ -607,36 +617,36 @@ class VCardWrapper:
     def titles(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("TITLE")
 
-    def _add_title(self, title) -> None:
-        self._add_labelled_object("title", title, True)
+    def _add_title(self, title: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("title", title, label, True)
 
     @property
     def roles(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("ROLE")
 
-    def _add_role(self, role) -> None:
-        self._add_labelled_object("role", role, True)
+    def _add_role(self, role: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("role", role, label, True)
 
     @property
     def nicknames(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("NICKNAME")
 
-    def _add_nickname(self, nickname) -> None:
-        self._add_labelled_object("nickname", nickname, True)
+    def _add_nickname(self, nickname: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("nickname", nickname, label, True)
 
     @property
     def notes(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("NOTE")
 
-    def _add_note(self, note) -> None:
-        self._add_labelled_object("note", note, True)
+    def _add_note(self, note: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("note", note, label, True)
 
     @property
     def webpages(self) -> List[Union[str, Dict[str, str]]]:
         return self._get_multi_property("URL")
 
-    def _add_webpage(self, webpage) -> None:
-        self._add_labelled_object("url", webpage, True)
+    def _add_webpage(self, webpage: str, label: Optional[str] = None) -> None:
+        self._add_labelled_property("url", webpage, label, True)
 
     @property
     def categories(self) -> Union[List[str], List[List[str]]]:
@@ -693,11 +703,10 @@ class VCardWrapper:
             string_to_list(type, ","), self.phone_types_v4 if
             self.version == "4.0" else self.phone_types_v3)
         if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for phone number " + number +
-                             " is missing.")
+            raise ValueError(f"Label for phone number {number} is missing.")
         if len(custom_types) > 1:
-            raise ValueError("Error: phone number " + number + " got more "
-                             "than one custom label: " +
+            raise ValueError(f"Phone number {number} got more than one "
+                             "custom label: " +
                              list_to_string(custom_types, ", "))
         phone_obj = self.vcard.add('tel')
         if self.version == "4.0":
@@ -748,10 +757,9 @@ class VCardWrapper:
             string_to_list(type, ","), self.email_types_v4 if
             self.version == "4.0" else self.email_types_v3)
         if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for email address " + address +
-                             " is missing.")
+            raise ValueError(f"Label for email address {address} is missing.")
         if len(custom_types) > 1:
-            raise ValueError("Error: email address " + address + " got more "
+            raise ValueError(f"Email address {address} got more "
                              "than one custom label: " +
                              list_to_string(custom_types, ", "))
         email_obj = self.vcard.add('email')
@@ -778,11 +786,11 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
-    def post_addresses(self) -> Dict[str, List[Dict[str, Union[List, str]]]]:
+    def post_addresses(self) -> Dict[str, List[PostAddress]]:
         """
         :returns: dict of type and post address list
         """
-        post_adr_dict: Dict[str, List[Dict[str, Union[List, str]]]] = {}
+        post_adr_dict: Dict[str, List[PostAddress]] = {}
         for child in self.vcard.getChildren():
             if child.name == "ADR":
                 type = list_to_string(self._get_types_for_vcard_object(
@@ -808,8 +816,8 @@ class VCardWrapper:
         for type, post_adr_list in self.post_addresses.items():
             formatted_post_adr_dict[type] = []
             for post_adr in post_adr_list:
-                get: Callable[[str], str] = lambda name: list_to_string(
-                    post_adr.get(name, ""), " ")
+                def get(name: str) -> str:
+                    return list_to_string(post_adr.get(name, ""), " ")
 
                 # remove empty fields to avoid empty lines
                 for x in list(post_adr.keys()):
@@ -842,18 +850,17 @@ class VCardWrapper:
                 formatted_post_adr_dict[type].append('\n'.join(strings))
         return formatted_post_adr_dict
 
-    def _add_post_address(self, type, box, extended, street, code, city,
-                          region, country):
+    def _add_post_address(self, type: str, box: StrList, extended: StrList,
+                          street: StrList, code: StrList, city: StrList,
+                          region: StrList, country: StrList) -> None:
         standard_types, custom_types, pref = self._parse_type_value(
             string_to_list(type, ","), self.address_types_v4
             if self.version == "4.0" else self.address_types_v3)
         if not standard_types and not custom_types and pref == 0:
-            raise ValueError("Error: label for post address " + street +
-                             " is missing.")
+            raise ValueError(f"Label for post address {street} is missing.")
         if len(custom_types) > 1:
-            raise ValueError("Error: post address " + street + " got more "
-                             "than one custom " "label: " +
-                             list_to_string(custom_types, ", "))
+            raise ValueError(f"Post address {street} got more than one custom "
+                             "label: " + list_to_string(custom_types, ", "))
         adr_obj = self.vcard.add('adr')
         adr_obj.value = vobject.vcard.Address(
             box=convert_to_vcard("box address field", box, ObjectType.both),
@@ -886,20 +893,20 @@ class VCardWrapper:
 
 
 class YAMLEditable(VCardWrapper):
-    """Conversion of vcards to YAML and updateing the vcard from YAML"""
+    """Conversion of vcards to YAML and updating the vcard from YAML"""
 
-    def __init__(self, vcard: vobject.vCard,
+    def __init__(self, vcard: vobject.base.Component,
                  supported_private_objects: Optional[List[str]] = None,
                  version: Optional[str] = None, localize_dates: bool = False
                  ) -> None:
-        """Initialize atributes needed for yaml conversions
+        """Initialize attributes needed for yaml conversions
 
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
             pobject
         :param version: the version of the RFC to use in this card
         :param localize_dates: should the formatted output of anniversary
-            and birthday be localized or should the isoformat be used instead
+            and birthday be localized or should the iso format be used instead
         """
         self.supported_private_objects = supported_private_objects or []
         self.localize_dates = localize_dates
@@ -909,9 +916,9 @@ class YAMLEditable(VCardWrapper):
     # getters and setters
     #####################
 
-    def _get_private_objects(self) -> Dict[str, List[str]]:
+    def _get_private_objects(self) -> Dict[str, List[Union[str, Dict[str, str]]]]:
         supported = [x.lower() for x in self.supported_private_objects]
-        private_objects: Dict[str, List[str]] = {}
+        private_objects: Dict[str, List[Union[str, Dict[str, str]]]] = {}
         for child in self.vcard.getChildren():
             lower = child.name.lower()
             if lower.startswith("x-") and lower[2:] in supported:
@@ -927,8 +934,8 @@ class YAMLEditable(VCardWrapper):
             value.sort(key=multi_property_key)
         return private_objects
 
-    def _add_private_object(self, key: str, value) -> None:
-        self._add_labelled_object('X-' + key.upper(), value)
+    def _add_private_object(self, key: str, value: str) -> None:
+        self._add_labelled_property('X-' + key.upper(), value)
 
     def get_formatted_anniversary(self) -> str:
         return self._format_date_object(self.anniversary, self.localize_dates)
@@ -973,12 +980,11 @@ class YAMLEditable(VCardWrapper):
 
     @staticmethod
     def _parse_yaml(input: str) -> Dict:
-        """Parse a YAML document into a dictinary and validate the data to some
-        degree.
+        """Parse a YAML document into a dictionary and validate the data to
+        some degree.
 
-        :param str input: the YAML document to parse
-        :returns: the parsed datastructure
-        :rtype: dict
+        :param input: the YAML document to parse
+        :returns: the parsed data structure
         """
         yaml_parser = YAML(typ='base')
         # parse user input string
@@ -989,20 +995,21 @@ class YAMLEditable(VCardWrapper):
             raise ValueError(err)
         else:
             if not contact_data:
-                raise ValueError("Error: Found no contact information")
+                raise ValueError("Found no contact information")
 
         # check for available data
         # at least enter name or organisation
         if not (contact_data.get("First name") or contact_data.get("Last name")
                 or contact_data.get("Organisation")):
-            raise ValueError(
-                "Error: You must either enter a name or an organisation")
+            raise ValueError("You must either enter a name or an organisation")
         return contact_data
 
     @staticmethod
-    def _set_string_list(setter: Callable[[Union[str, List]], None], key: str,
-                         data: Dict) -> None:
-        """Prepocess a string or list and set each value with the given setter
+    def _set_string_list(setter: Callable[[str, Optional[str]], None],
+                         key: str, data: Dict[str, Union[str, List[str]]]
+                         ) -> None:
+        """Pre-process a string or list and set each value with the given
+        setter
 
         :param setter: the setter method to add a value to a card
         :param key:
@@ -1011,11 +1018,18 @@ class YAMLEditable(VCardWrapper):
         value = data.get(key)
         if value:
             if isinstance(value, str):
-                setter(value)
+                setter(value, None)
+            elif isinstance(value, dict):
+                label, val = list(value.items())[0]
+                setter(val, label)
             elif isinstance(value, list):
                 for val in value:
                     if val:
-                        setter(val)
+                        if isinstance(val, dict):
+                            label, v = list(val.items())[0]
+                            setter(v, label)
+                        else:
+                            setter(val, None)
             else:
                 raise ValueError(
                     "{} must be a string or a list of strings".format(key))
@@ -1025,7 +1039,7 @@ class YAMLEditable(VCardWrapper):
         if not new:
             return
         if not isinstance(new, str):
-            raise ValueError("Error: {} must be a string object.".format(key))
+            raise ValueError(f"{key} must be a string object.")
         if re.match(r"^text[\s]*=.*$", new):
             if self.version == "4.0":
                 v1 = ', '.join(x.strip() for x in re.split(r"text[\s]*=", new)
@@ -1033,13 +1047,13 @@ class YAMLEditable(VCardWrapper):
                 if v1:
                     setattr(self, target, v1)
                 return
-            raise ValueError("Error: Free text format for {} only usable with "
-                             "vcard version 4.0.".format(key.lower()))
+            raise ValueError(f"Free text format for {key.lower()} only usable "
+                             "with vcard version 4.0.")
         if re.match(r"^--\d\d-?\d\d$", new) and self.version != "4.0":
             raise ValueError(
-                "Error: {} format --mm-dd and --mmdd only usable with "
+                f"{key} format --mm-dd and --mmdd only usable with "
                 "vcard version 4.0. You may use 1900 as placeholder, if "
-                "the year is unknown.".format(key))
+                "the year is unknown.")
         try:
             v2 = string_to_date(new)
             if v2:
@@ -1047,9 +1061,9 @@ class YAMLEditable(VCardWrapper):
             return
         except ValueError:
             pass
-        raise ValueError("Error: Wrong {} format or invalid date\n"
+        raise ValueError(f"Wrong {key.lower()} format or invalid date\n"
                          "Use format yyyy-mm-dd or "
-                         "yyyy-mm-ddTHH:MM:SS".format(key.lower()))
+                         "yyyy-mm-ddTHH:MM:SS")
 
     def update(self, input: str) -> None:
         """Update this vcard with some yaml input
@@ -1062,7 +1076,7 @@ class YAMLEditable(VCardWrapper):
 
         # name
         self._delete_vcard_object("N")
-        # although the "n" attribute is not explisitely required by the vcard
+        # although the "n" attribute is not explicitly required by the vcard
         # specification,
         # the vobject library throws an exception, if it doesn't exist
         # so add the name regardless if it's empty or not
@@ -1115,11 +1129,10 @@ class YAMLEditable(VCardWrapper):
                                 self._add_phone_number(type, number)
                     else:
                         raise ValueError(
-                            "Error: got no number or list of numbers for the "
-                            "phone number type " + type)
+                            "Got no number or list of numbers for the "
+                            f"phone number type {type}")
             else:
-                raise ValueError(
-                    "Error: missing type value for phone number field")
+                raise ValueError("Missing type value for phone number field")
 
         # email
         self._delete_vcard_object("EMAIL")
@@ -1135,11 +1148,10 @@ class YAMLEditable(VCardWrapper):
                                 self.add_email(type, email)
                     else:
                         raise ValueError(
-                            "Error: got no email or list of emails for the "
-                            "email address type " + type)
+                            "Got no email or list of emails for the "
+                            f"email address type {type}")
             else:
-                raise ValueError(
-                    "Error: missing type value for email address field")
+                raise ValueError("Missing type value for email address field")
 
         # post addresses
         self._delete_vcard_object("ADR")
@@ -1170,16 +1182,13 @@ class YAMLEditable(VCardWrapper):
                                         post_adr.get("Country", ""))
                             else:
                                 raise ValueError(
-                                    "Error: one of the " + type + " type "
-                                    "address list items does not contain an "
-                                    "address")
+                                    f"One of the {type} type address "
+                                    "list items does not contain an address")
                     else:
-                        raise ValueError(
-                            "Error: got no address or list of addresses for "
-                            "the post address type " + type)
+                        raise ValueError("Got no address or list of addresses "
+                                         f"for the post address type {type}")
             else:
-                raise ValueError(
-                    "Error: missing type value for post address field")
+                raise ValueError("Missing type value for post address field")
 
         # categories
         self._delete_vcard_object("CATEGORIES")
@@ -1206,7 +1215,7 @@ class YAMLEditable(VCardWrapper):
                                 self._add_category(sub_category)
             else:
                 raise ValueError(
-                    "Error: category must be a string or a list of strings")
+                    "Category must be a string or a list of strings")
 
         # urls
         self._delete_vcard_object("URL")
@@ -1236,16 +1245,15 @@ class YAMLEditable(VCardWrapper):
                                 if value:
                                     self._add_private_object(key, value)
                         else:
-                            raise ValueError(
-                                "Error: got no value or list of values for "
-                                "the private object " + key)
+                            raise ValueError("Got no value or list of values "
+                                             f"for the private object {key}")
                     else:
                         raise ValueError(
-                            "Error: private object key " + key + " was "
-                            "changed.\nSupported private keys: " + ', '.join(
+                            f"Private object key {key} was changed.\n"
+                            "Supported private keys: " + ', '.join(
                                 self.supported_private_objects))
             else:
-                raise ValueError("Error: private objects must consist of a "
+                raise ValueError("Private objects must consist of a "
                                  "key : value pair.")
 
         # notes
@@ -1310,7 +1318,7 @@ class YAMLEditable(VCardWrapper):
 
 class CarddavObject(YAMLEditable):
 
-    def __init__(self, vcard: vobject.vCard,
+    def __init__(self, vcard: vobject.base.Component,
                  address_book: "address_book.VdirAddressBook", filename: str,
                  supported_private_objects: Optional[List[str]] = None,
                  vcard_version: Optional[str] = None,
@@ -1323,10 +1331,10 @@ class CarddavObject(YAMLEditable):
         :param filename: the path to the file where this vcard is stored
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
-            pobject
+            object
         :param vcard_version: the version of the RFC to use
         :param localize_dates: should the formatted output of anniversary and
-            birthday be localized or should the isoformat be used instead
+            birthday be localized or should the iso format be used instead
         """
         self.address_book = address_book
         self.filename = filename
@@ -1365,9 +1373,9 @@ class CarddavObject(YAMLEditable):
             the file unconditionally
         :param supported_private_objects: the list of private property names
             that will be loaded from the actual vcard and represented in this
-            pobject
+            object
         :param localize_dates: should the formatted output of anniversary
-            and birthday be localized or should the isoformat be used instead
+            and birthday be localized or should the iso format be used instead
         :returns: the loaded CarddavObject or None if the file didn't match
         """
         with open(filename, "r") as file:
@@ -1539,7 +1547,7 @@ class CarddavObject(YAMLEditable):
     def delete_vcard_file(self) -> None:
         try:
             os.remove(self.filename)
-        except IOError as err:
+        except OSError as err:
             logger.error("Can not remove vCard file: %s", err)
 
     @classmethod

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Union
+from typing import Dict, List, Union
 
 
 class ObjectType(Enum):
@@ -14,16 +14,17 @@ class ObjectType(Enum):
 # some type aliases
 Date = Union[str, datetime]
 StrList = Union[str, List[str]]
+PostAddress = Dict[str, str]
 
 
 def convert_to_vcard(name: str, value: StrList, constraint: ObjectType
                      ) -> StrList:
-    """converts user input into vcard compatible data structures
+    """converts user input into vCard compatible data structures
 
     :param name: object name, only required for error messages
     :param value: user input
-    :param constraint: set the accepted return type for vcard attribute
-    :returns: cleaned user input, ready for vcard or a ValueError
+    :param constraint: set the accepted return type for vCard attribute
+    :returns: cleaned user input, ready for vCard or a ValueError
     """
     if isinstance(value, str):
         if constraint == ObjectType.list:
@@ -31,25 +32,23 @@ def convert_to_vcard(name: str, value: StrList, constraint: ObjectType
         return value.strip()
     if isinstance(value, list):
         if constraint == ObjectType.str:
-            raise ValueError("Error: " + name + " must contain a string.")
+            raise ValueError(f"{name} must contain a string.")
         if not all(isinstance(entry, str) for entry in value):
-            raise ValueError("Error: " + name +
-                             " must not contain a nested list")
+            raise ValueError(f"{name} must not contain a nested list")
         # filter out empty list items and strip leading and trailing space
         return [x.strip() for x in value if x.strip()]
     if constraint == ObjectType.str:
-        raise ValueError("Error: " + name + " must be a string.")
+        raise ValueError(f"{name} must be a string.")
     if constraint == ObjectType.list:
-        raise ValueError("Error: " + name + " must be a list with strings.")
-    raise ValueError("Error: " + name +
-                     " must be a string or a list with strings.")
+        raise ValueError(f"{name} must be a list with strings.")
+    raise ValueError(f"{name} must be a string or a list with strings.")
 
 
 def list_to_string(input: Union[str, List], delimiter: str) -> str:
     """converts list to string recursively so that nested lists are supported
 
     :param input: a list of strings and lists of strings (and so on recursive)
-    :param delimiter: the deimiter to use when joining the items
+    :param delimiter: the delimiter to use when joining the items
     :returns: the recursively joined list
     """
     if isinstance(input, list):

@@ -121,7 +121,7 @@ Spaces in the field name have to be replaced with underscores.
 The available fields are the same fields as in the YAML template with the
 exception of the five name components (first, last, prefix, suffix,
 additional).  But there is the special pseudo field specifier ``name:`` which
-will search in *any* name related field (including nichnames and formatted
+will search in *any* name related field (including nicknames and formatted
 names).
 
 If a field name is not known the search term is interpreted as a plain search

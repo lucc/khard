@@ -4,4 +4,3 @@ ToDo list for khard
     - member action to list all members of an organisation
 
 2. Implement impp attribute, see #105 for more information
-

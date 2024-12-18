@@ -1,6 +1,7 @@
 """Tests for the cli module"""
 
 from argparse import ArgumentTypeError
+import tempfile
 import unittest
 from unittest import mock
 
@@ -52,7 +53,7 @@ class TestParseArgs(unittest.TestCase):
 
     def test_uid_options_create_uid_queries(self):
         expected = self.uid
-        args, _config = cli.parse_args(['list', '--uid=foo'])
+        args, _config = cli.parse_args(['list', 'uid:foo'])
         actual = args.search_terms
         self.assertEqual(expected, actual)
 
@@ -80,24 +81,14 @@ class TestParseArgs(unittest.TestCase):
         self.assertEqual(self.baz, args.source_search_terms)
 
     def test_target_uid_option_creates_uid_queries(self):
-        args, _config = cli.parse_args(['merge', '--target-uid=foo', 'bar'])
+        args, _config = cli.parse_args(['merge', '--target', 'uid:foo', 'bar'])
         self.assertEqual(self.uid, args.target_contact)
         self.assertEqual(self.bar, args.source_search_terms)
 
     def test_uid_option_is_combined_with_search_terms_for_merge_command(self):
-        args, _config = cli.parse_args(['merge', '--uid=foo', '--target=bar'])
+        args, _config = cli.parse_args(['merge', 'uid:foo', '--target=bar'])
         self.assertEqual(self.uid, args.source_search_terms)
         self.assertEqual(self.bar, args.target_contact)
-
-    def test_uid_and_free_search_terms_produce_a_conflict(self):
-        with self.assertRaises(SystemExit):
-            with mock_stream("stderr"):  # just silence stderr
-                cli.parse_args(['list', '--uid=foo', 'bar'])
-
-    def test_target_uid_and_free_target_search_terms_produce_a_conflict(self):
-        with self.assertRaises(SystemExit):
-            with mock_stream("stderr"):  # just silence stderr
-                cli.parse_args(['merge', '--target-uid=foo', '--target=bar'])
 
     def test_no_target_specification_results_in_an_any_query(self):
         expected = query.AnyQuery()
@@ -131,3 +122,23 @@ class TestParseArgs(unittest.TestCase):
             ["add-email", "-H", "OtHer,myfield,from"])
         actual = args.headers
         self.assertEqual(["other", "myfield", "from"], actual)
+
+    def test_exit_user_friendly_without_config_file(self):
+        with mock_stream("stderr") as stderr:
+            with self.assertRaises(SystemExit):
+                cli.parse_args(["-c", "/this file should hopefully never exist."])
+        self.assertTrue(stderr.getvalue().startswith(
+            "Error reading config file: Config file not found:"))
+
+    def test_exit_user_friendly_without_contacts_folder(self):
+        with tempfile.NamedTemporaryFile("w", delete=False) as config:
+            config.write("""[general]
+                            editor = editor
+                            merge_editor = merge_editor
+                            [addressbooks]
+                            [[tmp]]
+                            path = /this file should hopefully never exist.
+                            """)
+            config.flush()
+            with self.assertRaises(SystemExit):
+                cli.init(["-c", config.name, "ls"])

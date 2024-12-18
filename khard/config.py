@@ -1,6 +1,7 @@
 """Loading and validation of the configuration file"""
 
 from argparse import Namespace
+import io
 import locale
 import logging
 import os
@@ -22,6 +23,10 @@ from .query import Query
 
 
 logger = logging.getLogger(__name__)
+# This is the type of the config file parameter accepted by the configobj
+# library:
+# https://configobj.readthedocs.io/en/latest/configobj.html#reading-a-config-file
+ConfigFile = Union[str, List[str], io.StringIO]
 
 
 class ConfigError(Exception):
@@ -88,7 +93,7 @@ class Config:
 
     supported_vcard_versions = ("3.0", "4.0")
 
-    def __init__(self, config_file: Optional[str] = None) -> None:
+    def __init__(self, config_file: Optional[ConfigFile] = None) -> None:
         self.config: configobj.ConfigObj
         self.abooks: AddressBookCollection
         locale.setlocale(locale.LC_ALL, '')
@@ -97,7 +102,7 @@ class Config:
         self._set_attributes()
 
     @classmethod
-    def _load_config_file(cls, config_file: Optional[str]
+    def _load_config_file(cls, config_file: Optional[ConfigFile]
                           ) -> configobj.ConfigObj:
         """Find and load the config file.
 
@@ -140,7 +145,9 @@ class Config:
         """Set the attributes from the internal config instance on self."""
         general = self.config["general"]
         self.debug = general["debug"]
-        self.editor = general["editor"] or os.environ.get("EDITOR", "vim")
+        self.editor = (
+            general["editor"] or shlex.split(os.environ.get("EDITOR", "vim"))
+        )
         self.merge_editor = general["merge_editor"] \
             or os.environ.get("MERGE_EDITOR", "vimdiff")
         self.default_action = general["default_action"]
@@ -178,7 +185,7 @@ class Config:
             self.abooks = AddressBookCollection(
                 "tmp", [VdirAddressBook(name, section[name]['path'], **kwargs)
                         for name in section])
-        except IOError as err:
+        except OSError as err:
             raise ConfigError(str(err))
 
     def get_address_books(self, names: Iterable[str], queries: Dict[str, Query]
@@ -218,7 +225,7 @@ class Config:
     def merge_args(self, args: Namespace) -> None:
         """Merge options from a flat argparse object.
 
-        :param argparse.Namespace args: the parsed arguments to incorperate
+        :param args: the parsed arguments to incorporate
         """
         skel = {'general': ['debug'],
                 'contact table': ['reverse', 'group_by_addressbook',

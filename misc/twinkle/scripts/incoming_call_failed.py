@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-import os, subprocess, time, datetime
+import datetime
+import os
+import subprocess
+
 import config
 
 # current date and time
@@ -9,7 +12,7 @@ current_date = "%.2d.%.2d.%.4d" % (datetime.day, datetime.month, datetime.year)
 current_time = "%.2d:%.2d:%.2d" % (datetime.hour, datetime.minute, datetime.second)
 
 # if music was stopped, resume again
-if os.path.exists(config.mpd_lockfile) == True:
+if os.path.exists(config.mpd_lockfile):
     os.remove(config.mpd_lockfile)
     subprocess.call(["mpc", "-h", config.mpd_host, "-p", str(config.mpd_port), "play"])
 
