@@ -5,19 +5,23 @@
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
     inherit (builtins) map head split replaceStrings mapAttrs;
+    inherit (pkgs.lib) lists;
     pyproject = builtins.fromTOML (builtins.readFile ./pyproject.toml);
     clean = d: replaceStrings ["."] ["-"] (head (split "[^a-zA-Z0-9._-]" d));
     build = map clean pyproject.build-system.requires;
     deps = map clean pyproject.project.dependencies;
     opts = mapAttrs (name: map clean) pyproject.project.optional-dependencies;
     get = names: pkgs: map (name: pkgs.${name}) names;
-    khard = { python3 }: python3.pkgs.buildPythonApplication {
+    khard = { python3, doc ? true }: python3.pkgs.buildPythonApplication {
       pname = "khard";
       version = "0.dev+${self.shortRev or self.dirtyShortRev}";
       pyproject = true;
       src = ./.;
-      nativeBuildInputs =
-        get (["sphinxHook"] ++ build ++ opts.doc) python3.pkgs;
+      nativeBuildInputs = let
+        names = build
+          ++ lists.optionals doc opts.doc
+          ++ lists.optional doc "sphinxHook";
+      in get names python3.pkgs;
       sphinxBuilders = [ "man" ];
       propagatedBuildInputs = get deps python3.pkgs;
       postInstall = ''
