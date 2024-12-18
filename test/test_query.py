@@ -167,6 +167,31 @@ class TestFieldQuery(unittest.TestCase):
         query = FieldQuery("emails", "home")
         self.assertTrue(query.match(vcard))
 
+    def test_individual_kind_query_without_kind_on_vcard(self):
+        vcard = load_contact("minimal.vcf")
+        query = FieldQuery("kind", "individual")
+        self.assertTrue(query.match(vcard))
+
+    def test_org_kind_query_without_kind_on_vcard(self):
+        vcard = load_contact("minimal.vcf")
+        query = FieldQuery("kind", "organisation")
+        self.assertFalse(query.match(vcard))
+
+    def test_kind_query_with_nonsensical_value(self):
+        vcard = load_contact("minimal.vcf")
+        query = FieldQuery("kind", "foo")
+        self.assertFalse(query.match(vcard))
+
+    def test_kind_query_with_explicit_match(self):
+        contact = TestCarddavObject(kind="organisation", version="4.0")
+        query = FieldQuery("kind", "organisation")
+        self.assertTrue(query.match(contact))
+
+    def test_kind_query_with_explicit_mismatch(self):
+        contact = TestCarddavObject(kind="organisation", version="4.0")
+        query = FieldQuery("kind", "individual")
+        self.assertFalse(query.match(contact))
+
 
 class TestNameQuery(unittest.TestCase):
     def test_matches_formatted_name_field(self):
@@ -222,3 +247,17 @@ class TestParser(unittest.TestCase):
         actual = parse("name:foo")
         expected = NameQuery("foo")
         self.assertEqual(actual, expected)
+
+    def test_kind_queries(self):
+        actual = parse("kind:individual")
+        expected = FieldQuery("kind", "individual")
+        self.assertEqual(actual, expected)
+
+    def test_non_sensical_kind_values_do_not_parse(self):
+        self.assertIsNone(parse("kind:foo"))
+
+    def test_kind_queries_only_need_a_substring_of_the_enum(self):
+        self.assertEqual(parse("kind:ind"), FieldQuery("kind", "individual"))
+        self.assertEqual(parse("kind:i"), FieldQuery("kind", "individual"))
+        self.assertEqual(parse("kind:org"), FieldQuery("kind", "organisation"))
+        self.assertEqual(parse("kind:o"), FieldQuery("kind", "organisation"))

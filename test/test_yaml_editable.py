@@ -47,6 +47,16 @@ Private       :
         self.assertIn("home1", yaml_dump)
         self.assertIn("home2", yaml_dump)
 
+    def test_empty_kind_is_included_in_yaml_format(self):
+        contact = TestYAMLEditable()
+        yaml = contact.to_yaml()
+        self.assertIn("Kind:", yaml)
+
+    def test_kind_is_included_in_yaml_format(self):
+        contact = TestYAMLEditable(version="4.0", kind="org")
+        yaml = contact.to_yaml()
+        self.assertIn("Kind: org", yaml)
+
 
 class ExceptionHandling(unittest.TestCase):
     def test_duplicate_key_errors_are_translated_to_value_errors(self):

@@ -251,6 +251,13 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         card.update(data)
         self.assertEqual(card.kind, "organisation")
 
+    def test_update_with_bad_kind_field_fails(self):
+        card = create_test_card(version="4.0")
+        self.assertEqual(card.kind, "individual")
+        data = to_yaml({"Kind": "foo"})
+        card.update(data)
+        self.assertEqual(card.kind, "individual")
+
     def test_parse_field(self):
         """Test round-trip of a field to/from YAML"""
         card = create_test_card()
