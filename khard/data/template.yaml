@@ -2,6 +2,10 @@
 # from the full name below if not given.
 Formatted name : 
 
+# kind (requires vcard 4.0)
+# one of: individual, group, org, location, application, device
+Kind : 
+
 # name components
 # every entry may contain a string or a list of strings
 # format:
