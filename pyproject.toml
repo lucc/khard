@@ -71,6 +71,8 @@ module = [
     "vobject",
     "vobject.base",
     "vobject.vcard",
+
+    "khard.version"
 ]
 ignore_missing_imports = true
 

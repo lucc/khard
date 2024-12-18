@@ -42,11 +42,11 @@
         pythonImportsCheck = ["khard"];
         checkPhase = "python3 -W error -m unittest -v";
       };
+    default = pkgs.callPackage khard {};
   in {
-    packages.${system}.default = pkgs.callPackage khard {};
+    packages.${system}.default = default;
     devShells.${system} = let
-      khard = self.packages.${system}.default;
-      upstream = p: khard.nativeBuildInputs ++ khard.propagatedBuildInputs;
+      upstream = p: default.nativeBuildInputs ++ default.propagatedBuildInputs;
       pythonEnv = pkgs.python3.withPackages (p:
         [
           p.build
@@ -54,26 +54,40 @@
           p.pylint
         ]
         ++ (upstream p));
+      packages = with pkgs; [git ruff pythonEnv];
     in {
-      default = pkgs.mkShell {packages = with pkgs; [git pythonEnv];};
+      default = pkgs.mkShell {inherit packages;};
       release = pkgs.mkShell {
-        packages = with pkgs; [git twine pythonEnv];
+        packages = packages ++ [pkgs.twine];
         shellHook = ''
           cat <<EOF
           To publish a tag on pypi
           0. version=$(git tag --list --sort=version:refname v\* | sed -n '$s/^v//p')
           1. git checkout v\$version
-          2. python3 -m build
-          3. twine check --strict dist/khard-\$version*
-          4. twine upload -r khardtest dist/khard-\$version*
-          5. twine upload -r khard dist/khard-\$version*
+          2. nix flake check
+          3. python3 -m build
+          4. twine check --strict dist/khard-\$version*
+          5. twine upload -r khardtest dist/khard-\$version*
+          6. twine upload -r khard dist/khard-\$version*
           EOF
         '';
       };
     };
-    checks.${system} = {
-      tests-python-311 = pkgs.callPackage khard {python3 = pkgs.python311;};
-      tests-python-312 = pkgs.callPackage khard {python3 = pkgs.python312;};
+    checks.${system} = let
+      tests = default.override {doc = false;};
+    in {
+      inherit default;
+      tests-python-311 = tests.override {python3 = pkgs.python311;};
+      tests-python-312 = tests.override {python3 = pkgs.python312;};
+      ruff = pkgs.runCommand "ruff" {} ''
+        ${pkgs.ruff}/bin/ruff check ${./khard}
+        touch $out
+      '';
+      mypy = pkgs.runCommand "mypy" {
+        buildInputs = [
+          (pkgs.python3.withPackages (p: [p.mypy] ++ default.propagatedBuildInputs))
+        ];
+      } "cd ${./.} && mypy && touch $out";
     };
   };
 }
