@@ -20,6 +20,7 @@
         version = "0.dev+${self.shortRev or self.dirtyShortRev}";
         build-system =
           attrs.build-system
+          ++ [python3.pkgs.pytestCheckHook]
           ++ pkgs.lib.lists.optionals doc attrs.optional-dependencies.doc
           ++ pkgs.lib.lists.optional doc python3.pkgs.sphinxHook;
         sphinxBuilders = ["man"];
@@ -30,7 +31,7 @@
         # see https://github.com/scheibler/khard/issues/263
         preCheck = "export COLUMNS=80";
         pythonImportsCheck = ["khard"];
-        checkPhase = "python3 -W error -m unittest -v";
+        pytestFlagsArray = ["-s"];
       };
     in
       python3.pkgs.buildPythonApplication (attrs // overrides);
