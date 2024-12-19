@@ -1,40 +1,30 @@
 {
   description = "Development flake for khard";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
+  inputs.pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
   outputs = {
     self,
     nixpkgs,
+    pyproject-nix,
   }: let
+    project = pyproject-nix.lib.project.loadPyproject {projectRoot = ./.;};
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
-    inherit (builtins) map head split replaceStrings mapAttrs;
-    inherit (pkgs.lib) lists;
-    pyproject = builtins.fromTOML (builtins.readFile ./pyproject.toml);
-    clean = d: replaceStrings ["."] ["-"] (head (split "[^a-zA-Z0-9._-]" d));
-    build = map clean pyproject.build-system.requires;
-    deps = map clean pyproject.project.dependencies;
-    opts = mapAttrs (name: map clean) pyproject.project.optional-dependencies;
-    get = names: pkgs: map (name: pkgs.${name}) names;
     khard = {
       python3,
       doc ? true,
-    }:
-      python3.pkgs.buildPythonApplication {
-        pname = "khard";
+    }: let
+      attrs = project.renderers.buildPythonPackage {python = python3;};
+      overrides = {
         version = "0.dev+${self.shortRev or self.dirtyShortRev}";
-        pyproject = true;
-        src = ./.;
-        nativeBuildInputs = let
-          names =
-            build
-            ++ lists.optionals doc opts.doc
-            ++ lists.optional doc "sphinxHook";
-        in
-          get names python3.pkgs;
+        build-system =
+          attrs.build-system
+          ++ pkgs.lib.lists.optionals doc attrs.optional-dependencies.doc
+          ++ pkgs.lib.lists.optional doc python3.pkgs.sphinxHook;
         sphinxBuilders = ["man"];
-        propagatedBuildInputs = get deps python3.pkgs;
         postInstall = ''
-          install -D misc/zsh/_khard $out/share/zsh/site-functions/_khard
+          install -D -t $out/share/zsh/site-functions/ misc/zsh/_*
           cp -r $src/khard/data $out/lib/python*/site-packages/khard
         '';
         # see https://github.com/scheibler/khard/issues/263
@@ -42,6 +32,8 @@
         pythonImportsCheck = ["khard"];
         checkPhase = "python3 -W error -m unittest -v";
       };
+    in
+      python3.pkgs.buildPythonApplication (attrs // overrides);
     default = pkgs.callPackage khard {};
   in {
     packages.${system}.default = default;
