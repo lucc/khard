@@ -17,8 +17,8 @@ except ImportError:
     import validate
 
 from .actions import Actions
-from .address_book import AddressBookCollection, AddressBookNameError, \
-    VdirAddressBook
+from .address_book import AddressBookCollection, VdirAddressBook
+from .exceptions import AddressBookNameError, ConfigError
 from .query import Query
 
 
@@ -27,10 +27,6 @@ logger = logging.getLogger(__name__)
 # library:
 # https://configobj.readthedocs.io/en/latest/configobj.html#reading-a-config-file
 ConfigFile = Union[str, list[str], io.StringIO]
-
-
-class ConfigError(Exception):
-    """Errors during config file parsing"""
 
 
 def validate_command(value: list[str]) -> list[str]:

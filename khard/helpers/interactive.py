@@ -8,16 +8,11 @@ import subprocess
 from tempfile import NamedTemporaryFile
 from typing import Callable, Generator, Optional, Sequence, TypeVar, Union
 
+from ..exceptions import Cancelled
 from ..carddav_object import CarddavObject
 
 
 T = TypeVar("T")
-
-
-class Canceled(Exception):
-    """An exception indicating that the user canceled some operation."""
-    def __init__(self, message: str = "Canceled") -> None:
-        super().__init__(message)
 
 
 def confirm(message: str, accept_enter_key: bool = True) -> bool:
@@ -74,7 +69,7 @@ def ask(message: str, choices: list[str], default: Optional[str] = None,
         except (EOFError, IndexError, ValueError):
             pass
         except KeyboardInterrupt:
-            raise Canceled
+            raise Cancelled
         if help is not None:
             print(help)
 
@@ -97,7 +92,7 @@ def select(items: Sequence[T], include_none: bool = False) -> Optional[T]:
             answer = input(prompt)
             answer = answer.lower()
             if answer == "q":
-                raise Canceled
+                raise Cancelled
             index = int(answer)
             if include_none and index == 0:
                 return None

@@ -77,6 +77,10 @@ module = [
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+module = "khard.khard"
+warn_no_return = false
+
+[[tool.mypy.overrides]]
 module = "test.*"
 check_untyped_defs = false
 disallow_untyped_calls = false

@@ -5,8 +5,9 @@ import logging
 import sys
 
 from .actions import Actions
+from .exceptions import ConfigError
 from .carddav_object import CarddavObject
-from .config import Config, ConfigError
+from .config import Config
 from .query import AndQuery, AnyQuery, parse
 from .version import version as khard_version
 

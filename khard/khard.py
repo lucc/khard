@@ -15,8 +15,8 @@ from typing import cast, Callable, Iterable, Optional, Union
 from unidecode import unidecode
 
 from . import helpers
-from .address_book import (AddressBookCollection, AddressBookNameError,
-                           AddressBookParseError, VdirAddressBook)
+from .address_book import AddressBookCollection, VdirAddressBook
+from .exceptions import AddressBookNameError, AddressBookParseError, Cancelled
 from .carddav_object import CarddavObject
 from . import cli
 from .config import Config
@@ -29,6 +29,8 @@ from .version import version as khard_version
 
 logger = logging.getLogger(__name__)
 config: Config
+# the types that sys.exit() can digest
+ExitStatus = Union[str, int, None]
 
 
 def version_check(contact: CarddavObject, description: str) -> bool:
@@ -104,9 +106,8 @@ def merge_existing_contacts(source_contact: CarddavObject,
             target_contact, t, config.localize_dates), src_text, target_text)
     # compare them
     if merged_contact is None or target_contact == merged_contact:
-        print("Target contact unmodified\n\n{}".format(
-            target_contact.pretty()))
-        sys.exit(0)
+        raise Cancelled(
+            f"Target contact unmodified\n\n{target_contact.pretty()}", 0)
 
     print("Merge contact {} from address book {} into contact {} from address "
           "book {}\n\n".format(source_contact, source_contact.address_book,
@@ -239,7 +240,7 @@ def choose_address_book_from_list(header: str, abooks: Union[
     :param header: some text to print in front of the list
     :param abooks: the address books from which to select
     :returns: the selected address book
-    :raises interactive.Canceled: when the user canceled the selection
+    :raises Canceled: when the user canceled the selection
     """
     if not abooks:
         return None
@@ -258,7 +259,7 @@ def choose_vcard_from_list(header: str, vcards: list[CarddavObject],
     :param header: some text to print in front of the list
     :param vcards: the contacts from which to select
     :returns: the selected contact
-    :raises interactive.Canceled: when the user canceled the selection
+    :raises Canceled: when the user canceled the selection
     """
     if not vcards:
         return None
@@ -368,7 +369,7 @@ def generate_contact_list(args: Namespace) -> list[CarddavObject]:
 
 
 def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
-                   ) -> None:
+                   ) -> ExitStatus:
     """Create a new contact.
 
     :param abooks: a list of address books that were selected on the command
@@ -376,13 +377,13 @@ def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
     :param data: the data for the new contact as a yaml formatted string
     :param open_editor: whether to open the new contact in the editor after
         creation
-    :raises interactive.Canceled: when the user canceled a selection
+    :raises Canceled: when the user canceled a selection
     """
     # ask for address book, in which to create the new contact
     abook = choose_address_book_from_list(
         "Select address book for new contact", abooks)
     if abook is None:
-        sys.exit("Error: address book list is empty")
+        return "address book list is empty"
     # if there is some data in stdin/the input file
     if data:
         # create new contact from stdin/the input file
@@ -391,7 +392,7 @@ def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
                 abook, data, config.private_objects,
                 config.preferred_vcard_version, config.localize_dates)
         except ValueError as err:
-            sys.exit(f"Error: {err}")
+            return str(err)
         else:
             new_contact.write_to_file()
         if open_editor:
@@ -411,7 +412,7 @@ def add_email_to_contact(name: str, email_address: str,
     :param email_address: email address of the contact
     :param abooks: the address books that were selected on the command line
     :param skip_already_added: skip if email_address is part of one or more contacts
-    :raises interactive.Canceled: when the user canceled a selection
+    :raises Canceled: when the user canceled a selection
     """
 
     # email address
@@ -552,7 +553,7 @@ def add_email_to_contact(name: str, email_address: str,
 
         # ask for address book, in which to create the new contact
         if not config.abooks:
-            sys.exit("Error: address book list is empty")
+            raise Cancelled("address book list is empty")
         else:
             selected_address_book = choose_address_book_from_list(
                     "Select address book for new contact", config.abooks)
@@ -678,18 +679,18 @@ def add_email_subcommand(
         text: str,
         abooks: AddressBookCollection,
         fields: list[str],
-        skip_already_added: bool) -> None:
+        skip_already_added: bool) -> ExitStatus:
     """Add a new email address to contacts, creating new contacts if necessary.
 
     :param text: the input text to search for the new email
     :param abooks: the address books that were selected on the command line
     :param field: the header field to extract contacts from
     :param skip_already_added: skip already known email addresses
-    :raises interactive.Canceled: when the user canceled a selection
+    :raises Canceled: when the user canceled a selection
     """
     email_addresses = find_email_addresses(text, fields)
     if not email_addresses:
-        sys.exit("No email addresses found in fields {}".format(fields))
+        return f"No email addresses found in fields {fields}"
 
     print("Khard: Add email addresses to contacts")
 
@@ -705,7 +706,7 @@ def add_email_subcommand(
 
 
 def birthdays_subcommand(vcard_list: list[CarddavObject], parsable: bool
-                         ) -> None:
+                         ) -> ExitStatus:
     """Print birthday contact table.
 
     :param vcard_list: the vCards to search for matching entries which should
@@ -747,11 +748,11 @@ def birthdays_subcommand(vcard_list: list[CarddavObject], parsable: bool
     else:
         if not parsable:
             print("Found no birthdays")
-        sys.exit(1)
+        return 1
 
 
 def phone_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
-        parsable: bool) -> None:
+        parsable: bool) -> ExitStatus:
     """Print a phone application friendly contact table.
 
     :param search_terms: used as search term to filter the contacts before
@@ -787,12 +788,12 @@ def phone_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
     else:
         if not parsable:
             print("Found no phone numbers")
-        sys.exit(1)
+        return 1
 
 
 def post_address_subcommand(search_terms: Query,
         vcard_list: list[CarddavObject], parsable: bool
-                            ) -> None:
+                            ) -> ExitStatus:
     """Print a contact table with all postal / mailing addresses
 
     :param search_terms: used as search term to filter the contacts before
@@ -832,11 +833,11 @@ def post_address_subcommand(search_terms: Query,
     else:
         if not parsable:
             print("Found no post addresses")
-        sys.exit(1)
+        return 1
 
 
 def email_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
-                     parsable: bool, remove_first_line: bool) -> None:
+                     parsable: bool, remove_first_line: bool) -> ExitStatus:
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
     Output format:
@@ -887,7 +888,7 @@ def email_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
             print("Found no email addresses")
         elif not remove_first_line:
             print("searching for '{}' ...".format(search_terms))
-        sys.exit(1)
+        return 1
 
 
 def _filter_email_post_or_phone_number_results(search_terms: Query,
@@ -908,7 +909,7 @@ def _filter_email_post_or_phone_number_results(search_terms: Query,
 
 
 def list_subcommand(vcard_list: list[CarddavObject], parsable: bool,
-                    fields: list[str]) -> None:
+                    fields: list[str]) -> ExitStatus:
     """Print a user friendly contacts table.
 
     :param vcard_list: the vCards to print
@@ -918,14 +919,14 @@ def list_subcommand(vcard_list: list[CarddavObject], parsable: bool,
     if not vcard_list:
         if not parsable:
             print("Found no contacts")
-        sys.exit(1)
+        return 1
     else:
         list_contacts(vcard_list, fields, parsable)
 
 
 def modify_subcommand(selected_vcard: CarddavObject,
                       input_from_stdin_or_file: str, open_editor: bool,
-                      source: bool = False) -> None:
+                      source: bool = False) -> ExitStatus:
     """Modify a contact in an external editor.
 
     :param selected_vcard: the contact to modify
@@ -939,10 +940,10 @@ def modify_subcommand(selected_vcard: CarddavObject,
     if source:
         editor = interactive.Editor(config.editor, config.merge_editor)
         editor.edit_files(selected_vcard.filename)
-        return
+        return None
     # show warning, if vCard version of selected contact is not 3.0 or 4.0
     if not version_check(selected_vcard, "selected contact"):
-        return
+        return None
     # if there is some data in stdin
     if input_from_stdin_or_file:
         # create new contact from stdin
@@ -951,7 +952,7 @@ def modify_subcommand(selected_vcard: CarddavObject,
                 selected_vcard, input_from_stdin_or_file,
                 config.localize_dates)
         except ValueError as err:
-            sys.exit(f"Error: {err}")
+            return str(err)
         if selected_vcard == new_contact:
             print("Nothing changed\n\n{}".format(new_contact.pretty()))
         else:
@@ -986,13 +987,13 @@ def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
 
 def merge_subcommand(vcards: list[CarddavObject],
                      abooks: AddressBookCollection, search_terms: Query
-                     ) -> None:
+                     ) -> ExitStatus:
     """Merge two contacts into one.
 
     :param vcards: the vCards from which to choose contacts for merging
     :param abooks: the address books to use to find the target contact
     :param search_terms: the search terms to find the target contact
-    :raises interactive.Canceled: when the user canceled a selection
+    :raises Canceled: when the user canceled a selection
     """
     # Find possible target contacts.
     target_vcards = get_contact_list(abooks, search_terms)
@@ -1000,7 +1001,7 @@ def merge_subcommand(vcards: list[CarddavObject],
     source_vcard = choose_vcard_from_list("Select contact from which to merge",
                                           vcards)
     if source_vcard is None:
-        sys.exit("Found no source contact for merging")
+        return "Found no source contact for merging"
     else:
         print("Merge from {} from address book {}\n\n".format(
             source_vcard, source_vcard.address_book))
@@ -1008,7 +1009,7 @@ def merge_subcommand(vcards: list[CarddavObject],
     target_vcard = choose_vcard_from_list("Select contact into which to merge",
                                           target_vcards)
     if target_vcard is None:
-        sys.exit("Found no target contact for merging")
+        return "Found no target contact for merging"
     else:
         print("Merge into {} from address book {}\n\n".format(
             target_vcard, target_vcard.address_book))
@@ -1021,19 +1022,19 @@ def merge_subcommand(vcards: list[CarddavObject],
 
 def copy_or_move_subcommand(action: str, vcards: list[CarddavObject],
                             target_address_books: AddressBookCollection
-                            ) -> None:
+                            ) -> ExitStatus:
     """Copy or move a contact to a different address book.
 
     :param action: the string "copy" or "move" to indicate what to do
     :param vcards: the contact list from which to select one for the action
     :param target_address_books: the target address books
-    :raises interactive.Canceled: when the user canceled a selection
+    :raises Canceled: when the user canceled a selection
     """
     # get the source vCard, which to copy or move
     source_vcard = choose_vcard_from_list(
         "Select contact to {}".format(action.title()), vcards)
     if source_vcard is None:
-        sys.exit("Found no contact")
+        return "Found no contact"
     else:
         print("{} contact {} from address book {}".format(
             action.title(), source_vcard, source_vcard.address_book))
@@ -1041,15 +1042,14 @@ def copy_or_move_subcommand(action: str, vcards: list[CarddavObject],
     # get target address book
     if len(target_address_books) == 1 \
             and target_address_books[0] == source_vcard.address_book:
-        sys.exit("The address book {} already contains the contact {}".format(
-            target_address_books[0], source_vcard))
+        return f"The address book {target_address_books[0]} already contains the contact {source_vcard}"
     else:
         available_address_books = [abook for abook in target_address_books
                                    if abook != source_vcard.address_book]
         target_abook = choose_address_book_from_list(
             "Select target address book", available_address_books)
         if target_abook is None:
-            sys.exit("Error: address book list is empty")
+            return "address book list is empty"
 
     # check if a contact already exists in the target address book
     target_vcard = choose_vcard_from_list(
@@ -1094,7 +1094,7 @@ def copy_or_move_subcommand(action: str, vcards: list[CarddavObject],
                 break
 
 
-def main(argv: list[str] = sys.argv[1:]) -> None:
+def main(argv: list[str] = sys.argv[1:]) -> ExitStatus:
     args, conf = cli.init(argv)
 
     # store the config instance in the module level variable
@@ -1105,7 +1105,7 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
     # options and can directly be run.
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.abooks))
-        return
+        return None
     if args.action == "template":
         print("# Contact template for khard version {}\n#\n"
               "# Use this yaml formatted template to create a new contact:\n"
@@ -1113,7 +1113,7 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
               "#   or with: cat template.yaml | khard new -a address_book\n"
               "\n{}".format(khard_version, helpers.get_new_contact_template(
                   config.private_objects)))
-        return
+        return None
 
     search_queries = prepare_search_queries(args)
 
@@ -1126,16 +1126,15 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
             args.target_addressbook = config.get_address_books(
                 args.target_addressbook, search_queries)
     except AddressBookParseError as err:
-        sys.exit("{}\nUse --debug for more information or --skip-unparsable "
-                 "to proceed".format(err))
+        return f"{err}\nUse --debug for more information or --skip-unparsable to proceed"
     except AddressBookNameError as err:
-        sys.exit(str(err))
+        return str(err)
 
     vcard_list = generate_contact_list(args)
 
     if args.action == "filename":
         print('\n'.join(contact.filename for contact in vcard_list))
-        return
+        return None
 
     # read from template file or stdin if available
     input_from_stdin_or_file = ""
@@ -1146,14 +1145,13 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
                 with open(args.input_file, "r") as infile:
                     input_from_stdin_or_file = infile.read()
             except OSError as err:
-                sys.exit("Error: {}\n       File: {}".format(err.strerror,
-                                                             err.filename))
+                return "Error: {}\n       File: {}".format(err.strerror, err.filename)
         elif not sys.stdin.isatty():
             # try to read from stdin
             try:
                 input_from_stdin_or_file = sys.stdin.read()
             except OSError:
-                sys.exit("Error: Can't read from stdin")
+                return "Error: Can't read from stdin"
             # try to reopen console
             # otherwise further user interaction is not possible (for example
             # selecting a contact from the contact table)
@@ -1164,25 +1162,25 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
 
     # these listing commands do not require any user interaction
     if args.action == "birthdays":
-        birthdays_subcommand(vcard_list, args.parsable)
+        return birthdays_subcommand(vcard_list, args.parsable)
     elif args.action == "phone":
-        phone_subcommand(args.search_terms, vcard_list, args.parsable)
+        return phone_subcommand(args.search_terms, vcard_list, args.parsable)
     elif args.action == "postaddress":
-        post_address_subcommand(args.search_terms, vcard_list, args.parsable)
+        return post_address_subcommand(args.search_terms, vcard_list, args.parsable)
     elif args.action == "email":
-        email_subcommand(args.search_terms, vcard_list,
-                         args.parsable, args.remove_first_line)
+        return email_subcommand(args.search_terms, vcard_list, args.parsable,
+                                args.remove_first_line)
     elif args.action == "list":
-        list_subcommand(vcard_list, args.parsable, args.fields)
+        return list_subcommand(vcard_list, args.parsable, args.fields)
 
     else:
         # these commands require user interaction
         try:
             if args.action == "new":
-                new_subcommand(args.addressbook, input_from_stdin_or_file,
-                               args.open_editor)
+                return new_subcommand(args.addressbook, input_from_stdin_or_file,
+                                      args.open_editor)
             elif args.action == "add-email":
-                add_email_subcommand(input_from_stdin_or_file,
+                return add_email_subcommand(input_from_stdin_or_file,
                                      args.addressbook, args.headers,
                                      args.skip_already_added)
             elif args.action in ["show", "edit", "remove"]:
@@ -1190,7 +1188,7 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
                     "Select contact for {} action".format(args.action.title()),
                     vcard_list)
                 if selected_vcard is None:
-                    sys.exit("Found no contact")
+                    return "Found no contact"
                 if args.action == "show":
                     if args.format == "pretty":
                         output = selected_vcard.pretty()
@@ -1204,15 +1202,19 @@ def main(argv: list[str] = sys.argv[1:]) -> None:
                                      selected_vcard.to_yaml())
                     args.output_file.write(output)
                 elif args.action == "edit":
-                    modify_subcommand(selected_vcard, input_from_stdin_or_file,
+                    return modify_subcommand(selected_vcard, input_from_stdin_or_file,
                                       args.open_editor, args.format == 'vcard')
                 elif args.action == "remove":
                     remove_subcommand(selected_vcard, args.force)
             elif args.action == "merge":
-                merge_subcommand(vcard_list, args.target_addressbook,
-                                 args.target_contact)
+                return merge_subcommand(vcard_list, args.target_addressbook,
+                                        args.target_contact)
             elif args.action in ["copy", "move"]:
-                copy_or_move_subcommand(
-                    args.action, vcard_list, args.target_addressbook)
-        except interactive.Canceled as ex:
-            sys.exit(str(ex))
+                return copy_or_move_subcommand(args.action, vcard_list,
+                                               args.target_addressbook)
+        except Cancelled as ex:
+            if ex.code == 0:
+                print(ex)
+            else:
+                print(f"Error: {ex}")
+            return ex.code

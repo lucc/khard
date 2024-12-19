@@ -11,29 +11,11 @@ from typing import Generator, Iterator, Optional, Union, overload
 import vobject.base
 
 from . import carddav_object
+from .exceptions import AddressBookParseError
 from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
-
-
-class AddressBookParseError(Exception):
-    """Indicate an error while parsing data from an address book backend."""
-
-    def __init__(self, filename: str, abook: str, reason: Exception) -> None:
-        """Store the filename that caused the error."""
-        super().__init__()
-        self.filename = filename
-        self.abook = abook
-        self.reason = reason
-
-    def __str__(self) -> str:
-        return "Error when parsing {} in address book {}: {}".format(
-            self.filename, self.abook, self.reason)
-
-
-class AddressBookNameError(Exception):
-    """Indicate an error with an address book name."""
 
 
 class AddressBook(metaclass=abc.ABCMeta):

@@ -165,9 +165,13 @@ class ListingCommands(unittest.TestCase):
 
     def test_regex_special_chars_are_not_special(self):
         with mock_stream() as stdout:
-            with self.assertRaises(SystemExit):
-                khard.main(['list', 'uid.'])
+            ret = khard.main(['list', 'uid'])
+        self.assertNotEqual(stdout.getvalue(), "Found no contacts\n")
+        self.assertIsNone(ret)
+        with mock_stream() as stdout:
+            ret = khard.main(['list', 'uid.'])
         self.assertEqual(stdout.getvalue(), "Found no contacts\n")
+        self.assertEqual(ret, 1)
 
     def test_display_post_address(self):
         with TmpConfig(["post.vcf"]):

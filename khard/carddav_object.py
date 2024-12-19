@@ -13,7 +13,6 @@ import locale
 import logging
 import os
 import re
-import sys
 import time
 from typing import Any, Callable, Literal, Optional, TypeVar, Union, \
     Sequence, overload
@@ -22,6 +21,8 @@ from atomicwrites import atomic_write
 from ruamel import yaml
 from ruamel.yaml import YAML
 import vobject
+
+from khard.exceptions import Cancelled
 
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
@@ -1518,11 +1519,9 @@ class CarddavObject(YAMLEditable):
             with atomic_write(self.filename, overwrite=overwrite) as f:
                 f.write(self.vcard.serialize())
         except vobject.base.ValidateError as err:
-            print("Error: Vcard is not valid.\n{}".format(err))
-            sys.exit(4)
+            raise Cancelled(f"Vcard is not valid.\n{err}", 4)
         except OSError as err:
-            print("Error: Can't write\n{}".format(err))
-            sys.exit(4)
+            raise Cancelled(f"Can't write\n{err}", 4)
 
     def delete_vcard_file(self) -> None:
         try:

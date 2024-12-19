@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 from khard import address_book, query
+from khard.exceptions import AddressBookParseError
 
 from .helpers import TmpAbook
 
@@ -94,7 +95,7 @@ class VcardAddressBookLoad(unittest.TestCase):
     def test_loading_unparsable_vcard_fails(self):
         abook = address_book.VdirAddressBook('test',
                                              'test/fixture/broken.abook')
-        with self.assertRaises(address_book.AddressBookParseError):
+        with self.assertRaises(AddressBookParseError):
             with self.assertLogs(level='ERROR'):
                 abook.load()
 
