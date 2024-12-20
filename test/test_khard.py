@@ -8,7 +8,7 @@ from unittest import mock
 from khard import config, khard, query
 from khard.khard import find_email_addresses
 
-from .helpers import TestCarddavObject, TmpAbook, load_contact
+from .helpers import TestContact, TmpAbook, load_contact
 
 
 class TestSearchQueryPreparation(unittest.TestCase):
@@ -240,11 +240,11 @@ class TestSortContacts(unittest.TestCase):
 
     def test_sort_order_for_accentuated_names(self):
         # reported in issue #127
-        albert = TestCarddavObject(fn="Albert")
-        eleanor = TestCarddavObject(fn="Eleanor")
-        eugene = TestCarddavObject(fn="Eugene")
-        zakari = TestCarddavObject(fn="Zakari")
-        eric = TestCarddavObject(fn="Éric")
+        albert = TestContact(fn="Albert")
+        eleanor = TestContact(fn="Eleanor")
+        eugene = TestContact(fn="Eugene")
+        zakari = TestContact(fn="Zakari")
+        eric = TestContact(fn="Éric")
         unsorted = [albert, eleanor, eugene, zakari, eric]
         sorted = khard.sort_contacts(unsorted, sort="formatted_name")
         self.assertEqual(sorted, [albert, eleanor, eric, eugene, zakari])

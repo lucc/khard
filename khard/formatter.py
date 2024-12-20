@@ -1,11 +1,11 @@
 """Formatting and sorting of contacts"""
 
-from .carddav_object import CarddavObject
+from .contacts import Contact
 
 
 class Formatter:
 
-    """A formatter for CarddavObject.
+    """A formatter for Contact.
 
     It receives some settings on initialisation which influence the formatting
     of the contact.
@@ -48,7 +48,7 @@ class Formatter:
         first_key = sorted(keys, key=lambda k: k.lower())[0]
         return "{}: {}".format(first_key, sorted(field.get(first_key, []))[0])
 
-    def get_special_field(self, vcard: CarddavObject, field: str) -> str:
+    def get_special_field(self, vcard: Contact, field: str) -> str:
         """Returns certain fields with specific formatting options
             (for support of some list command options)."""
         if field == 'name':
@@ -74,7 +74,7 @@ class Formatter:
         return ""
 
     @staticmethod
-    def get_nested_field(vcard: CarddavObject, field: str) -> str:
+    def get_nested_field(vcard: Contact, field: str) -> str:
         """Returns the value of a nested field from a string
 
         get_nested_field(vcard,'emails.home.1') is equivalent to

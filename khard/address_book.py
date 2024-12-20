@@ -10,7 +10,7 @@ from typing import Generator, Iterator, Optional, Union, overload
 
 import vobject.base
 
-from . import carddav_object
+from . import contacts
 from .exceptions import AddressBookParseError
 from .query import AnyQuery, Query
 
@@ -24,9 +24,9 @@ class AddressBook(metaclass=abc.ABCMeta):
     def __init__(self, name: str) -> None:
         """:param name: the name to identify the address book"""
         self._loaded = False
-        self.contacts: dict[str, "carddav_object.CarddavObject"] = {}
+        self.contacts: dict[str, "contacts.Contact"] = {}
         self._short_uids: Optional[dict[str,
-                                        "carddav_object.CarddavObject"]] = None
+                                        "contacts.Contact"]] = None
         self.name = name
 
     def __str__(self) -> str:
@@ -49,7 +49,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def search(self, query: Query) -> Generator["carddav_object.CarddavObject",
+    def search(self, query: Query) -> Generator["contacts.Contact",
                                                 None, None]:
         """Search this address book for contacts matching the query.
 
@@ -66,7 +66,7 @@ class AddressBook(metaclass=abc.ABCMeta):
                 yield contact
 
     def get_short_uid_dict(self, query: Query = AnyQuery()) -> dict[
-            str, "carddav_object.CarddavObject"]:
+            str, "contacts.Contact"]:
         """Create a dictionary of shortened UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
@@ -173,7 +173,7 @@ class VdirAddressBook(AddressBook):
         errors = 0
         for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
-                card = carddav_object.CarddavObject.from_file(
+                card = contacts.Contact.from_file(
                     self, filename,
                     query if search_in_source_files else AnyQuery(),
                     self._private_objects, self._localize_dates)

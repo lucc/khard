@@ -1,4 +1,4 @@
-"""Tests for the VCardWrapper class from the carddav module."""
+"""Tests for the VCardWrapper class from the contacts module."""
 # pylint: disable=missing-docstring
 
 import contextlib
@@ -8,7 +8,7 @@ from typing import Union
 
 import vobject
 
-from khard.carddav_object import VCardWrapper
+from khard.contacts import VCardWrapper
 from khard.helpers.typing import ObjectType
 
 from .helpers import vCard, TestVCardWrapper

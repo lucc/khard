@@ -106,7 +106,7 @@ class VcardAddressBookLoad(unittest.TestCase):
             abook.load()
         self.assertEqual(
             cm.output[0],
-            "WARNING:khard.carddav_object:Filtering some problematic tags "
+            "WARNING:khard.contacts:Filtering some problematic tags "
             "from test/fixture/broken.abook/unparsable.vcf",
         )
         # FIXME Remove this regex assert when either

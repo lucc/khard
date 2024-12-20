@@ -11,7 +11,7 @@ from khard.query import (
     parse,
 )
 
-from .helpers import TestCarddavObject, load_contact
+from .helpers import TestContact, load_contact
 
 
 class TestTermQuery(unittest.TestCase):
@@ -107,43 +107,43 @@ class TestEquality(unittest.TestCase):
 class TestFieldQuery(unittest.TestCase):
     @unittest.expectedFailure
     def test_empty_field_values_match_if_the_field_is_present(self):
-        # This test currently fails because the CarddavObject class has all
+        # This test currently fails because the Contact class has all
         # attributes set because they are properties.  So the test in the query
         # class if an attribute is present never fails.
         uid = "Some Test Uid"
-        vcard1 = TestCarddavObject(uid=uid)
-        vcard2 = TestCarddavObject()
+        vcard1 = TestContact(uid=uid)
+        vcard2 = TestContact()
         query = FieldQuery("uid", "")
         self.assertTrue(query.match(vcard1))
         self.assertFalse(query.match(vcard2))
 
     def test_empty_field_values_fails_if_the_field_is_absent(self):
-        vcard = TestCarddavObject()
+        vcard = TestContact()
         query = FieldQuery("emails", "")
         self.assertFalse(query.match(vcard))
 
     def test_values_can_match_exact(self):
         uid = "Some Test Uid"
-        vcard = TestCarddavObject(uid=uid)
+        vcard = TestContact(uid=uid)
         query = FieldQuery("uid", uid)
         self.assertTrue(query.match(vcard))
 
     def test_values_can_match_substrings(self):
         uid = "Some Test Uid"
-        vcard = TestCarddavObject(uid=uid)
+        vcard = TestContact(uid=uid)
         query = FieldQuery("uid", "e Test U")
         self.assertTrue(query.match(vcard))
 
     def test_values_can_match_case_insensitive(self):
         uid = "Some Test Uid"
-        vcard = TestCarddavObject(uid=uid)
+        vcard = TestContact(uid=uid)
         query1 = FieldQuery("uid", uid.upper())
         query2 = FieldQuery("uid", uid.lower())
         self.assertTrue(query1.match(vcard))
         self.assertTrue(query2.match(vcard))
 
     def test_match_formatted_name(self):
-        vcard = TestCarddavObject(fn="foo bar")
+        vcard = TestContact(fn="foo bar")
         query = FieldQuery("formatted_name", "foo")
         self.assertTrue(query.match(vcard))
 
@@ -183,12 +183,12 @@ class TestFieldQuery(unittest.TestCase):
         self.assertFalse(query.match(vcard))
 
     def test_kind_query_with_explicit_match(self):
-        contact = TestCarddavObject(kind="org", version="4.0")
+        contact = TestContact(kind="org", version="4.0")
         query = FieldQuery("kind", "org")
         self.assertTrue(query.match(contact))
 
     def test_kind_query_with_explicit_mismatch(self):
-        contact = TestCarddavObject(kind="org", version="4.0")
+        contact = TestContact(kind="org", version="4.0")
         query = FieldQuery("kind", "individual")
         self.assertFalse(query.match(contact))
 

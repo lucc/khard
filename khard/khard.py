@@ -17,7 +17,7 @@ from unidecode import unidecode
 from . import helpers
 from .address_book import AddressBookCollection, VdirAddressBook
 from .exceptions import AddressBookNameError, AddressBookParseError, Cancelled
-from .carddav_object import CarddavObject
+from .contacts import Contact
 from . import cli
 from .config import Config
 from .formatter import Formatter
@@ -33,7 +33,7 @@ config: Config
 ExitStatus = Union[str, int, None]
 
 
-def version_check(contact: CarddavObject, description: str) -> bool:
+def version_check(contact: Contact, description: str) -> bool:
     if contact.version not in config.supported_vcard_versions:
         print("Warning:\nThe {} is based on vcard version {} but khard only "
               "supports the modification of vcards with version 3.0 and 4.0.\n"
@@ -54,11 +54,11 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
         "{}\n# if you want to cancel, exit without saving\n\n{}".format(
             address_book, config.preferred_vcard_version,
             helpers.get_new_contact_template(config.private_objects))
-    new_contact = editor.edit_templates(lambda t: CarddavObject.from_yaml(
+    new_contact = editor.edit_templates(lambda t: Contact.from_yaml(
         address_book, t, config.private_objects,
         config.preferred_vcard_version, config.localize_dates), template)
 
-    # create carddav object from temp file
+    # create contact object from temp file
     if new_contact is None:
         print("Canceled")
     else:
@@ -66,7 +66,7 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
         print("Creation successful\n\n{}".format(new_contact.pretty()))
 
 
-def modify_existing_contact(old_contact: CarddavObject) -> None:
+def modify_existing_contact(old_contact: Contact) -> None:
     editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file and open it with the specified text editor
     text = ("# Edit contact: {}\n# Address book: {}\n# Vcard version: {}\n"
@@ -74,7 +74,7 @@ def modify_existing_contact(old_contact: CarddavObject) -> None:
                 old_contact, old_contact.address_book, old_contact.version,
                 old_contact.to_yaml()))
     new_contact = editor.edit_templates(
-        lambda t: CarddavObject.clone_with_yaml_update(
+        lambda t: Contact.clone_with_yaml_update(
             old_contact, t, config.localize_dates), text)
 
     # check if the user changed anything
@@ -85,8 +85,8 @@ def modify_existing_contact(old_contact: CarddavObject) -> None:
         print("Modification successful\n\n{}".format(new_contact.pretty()))
 
 
-def merge_existing_contacts(source_contact: CarddavObject,
-                            target_contact: CarddavObject,
+def merge_existing_contacts(source_contact: Contact,
+                            target_contact: Contact,
                             delete_source_contact: bool) -> None:
     # show warning, if target vCard version is not 3.0 or 4.0
     if not version_check(target_contact, "target contact in which to merge"):
@@ -102,7 +102,7 @@ def merge_existing_contacts(source_contact: CarddavObject,
                        target_contact, target_contact.address_book,
                        target_contact.version, target_contact.to_yaml()))
     merged_contact = editor.edit_templates(
-        lambda t: CarddavObject.clone_with_yaml_update(
+        lambda t: Contact.clone_with_yaml_update(
             target_contact, t, config.localize_dates), src_text, target_text)
     # compare them
     if merged_contact is None or target_contact == merged_contact:
@@ -129,7 +129,7 @@ def merge_existing_contacts(source_contact: CarddavObject,
     print("Merge successful\n\n{}".format(merged_contact.pretty()))
 
 
-def copy_contact(contact: CarddavObject, target_address_book: VdirAddressBook,
+def copy_contact(contact: Contact, target_address_book: VdirAddressBook,
                  delete_source_contact: bool) -> None:
     source_contact_filename = ""
     if delete_source_contact:
@@ -161,7 +161,7 @@ def list_address_books(address_books: Union[AddressBookCollection,
     print(helpers.pretty_print(table))
 
 
-def list_contacts(vcard_list: list[CarddavObject], fields: Iterable[str] = (),
+def list_contacts(vcard_list: list[Contact], fields: Iterable[str] = (),
                   parsable: bool = False) -> None:
     selected_address_books: list[VdirAddressBook] = []
     selected_kinds = set()
@@ -174,7 +174,7 @@ def list_contacts(vcard_list: list[CarddavObject], fields: Iterable[str] = (),
     # default table header
     table_header = ["index", "name", "phone", "email"]
     plural = ""
-    if config.show_kinds or len(selected_kinds) > 1 or CarddavObject._default_kind not in selected_kinds:
+    if config.show_kinds or len(selected_kinds) > 1 or Contact._default_kind not in selected_kinds:
         table_header.append("kind")
     if len(selected_address_books) > 1:
         plural = "s"
@@ -251,9 +251,9 @@ def choose_address_book_from_list(header: str, abooks: Union[
     return interactive.select(abooks)
 
 
-def choose_vcard_from_list(header: str, vcards: list[CarddavObject],
+def choose_vcard_from_list(header: str, vcards: list[Contact],
                            include_none: bool = False
-                           ) -> Optional[CarddavObject]:
+                           ) -> Optional[Contact]:
     """Let the user select a contact from a list
 
     :param header: some text to print in front of the list
@@ -272,22 +272,22 @@ def choose_vcard_from_list(header: str, vcards: list[CarddavObject],
 
 def get_contact_list(address_books: Union[VdirAddressBook,
                                           AddressBookCollection],
-                     query: Query) -> list[CarddavObject]:
+                     query: Query) -> list[Contact]:
     """Find contacts in the given address book grouped, sorted and reversed
     according to the loaded configuration.
 
     :param address_books: the address book to search
     :param query: the query to use when searching
-    :returns: list of found CarddavObject objects
+    :returns: list of found Contact objects
     """
     contacts = address_books.search(query)
     return sort_contacts(contacts, config.reverse, config.group_by_addressbook,
                          config.sort)
 
 
-def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
+def sort_contacts(contacts: Iterable[Contact], reverse: bool = False,
                   group: bool = False, sort: str = "first_name") -> list[
-                      CarddavObject]:
+                      Contact]:
     """Sort a list of contacts
 
     :param contacts: the contact list to sort
@@ -352,7 +352,7 @@ def prepare_search_queries(args: Namespace) -> dict[str, Query]:
     return queries2
 
 
-def generate_contact_list(args: Namespace) -> list[CarddavObject]:
+def generate_contact_list(args: Namespace) -> list[Contact]:
     """Find the contact list with which we will work later on
 
     :param args: the command line arguments
@@ -388,7 +388,7 @@ def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
     if data:
         # create new contact from stdin/the input file
         try:
-            new_contact = CarddavObject.from_yaml(
+            new_contact = Contact.from_yaml(
                 abook, data, config.private_objects,
                 config.preferred_vcard_version, config.localize_dates)
         except ValueError as err:
@@ -610,7 +610,7 @@ def add_email_to_contact(name: str, email_address: str,
         if not confirm("Create contact?", False):
             print("Cancelled")
             return
-        selected_vcard = CarddavObject.from_yaml(
+        selected_vcard = Contact.from_yaml(
                 selected_address_book, '\n'.join(template_data),
                 config.private_objects, config.preferred_vcard_version,
                 config.localize_dates)
@@ -705,7 +705,7 @@ def add_email_subcommand(
     print("No more email addresses")
 
 
-def birthdays_subcommand(vcard_list: list[CarddavObject], parsable: bool
+def birthdays_subcommand(vcard_list: list[Contact], parsable: bool
                          ) -> ExitStatus:
     """Print birthday contact table.
 
@@ -751,7 +751,7 @@ def birthdays_subcommand(vcard_list: list[CarddavObject], parsable: bool
         return 1
 
 
-def phone_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
+def phone_subcommand(search_terms: Query, vcard_list: list[Contact],
         parsable: bool) -> ExitStatus:
     """Print a phone application friendly contact table.
 
@@ -792,7 +792,7 @@ def phone_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
 
 
 def post_address_subcommand(search_terms: Query,
-        vcard_list: list[CarddavObject], parsable: bool
+        vcard_list: list[Contact], parsable: bool
                             ) -> ExitStatus:
     """Print a contact table with all postal / mailing addresses
 
@@ -836,7 +836,7 @@ def post_address_subcommand(search_terms: Query,
         return 1
 
 
-def email_subcommand(search_terms: Query, vcard_list: list[CarddavObject],
+def email_subcommand(search_terms: Query, vcard_list: list[Contact],
                      parsable: bool, remove_first_line: bool) -> ExitStatus:
     """Print a mail client friendly contacts table that is compatible with the
     default format used by mutt.
@@ -908,7 +908,7 @@ def _filter_email_post_or_phone_number_results(search_terms: Query,
     return matched_line_list if matched_line_list else field_line_list
 
 
-def list_subcommand(vcard_list: list[CarddavObject], parsable: bool,
+def list_subcommand(vcard_list: list[Contact], parsable: bool,
                     fields: list[str]) -> ExitStatus:
     """Print a user friendly contacts table.
 
@@ -924,7 +924,7 @@ def list_subcommand(vcard_list: list[CarddavObject], parsable: bool,
         list_contacts(vcard_list, fields, parsable)
 
 
-def modify_subcommand(selected_vcard: CarddavObject,
+def modify_subcommand(selected_vcard: Contact,
                       input_from_stdin_or_file: str, open_editor: bool,
                       source: bool = False) -> ExitStatus:
     """Modify a contact in an external editor.
@@ -948,7 +948,7 @@ def modify_subcommand(selected_vcard: CarddavObject,
     if input_from_stdin_or_file:
         # create new contact from stdin
         try:
-            new_contact = CarddavObject.clone_with_yaml_update(
+            new_contact = Contact.clone_with_yaml_update(
                 selected_vcard, input_from_stdin_or_file,
                 config.localize_dates)
         except ValueError as err:
@@ -969,7 +969,7 @@ def modify_subcommand(selected_vcard: CarddavObject,
         modify_existing_contact(selected_vcard)
 
 
-def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
+def remove_subcommand(selected_vcard: Contact, force: bool) -> None:
     """Remove a contact from the address book.
 
     :param selected_vcard: the contact to delete
@@ -985,7 +985,7 @@ def remove_subcommand(selected_vcard: CarddavObject, force: bool) -> None:
         selected_vcard.formatted_name))
 
 
-def merge_subcommand(vcards: list[CarddavObject],
+def merge_subcommand(vcards: list[Contact],
                      abooks: AddressBookCollection, search_terms: Query
                      ) -> ExitStatus:
     """Merge two contacts into one.
@@ -1020,7 +1020,7 @@ def merge_subcommand(vcards: list[CarddavObject],
         merge_existing_contacts(source_vcard, target_vcard, True)
 
 
-def copy_or_move_subcommand(action: str, vcards: list[CarddavObject],
+def copy_or_move_subcommand(action: str, vcards: list[Contact],
                             target_address_books: AddressBookCollection
                             ) -> ExitStatus:
     """Copy or move a contact to a different address book.

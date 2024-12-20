@@ -9,7 +9,7 @@ from tempfile import NamedTemporaryFile
 from typing import Callable, Generator, Optional, Sequence, TypeVar, Union
 
 from ..exceptions import Cancelled
-from ..carddav_object import CarddavObject
+from ..contacts import Contact
 
 
 T = TypeVar("T")
@@ -162,16 +162,16 @@ class Editor:
             return EditState.unmodified
         return EditState.modified
 
-    def edit_templates(self, yaml2card: Callable[[str], CarddavObject],
+    def edit_templates(self, yaml2card: Callable[[str], Contact],
                        template1: str, template2: Optional[str] = None
-                       ) -> Optional[CarddavObject]:
+                       ) -> Optional[Contact]:
         """Edit YAML templates of contacts and parse them back
 
         :param yaml2card: a function to convert the modified YAML templates
-            into a CarddavObject
+            into a Contact
         :param template1: the first template
         :param template2: the second template (optional, for merges)
-        :returns: the parsed CarddavObject or None
+        :returns: the parsed Contact or None
         """
         templates = [t for t in (template1, template2) if t is not None]
         with contextlib.ExitStack() as stack:

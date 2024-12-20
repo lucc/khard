@@ -6,7 +6,7 @@ import sys
 
 from .actions import Actions
 from .exceptions import ConfigError
-from .carddav_object import CarddavObject
+from .contacts import Contact
 from .config import Config
 from .query import AndQuery, AnyQuery, parse
 from .version import version as khard_version
@@ -62,7 +62,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
     # Create the base argument parser.  It will be reused for the first and
     # second round of argument parsing.
     base = argparse.ArgumentParser(
-        description="Khard is a carddav address book for the console",
+        description="Khard is a vcard address book for the console",
         formatter_class=argparse.RawTextHelpFormatter, add_help=False)
     base.add_argument("-c", "--config", help="config file to use")
     base.add_argument("--debug", action="store_true",
@@ -188,7 +188,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     field_argument = FieldsArgument(
         'index', 'name', 'phone', 'email', 'address_book',
-        *CarddavObject.get_properties(), nested=True)
+        *Contact.get_properties(), nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
         help="Comma separated list of fields to show "

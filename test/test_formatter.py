@@ -5,7 +5,7 @@ import unittest
 from vobject.vcard import Name
 
 from khard.address_book import VdirAddressBook
-from khard.carddav_object import CarddavObject
+from khard.contacts import Contact
 from khard.formatter import Formatter
 
 from .helpers import vCard
@@ -66,7 +66,7 @@ class GetSpecialField(unittest.TestCase):
         prefix="Prefix",
         suffix="Suffix",
     )
-    _vcard = CarddavObject(
+    _vcard = Contact(
         vCard(fn="Formatted Name", n=_name, nickname="Nickname"),
         VdirAddressBook("test", "/tmp"),
         "",

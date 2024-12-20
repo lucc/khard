@@ -1331,7 +1331,7 @@ class YAMLEditable(VCardWrapper):
         return stream.getvalue() + "\n"
 
 
-class CarddavObject(YAMLEditable):
+class Contact(YAMLEditable):
 
     def __init__(self, vcard: vobject.base.Component,
                  address_book: "address_book.VdirAddressBook", filename: str,
@@ -1364,8 +1364,8 @@ class CarddavObject(YAMLEditable):
     def new(cls, address_book: "address_book.VdirAddressBook",
             supported_private_objects: Optional[list[str]] = None,
             version: Optional[str] = None, localize_dates: bool = False
-            ) -> "CarddavObject":
-        """Create a new CarddavObject from scratch"""
+            ) -> "Contact":
+        """Create a new Contact from scratch"""
         vcard = vobject.vCard()
         uid = helpers.get_random_uid()
         filename = os.path.join(address_book.path, uid + ".vcf")
@@ -1378,8 +1378,8 @@ class CarddavObject(YAMLEditable):
     def from_file(cls, address_book: "address_book.VdirAddressBook",
                   filename: str, query: Query = AnyQuery(),
                   supported_private_objects: Optional[list[str]] = None,
-                  localize_dates: bool = False) -> Optional["CarddavObject"]:
-        """Load a CarddavObject object from a .vcf file if the plain file
+                  localize_dates: bool = False) -> Optional["Contact"]:
+        """Load a Contact object from a .vcf file if the plain file
         matches the query.
 
         :param address_book: the address book where this contact is stored
@@ -1391,7 +1391,7 @@ class CarddavObject(YAMLEditable):
             object
         :param localize_dates: should the formatted output of anniversary
             and birthday be localized or should the iso format be used instead
-        :returns: the loaded CarddavObject or None if the file didn't match
+        :returns: the loaded Contact or None if the file didn't match
         """
         with open(filename, "r") as file:
             contents = file.read()
@@ -1411,7 +1411,7 @@ class CarddavObject(YAMLEditable):
     def from_yaml(cls, address_book: "address_book.VdirAddressBook", yaml: str,
                   supported_private_objects: Optional[list[str]] = None,
                   version: Optional[str] = None, localize_dates: bool = False
-                  ) -> "CarddavObject":
+                  ) -> "Contact":
         """Use this if you want to create a new contact from user input."""
         contact = cls.new(address_book, supported_private_objects, version,
                           localize_dates=localize_dates)
@@ -1419,9 +1419,9 @@ class CarddavObject(YAMLEditable):
         return contact
 
     @classmethod
-    def clone_with_yaml_update(cls, contact: "CarddavObject", yaml: str,
+    def clone_with_yaml_update(cls, contact: "Contact", yaml: str,
                                localize_dates: bool = False
-                               ) -> "CarddavObject":
+                               ) -> "Contact":
         """
         Use this if you want to clone an existing contact and replace its data
         with new user input in one step.
@@ -1439,7 +1439,7 @@ class CarddavObject(YAMLEditable):
     ######################################
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, CarddavObject) and \
+        return isinstance(other, Contact) and \
             self.pretty(False) == other.pretty(False)
 
     def __ne__(self, other: object) -> bool:
@@ -1566,5 +1566,5 @@ class CarddavObject(YAMLEditable):
     @classmethod
     def get_properties(cls) -> list[str]:
         """Return the property names that are defined on this class."""
-        return [name for name in dir(CarddavObject)
-                if isinstance(getattr(CarddavObject, name), property)]
+        return [name for name in dir(Contact)
+                if isinstance(getattr(Contact, name), property)]

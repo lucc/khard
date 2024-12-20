@@ -1,4 +1,4 @@
-"""Tests for the carddav_object.YAMLEditable class"""
+"""Tests for the contacts.YAMLEditable class"""
 
 import unittest
 
