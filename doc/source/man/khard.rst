@@ -5,16 +5,14 @@ Synopsis
 --------
 
 .. argparse::
-  :module: khard.cli
-  :func: _sphinxarg_helper
-  :prog: khard
-  :nosubcommands: true
+   :module: khard.cli
+   :func: _sphinxarg_helper
+   :prog: khard
+   :nosubcommands: true
 
-:program:`khard` [:option:`-c` CONFIG] [:option:`--debug`] [:option:`--skip-unparsable`] SUBCOMMAND ...
-
-:program:`khard` :option:`-h` | :option:`--help`
-
-:program:`khard` :option:`-v` | :option:`--version`
+   -c --config
+     The default value and the syntax of the config file are explained in
+     :manpage:`khard.conf(5)`.
 
 Description
 -----------
@@ -23,29 +21,6 @@ Description
 modify and delete vCard address book entries.  :program:`khard` only works with a local
 store of vCard files.  It is intended to be used in conjunction with other
 programs like an email client, text editor, vdir synchronizer or VOIP client.
-
-Options
--------
-
-.. option:: -c CONFIG, --config CONFIG
-
-  configuration file (default: :file:`~/.config/khard/khard.conf`)
-
-.. option:: --debug
-
-  output debugging information
-
-.. option:: -h, --help
-
-  show a help message and exit
-
-.. option:: --skip-unparsable
-
-  skip unparsable vcards when reading the address books
-
-.. option:: -v, --version
-
-  show program's version number and exit
 
 Subcommands
 -----------

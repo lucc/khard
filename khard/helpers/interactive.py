@@ -35,7 +35,7 @@ def ask(message: str, choices: list[str], default: Optional[str] = None,
         None this list must not contain the string "?"
     :param default: the answer that should be selected on empty user input
         (None means empty input is not accepted)
-    :parm help: a help text to display to the user if they did not answer
+    :param help: a help text to display to the user if they did not answer
         correctly
     :returns: the choice of the user
     """
