@@ -31,7 +31,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-doc = ['sphinx', 'sphinx-autoapi', 'sphinx-autodoc-typehints']
+doc = [
+    'sphinx',
+    'sphinx-argparse',
+    'sphinx-autoapi',
+    'sphinx-autodoc-typehints',
+]
 
 [project.urls]
 homepage = "https://github.com/lucc/khard"

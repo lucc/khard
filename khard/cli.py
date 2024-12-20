@@ -455,3 +455,8 @@ def init(argv: list[str]) -> tuple[argparse.Namespace, Config]:
         return args, merge_args_into_config(args, conf)
     except ConfigError as err:
         sys.exit(str(err))
+
+
+def _sphinxarg_helper():
+    """Helper function to return the correct argument parser for the docs."""
+    return create_parsers()[1]

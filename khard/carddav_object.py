@@ -115,7 +115,7 @@ class VCardWrapper:
     def get_first(self, property: str, default: str = "") -> str:
         """Get a property from the underlying vCard.
 
-        This method should only be called for properties with cardinality *1
+        This method should only be called for properties with cardinality \\*1
         (zero or one).  Otherwise only the first value will be returned. If the
         property is not present a default will be returned.
 
