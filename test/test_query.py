@@ -174,7 +174,7 @@ class TestFieldQuery(unittest.TestCase):
 
     def test_org_kind_query_without_kind_on_vcard(self):
         vcard = load_contact("minimal.vcf")
-        query = FieldQuery("kind", "organisation")
+        query = FieldQuery("kind", "org")
         self.assertFalse(query.match(vcard))
 
     def test_kind_query_with_nonsensical_value(self):
@@ -183,12 +183,12 @@ class TestFieldQuery(unittest.TestCase):
         self.assertFalse(query.match(vcard))
 
     def test_kind_query_with_explicit_match(self):
-        contact = TestCarddavObject(kind="organisation", version="4.0")
-        query = FieldQuery("kind", "organisation")
+        contact = TestCarddavObject(kind="org", version="4.0")
+        query = FieldQuery("kind", "org")
         self.assertTrue(query.match(contact))
 
     def test_kind_query_with_explicit_mismatch(self):
-        contact = TestCarddavObject(kind="organisation", version="4.0")
+        contact = TestCarddavObject(kind="org", version="4.0")
         query = FieldQuery("kind", "individual")
         self.assertFalse(query.match(contact))
 
@@ -254,10 +254,10 @@ class TestParser(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_non_sensical_kind_values_do_not_parse(self):
-        self.assertIsNone(parse("kind:foo"))
+        self.assertEqual(parse("kind:foo"), TermQuery("kind:foo"))
 
     def test_kind_queries_only_need_a_substring_of_the_enum(self):
         self.assertEqual(parse("kind:ind"), FieldQuery("kind", "individual"))
         self.assertEqual(parse("kind:i"), FieldQuery("kind", "individual"))
-        self.assertEqual(parse("kind:org"), FieldQuery("kind", "organisation"))
-        self.assertEqual(parse("kind:o"), FieldQuery("kind", "organisation"))
+        self.assertEqual(parse("kind:org"), FieldQuery("kind", "org"))
+        self.assertEqual(parse("kind:o"), FieldQuery("kind", "org"))

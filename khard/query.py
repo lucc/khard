@@ -348,6 +348,11 @@ def parse(string: str) -> Union[TermQuery, FieldQuery]:
             return NameQuery(term)
         if field == FIELD_PHONE_NUMBERS:
             return PhoneNumberQuery(term)
+        if field == "kind":
+            for kind in carddav_object.CarddavObject._supported_kinds:
+                if kind.startswith(term.lower()):
+                    return FieldQuery(field, kind)
+            return TermQuery(string)
         if field in carddav_object.CarddavObject.get_properties():
             return FieldQuery(field, term)
     return TermQuery(string)

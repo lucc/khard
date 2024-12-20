@@ -4,6 +4,11 @@ This module explicitly supports the vCard specifications version 3.0 and 4.0
 which can be found here:
 - version 3.0: https://tools.ietf.org/html/rfc2426
 - version 4.0: https://tools.ietf.org/html/rfc6350
+
+For further details about the application and device values for the kind
+field see:
+- application: https://tools.ietf.org/html/rfc6473
+- device: https://tools.ietf.org/html/rfc6869
 """
 
 import copy
@@ -67,9 +72,13 @@ class VCardWrapper:
     by the vobject library are enforced here.
     """
 
-    _default_kind = "individual"
     _default_version = "3.0"
     _supported_versions = ("3.0", "4.0")
+    _default_kind = "individual"
+    # FIXME we support group for the kind attribute but we do not support
+    # member attributes in any way.
+    _supported_kinds = ("individual", "group", "org", "location",
+                        "application", "device")
 
     # vcard v3.0 supports the following type values
     phone_types_v3 = ("bbs", "car", "cell", "fax", "home", "isdn", "msg",
@@ -461,12 +470,16 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        kind = self.get_first(self._kind_attribute_name().lower(), self._default_kind)
-        return kind if kind != "org" else "organisation"
+        return self.get_first(self._kind_attribute_name().lower(), self._default_kind)
 
     @kind.setter
     def kind(self, value: str) -> None:
-        value = value if value != "organisation" else "org"
+        if value == "":
+            self._delete_vcard_object(self._kind_attribute_name().lower())
+            return
+        value = value.lower()
+        if not any(k.startswith(value) for k in self._supported_kinds):
+            raise ValueError(f"Bad value for kind attribute: {value}")
         self.vcard.add(self._kind_attribute_name()).value = value
 
     def _kind_attribute_name(self) -> str:
@@ -1272,6 +1285,7 @@ class YAMLEditable(VCardWrapper):
 
         translation_table = {
             "Formatted name": self.formatted_name,
+            "Kind": self.kind,
             "Prefix": self._get_name_prefixes(),
             "First name": self._get_first_names(),
             "Additional": self._get_additional_names(),

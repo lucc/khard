@@ -238,24 +238,25 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
     def test_update_kind(self):
         card = create_test_card(version="4.0")
         self.assertEqual(card.kind, "individual")
-        data = {"Kind": "organisation"}
+        data = {"Kind": "org"}
         data = to_yaml(data)
         card.update(data)
-        self.assertEqual(card.kind, "organisation")
+        self.assertEqual(card.kind, "org")
 
     def test_update_kind_on_3_0_card(self):
         card = create_test_card()
         self.assertEqual(card.kind, "individual")
-        data = {"Kind": "organisation"}
+        data = {"Kind": "org"}
         data = to_yaml(data)
         card.update(data)
-        self.assertEqual(card.kind, "organisation")
+        self.assertEqual(card.kind, "org")
 
     def test_update_with_bad_kind_field_fails(self):
         card = create_test_card(version="4.0")
         self.assertEqual(card.kind, "individual")
         data = to_yaml({"Kind": "foo"})
-        card.update(data)
+        with self.assertRaises(ValueError):
+            card.update(data)
         self.assertEqual(card.kind, "individual")
 
     def test_parse_field(self):
