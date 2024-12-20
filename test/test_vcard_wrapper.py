@@ -8,7 +8,7 @@ from typing import Union
 
 import vobject
 
-from khard.contacts import VCardWrapper
+from khard.contacts import Contact, VCardWrapper
 from khard.helpers.typing import ObjectType
 
 from .helpers import vCard, TestVCardWrapper
@@ -574,3 +574,15 @@ class GetFirst(unittest.TestCase):
         p.value = vobject.vcard.Name(family='Foo', given='Bar')
         self.assertEqual(wrapper.get_first("n"),
                          vobject.vcard.Name(family='Foo', given='Bar'))
+
+
+class NullableProperties(unittest.TestCase):
+    "test that properties that are not present on the vcard return None"
+
+    def test_properties(self):
+        for version in ["3.0", "4.0"]:
+            card = TestVCardWrapper(version=version)
+            for property in Contact.get_properties():
+                if property not in ["formatted_name", "version", "kind"]:
+                    with self.subTest(property=property, version=version):
+                        self.assertIsNone(getattr(card, property))
