@@ -53,7 +53,7 @@ class DeleteVcardObject(unittest.TestCase):
         wrapper._delete_vcard_object('FOO')
         self.assertEqual(wrapper.vcard.serialize(), expected)
 
-    def test_deletes_all_field_occurences(self):
+    def test_deletes_all_field_occurrences(self):
         vcard = vCard()
         expected = vcard.serialize()
         vcard.add('FOO').value = 'bar'
@@ -207,7 +207,7 @@ class NameAttributes(unittest.TestCase):
                          'N:;;;;\r\n'
                          'END:VCARD\r\n')
 
-    def test_get_first_name_last_name_retunrs_fn_if_no_name_present(self):
+    def test_get_first_name_last_name_returns_fn_if_no_name_present(self):
         wrapper = TestVCardWrapper()
         self.assertEqual(wrapper.get_first_name_last_name(), 'Test vCard')
 
@@ -230,7 +230,7 @@ class NameAttributes(unittest.TestCase):
         self.assertEqual(wrapper.get_first_name_last_name(), 'given1 given2 '
                          'additional1 additional2 family1 family2')
 
-    def test_get_last_name_first_name_retunrs_fn_if_no_name_present(self):
+    def test_get_last_name_first_name_returns_fn_if_no_name_present(self):
         wrapper = TestVCardWrapper()
         self.assertEqual(wrapper.get_last_name_first_name(), 'Test vCard')
 
@@ -267,7 +267,7 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(wrapper.phone_numbers,
                              {'custom_type': ['0123456789']})
 
-    def test_adding_multible_phone_number(self):
+    def test_adding_multiple_phone_number(self):
         wrapper = TestVCardWrapper()
         wrapper._add_phone_number('work', '0987654321')
         wrapper._add_phone_number('home', '0123456789')
@@ -296,7 +296,7 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(wrapper.emails,
                              {'custom_type': ['foo@bar.net']})
 
-    def test_adding_multible_emails(self):
+    def test_adding_multiple_emails(self):
         wrapper = TestVCardWrapper()
         wrapper.add_email('work', 'foo@bar.net')
         wrapper.add_email('home', 'foo@baz.net')
@@ -330,7 +330,7 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(wrapper.post_addresses,
                              {'custom_type': [expected]})
 
-    def test_adding_multible_addresses(self):
+    def test_adding_multiple_addresses(self):
         wrapper = TestVCardWrapper()
         components = ('box', 'extended', 'street', 'code', 'city', 'region',
                       'country')
@@ -562,7 +562,7 @@ class GetFirst(unittest.TestCase):
         p.value = "bar"
         self.assertEqual(wrapper.get_first("title"), "baz")
 
-    def test_returnes_the_default(self):
+    def test_returns_the_default(self):
         wrapper = TestVCardWrapper()
         self.assertEqual(wrapper.get_first("title"), "")
         self.assertEqual(wrapper.get_first("title", "foo"), "foo")

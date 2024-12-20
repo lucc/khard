@@ -9,7 +9,6 @@ from .helpers import mock_stream
 
 
 class Ask(unittest.TestCase):
-
     def test_accepts_on_of_the_given_options(self):
         with mock.patch("builtins.input", lambda _: "foo"):
             actual = interactive.ask("message", ["foo", "bar"])
@@ -40,7 +39,6 @@ class Ask(unittest.TestCase):
 
 
 class Select(unittest.TestCase):
-
     def _test(self, include_none=None):
         input_list = ["a", "b", "c"]
         if include_none is None:
@@ -58,8 +56,9 @@ class Select(unittest.TestCase):
             with mock_stream() as stdout:
                 actual = self._test()
         stdout = stdout.getvalue()
-        self.assertEqual(stdout, "Please enter an index value between 1 and 3 "
-                         "or q to quit.\n")
+        self.assertEqual(
+            stdout, "Please enter an index value between 1 and 3 " "or q to quit.\n"
+        )
         self.assertEqual(actual, "b")
 
     def test_out_of_bounds_repeats(self):
@@ -67,8 +66,9 @@ class Select(unittest.TestCase):
             with mock_stream() as stdout:
                 actual = self._test()
         stdout = stdout.getvalue()
-        self.assertEqual(stdout, "Please enter an index value between 1 and 3 "
-                         "or q to quit.\n")
+        self.assertEqual(
+            stdout, "Please enter an index value between 1 and 3 " "or q to quit.\n"
+        )
         self.assertEqual(actual, "b")
 
     def test_index_0_is_not_accepted(self):
@@ -76,8 +76,9 @@ class Select(unittest.TestCase):
             with mock_stream() as stdout:
                 actual = self._test()
         stdout = stdout.getvalue()
-        self.assertEqual(stdout, "Please enter an index value between 1 and 3 "
-                         "or q to quit.\n")
+        self.assertEqual(
+            stdout, "Please enter an index value between 1 and 3 " "or q to quit.\n"
+        )
         self.assertEqual(actual, "b")
 
     def test_index_0_is_accepted_with_include_none(self):
@@ -90,13 +91,13 @@ class Select(unittest.TestCase):
             with mock_stream() as stdout:
                 actual = self._test()
         stdout = stdout.getvalue()
-        self.assertEqual(stdout, "Please enter an index value between 1 and 3 "
-                         "or q to quit.\n")
+        self.assertEqual(
+            stdout, "Please enter an index value between 1 and 3 " "or q to quit.\n"
+        )
         self.assertEqual(actual, "b")
 
 
 class Confirm(unittest.TestCase):
-
     def test_y_is_true(self):
         with mock.patch("builtins.input", lambda _: "y"):
             self.assertTrue(interactive.confirm(""))
