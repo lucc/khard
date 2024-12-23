@@ -510,7 +510,7 @@ class AddLabelledObject(unittest.TestCase):
     def assertTitle(self, expected):
         wrapper = TestVCardWrapper()
         yield wrapper
-        self.assertEqual(wrapper._get_multi_property("TITLE"), expected)
+        self.assertEqual(wrapper.get_all("title"), expected)
 
     def test_add_a_string(self):
         with self.assertTitle(["foo"]) as wrapper:
@@ -578,10 +578,21 @@ class GetFirst(unittest.TestCase):
 class NullableProperties(unittest.TestCase):
     "test that properties that are not present on the vcard return None"
 
+    LIST_PROPERTIES = ["categories", "titles", "webpages", "organisations",
+                       "notes", "roles", "nicknames"]
+    DICT_PROPERTIES = ["post_addresses", "emails", "phone_numbers"]
+    BASE_PROPERTIES = ["formatted_name", "kind", "version"]
+
     def test_properties(self):
         for version in ["3.0", "4.0"]:
             card = TestVCardWrapper(version=version)
             for property in Contact.get_properties():
-                if property not in ["formatted_name", "version", "kind"]:
+                if property in self.DICT_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertEqual(getattr(card, property), {})
+                elif property in self.LIST_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertEqual(getattr(card, property), [])
+                elif property not in self.BASE_PROPERTIES:
                     with self.subTest(property=property, version=version):
                         self.assertIsNone(getattr(card, property))
