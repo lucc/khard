@@ -105,13 +105,27 @@ class TestEquality(unittest.TestCase):
 
 
 class TestFieldQuery(unittest.TestCase):
-    def test_empty_field_values_match_if_the_field_is_present(self):
+    def test_empty_field_values_match_if_sstring_field_is_present(self):
         uid = "Some Test Uid"
         vcard1 = TestContact(uid=uid)
         vcard2 = TestContact()
         query = FieldQuery("uid", "")
         self.assertTrue(query.match(vcard1))
         self.assertFalse(query.match(vcard2))
+
+    def test_empty_field_values_match_if_list_field_is_present(self):
+        vcard1 = TestContact(categories=["foo", "bar"])
+        vcard2 = TestContact()
+        query = FieldQuery("categories", "")
+        self.assertTrue(query.match(vcard1))
+        self.assertFalse(query.match(vcard2))
+
+    def test_empty_field_values_match_if_dict_field_is_present(self):
+        query = FieldQuery("emails", "")
+        vcard = TestContact()
+        self.assertFalse(query.match(vcard))
+        vcard.add_email("home", "a@b.c")
+        self.assertTrue(query.match(vcard))
 
     def test_empty_field_values_fails_if_the_field_is_absent(self):
         vcard = TestContact()
