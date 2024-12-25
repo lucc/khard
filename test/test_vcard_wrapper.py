@@ -576,14 +576,15 @@ class GetFirst(unittest.TestCase):
 
 
 class NullableProperties(unittest.TestCase):
-    "test that properties that are not present on the vcard return None"
+    "test that attributes that are not present on the vcard return None"
 
     LIST_PROPERTIES = ["categories", "titles", "webpages", "organisations",
                        "notes", "roles", "nicknames"]
     DICT_PROPERTIES = ["post_addresses", "emails", "phone_numbers"]
     BASE_PROPERTIES = ["formatted_name", "kind", "version"]
 
-    def test_properties(self):
+    def test_for_non_existing_attributes(self):
+        """Non existing attributes"""
         for version in ["3.0", "4.0"]:
             card = TestVCardWrapper(version=version)
             for property in Contact.get_properties():
@@ -596,3 +597,14 @@ class NullableProperties(unittest.TestCase):
                 elif property not in self.BASE_PROPERTIES:
                     with self.subTest(property=property, version=version):
                         self.assertIsNone(getattr(card, property))
+
+    @unittest.expectedFailure
+    def test_no_name_is_not_equal_to_empty_name(self):
+        # FIXME this fails because khard.contacts.VCardWrapper._get_names_part
+        # specifically treats a name where all components are the empty string
+        # the same way as no N attribute at all.
+        empty = TestVCardWrapper()
+        empty._add_name("", "", "", "", "")
+        noname = TestVCardWrapper()
+        self.assertNotEqual(empty.first_name, noname.first_name)
+        self.assertNotEqual(empty.last_name, noname.last_name)

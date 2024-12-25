@@ -531,10 +531,9 @@ class VCardWrapper:
             the_list = getattr(self.vcard.n.value, part)
         except AttributeError:
             return []
-        else:
-            # check if list only contains empty strings
-            if not ''.join(the_list):
-                return []
+        # check if list only contains empty strings
+        if not ''.join(the_list):
+            return []
         return the_list if isinstance(the_list, list) else [the_list]
 
     def _get_name_prefixes(self) -> list[str]:
