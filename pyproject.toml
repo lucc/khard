@@ -37,6 +37,12 @@ doc = [
     'sphinx-autoapi',
     'sphinx-autodoc-typehints',
 ]
+typing = [
+    "mypy",
+    "types-atomicwrites",
+    # vobject does fancy dynamic stuff that is hard to type-check
+    #"types-vobject",
+]
 
 [project.urls]
 homepage = "https://github.com/lucc/khard"
