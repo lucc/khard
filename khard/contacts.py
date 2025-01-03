@@ -39,6 +39,7 @@ from .query import AnyQuery, Query
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
+LabeledStrs = list[Union[str, dict[str, str]]]
 
 
 @overload
@@ -112,12 +113,19 @@ class VCardWrapper:
     def __str__(self) -> str:
         return self.formatted_name
 
-    def get_first(self, property: str, default: str = "") -> str:
+    @overload
+    def get_first(self, property: Literal["n"]) -> Optional[vobject.vcard.Name]: ...
+    @overload
+    def get_first(self, property: Literal["adr"]) -> Optional[vobject.vcard.Address]: ...
+    @overload
+    def get_first(self, property: str) -> Optional[str]: ...
+    def get_first(self, property: str) -> Union[None, str, vobject.vcard.Name,
+                                                vobject.vcard.Address]:
         """Get a property from the underlying vCard.
 
         This method should only be called for properties with cardinality \\*1
         (zero or one).  Otherwise only the first value will be returned. If the
-        property is not present a default will be returned.
+        property is not present None will be retuned.
 
         The type annotation for the return value is str but this is not
         enforced so it is up to the caller to make sure to only call this
@@ -125,17 +133,15 @@ class VCardWrapper:
         str.
 
         :param property: the field value to get
-        :param default: the value to return if the vCard does not have this
-            property
-        :returns: the property value or the default
+        :returns: the property value or None
         """
         try:
             return getattr(self.vcard, property).value
         except AttributeError:
-            return default
+            return None
 
-    def _get_multi_property(self, name: str) -> list:
-        """Get a vCard property that can exist more than once.
+    def get_all(self, name: str) -> list:
+        """Get all values of the given vCard property.
 
         It does not matter what the individual vcard properties store as their
         value.  This function returns them untouched inside an aggregating
@@ -147,14 +153,12 @@ class VCardWrapper:
         :param name: the name of the property (should be UPPER case)
         :returns: the values from all occurrences of the named property
         """
-        values = []
-        for child in self.vcard.getChildren():
-            if child.name == name:
-                ablabel = self._get_ablabel(child)
-                if ablabel:
-                    values.append({ablabel: child.value})
-                else:
-                    values.append(child.value)
+        try:
+            values = getattr(self.vcard, f"{name.lower()}_list")
+        except AttributeError:
+            return []
+        values = [{label: item.value} if (label := self._get_ablabel(item))
+                  else item.value for item in values]
         return sorted(values, key=multi_property_key)
 
     def _delete_vcard_object(self, name: str) -> None:
@@ -259,7 +263,7 @@ class VCardWrapper:
         return [default_type]
 
     @property
-    def version(self) -> str:
+    def version(self) -> Optional[str]:
         return self.get_first("version")
 
     @version.setter
@@ -274,7 +278,7 @@ class VCardWrapper:
         version.value = convert_to_vcard("version", value, ObjectType.str)
 
     @property
-    def uid(self) -> str:
+    def uid(self) -> Optional[str]:
         return self.get_first("uid")
 
     @uid.setter
@@ -470,7 +474,7 @@ class VCardWrapper:
 
     @property
     def kind(self) -> str:
-        return self.get_first(self._kind_attribute_name().lower(), self._default_kind)
+        return self.get_first(self._kind_attribute_name().lower()) or self._default_kind
 
     @kind.setter
     def kind(self, value: str) -> None:
@@ -487,10 +491,15 @@ class VCardWrapper:
 
     @property
     def formatted_name(self) -> str:
-        return self.get_first("fn")
+        fn = self.get_first("fn")
+        if fn:
+            return fn
+        self.formatted_name = ""
+        return self.get_first("fn") or ""
 
     @formatted_name.setter
     def formatted_name(self, value: str) -> None:
+        # TODO cardinality 1*
         """Set the FN field to the new value.
 
         All previously existing FN fields are deleted.  Version 4 of the specs
@@ -522,10 +531,9 @@ class VCardWrapper:
             the_list = getattr(self.vcard.n.value, part)
         except AttributeError:
             return []
-        else:
-            # check if list only contains empty strings
-            if not ''.join(the_list):
-                return []
+        # check if list only contains empty strings
+        if not ''.join(the_list):
+            return []
         return the_list if isinstance(the_list, list) else [the_list]
 
     def _get_name_prefixes(self) -> list[str]:
@@ -573,12 +581,16 @@ class VCardWrapper:
         return self.formatted_name
 
     @property
-    def first_name(self) -> str:
-        return list_to_string(self._get_first_names(), " ")
+    def first_name(self) -> Optional[str]:
+        if parts := self._get_first_names():
+            return list_to_string(parts, " ")
+        return None
 
     @property
-    def last_name(self) -> str:
-        return list_to_string(self._get_last_names(), " ")
+    def last_name(self) -> Optional[str]:
+        if parts := self._get_last_names():
+            return list_to_string(parts, " ")
+        return None
 
     def _add_name(self, prefix: StrList, first_name: StrList,
                   additional_name: StrList, last_name: StrList,
@@ -605,7 +617,7 @@ class VCardWrapper:
         """
         :returns: list of organisations, sorted alphabetically
         """
-        return self._get_multi_property("ORG")
+        return self.get_all("org")
 
     def _add_organisation(self, organisation: StrList, label: Optional[str] = None) -> None:
         """Add one ORG entry to the underlying vcard
@@ -628,48 +640,47 @@ class VCardWrapper:
             showas_obj.value = "COMPANY"
 
     @property
-    def titles(self) -> list[Union[str, dict[str, str]]]:
-        return self._get_multi_property("TITLE")
+    def titles(self) -> LabeledStrs:
+        return self.get_all("title")
 
     def _add_title(self, title: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("title", title, label, True)
 
     @property
-    def roles(self) -> list[Union[str, dict[str, str]]]:
-        return self._get_multi_property("ROLE")
+    def roles(self) -> LabeledStrs:
+        return self.get_all("role")
 
     def _add_role(self, role: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("role", role, label, True)
 
     @property
-    def nicknames(self) -> list[Union[str, dict[str, str]]]:
-        return self._get_multi_property("NICKNAME")
+    def nicknames(self) -> LabeledStrs:
+        return self.get_all("nickname")
 
     def _add_nickname(self, nickname: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("nickname", nickname, label, True)
 
     @property
-    def notes(self) -> list[Union[str, dict[str, str]]]:
-        return self._get_multi_property("NOTE")
+    def notes(self) -> LabeledStrs:
+        return self.get_all("note")
 
     def _add_note(self, note: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("note", note, label, True)
 
     @property
-    def webpages(self) -> list[Union[str, dict[str, str]]]:
-        return self._get_multi_property("URL")
+    def webpages(self) -> LabeledStrs:
+        return self.get_all("url")
 
     def _add_webpage(self, webpage: str, label: Optional[str] = None) -> None:
         self._add_labelled_property("url", webpage, label, True)
 
     @property
     def categories(self) -> Union[list[str], list[list[str]]]:
-        category_list = []
-        for child in self.vcard.getChildren():
-            if child.name == "CATEGORIES":
-                value = child.value
-                category_list.append(
-                    value if isinstance(value, list) else [value])
+        category_list = self.get_all("categories")
+        if not category_list:
+            return category_list
+        category_list = [value if isinstance(value, list) else [value] for
+            value in category_list]
         if len(category_list) == 1:
             return category_list[0]
         return sorted(category_list)
@@ -754,13 +765,16 @@ class VCardWrapper:
         :returns: dict of type and email address list
         """
         email_dict: dict[str, list[str]] = {}
-        for child in self.vcard.getChildren():
-            if child.name == "EMAIL":
-                type = list_to_string(
-                    self._get_types_for_vcard_object(child, "internet"), ", ")
-                if type not in email_dict:
-                    email_dict[type] = []
-                email_dict[type].append(child.value)
+        try:
+            emails = self.vcard.email_list
+        except AttributeError:
+            return {}
+        for child in emails:
+            type = list_to_string(
+                self._get_types_for_vcard_object(child, "internet"), ", ")
+            if type not in email_dict:
+                email_dict[type] = []
+            email_dict[type].append(child.value)
         # sort email address lists
         for email_list in email_dict.values():
             email_list.sort()
@@ -805,19 +819,22 @@ class VCardWrapper:
         :returns: dict of type and post address list
         """
         post_adr_dict: dict[str, list[PostAddress]] = {}
-        for child in self.vcard.getChildren():
-            if child.name == "ADR":
-                type = list_to_string(self._get_types_for_vcard_object(
-                    child, "home"), ", ")
-                if type not in post_adr_dict:
-                    post_adr_dict[type] = []
-                post_adr_dict[type].append({"box": child.value.box,
-                                            "extended": child.value.extended,
-                                            "street": child.value.street,
-                                            "code": child.value.code,
-                                            "city": child.value.city,
-                                            "region": child.value.region,
-                                            "country": child.value.country})
+        try:
+            addresses = self.vcard.adr_list
+        except AttributeError:
+            return {}
+        for child in addresses:
+            type = list_to_string(self._get_types_for_vcard_object(
+                child, "home"), ", ")
+            if type not in post_adr_dict:
+                post_adr_dict[type] = []
+            post_adr_dict[type].append({"box": child.value.box,
+                                        "extended": child.value.extended,
+                                        "street": child.value.street,
+                                        "code": child.value.code,
+                                        "city": child.value.city,
+                                        "region": child.value.region,
+                                        "country": child.value.country})
         # sort post address lists
         for post_adr_list in post_adr_dict.values():
             post_adr_list.sort(key=lambda x: (
@@ -930,9 +947,9 @@ class YAMLEditable(VCardWrapper):
     # getters and setters
     #####################
 
-    def _get_private_objects(self) -> dict[str, list[Union[str, dict[str, str]]]]:
+    def _get_private_objects(self) -> dict[str, LabeledStrs]:
         supported = [x.lower() for x in self.supported_private_objects]
-        private_objects: dict[str, list[Union[str, dict[str, str]]]] = {}
+        private_objects: dict[str, LabeledStrs] = {}
         for child in self.vcard.getChildren():
             lower = child.name.lower()
             if lower.startswith("x-") and lower[2:] in supported:
@@ -1303,9 +1320,11 @@ class YAMLEditable(VCardWrapper):
             "Note": self.notes,
             "Webpage": self.webpages,
             "Anniversary":
-                helpers.yaml_anniversary(self.anniversary, self.version),
+                helpers.yaml_anniversary(self.anniversary, self.version or
+                                         self._default_version),
             "Birthday":
-                helpers.yaml_anniversary(self.birthday, self.version),
+                helpers.yaml_anniversary(self.birthday, self.version or
+                                         self._default_version),
             "Address": helpers.yaml_addresses(
                 self.post_addresses, ["Box", "Extended", "Street", "Code",
                     "City", "Region", "Country"], defaults=["home"])

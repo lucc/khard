@@ -8,7 +8,7 @@ from typing import Union
 
 import vobject
 
-from khard.contacts import VCardWrapper
+from khard.contacts import Contact, VCardWrapper
 from khard.helpers.typing import ObjectType
 
 from .helpers import vCard, TestVCardWrapper
@@ -510,7 +510,7 @@ class AddLabelledObject(unittest.TestCase):
     def assertTitle(self, expected):
         wrapper = TestVCardWrapper()
         yield wrapper
-        self.assertEqual(wrapper._get_multi_property("TITLE"), expected)
+        self.assertEqual(wrapper.get_all("title"), expected)
 
     def test_add_a_string(self):
         with self.assertTitle(["foo"]) as wrapper:
@@ -564,8 +564,7 @@ class GetFirst(unittest.TestCase):
 
     def test_returns_the_default(self):
         wrapper = TestVCardWrapper()
-        self.assertEqual(wrapper.get_first("title"), "")
-        self.assertEqual(wrapper.get_first("title", "foo"), "foo")
+        self.assertIsNone(wrapper.get_first("title"))
 
     def test_can_return_any_value_contradicting_type_annotation(self):
         """This is discouraged!"""
@@ -574,3 +573,38 @@ class GetFirst(unittest.TestCase):
         p.value = vobject.vcard.Name(family='Foo', given='Bar')
         self.assertEqual(wrapper.get_first("n"),
                          vobject.vcard.Name(family='Foo', given='Bar'))
+
+
+class NullableProperties(unittest.TestCase):
+    "test that attributes that are not present on the vcard return None"
+
+    LIST_PROPERTIES = ["categories", "titles", "webpages", "organisations",
+                       "notes", "roles", "nicknames"]
+    DICT_PROPERTIES = ["post_addresses", "emails", "phone_numbers"]
+    BASE_PROPERTIES = ["formatted_name", "kind", "version"]
+
+    def test_for_non_existing_attributes(self):
+        """Non existing attributes"""
+        for version in ["3.0", "4.0"]:
+            card = TestVCardWrapper(version=version)
+            for property in Contact.get_properties():
+                if property in self.DICT_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertEqual(getattr(card, property), {})
+                elif property in self.LIST_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertEqual(getattr(card, property), [])
+                elif property not in self.BASE_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertIsNone(getattr(card, property))
+
+    @unittest.expectedFailure
+    def test_no_name_is_not_equal_to_empty_name(self):
+        # FIXME this fails because khard.contacts.VCardWrapper._get_names_part
+        # specifically treats a name where all components are the empty string
+        # the same way as no N attribute at all.
+        empty = TestVCardWrapper()
+        empty._add_name("", "", "", "", "")
+        noname = TestVCardWrapper()
+        self.assertNotEqual(empty.first_name, noname.first_name)
+        self.assertNotEqual(empty.last_name, noname.last_name)

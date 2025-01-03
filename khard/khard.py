@@ -210,9 +210,9 @@ def list_contacts(vcard_list: list[Contact], fields: Iterable[str] = (),
                 row.append(formatter.get_special_field(vcard, field))
             elif field == 'uid':
                 if parsable:
-                    row.append(vcard.uid)
-                elif abook_collection.get_short_uid(vcard.uid):
-                    row.append(abook_collection.get_short_uid(vcard.uid))
+                    row.append(vcard.uid or "")
+                elif uid := abook_collection.get_short_uid(vcard.uid or ""):
+                    row.append(uid)
                 else:
                     row.append("")
             else:
