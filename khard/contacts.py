@@ -31,9 +31,8 @@ from khard.exceptions import Cancelled
 
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
-from .helpers.typing import (Date, ObjectType, PostAddress, StrList,
-    convert_to_vcard, list_to_string, string_to_date,
-    string_to_list)
+from .helpers.typing import (Date, PostAddress, StrList, convert_to_vcard,
+    list_to_string, string_to_date, string_to_list)
 from .query import AnyQuery, Query
 
 
@@ -275,7 +274,7 @@ class VCardWrapper:
         # for version 4 but also makes sense for all other versions.
         self._delete_vcard_object("VERSION")
         version = self.vcard.add("version")
-        version.value = convert_to_vcard("version", value, ObjectType.str)
+        version.value = convert_to_vcard("version", value, str)
 
     @property
     def uid(self) -> Optional[str]:
@@ -287,7 +286,7 @@ class VCardWrapper:
         # for version 4 but also makes sense for all other versions.
         self._delete_vcard_object("UID")
         uid = self.vcard.add('uid')
-        uid.value = convert_to_vcard("uid", value, ObjectType.str)
+        uid.value = convert_to_vcard("uid", value, str)
 
     def _update_revision(self) -> None:
         """Generate a new REV field for the vCard, replace any existing
@@ -417,7 +416,7 @@ class VCardWrapper:
     def _add_labelled_property(
             self, property: str, value: StrList, label: Optional[str] = None,
             name_groups: bool = False,
-            allowed_object_type: ObjectType = ObjectType.str) -> None:
+            allowed_object_type: Union[None, type[str], type[list]] = str) -> None:
         """Add an object to the VCARD. If a label is given it will be added to
         a group with an ABLABEL.
 
@@ -510,7 +509,7 @@ class VCardWrapper:
         """
         self._delete_vcard_object("FN")
         if value:
-            final = convert_to_vcard("FN", value, ObjectType.str)
+            final = convert_to_vcard("FN", value, str)
         elif self._get_first_names() or self._get_last_names():
             # autofill the FN field from the N field
             names = [self._get_name_prefixes(), self._get_first_names(),
@@ -605,12 +604,11 @@ class VCardWrapper:
         """
         name_obj = self.vcard.add('n')
         name_obj.value = vobject.vcard.Name(
-            prefix=convert_to_vcard("name prefix", prefix, ObjectType.both),
-            given=convert_to_vcard("first name", first_name, ObjectType.both),
-            additional=convert_to_vcard("additional name", additional_name,
-                                        ObjectType.both),
-            family=convert_to_vcard("last name", last_name, ObjectType.both),
-            suffix=convert_to_vcard("name suffix", suffix, ObjectType.both))
+            prefix=convert_to_vcard("name prefix", prefix, None),
+            given=convert_to_vcard("first name", first_name, None),
+            additional=convert_to_vcard("additional name", additional_name, None),
+            family=convert_to_vcard("last name", last_name, None),
+            suffix=convert_to_vcard("name suffix", suffix, None))
 
     @property
     def organisations(self) -> list[Union[list[str], dict[str, list[str]]]]:
@@ -625,8 +623,7 @@ class VCardWrapper:
         :param organisation: the value to add
         :param label: an optional label to add
         """
-        self._add_labelled_property("org", organisation, label, True,
-                                    ObjectType.list)
+        self._add_labelled_property("org", organisation, label, True, list)
         # check if fn attribute is already present
         if not self.vcard.getChildValue("fn") and self.organisations:
             # if not, set fn to organisation name
@@ -691,8 +688,7 @@ class VCardWrapper:
         :param categories:
         """
         categories_obj = self.vcard.add('categories')
-        categories_obj.value = convert_to_vcard("category", categories,
-                                                ObjectType.list)
+        categories_obj.value = convert_to_vcard("category", categories, list)
 
     @property
     def phone_numbers(self) -> dict[str, list[str]]:
@@ -736,13 +732,12 @@ class VCardWrapper:
         phone_obj = self.vcard.add('tel')
         if self.version == "4.0":
             phone_obj.value = "tel:{}".format(
-                convert_to_vcard("phone number", number, ObjectType.str))
+                convert_to_vcard("phone number", number, str))
             phone_obj.params['VALUE'] = ["uri"]
             if pref > 0:
                 phone_obj.params['PREF'] = str(pref)
         else:
-            phone_obj.value = convert_to_vcard("phone number", number,
-                                               ObjectType.str)
+            phone_obj.value = convert_to_vcard("phone number", number, str)
             if pref > 0:
                 standard_types.append("pref")
         if standard_types:
@@ -791,8 +786,7 @@ class VCardWrapper:
                              "than one custom label: " +
                              list_to_string(custom_types, ", "))
         email_obj = self.vcard.add('email')
-        email_obj.value = convert_to_vcard("email address", address,
-                                           ObjectType.str)
+        email_obj.value = convert_to_vcard("email address", address, str)
         if self.version == "4.0":
             if pref > 0:
                 email_obj.params['PREF'] = str(pref)
@@ -894,14 +888,13 @@ class VCardWrapper:
                              "label: " + list_to_string(custom_types, ", "))
         adr_obj = self.vcard.add('adr')
         adr_obj.value = vobject.vcard.Address(
-            box=convert_to_vcard("box address field", box, ObjectType.both),
-            extended=convert_to_vcard("extended address field", extended,
-                                      ObjectType.both),
-            street=convert_to_vcard("street", street, ObjectType.both),
-            code=convert_to_vcard("post code", code, ObjectType.both),
-            city=convert_to_vcard("city", city, ObjectType.both),
-            region=convert_to_vcard("region", region, ObjectType.both),
-            country=convert_to_vcard("country", country, ObjectType.both))
+            box=convert_to_vcard("box address field", box, None),
+            extended=convert_to_vcard("extended address field", extended, None),
+            street=convert_to_vcard("street", street, None),
+            code=convert_to_vcard("post code", code, None),
+            city=convert_to_vcard("city", city, None),
+            region=convert_to_vcard("region", region, None),
+            country=convert_to_vcard("country", country, None))
         if self.version == "4.0":
             if pref > 0:
                 adr_obj.params['PREF'] = str(pref)

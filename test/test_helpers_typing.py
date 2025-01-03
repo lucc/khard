@@ -4,7 +4,6 @@ import datetime
 import unittest
 
 from khard.helpers.typing import (
-    ObjectType,
     convert_to_vcard,
     list_to_string,
     string_to_date,
@@ -14,42 +13,42 @@ from khard.helpers.typing import (
 class ConvertToVcard(unittest.TestCase):
     def test_returns_strings(self):
         value = "some text"
-        actual = convert_to_vcard("test", value, ObjectType.str)
+        actual = convert_to_vcard("test", value, str)
         self.assertEqual(value, actual)
 
     def test_returns_lists(self):
         value = ["some", "text"]
-        actual = convert_to_vcard("test", value, ObjectType.list)
+        actual = convert_to_vcard("test", value, list)
         self.assertListEqual(value, actual)
 
     def test_fail_if_not_string(self):
         value = ["some", "text"]
         with self.assertRaises(ValueError):
-            convert_to_vcard("test", value, ObjectType.str)
+            convert_to_vcard("test", value, str)
 
     def test_upgrades_string_to_list(self):
         value = "some text"
-        actual = convert_to_vcard("test", value, ObjectType.list)
+        actual = convert_to_vcard("test", value, list)
         self.assertListEqual([value], actual)
 
     def test_fails_if_string_lists_are_not_homogeneous(self):
         value = ["some", ["nested", "list"]]
         with self.assertRaises(ValueError):
-            convert_to_vcard("test", value, ObjectType.list)
+            convert_to_vcard("test", value, list)
 
     def test_empty_list_items_are_filtered(self):
         value = ["some", "", "text", "", "more text"]
-        actual = convert_to_vcard("test", value, ObjectType.list)
+        actual = convert_to_vcard("test", value, list)
         self.assertListEqual(["some", "text", "more text"], actual)
 
     def test_strings_are_stripped(self):
         value = " some text "
-        actual = convert_to_vcard("test", value, ObjectType.str)
+        actual = convert_to_vcard("test", value, str)
         self.assertEqual("some text", actual)
 
     def test_strings_in_lists_are_stripped(self):
         value = [" some ", " text "]
-        actual = convert_to_vcard("test", value, ObjectType.list)
+        actual = convert_to_vcard("test", value, list)
         self.assertListEqual(["some", "text"], actual)
 
 

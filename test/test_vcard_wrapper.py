@@ -9,7 +9,6 @@ from typing import Union
 import vobject
 
 from khard.contacts import Contact, VCardWrapper
-from khard.helpers.typing import ObjectType
 
 from .helpers import vCard, TestVCardWrapper
 
@@ -524,7 +523,7 @@ class AddLabelledObject(unittest.TestCase):
     def test_add_a_list_of_strings(self):
         with self.assertTitle([["foo","bar"]]) as wrapper:
             wrapper._add_labelled_property("title", ["foo", "bar"],
-                                         allowed_object_type=ObjectType.list)
+                                           allowed_object_type=list)
 
     def test_add_string_with_label(self):
         with self.assertTitle([{"foo": "bar"}]) as wrapper:
@@ -543,7 +542,7 @@ class AddLabelledObject(unittest.TestCase):
     def test_add_a_list_with_label(self):
         with self.assertTitle([{"foo": ["bar", "baz"]}]) as wrapper:
             wrapper._add_labelled_property("title", ["bar", "baz"], "foo",
-                                         allowed_object_type=ObjectType.list)
+                                           allowed_object_type=list)
 
 
 class GetFirst(unittest.TestCase):
