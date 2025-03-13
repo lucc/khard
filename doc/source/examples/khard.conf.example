@@ -31,6 +31,8 @@ show_uids = yes
 show_kinds = no
 # sort by first or last name: first_name / last_name / formatted_name
 sort = last_name
+# sort names as unaccentuated: yes / no
+unaccentuated_sort = yes
 # localize dates: yes / no
 localize_dates = yes
 # set a comma separated list of preferred phone number types in descending priority
