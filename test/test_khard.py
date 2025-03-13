@@ -225,6 +225,11 @@ class TestSortContacts(unittest.TestCase):
     def test_reverses_sort_order(self):
         self._test(self.no_nickname, self.nickname, reverse=True)
 
+    def test_sorting_of_korean_names(self):
+        korean_c = load_contact("korean-c.vcf")
+        korean_j = load_contact("korean-j.vcf")
+        self._test(korean_j, korean_c)
+
     def test_can_sort_by_last_name(self):
         self._test(self.no_nickname, self.nickname, sort="last_name")
 
