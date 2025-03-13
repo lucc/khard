@@ -15,6 +15,7 @@ show_nicknames = boolean(default=False)
 show_uids = boolean(default=True)
 show_kinds = boolean(default=False)
 sort = option('first_name', 'last_name', 'formatted_name', default='first_name')
+unaccentuated_sort = boolean(default=False)
 
 [vcard]
 preferred_version = option('3.0', '4.0', default='3.0')
