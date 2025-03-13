@@ -1,12 +1,14 @@
-"""Tests for the VCardWrapper class from the carddav module."""
+"""Tests for the VCardWrapper class from the contacts module."""
 # pylint: disable=missing-docstring
 
+import contextlib
 import datetime
 import unittest
+from typing import Union
 
 import vobject
 
-from khard.carddav_object import VCardWrapper
+from khard.contacts import Contact, VCardWrapper
 
 from .helpers import vCard, TestVCardWrapper
 
@@ -50,7 +52,7 @@ class DeleteVcardObject(unittest.TestCase):
         wrapper._delete_vcard_object('FOO')
         self.assertEqual(wrapper.vcard.serialize(), expected)
 
-    def test_deletes_all_field_occurences(self):
+    def test_deletes_all_field_occurrences(self):
         vcard = vCard()
         expected = vcard.serialize()
         vcard.add('FOO').value = 'bar'
@@ -204,7 +206,7 @@ class NameAttributes(unittest.TestCase):
                          'N:;;;;\r\n'
                          'END:VCARD\r\n')
 
-    def test_get_first_name_last_name_retunrs_fn_if_no_name_present(self):
+    def test_get_first_name_last_name_returns_fn_if_no_name_present(self):
         wrapper = TestVCardWrapper()
         self.assertEqual(wrapper.get_first_name_last_name(), 'Test vCard')
 
@@ -227,7 +229,7 @@ class NameAttributes(unittest.TestCase):
         self.assertEqual(wrapper.get_first_name_last_name(), 'given1 given2 '
                          'additional1 additional2 family1 family2')
 
-    def test_get_last_name_first_name_retunrs_fn_if_no_name_present(self):
+    def test_get_last_name_first_name_returns_fn_if_no_name_present(self):
         wrapper = TestVCardWrapper()
         self.assertEqual(wrapper.get_last_name_first_name(), 'Test vCard')
 
@@ -264,7 +266,7 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(wrapper.phone_numbers,
                              {'custom_type': ['0123456789']})
 
-    def test_adding_multible_phone_number(self):
+    def test_adding_multiple_phone_number(self):
         wrapper = TestVCardWrapper()
         wrapper._add_phone_number('work', '0987654321')
         wrapper._add_phone_number('home', '0123456789')
@@ -293,7 +295,7 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(wrapper.emails,
                              {'custom_type': ['foo@bar.net']})
 
-    def test_adding_multible_emails(self):
+    def test_adding_multiple_emails(self):
         wrapper = TestVCardWrapper()
         wrapper.add_email('work', 'foo@bar.net')
         wrapper.add_email('home', 'foo@baz.net')
@@ -327,7 +329,7 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(wrapper.post_addresses,
                              {'custom_type': [expected]})
 
-    def test_adding_multible_addresses(self):
+    def test_adding_multiple_addresses(self):
         wrapper = TestVCardWrapper()
         components = ('box', 'extended', 'street', 'code', 'city', 'region',
                       'country')
@@ -354,6 +356,39 @@ class TypedProperties(unittest.TestCase):
         self.assertDictEqual(
             wrapper.post_addresses, {'home': [expected_home1],
                                      'home, pref': [expected_home2]})
+
+    def _test_list_of_strings_as(self, key: str) -> None:
+        wrapper = TestVCardWrapper()
+        components = ('box', 'extended', 'street', 'code', 'city', 'region',
+                      'country')
+        expected: dict[str, Union[str, list[str]]] = {item: item
+                                                      for item in components}
+        expected[key] = ["a", "b"]
+        index = components.index(key)
+        components = (*components[:index], ["a", "b"], *components[index+1:])  # type: ignore
+        wrapper._add_post_address('home', *components)
+        self.assertDictEqual(wrapper.post_addresses, {'home': [expected]})
+
+    def test_list_of_strings_as_box(self):
+        self._test_list_of_strings_as("box")
+
+    def test_list_of_strings_as_extended(self):
+        self._test_list_of_strings_as("extended")
+
+    def test_list_of_strings_as_street(self):
+        self._test_list_of_strings_as("street")
+
+    def test_list_of_strings_as_code(self):
+        self._test_list_of_strings_as("code")
+
+    def test_list_of_strings_as_city(self):
+        self._test_list_of_strings_as("city")
+
+    def test_list_of_strings_as_region(self):
+        self._test_list_of_strings_as("region")
+
+    def test_list_of_strings_as_country(self):
+        self._test_list_of_strings_as("country")
 
 
 class OtherProperties(unittest.TestCase):
@@ -382,17 +417,35 @@ class OtherProperties(unittest.TestCase):
         wrapper._add_title('Bar')
         self.assertListEqual(wrapper.titles, ['Bar', 'Foo'])
 
+    def test_setting_labeled_title(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_title("bar", "foo")
+        wrapper._add_title("BAZ")
+        self.assertListEqual(wrapper.titles, ["BAZ", {"foo": "bar"}])
+
     def test_setting_and_getting_roles(self):
         wrapper = TestVCardWrapper()
         wrapper._add_role('Foo')
         wrapper._add_role('Bar')
         self.assertListEqual(wrapper.roles, ['Bar', 'Foo'])
 
+    def test_setting_labeled_role(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_role("bar", "foo")
+        wrapper._add_role("BAZ")
+        self.assertListEqual(wrapper.roles, ["BAZ", {"foo": "bar"}])
+
     def test_setting_and_getting_nicks(self):
         wrapper = TestVCardWrapper()
         wrapper._add_nickname('Foo')
         wrapper._add_nickname('Bar')
         self.assertListEqual(wrapper.nicknames, ['Bar', 'Foo'])
+
+    def test_setting_labeled_nick(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_nickname("bar", "foo")
+        wrapper._add_nickname("BAZ")
+        self.assertListEqual(wrapper.nicknames, ["BAZ", {"foo": "bar"}])
 
     def test_setting_and_getting_notes(self):
         wrapper = TestVCardWrapper()
@@ -401,12 +454,24 @@ class OtherProperties(unittest.TestCase):
         self.assertListEqual(wrapper.notes, ['First long note',
                              'Second long note\nwith newline'])
 
+    def test_setting_labeled_note(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_note("bar", "foo")
+        wrapper._add_note("BAZ")
+        self.assertListEqual(wrapper.notes, ["BAZ", {"foo": "bar"}])
+
     def test_setting_and_getting_webpages(self):
         wrapper = TestVCardWrapper()
         wrapper._add_webpage('https://github.com/scheibler/khard')
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper.webpages, ['http://example.com',
                              'https://github.com/scheibler/khard'])
+
+    def test_setting_labeled_webpages(self):
+        wrapper = TestVCardWrapper()
+        wrapper._add_webpage("bar", "foo")
+        wrapper._add_webpage("BAZ")
+        self.assertListEqual(wrapper.webpages, ["BAZ", {"foo": "bar"}])
 
     def test_setting_and_getting_categories(self):
         wrapper = TestVCardWrapper()
@@ -421,7 +486,7 @@ class ABLabels(unittest.TestCase):
 
     def test_setting_and_getting_webpage_ablabel(self):
         wrapper = TestVCardWrapper()
-        wrapper._add_webpage({'github': 'https://github.com/scheibler/khard'})
+        wrapper._add_webpage('https://github.com/scheibler/khard', 'github')
         wrapper._add_webpage('http://example.com')
         self.assertListEqual(wrapper.webpages, [
             'http://example.com',
@@ -434,5 +499,111 @@ class ABLabels(unittest.TestCase):
     def test_setting_fn_from_labelled_org(self):
         wrapper = TestVCardWrapper()
         wrapper._delete_vcard_object("FN")
-        wrapper._add_organisation({'Work': ['Test Inc']})
+        wrapper._add_organisation(['Test Inc'], 'Work')
         self.assertEqual(wrapper.formatted_name, 'Test Inc')
+
+
+class AddLabelledObject(unittest.TestCase):
+
+    @contextlib.contextmanager
+    def assertTitle(self, expected):
+        wrapper = TestVCardWrapper()
+        yield wrapper
+        self.assertEqual(wrapper.get_all("title"), expected)
+
+    def test_add_a_string(self):
+        with self.assertTitle(["foo"]) as wrapper:
+            wrapper._add_labelled_property("title", "foo")
+
+    def test_add_several_strings(self):
+        with self.assertTitle(["bar", "foo"]) as wrapper:
+            wrapper._add_labelled_property("title", "foo")
+            wrapper._add_labelled_property("title", "bar")
+
+    def test_add_a_list_of_strings(self):
+        with self.assertTitle([["foo","bar"]]) as wrapper:
+            wrapper._add_labelled_property("title", ["foo", "bar"],
+                                           allowed_object_type=list)
+
+    def test_add_string_with_label(self):
+        with self.assertTitle([{"foo": "bar"}]) as wrapper:
+            wrapper._add_labelled_property("title", "bar", "foo")
+
+    def test_add_strings_with_same_label(self):
+        with self.assertTitle([{"foo": "bar"}, {"foo": "baz"}]) as wrapper:
+            wrapper._add_labelled_property("title", "bar", "foo")
+            wrapper._add_labelled_property("title", "baz", "foo")
+
+    def test_add_strings_with_different_label(self):
+        with self.assertTitle([{"baz": "qux"}, {"foo": "bar"}]) as wrapper:
+            wrapper._add_labelled_property("title", "bar", "foo")
+            wrapper._add_labelled_property("title", "qux", "baz")
+
+    def test_add_a_list_with_label(self):
+        with self.assertTitle([{"foo": ["bar", "baz"]}]) as wrapper:
+            wrapper._add_labelled_property("title", ["bar", "baz"], "foo",
+                                           allowed_object_type=list)
+
+
+class GetFirst(unittest.TestCase):
+
+    def test_get_a_property(self):
+        wrapper = TestVCardWrapper()
+        p = wrapper.vcard.add("TITLE")
+        p.value = "bar"
+        self.assertEqual(wrapper.get_first("title"), "bar")
+
+    def test_get_only_the_first_property(self):
+        wrapper = TestVCardWrapper()
+        p = wrapper.vcard.add("TITLE")
+        p.value = "baz"
+        p = wrapper.vcard.add("TITLE")
+        p.value = "bar"
+        self.assertEqual(wrapper.get_first("title"), "baz")
+
+    def test_returns_the_default(self):
+        wrapper = TestVCardWrapper()
+        self.assertIsNone(wrapper.get_first("title"))
+
+    def test_can_return_any_value_contradicting_type_annotation(self):
+        """This is discouraged!"""
+        wrapper = TestVCardWrapper()
+        p = wrapper.vcard.add("N")
+        p.value = vobject.vcard.Name(family='Foo', given='Bar')
+        self.assertEqual(wrapper.get_first("n"),
+                         vobject.vcard.Name(family='Foo', given='Bar'))
+
+
+class NullableProperties(unittest.TestCase):
+    "test that attributes that are not present on the vcard return None"
+
+    LIST_PROPERTIES = ["categories", "titles", "webpages", "organisations",
+                       "notes", "roles", "nicknames"]
+    DICT_PROPERTIES = ["post_addresses", "emails", "phone_numbers"]
+    BASE_PROPERTIES = ["formatted_name", "kind", "version"]
+
+    def test_for_non_existing_attributes(self):
+        """Non existing attributes"""
+        for version in ["3.0", "4.0"]:
+            card = TestVCardWrapper(version=version)
+            for property in Contact.get_properties():
+                if property in self.DICT_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertEqual(getattr(card, property), {})
+                elif property in self.LIST_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertEqual(getattr(card, property), [])
+                elif property not in self.BASE_PROPERTIES:
+                    with self.subTest(property=property, version=version):
+                        self.assertIsNone(getattr(card, property))
+
+    @unittest.expectedFailure
+    def test_no_name_is_not_equal_to_empty_name(self):
+        # FIXME this fails because khard.contacts.VCardWrapper._get_names_part
+        # specifically treats a name where all components are the empty string
+        # the same way as no N attribute at all.
+        empty = TestVCardWrapper()
+        empty._add_name("", "", "", "", "")
+        noname = TestVCardWrapper()
+        self.assertNotEqual(empty.first_name, noname.first_name)
+        self.assertNotEqual(empty.last_name, noname.last_name)

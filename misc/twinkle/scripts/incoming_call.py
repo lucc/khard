@@ -6,13 +6,17 @@
 # Further information about Twinkle scripts can be found at
 # http://mfnboer.home.xs4all.nl/twinkle/manual.html#profile_scripts
 
-import os, subprocess, sys, re
+import os
+import re
+import subprocess
+import sys
+
 import config
 
 def get_caller_id(from_hdr):
     caller_id = from_hdr[from_hdr.find(":")+1:from_hdr.find("@")]
     # remove all non digits from caller id
-    caller_id = re.sub("\D", "", caller_id)
+    caller_id = re.sub(r"\D", "", caller_id)
     # remove two digit country identification if present
     if not caller_id.startswith("0"):
         return caller_id[2:]
@@ -29,12 +33,12 @@ def caller_from_addressbook(caller_id):
         # the contact contains multiple phone numbers and we have to obtain the right phone label
         regexp = re.compile(caller_id, re.IGNORECASE)
         for entry in callers.split("\n"):
-            if regexp.search(re.sub("\D", "", entry.split("\t")[0])) != None:
+            if regexp.search(re.sub("\D", "", entry.split("\t")[0])) is not None:
                 return "%s (%s)" % (entry.split("\t")[1], entry.split("\t")[2])
         return callers.split("\n")[0].split("\t")[1]
 
 def create_ringtone(caller_id):
-    if os.path.exists(config.new_ringtone) == True:
+    if os.path.exists(config.new_ringtone):
         os.remove(config.new_ringtone)
     if config.language == "de":
         subprocess.call(["espeak", "-v", "de", "-s", "300", "-w", config.tmp_mono_file, caller_id])
@@ -46,7 +50,7 @@ def create_ringtone(caller_id):
 
 
 # main part of the script
-if os.path.exists(config.constant_ringtone_segment) == False:
+if not os.path.exists(config.constant_ringtone_segment):
     print("The constant part of the ringtone file is missing. Create the sounds folder in your twinkle config and put a wav file in it")
     sys.exit(1)
 
@@ -79,6 +83,6 @@ if "SIP_FROM" in os.environ:
         caller_id_file.write(caller_id)
     # if the file creation was successful and the file exists, tell twinkle to use it as the ringtone
     # else do nothing and play the standard ringtone
-    if os.path.exists(config.new_ringtone) == True:
+    if os.path.exists(config.new_ringtone):
         print("ringtone=" + config.new_ringtone)
 sys.exit()

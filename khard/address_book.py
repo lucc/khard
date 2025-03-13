@@ -6,45 +6,27 @@ from collections.abc import Mapping, Sequence
 import glob
 import logging
 import os
-from typing import Dict, Generator, Iterator, List, Optional, Union, overload
+from typing import Generator, Iterator, Optional, Union, overload
 
 import vobject.base
 
-from . import carddav_object
+from . import contacts
+from .exceptions import AddressBookParseError
 from .query import AnyQuery, Query
 
 
 logger = logging.getLogger(__name__)
 
 
-class AddressBookParseError(Exception):
-    """Indicate an error while parsing data from an address book backend."""
-
-    def __init__(self, filename: str, abook: str, reason: Exception) -> None:
-        """Store the filename that caused the error."""
-        super().__init__()
-        self.filename = filename
-        self.abook = abook
-        self.reason = reason
-
-    def __str__(self) -> str:
-        return "Error when parsing {} in address book {}: {}".format(
-            self.filename, self.abook, self.reason)
-
-
-class AddressBookNameError(Exception):
-    """Indicate an error with an address book name."""
-
-
 class AddressBook(metaclass=abc.ABCMeta):
     """The base class of all address book implementations."""
 
     def __init__(self, name: str) -> None:
-        """:param str name: the name to identify the address book"""
+        """:param name: the name to identify the address book"""
         self._loaded = False
-        self.contacts: Dict[str, "carddav_object.CarddavObject"] = {}
-        self._short_uids: Optional[Dict[str,
-                                        "carddav_object.CarddavObject"]] = None
+        self.contacts: dict[str, "contacts.Contact"] = {}
+        self._short_uids: Optional[dict[str,
+                                        "contacts.Contact"]] = None
         self.name = name
 
     def __str__(self) -> str:
@@ -67,7 +49,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """
         return len(os.path.commonprefix((uid1, uid2)))
 
-    def search(self, query: Query) -> Generator["carddav_object.CarddavObject",
+    def search(self, query: Query) -> Generator["contacts.Contact",
                                                 None, None]:
         """Search this address book for contacts matching the query.
 
@@ -83,8 +65,8 @@ class AddressBook(metaclass=abc.ABCMeta):
             if query.match(contact):
                 yield contact
 
-    def get_short_uid_dict(self, query: Query = AnyQuery()) -> Dict[
-            str, "carddav_object.CarddavObject"]:
+    def get_short_uid_dict(self, query: Query = AnyQuery()) -> dict[
+            str, "contacts.Contact"]:
         """Create a dictionary of shortened UIDs for all contacts.
 
         All arguments are only used if the address book is not yet initialized
@@ -154,7 +136,7 @@ class VdirAddressBook(AddressBook):
     """
 
     def __init__(self, name: str, path: str,
-                 private_objects: Optional[List[str]] = None,
+                 private_objects: Optional[list[str]] = None,
                  localize_dates: bool = True, skip: bool = False) -> None:
         """
         :param name: the name to identify the address book
@@ -191,7 +173,7 @@ class VdirAddressBook(AddressBook):
         errors = 0
         for filename in glob.glob(os.path.join(self.path, "*.vcf")):
             try:
-                card = carddav_object.CarddavObject.from_file(
+                card = contacts.Contact.from_file(
                     self, filename,
                     query if search_in_source_files else AnyQuery(),
                     self._private_objects, self._localize_dates)
@@ -236,7 +218,7 @@ class AddressBookCollection(AddressBook, Mapping, Sequence):
     this class to use all other methods from the parent AddressBook class.
     """
 
-    def __init__(self, name: str, abooks: List[VdirAddressBook]) -> None:
+    def __init__(self, name: str, abooks: list[VdirAddressBook]) -> None:
         """
         :param name: the name to identify the address book
         :param abooks: a list of address books to combine in this collection
@@ -272,9 +254,9 @@ class AddressBookCollection(AddressBook, Mapping, Sequence):
     @overload
     def __getitem__(self, key: Union[int, str]) -> VdirAddressBook: ...
     @overload
-    def __getitem__(self, key: slice) -> List[VdirAddressBook]: ...
+    def __getitem__(self, key: slice) -> list[VdirAddressBook]: ...
     def __getitem__(self, key: Union[int, str, slice]
-                    ) -> Union[VdirAddressBook, List[VdirAddressBook]]:
+                    ) -> Union[VdirAddressBook, list[VdirAddressBook]]:
         """Get one or more of the backing address books by name or index
 
         :param key: the name of the address book to get or its index

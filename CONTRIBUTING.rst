@@ -31,9 +31,6 @@ Feature requests
 
 Please stick to the following standards when you open pull requests:
 
-- Khard's development tries to follow `Vincent's branching model`_ so normal
-  pull requests should be made against the `develop`_ branch. Only important
-  bug fixes that affect the current release should be opened against `master`_.
 - Write "good" commit messages, especially a proper subject line.  This is also
   explained in `the Git book`_.
 - Format your python code according to `PEP 8`_.  Tools like `pylint`_ also
@@ -46,13 +43,6 @@ Please stick to the following standards when you open pull requests:
 
 Development
 -----------
-
-In order to start coding you need to fetch the ``develop`` branch:
-
-.. code-block:: shell
-
-  git clone https://github.com/lucc/khard
-  cd khard
 
 It is recommended to create a `virtualenv`_ to isolate the development
 environment for Khard from your system's Python installation:
@@ -75,7 +65,6 @@ dependencies with ``nix develop``.
 
 .. _bug reports: https://github.com/lucc/khard/issues
 .. _the Git book: https://www.git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project#_commit_guidelines
-.. _develop: https://github.com/lucc/khard/tree/develop
 .. _feature requests: https://github.com/lucc/khard/pulls
 .. _Github: https://github.com/lucc/khard
 .. _master: https://github.com/lucc/khard/tree/master

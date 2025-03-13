@@ -1,17 +1,17 @@
 """Tests for the action class"""
+
 # pylint: disable=missing-docstring
 
 import unittest
 
 from khard import actions
 
-action = 'list'
-alias = 'ls'
-unknown = 'this is not an action or an alias'
+action = "list"
+alias = "ls"
+unknown = "this is not an action or an alias"
 
 
 class Action(unittest.TestCase):
-
     def test_get_action_resolves_aliases(self):
         self.assertEqual(action, actions.Actions.get_action(alias))
 

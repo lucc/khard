@@ -7,7 +7,7 @@ import logging
 import os
 import re
 import shlex
-from typing import Iterable, Dict, List, Optional, Union
+from typing import Iterable, Optional, Union
 
 import configobj
 try:
@@ -17,8 +17,8 @@ except ImportError:
     import validate
 
 from .actions import Actions
-from .address_book import AddressBookCollection, AddressBookNameError, \
-    VdirAddressBook
+from .address_book import AddressBookCollection, VdirAddressBook
+from .exceptions import AddressBookNameError, ConfigError
 from .query import Query
 
 
@@ -26,14 +26,10 @@ logger = logging.getLogger(__name__)
 # This is the type of the config file parameter accepted by the configobj
 # library:
 # https://configobj.readthedocs.io/en/latest/configobj.html#reading-a-config-file
-ConfigFile = Union[str, List[str], io.StringIO]
+ConfigFile = Union[str, list[str], io.StringIO]
 
 
-class ConfigError(Exception):
-    """Errors during config file parsing"""
-
-
-def validate_command(value: List[str]) -> List[str]:
+def validate_command(value: list[str]) -> list[str]:
     """Special validator to check shell commands
 
     The input must either be a list of strings or a string that shlex.split can
@@ -68,7 +64,7 @@ def validate_action(value: str) -> str:
     return validate.is_option(value, *Actions.get_actions())
 
 
-def validate_private_objects(value: List[str]) -> List[str]:
+def validate_private_objects(value: list[str]) -> list[str]:
     """Check that the private objects are reasonable
 
     :param value: the config value to check
@@ -189,7 +185,7 @@ class Config:
         except OSError as err:
             raise ConfigError(str(err))
 
-    def get_address_books(self, names: Iterable[str], queries: Dict[str, Query]
+    def get_address_books(self, names: Iterable[str], queries: dict[str, Query]
                           ) -> AddressBookCollection:
         """Load all address books with the given names.
 
@@ -213,7 +209,7 @@ class Config:
             abook.load(queries[abook.name], self.search_in_source_files)
         return collection
 
-    def merge(self, other: Union[configobj.ConfigObj, Dict]) -> None:
+    def merge(self, other: Union[configobj.ConfigObj, dict]) -> None:
         """Merge the config with some other dict or ConfigObj
 
         :param other: the other dict or ConfigObj to merge into self
@@ -226,7 +222,7 @@ class Config:
     def merge_args(self, args: Namespace) -> None:
         """Merge options from a flat argparse object.
 
-        :param argparse.Namespace args: the parsed arguments to incorporate
+        :param args: the parsed arguments to incorporate
         """
         skel = {'general': ['debug'],
                 'contact table': ['reverse', 'group_by_addressbook',

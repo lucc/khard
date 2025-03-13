@@ -6,19 +6,13 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Generator, List, Optional, Sequence, \
-    TypeVar, Union
+from typing import Callable, Generator, Optional, Sequence, TypeVar, Union
 
-from ..carddav_object import CarddavObject
+from ..exceptions import Cancelled
+from ..contacts import Contact
 
 
 T = TypeVar("T")
-
-
-class Canceled(Exception):
-    """An exception indicating that the user canceled some operation."""
-    def __init__(self, message: str = "Canceled") -> None:
-        super().__init__(message)
 
 
 def confirm(message: str, accept_enter_key: bool = True) -> bool:
@@ -32,7 +26,7 @@ def confirm(message: str, accept_enter_key: bool = True) -> bool:
                         "no" if accept_enter_key else None)
 
 
-def ask(message: str, choices: List[str], default: Optional[str] = None,
+def ask(message: str, choices: list[str], default: Optional[str] = None,
         help: Optional[str] = None) -> str:
     """Ask the user to select one of the given choices
 
@@ -41,7 +35,7 @@ def ask(message: str, choices: List[str], default: Optional[str] = None,
         None this list must not contain the string "?"
     :param default: the answer that should be selected on empty user input
         (None means empty input is not accepted)
-    :parm help: a help text to display to the user if they did not answer
+    :param help: a help text to display to the user if they did not answer
         correctly
     :returns: the choice of the user
     """
@@ -75,7 +69,7 @@ def ask(message: str, choices: List[str], default: Optional[str] = None,
         except (EOFError, IndexError, ValueError):
             pass
         except KeyboardInterrupt:
-            raise Canceled
+            raise Cancelled
         if help is not None:
             print(help)
 
@@ -98,7 +92,7 @@ def select(items: Sequence[T], include_none: bool = False) -> Optional[T]:
             answer = input(prompt)
             answer = answer.lower()
             if answer == "q":
-                raise Canceled
+                raise Cancelled
             index = int(answer)
             if include_none and index == 0:
                 return None
@@ -120,8 +114,8 @@ class Editor:
 
     """Wrapper around subprocess.Popen to edit and merge files."""
 
-    def __init__(self, editor: Union[str, List[str]],
-                 merge_editor: Union[str, List[str]]) -> None:
+    def __init__(self, editor: Union[str, list[str]],
+                 merge_editor: Union[str, list[str]]) -> None:
         self.editor = [editor] if isinstance(editor, str) else editor
         self.merge_editor = [merge_editor] if isinstance(merge_editor, str) \
             else merge_editor
@@ -168,16 +162,16 @@ class Editor:
             return EditState.unmodified
         return EditState.modified
 
-    def edit_templates(self, yaml2card: Callable[[str], CarddavObject],
+    def edit_templates(self, yaml2card: Callable[[str], Contact],
                        template1: str, template2: Optional[str] = None
-                       ) -> Optional[CarddavObject]:
+                       ) -> Optional[Contact]:
         """Edit YAML templates of contacts and parse them back
 
         :param yaml2card: a function to convert the modified YAML templates
-            into a CarddavObject
+            into a Contact
         :param template1: the first template
         :param template2: the second template (optional, for merges)
-        :returns: the parsed CarddavObject or None
+        :returns: the parsed Contact or None
         """
         templates = [t for t in (template1, template2) if t is not None]
         with contextlib.ExitStack() as stack:
@@ -198,7 +192,7 @@ class Editor:
                 try:
                     return yaml2card(modified_template)
                 except ValueError as err:
-                    print("\n{}\n".format(err))
+                    print(f"\nError: {err}\n")
                     if not confirm("Do you want to open the editor again?"):
                         print("Canceled")
                         return None

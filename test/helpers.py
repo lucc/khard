@@ -11,7 +11,7 @@ from unittest import mock
 import vobject
 
 from khard import address_book
-from khard import carddav_object
+from khard import contacts
 
 
 def vCard(**kwargs):
@@ -28,17 +28,17 @@ def vCard(**kwargs):
 
 def TestVCardWrapper(**kwargs):
     """Create a simple VCardWrapper for tests."""
-    return carddav_object.VCardWrapper(vCard(**kwargs))
+    return contacts.VCardWrapper(vCard(**kwargs))
 
 
 def TestYAMLEditable(**kwargs):
     """Create a simple YAMLEditable for tests."""
-    return carddav_object.YAMLEditable(vCard(**kwargs))
+    return contacts.YAMLEditable(vCard(**kwargs))
 
 
-def TestCarddavObject(**kwargs):
-    """Create a siple CarddavObject for tests."""
-    return carddav_object.CarddavObject(vCard(**kwargs), None, None)
+def TestContact(**kwargs):
+    """Create a siple Contact for tests."""
+    return contacts.Contact(vCard(**kwargs), None, None)
 
 
 def mock_stream(name="stdout"):
@@ -57,16 +57,18 @@ def mock_stream(name="stdout"):
     return context_manager
 
 
-def load_contact(path, abook=None):
+def load_contact(path: str) -> contacts.Contact:
     """Load a contact from the fixture directory.
 
-    :param str path: the file name (full, relative to cwd or the fixture dir)
-    :param AddressBook abook:
-    :returns CarddavObject:
+    :param path: the file name (full, relative to cwd or the fixture dir)
     """
+    abook = address_book.VdirAddressBook("test", "/tmp")
     if not os.path.exists(path):
         path = os.path.join("test/fixture/vcards", path)
-    return carddav_object.CarddavObject.from_file(abook, path)
+    contact = contacts.Contact.from_file(abook, path)
+    if contact is None:
+        raise FileNotFoundError(path)
+    return contact
 
 
 class TmpAbook:

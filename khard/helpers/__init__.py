@@ -4,16 +4,16 @@ from datetime import datetime
 import pathlib
 import random
 import string
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 
 from ruamel.yaml.scalarstring import LiteralScalarString
 from .typing import list_to_string, PostAddress
 
 
-YamlPostAddresses = Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]
+YamlPostAddresses = dict[str, Union[list[dict[str, Any]], dict[str, Any]]]
 
 
-def pretty_print(table: List[List[str]], justify: str = "L") -> str:
+def pretty_print(table: list[list[str]], justify: str = "L") -> str:
     """Converts a list of lists into a string formatted like a table
     with spaces separating fields and newlines separating rows"""
     # support for multiline columns
@@ -66,8 +66,8 @@ def get_random_uid() -> str:
                     for _ in range(36)])
 
 
-def yaml_clean(value: Union[str, Sequence, Dict[str, Any], None]
-               ) -> Union[Sequence, str, Dict[str, Any], LiteralScalarString,
+def yaml_clean(value: Union[str, Sequence, dict[str, Any], None]
+               ) -> Union[Sequence, str, dict[str, Any], LiteralScalarString,
                           None]:
     """
     sanitize yaml values according to some simple principles:
@@ -95,9 +95,9 @@ def yaml_clean(value: Union[str, Sequence, Dict[str, Any], None]
 
 
 def yaml_dicts(
-        data: Optional[Dict[str, Any]],
-        defaults: Union[Dict[str, Any], List[str], None] = None
-    ) -> Optional[Dict[str, Any]]:
+        data: Optional[dict[str, Any]],
+        defaults: Union[dict[str, Any], list[str], None] = None
+    ) -> Optional[dict[str, Any]]:
     """
     format a dict according to template, if empty use specified defaults
 
@@ -118,9 +118,9 @@ def yaml_dicts(
     return data_dict
 
 
-def yaml_addresses(addresses: Optional[Dict[str, List[PostAddress]]],
-                   address_properties: List[str],
-                   defaults: Optional[List[str]] = None
+def yaml_addresses(addresses: Optional[dict[str, list[PostAddress]]],
+                   address_properties: list[str],
+                   defaults: Optional[list[str]] = None
                    ) -> Optional[YamlPostAddresses]:
     """
     build a dict from an address, using a list of properties, an address has.
@@ -185,9 +185,9 @@ def yaml_anniversary(anniversary: Union[str, datetime, None],
     return anniversary
 
 
-def convert_to_yaml(name: str, value: Union[None, str, List], indentation: int,
+def convert_to_yaml(name: str, value: Union[None, str, list], indentation: int,
                     index_of_colon: int, show_multi_line_character: bool
-                    ) -> List[str]:
+                    ) -> list[str]:
     """converts a value list into yaml syntax
 
     :param name: name of object (example: phone)
@@ -250,7 +250,7 @@ def convert_to_yaml(name: str, value: Union[None, str, List], indentation: int,
     return strings
 
 
-def indent_multiline_string(input: Union[str, List], indentation: int,
+def indent_multiline_string(input: Union[str, list], indentation: int,
                             show_multi_line_character: bool) -> str:
     # if input is a list, convert to string first
     if isinstance(input, list):
@@ -265,7 +265,7 @@ def indent_multiline_string(input: Union[str, List], indentation: int,
 
 
 def get_new_contact_template(
-        supported_private_objects: Optional[List[str]] = None) -> str:
+        supported_private_objects: Optional[list[str]] = None) -> str:
     formatted_private_objects = []
     if supported_private_objects:
         formatted_private_objects.append("")

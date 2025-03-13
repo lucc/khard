@@ -3,12 +3,12 @@
 import argparse
 import logging
 import sys
-from typing import List, Tuple
 
 from .actions import Actions
-from .carddav_object import CarddavObject
-from .config import Config, ConfigError
-from .query import AndQuery, AnyQuery, FieldQuery, NameQuery, parse
+from .exceptions import ConfigError
+from .contacts import Contact
+from .config import Config
+from .query import AndQuery, AnyQuery, parse
 from .version import version as khard_version
 
 
@@ -33,7 +33,7 @@ class FieldsArgument:
         self._choices = sorted(choices)
         self._nested = nested
 
-    def __call__(self, argument: str) -> List[str]:
+    def __call__(self, argument: str) -> list[str]:
         ret = []
         for candidate in argument.split(","):
             candidate = candidate.lower()
@@ -48,7 +48,7 @@ class FieldsArgument:
         return ret
 
 
-def create_parsers() -> Tuple[argparse.ArgumentParser,
+def create_parsers() -> tuple[argparse.ArgumentParser,
                               argparse.ArgumentParser]:
     """Create two argument parsers.
 
@@ -62,7 +62,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     # Create the base argument parser.  It will be reused for the first and
     # second round of argument parsing.
     base = argparse.ArgumentParser(
-        description="Khard is a carddav address book for the console",
+        description="Khard is a vcard address book for the console",
         formatter_class=argparse.RawTextHelpFormatter, add_help=False)
     base.add_argument("-c", "--config", help="config file to use")
     base.add_argument("--debug", action="store_true",
@@ -158,13 +158,6 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
-    # TODO remove after version 0.19
-    default_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true", help=argparse.SUPPRESS)
-    # TODO remove after version 0.19
-    default_search_parser.add_argument(
-        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help=argparse.SUPPRESS)
     default_search_parser.add_argument(
         "search_terms", nargs="*", metavar="search terms", type=parse,
         default=[], help="search in specified or all fields to find matching "
@@ -175,20 +168,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
-    # TODO remove after version 0.19
-    merge_search_parser.add_argument(
-        "-e", "--strict-search", action="store_true", help=argparse.SUPPRESS)
     merge_search_parser.add_argument(
         "-t", "--target-contact", "--target", type=parse,
         help="search for a matching target contact")
-    # TODO remove after version 0.19
-    merge_search_parser.add_argument(
-        "-u", "--uid", type=lambda x: FieldQuery("uid", x),
-        help=argparse.SUPPRESS)
-    # TODO remove after version 0.19
-    merge_search_parser.add_argument(
-        "-U", "--target-uid", type=lambda x: FieldQuery("uid", x),
-        help=argparse.SUPPRESS)
     merge_search_parser.add_argument(
         "source_search_terms", nargs="*", metavar="source", type=parse,
         default=[],
@@ -207,9 +189,9 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     list_parser.add_argument(
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
-    field_argument = FieldsArgument('index', 'name', 'phone', 'email',
-                                    *CarddavObject.get_properties(),
-                                    nested=True)
+    field_argument = FieldsArgument(
+        'index', 'name', 'phone', 'email', 'address_book',
+        *Contact.get_properties(), nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
         help="Comma separated list of fields to show "
@@ -370,7 +352,7 @@ def create_parsers() -> Tuple[argparse.ArgumentParser,
     return first_parser, parser
 
 
-def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
+def parse_args(argv: list[str]) -> tuple[argparse.Namespace, Config]:
     """Parse the command line arguments and return the namespace that was
     creates by argparse.ArgumentParser.parse_args().
 
@@ -426,54 +408,14 @@ def parse_args(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
     args.skip_unparsable = skip
     logger.debug("second args=%s", args)
 
-    # An integrity check for some options.
-    if "uid" in args and args.uid and (
-            ("search_terms" in args and args.search_terms) or
-            ("source_search_terms" in args and args.source_search_terms)):
-        # If an uid was given we require that no search terms where given.
-        parser.error("You can not give arbitrary search terms and --uid at the"
-                     " same time.")
-    if "target_uid" in args and args.target_uid and args.target_contact:
-        parser.error("You can not give arbitrary target search terms and "
-                     "--target-uid at the same time.")
-    # Deprecation workaround
-    if "strict_search" in args and args.strict_search:
-        logger.error("Deprecated option --strict-search, use the new query "
-                     "syntax instead.")
-        if "search_terms" in args:
-            args.search_terms = [NameQuery(t.get_term()) for t in
-                                 args.search_terms]
-        if "source_search_terms" in args:
-            args.source_search_terms = [NameQuery(t.get_term()) for t in
-                                        args.source_search_terms]
-        if "taget_search_terms" in args:
-            args.taget_search_terms = [NameQuery(t.get_term()) for t in
-                                       args.taget_search_terms]
-
-    # Build conjunctive queries.  If uid was given the list of search terms
-    # will be empty.  If no uid was given it will be None.
+    # Build conjunctive queries.
     if "source_search_terms" in args:
-        args.source_search_terms = AndQuery.reduce(args.source_search_terms,
-                                                   args.uid)
+        args.source_search_terms = AndQuery.reduce(args.source_search_terms)
     if "search_terms" in args:
-        args.search_terms = AndQuery.reduce(args.search_terms, args.uid)
+        args.search_terms = AndQuery.reduce(args.search_terms)
     if "target_contact" in args:
         # Only one of target_contact or target_uid can be set.
-        args.target_contact = args.target_contact or args.target_uid \
-            or AnyQuery()
-    # Remove uid values from the args Namespace.  They have been merged into
-    # the search terms above.
-    # TODO remove after version 0.19
-    if "uid" in args:
-        if args.uid:
-            logger.error("Deprecated option --uid, use the new query syntax "
-                         "instead.")
-        del args.uid
-    if "target_uid" in args:
-        if args.target_uid:
-            logger.error("Deprecated option --target-uid, use the new query "
-                         "syntax instead.")
-        del args.target_uid
+        args.target_contact = args.target_contact or AnyQuery()
 
     return args, config
 
@@ -498,7 +440,7 @@ def merge_args_into_config(args: argparse.Namespace, config: Config) -> Config:
     return config
 
 
-def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
+def init(argv: list[str]) -> tuple[argparse.Namespace, Config]:
     """Initialize khard by parsing the command line and reading the config file
 
     :param argv: the command line arguments
@@ -516,3 +458,8 @@ def init(argv: List[str]) -> Tuple[argparse.Namespace, Config]:
         return args, merge_args_into_config(args, conf)
     except ConfigError as err:
         sys.exit(str(err))
+
+
+def _sphinxarg_helper():
+    """Helper function to return the correct argument parser for the docs."""
+    return create_parsers()[1]

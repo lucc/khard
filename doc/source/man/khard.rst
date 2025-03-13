@@ -4,11 +4,15 @@ khard
 Synopsis
 --------
 
-:program:`khard` [:option:`-c` CONFIG] [:option:`--debug`] [:option:`--skip-unparsable`] SUBCOMMAND ...
+.. argparse::
+   :module: khard.cli
+   :func: _sphinxarg_helper
+   :prog: khard
+   :nosubcommands: true
 
-:program:`khard` :option:`-h` | :option:`--help`
-
-:program:`khard` :option:`-v` | :option:`--version`
+   -c --config
+     The default value and the syntax of the config file are explained in
+     :manpage:`khard.conf(5)`.
 
 Description
 -----------
@@ -18,34 +22,13 @@ modify and delete vCard address book entries.  :program:`khard` only works with 
 store of vCard files.  It is intended to be used in conjunction with other
 programs like an email client, text editor, vdir synchronizer or VOIP client.
 
-Options
--------
-
-.. option:: -c CONFIG, --config CONFIG
-
-  configuration file (default: :file:`~/.config/khard/khard.conf`)
-
-.. option:: --debug
-
-  output debugging information
-
-.. option:: -h, --help
-
-  show a help message and exit
-
-.. option:: --skip-unparsable
-
-  skip unparsable vcards when reading the address books
-
-.. option:: -v, --version
-
-  show program's version number and exit
-
 Subcommands
 -----------
 
 The functionality of khard is divided into several subcommands.  All of these
 have their own help text which can be seen with ``khard SUBCOMMAND --help``.
+The full list of subcommands and all options can be found in
+:manpage:`khard-subcommands(1)`.
 
 Many subcommands accept search terms to limit the number of contacts they
 should work on, display or present for selection.  The syntax is described in

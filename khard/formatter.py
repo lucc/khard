@@ -1,13 +1,11 @@
 """Formatting and sorting of contacts"""
 
-from typing import Dict, List
-
-from .carddav_object import CarddavObject
+from .contacts import Contact
 
 
 class Formatter:
 
-    """A formatter for CarddavObject.
+    """A formatter for Contact.
 
     It receives some settings on initialisation which influence the formatting
     of the contact.
@@ -17,8 +15,8 @@ class Formatter:
     LAST = "last_name"
     FORMAT = "formatted_name"
 
-    def __init__(self, display: str, preferred_email: List[str],
-                 preferred_phone: List[str], show_nicknames: bool,
+    def __init__(self, display: str, preferred_email: list[str],
+                 preferred_phone: list[str], show_nicknames: bool,
                  parsable: bool) -> None:
         self._display = display
         self._preferred_email = preferred_email
@@ -27,7 +25,7 @@ class Formatter:
         self._parsable = parsable
 
     @staticmethod
-    def format_labeled_field(field: Dict[str, List[str]], preferred: List[str]
+    def format_labeled_field(field: dict[str, list[str]], preferred: list[str]
                              ) -> str:
         """Format a labeled field from a vCard for display, the first entry
         under the preferred label will be returned
@@ -50,7 +48,7 @@ class Formatter:
         first_key = sorted(keys, key=lambda k: k.lower())[0]
         return "{}: {}".format(first_key, sorted(field.get(first_key, []))[0])
 
-    def get_special_field(self, vcard: CarddavObject, field: str) -> str:
+    def get_special_field(self, vcard: Contact, field: str) -> str:
         """Returns certain fields with specific formatting options
             (for support of some list command options)."""
         if field == 'name':
@@ -76,7 +74,7 @@ class Formatter:
         return ""
 
     @staticmethod
-    def get_nested_field(vcard: CarddavObject, field: str) -> str:
+    def get_nested_field(vcard: Contact, field: str) -> str:
         """Returns the value of a nested field from a string
 
         get_nested_field(vcard,'emails.home.1') is equivalent to

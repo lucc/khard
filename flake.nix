@@ -1,45 +1,101 @@
 {
   description = "Development flake for khard";
-
-  outputs = { self, nixpkgs }: {
-
-    packages.x86_64-linux.default =
-      nixpkgs.legacyPackages.x86_64-linux.khard.overridePythonAttrs (oa: rec {
-        name = "khard-${version}";
-        version = "${oa.version}post-dev+${if self ? shortRev then self.shortRev else "dirty"}";
-        SETUPTOOLS_SCM_PRETEND_VERSION = version;
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
+  inputs.pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
+  outputs = {
+    self,
+    nixpkgs,
+    pyproject-nix,
+  }: let
+    project = pyproject-nix.lib.project.loadPyproject {projectRoot = ./.;};
+    system = "x86_64-linux";
+    pkgs = import nixpkgs {inherit system;};
+    khard = {
+      python3,
+      doc ? true,
+      typing ? false,
+    }: let
+      packageOverrides = final: prev: {
+        types-atomicwrites = python3.pkgs.buildPythonPackage rec {
+          pname = "types-atomicwrites";
+          version = "1.4.5.1";
+          src = pkgs.fetchPypi {
+            inherit pname version;
+            hash = "sha256-np8JI+v5NSSyi87OWiOsjDgg85sGDfKfZxk20uS8BLw=";
+          };
+        };
+      };
+      attrs = project.renderers.buildPythonPackage {
+        python = python3.override {inherit packageOverrides;};
+      };
+      overrides = {
+        version = "0.dev+${self.shortRev or self.dirtyShortRev}";
+        build-system =
+          attrs.build-system
+          ++ [python3.pkgs.pytestCheckHook]
+          ++ pkgs.lib.lists.optionals typing attrs.optional-dependencies.typing
+          ++ pkgs.lib.lists.optionals doc attrs.optional-dependencies.doc
+          ++ pkgs.lib.lists.optional doc python3.pkgs.sphinxHook;
+        sphinxBuilders = ["man"];
         postInstall = ''
-          ${oa.postInstall}
+          install -D -t $out/share/zsh/site-functions/ misc/zsh/_*
           cp -r $src/khard/data $out/lib/python*/site-packages/khard
         '';
-        src = ./.;
-      });
-    devShells.x86_64-linux.release =
-      let pkgs = nixpkgs.legacyPackages.x86_64-linux; in
-      pkgs.mkShell {
-        packages = with pkgs; [
-          git
-          twine
-          (python3.withPackages (p: with p; [
-            build
-            mypy
-            pylint
-            setuptools
-            setuptools-scm
-            wheel
-          ] ++ self.packages.x86_64-linux.default.propagatedBuildInputs))
-        ];
+        # see https://github.com/scheibler/khard/issues/263
+        preCheck = "export COLUMNS=80";
+        pythonImportsCheck = ["khard"];
+        pytestFlagsArray = ["-s"];
+      };
+    in
+      python3.pkgs.buildPythonApplication (attrs // overrides);
+    default = pkgs.callPackage khard {};
+  in {
+    packages.${system} = {inherit default;};
+    devShells.${system} = let
+      upstream = p: default.nativeBuildInputs ++ default.propagatedBuildInputs;
+      pythonEnv = pkgs.python3.withPackages (p:
+        [
+          p.build
+          p.mypy
+          p.pylint
+        ]
+        ++ (upstream p));
+      packages = with pkgs; [git ruff pythonEnv];
+    in {
+      default = pkgs.mkShell {inherit packages;};
+      release = pkgs.mkShell {
+        packages = packages ++ [pkgs.twine];
         shellHook = ''
           cat <<EOF
           To publish a tag on pypi
           0. version=$(git tag --list --sort=version:refname v\* | sed -n '$s/^v//p')
           1. git checkout v\$version
-          2. python3 -m build
-          3. twine check --strict dist/khard-\$version*
-          4. twine upload -r khardtest dist/khard-\$version*
-          5. twine upload -r khard dist/khard-\$version*
+          2. nix flake check
+          3. python3 -m build
+          4. twine check --strict dist/khard-\$version*
+          5. twine upload -r khardtest dist/khard-\$version*
+          6. twine upload -r khard dist/khard-\$version*
           EOF
         '';
       };
+    };
+    checks.${system} = let
+      tests = default.override {doc = false;};
+      typing = default.override {typing = true;};
+    in {
+      inherit default;
+      tests-python-311 = tests.override {python3 = pkgs.python311;};
+      tests-python-312 = tests.override {python3 = pkgs.python312;};
+      ruff = pkgs.runCommand "ruff" {} ''
+        ${pkgs.ruff}/bin/ruff check ${./khard}
+        touch $out
+      '';
+      mypy = pkgs.runCommand "mypy" {
+        buildInputs = [
+          (pkgs.python3.withPackages (p: typing.propagatedBuildInputs ++ typing.nativeBuildInputs))
+        ];
+      } "cd ${./.} && mypy && touch $out";
+    };
   };
 }

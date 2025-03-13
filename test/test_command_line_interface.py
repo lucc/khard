@@ -165,9 +165,13 @@ class ListingCommands(unittest.TestCase):
 
     def test_regex_special_chars_are_not_special(self):
         with mock_stream() as stdout:
-            with self.assertRaises(SystemExit):
-                khard.main(['list', 'uid.'])
+            ret = khard.main(['list', 'uid'])
+        self.assertNotEqual(stdout.getvalue(), "Found no contacts\n")
+        self.assertIsNone(ret)
+        with mock_stream() as stdout:
+            ret = khard.main(['list', 'uid.'])
         self.assertEqual(stdout.getvalue(), "Found no contacts\n")
+        self.assertEqual(ret, 1)
 
     def test_display_post_address(self):
         with TmpConfig(["post.vcf"]):
@@ -215,9 +219,9 @@ class ListingCommands(unittest.TestCase):
         text = [line.rstrip() for line in stdout.getvalue().splitlines()]
         expected = [
             "Address book: tmp",
-            "Index    Name              Phone    Email    Kind            Uid",
-            "1        ACME Inc.                           organisation    4",
-            "2        Wile E. Coyote                      individual      1"]
+            "Index    Name              Phone    Email    Kind          Uid",
+            "1        ACME Inc.                           org           4",
+            "2        Wile E. Coyote                      individual    1"]
         self.assertListEqual(expected, text)
 
     def test_non_individual_kind(self):
@@ -226,8 +230,8 @@ class ListingCommands(unittest.TestCase):
         text = [line.rstrip() for line in stdout.getvalue().splitlines()]
         expected = [
             "Address book: tmp",
-            "Index    Name         Phone    Email    Kind            Uid",
-            "1        ACME Inc.                      organisation    4"]
+            "Index    Name         Phone    Email    Kind    Uid",
+            "1        ACME Inc.                      org     4"]
         self.assertListEqual(expected, text)
 
 
