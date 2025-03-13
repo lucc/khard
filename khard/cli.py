@@ -148,7 +148,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "-s", "--sort", choices=("first_name", "last_name", "formatted_name"),
         help="Sort contact table by first or last name")
     sort_parser.add_argument(
-        "--unaccentuated-sort", action="store_true",
+        "--unaccentuated-sort",
         help="Sort contacts unaccentuated")
 
     # create search subparsers
