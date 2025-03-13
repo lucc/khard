@@ -218,7 +218,7 @@ def list_contacts(vcard_list: list[Contact], fields: Iterable[str] = (),
             else:
                 row.append(formatter.get_nested_field(vcard, field))
         if parsable:
-            print("\t".join([str(v) for v in row]))
+            print("\t".join(str(v) for v in row))
         else:
             table.append(row)
     if not parsable:
