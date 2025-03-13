@@ -102,6 +102,7 @@ case $state in
       '(-g)'{-g,--group-by-addressbook}'[group contacts table by address book]'
       '(-r)'{-r,--reverse}'[reverse order of contact table]'
       '(-s)'{-s+,--sort=}'[sort contact table]:sort by:(first_name last_name formatted_name)'
+      {--unaccentuated_sort}'[sort contacts unaccentuated]'
     )
     # search options
     local -a default_search_options merge_search_options
