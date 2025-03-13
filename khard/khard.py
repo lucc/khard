@@ -281,11 +281,11 @@ def get_contact_list(address_books: Union[VdirAddressBook,
     """
     contacts = address_books.search(query)
     return sort_contacts(contacts, config.reverse, config.group_by_addressbook,
-                         config.sort)
+                         config.sort, config.unaccentuated_sort)
 
 
 def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
-                  group: bool = False, sort: str = "first_name") -> List[
+                  group: bool = False, sort: str = "first_name", unaccentuated_sort: bool = False) -> List[
                       CarddavObject]:
     """Sort a list of contacts
 
@@ -308,8 +308,11 @@ def sort_contacts(contacts: Iterable[CarddavObject], reverse: bool = False,
     else:
         raise ValueError('sort must be "first_name", "last_name" or '
                          '"formatted_name" not {}.'.format(sort))
+
+    decoder = (lambda x: x) if unaccentuated_sort else unidecode
+
     return sorted(contacts, reverse=reverse,
-                  key=lambda x: [unidecode(key(x)).lower() for key in keys])
+                  key=lambda x: [decoder(key(x)).lower() for key in keys])
 
 
 def prepare_search_queries(args: Namespace) -> Dict[str, Query]:

@@ -157,6 +157,7 @@ class Config:
         # if display by name attribute is not present in the config file use
         # the sort attribute value for backwards compatibility
         self.display = table.get("display", self.sort)
+        self.unaccentuated_sort = table['unaccentuated_sort']
         self.localize_dates = table['localize_dates']
         self.private_objects = vcard['private_objects']
         self.preferred_vcard_version = vcard['preferred_version']
@@ -229,7 +230,7 @@ class Config:
         """
         skel = {'general': ['debug'],
                 'contact table': ['reverse', 'group_by_addressbook',
-                                  'display', 'sort'],
+                                  'display', 'sort', 'unaccentuated_sort'],
                 'vcard': ['search_in_source_files', 'skip_unparsable',
                           'preferred_version'],
                 }
