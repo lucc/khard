@@ -170,6 +170,7 @@ class TestGetContactListByUserSelection(unittest.TestCase):
         khard.config.group_by_addressbook = False
         khard.config.reverse = False
         khard.config.sort = "last_name"
+        khard.config.unaccentuated_sort = False
 
     def tearDown(self):
         del khard.config
@@ -229,6 +230,11 @@ class TestSortContacts(unittest.TestCase):
 
     def test_reverses_sort_order(self):
         self._test(self.no_nickname, self.nickname, reverse=True)
+
+    def test_unaccentuated_sort(self):
+        korean_c = load_contact("korean-c.vcf")
+        korean_j = load_contact("korean-j.vcf")
+        self._test(korean_j, korean_c, unaccentuated_sort=True)
 
     def test_can_sort_by_last_name(self):
         self._test(self.no_nickname, self.nickname, sort="last_name")

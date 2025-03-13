@@ -465,6 +465,10 @@ class CommandLineArgumentsOverwriteConfigValues(unittest.TestCase):
         conf = self._merge(['list', '--search-in-source-files'])
         self.assertTrue(conf.search_in_source_files)
 
+    def test_unaccentuated_sort_is_picked_up_from_arguments(self):
+        conf = self._merge(['list', '--unaccentuated-sort'])
+        self.assertTrue(conf.unaccentuated_sort)
+
 
 class Merge(unittest.TestCase):
 

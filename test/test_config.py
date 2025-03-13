@@ -144,6 +144,10 @@ class Defaults(unittest.TestCase):
         c = config.Config("test/fixture/minimal.conf")
         self.assertEqual(c.merge_editor, 'vimdiff')
 
+    def test_unaccentuated_sort_defaults_to_false(self):
+        c = config.Config("test/fixture/minimal.conf")
+        self.assertFalse(c.unaccentuated_sort)
+
 
 class Validation(unittest.TestCase):
 
