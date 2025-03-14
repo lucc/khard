@@ -1,11 +1,13 @@
 """Unittests for the khard module"""
 
 import unittest
+import itertools
 from argparse import Namespace
 from email.headerregistry import Address
 from unittest import mock
 
 from khard import config, khard, query
+from khard.contacts import Contact
 from khard.khard import find_email_addresses
 
 from .helpers import TestContact, TmpAbook, load_contact
@@ -206,14 +208,16 @@ class TestSortContacts(unittest.TestCase):
     nickname = load_contact("nickname.vcf")
     no_nickname = load_contact("no-nickname.vcf")
 
-    def _test(self, first, second, **kwargs):
+    def _test(self, *contacts: Contact, **kwargs):
         """Run the sort_contacts function and assert the result
 
-        The two contacts first and second are expected to come out in that
-        order and are deliberately put into the function in the reverse order.
+        The contacts are expected to come out in the order that they are given
+        in.
         """
-        actual = khard.sort_contacts([second, first], **kwargs)
-        self.assertListEqual(actual, [first, second])
+        contacts_list = list(contacts)
+        for order in itertools.permutations(contacts):
+            actual = khard.sort_contacts(order, **kwargs)
+            self.assertEqual(actual, contacts_list)
 
     def test_sorts_by_first_name_by_default(self):
         self._test(self.nickname, self.no_nickname)
@@ -234,9 +238,7 @@ class TestSortContacts(unittest.TestCase):
                 category = next(abook1.search(query.NameQuery("category")))
                 contact2 = next(abook2.search(query.FieldQuery("uid", "testuid2")))
                 labels = next(abook2.search(query.NameQuery("labeled guy")))
-        expected = [category, contact1, labels, contact2]
-        actual = khard.sort_contacts([contact1, contact2, category, labels], group=True)
-        self.assertListEqual(actual, expected)
+        self._test(category, contact1, labels, contact2, group=True)
 
     def test_sort_order_for_accentuated_names(self):
         # reported in issue #127
@@ -245,6 +247,4 @@ class TestSortContacts(unittest.TestCase):
         eugene = TestContact(fn="Eugene")
         zakari = TestContact(fn="Zakari")
         eric = TestContact(fn="Éric")
-        unsorted = [albert, eleanor, eugene, zakari, eric]
-        sorted = khard.sort_contacts(unsorted, sort="formatted_name")
-        self.assertEqual(sorted, [albert, eleanor, eric, eugene, zakari])
+        self._test(albert, eleanor, eric, eugene, zakari, sort="formatted_name")
