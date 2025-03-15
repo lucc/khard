@@ -3,10 +3,12 @@
 
 import contextlib
 import io
+import locale
 import os
 import shutil
 import tempfile
-from unittest import mock
+from typing import Generator
+from unittest import SkipTest, mock
 
 import vobject
 
@@ -69,6 +71,46 @@ def load_contact(path: str) -> contacts.Contact:
     if contact is None:
         raise FileNotFoundError(path)
     return contact
+
+
+@contextlib.contextmanager
+def mock_locale(cat: int, loc: str) -> Generator[None, None, None]:
+    if not check_locale(loc):
+        raise SkipTest(f"Locale {loc} is not installed")
+    old = locale.getlocale(cat)
+    if loc in locale.locale_alias:
+        loc = locale.locale_alias[loc]
+    try:
+        locale.setlocale(cat, loc)
+        yield
+    finally:
+        locale.setlocale(cat, old)
+
+
+_installed_locales: dict[str, str] = {}
+def check_locale(loc: str) -> bool:
+    if not _installed_locales:
+        collate = locale.getlocale(locale.LC_COLLATE)
+        ctype = locale.getlocale(locale.LC_CTYPE)
+        messages = locale.getlocale(locale.LC_MESSAGES)
+        monetary = locale.getlocale(locale.LC_MONETARY)
+        numeric = locale.getlocale(locale.LC_NUMERIC)
+        time = locale.getlocale(locale.LC_TIME)
+        try:
+            for key, value in locale.locale_alias.items():
+                try:
+                    locale.setlocale(locale.LC_ALL, value)
+                    _installed_locales[key] = value
+                except locale.Error:
+                    pass
+        finally:
+            locale.setlocale(locale.LC_COLLATE, collate)
+            locale.setlocale(locale.LC_CTYPE, ctype)
+            locale.setlocale(locale.LC_MESSAGES, messages)
+            locale.setlocale(locale.LC_MONETARY, monetary)
+            locale.setlocale(locale.LC_NUMERIC, numeric)
+            locale.setlocale(locale.LC_TIME, time)
+    return loc in _installed_locales or loc in _installed_locales.values()
 
 
 class TmpAbook:

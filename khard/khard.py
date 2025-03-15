@@ -5,14 +5,13 @@ import datetime
 from email import message_from_string
 from email.policy import SMTP as SMTP_POLICY
 from email.headerregistry import Address, AddressHeader, Group
+import locale
 import logging
 import operator
 import os
 import sys
 import textwrap
 from typing import cast, Callable, Iterable, Optional, Union
-
-from unidecode import unidecode
 
 from . import helpers
 from .address_book import AddressBookCollection, VdirAddressBook
@@ -310,7 +309,8 @@ def sort_contacts(contacts: Iterable[Contact], reverse: bool = False,
         raise ValueError('sort must be "first_name", "last_name" or '
                          '"formatted_name" not {}.'.format(sort))
     return sorted(contacts, reverse=reverse,
-                  key=lambda x: [unidecode(key(x)).lower() for key in keys])
+                  key=lambda x: [locale.strxfrm(key(x).lower())
+                                 for key in keys])
 
 
 def prepare_search_queries(args: Namespace) -> dict[str, Query]:
@@ -1095,6 +1095,7 @@ def copy_or_move_subcommand(action: str, vcards: list[Contact],
 
 
 def main(argv: list[str] = sys.argv[1:]) -> ExitStatus:
+    locale.setlocale(locale.LC_ALL, "")
     args, conf = cli.init(argv)
 
     # store the config instance in the module level variable

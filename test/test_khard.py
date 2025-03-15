@@ -1,5 +1,6 @@
 """Unittests for the khard module"""
 
+import locale
 import unittest
 import itertools
 from argparse import Namespace
@@ -10,7 +11,7 @@ from khard import config, khard, query
 from khard.contacts import Contact
 from khard.khard import find_email_addresses
 
-from .helpers import TestContact, TmpAbook, load_contact
+from .helpers import TestContact, TmpAbook, load_contact, mock_locale
 
 
 class TestSearchQueryPreparation(unittest.TestCase):
@@ -228,7 +229,8 @@ class TestSortContacts(unittest.TestCase):
     def test_sorting_of_korean_names(self):
         korean_c = load_contact("korean-c.vcf")
         korean_j = load_contact("korean-j.vcf")
-        self._test(korean_j, korean_c)
+        with mock_locale(locale.LC_COLLATE, "korean"):
+            self._test(korean_j, korean_c)
 
     def test_can_sort_by_last_name(self):
         self._test(self.no_nickname, self.nickname, sort="last_name")
@@ -252,4 +254,5 @@ class TestSortContacts(unittest.TestCase):
         eugene = TestContact(fn="Eugene")
         zakari = TestContact(fn="Zakari")
         eric = TestContact(fn="Éric")
-        self._test(albert, eleanor, eric, eugene, zakari, sort="formatted_name")
+        with mock_locale(locale.LC_COLLATE, "fr"):
+            self._test(albert, eleanor, eric, eugene, zakari, sort="formatted_name")

@@ -38,6 +38,7 @@
           ++ pkgs.lib.lists.optionals doc attrs.optional-dependencies.doc
           ++ pkgs.lib.lists.optional doc python3.pkgs.sphinxHook;
         sphinxBuilders = ["man"];
+        dependencies = attrs.dependencies ++ [pkgs.glibcLocales];
         postInstall = ''
           install -D -t $out/share/zsh/site-functions/ misc/zsh/_*
           cp -r $src/khard/data $out/lib/python*/site-packages/khard
