@@ -76,6 +76,7 @@ contact table
   - *show_uids*: whether to show uids
   - *show_kinds*: whether to show kinds
   - *sort*: field by which to sort contact listings
+  - *unaccentuated_sort*: whether to sort contacts as unaccentuated
 
 vcard
   - *private_objects*: a list of strings, these are the names of private vCard
