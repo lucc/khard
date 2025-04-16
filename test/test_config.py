@@ -50,6 +50,13 @@ class LoadingConfigFile(unittest.TestCase):
                 with self.assertRaises(ConfigError):
                     config.Config(name)
 
+    def test_discover_books(self):
+        filename = "test/fixture/discover.conf"
+        cfg = config.Config(filename)
+        cfg.init_address_books()
+        expected = {'broken.abook', 'nick.abook', 'test.abook', 'minimal.abook'}
+        self.assertEqual(set(cfg.abooks._abooks.keys()), expected)
+
     @mock.patch.dict("os.environ", EDITOR="editor", MERGE_EDITOR="meditor")
     def test_load_minimal_file_by_name(self):
         cfg = config.Config("test/fixture/minimal.conf")
