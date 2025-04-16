@@ -39,7 +39,7 @@ def TestYAMLEditable(**kwargs):
 
 
 def TestContact(**kwargs):
-    """Create a siple Contact for tests."""
+    """Create a simple Contact for tests."""
     return contacts.Contact(vCard(**kwargs), None, None)
 
 
