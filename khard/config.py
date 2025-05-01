@@ -142,6 +142,15 @@ class Config:
 
     @classmethod
     def _unfold_discover_books(cls, addressbooks: configobj.Section) -> configobj.Section:
+        """Expand globs in path of addressbooks of type "discover"
+
+        This expands all addressbooks of type "discover" into (potentially)
+        multiple addressbooks of type "vdir". The names are automatically generated
+        based on the directory name.
+
+        :param config: the configuration to be changed
+        :returns: the changed configuration with no "discover" addressbooks
+        """
         for section_name, book in addressbooks.copy().items():
             if book["type"] != "discover":
                 continue
@@ -166,6 +175,14 @@ class Config:
 
     @staticmethod
     def _find_leaf_dirs(hits: Iterable[str]) -> set[str]:
+        """Find leaf directories in a tree of hits when using glob.iglob
+
+        The hits are neither guaranteed to be unique nor leaf directories, both
+        of which are enforced by this function.
+
+        :param hits: the hits of a glob as returned by glob.iglob
+        :returns: a set of path strings
+        """
         dirs = {os.path.normpath(hit) for hit in hits if os.path.isdir(hit)}
         parents = {os.path.normpath(os.path.join(dir, os.pardir)) for dir in dirs}
         return dirs - parents
