@@ -8,6 +8,9 @@
 path = ~/.contacts/family/
 [[friends]]
 path = ~/.contacts/friends/
+[[work]]
+path = ~/.work/**/client-*-contacts/
+type = discover
 
 [general]
 debug = no

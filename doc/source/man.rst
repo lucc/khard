@@ -8,4 +8,4 @@ The following man pages are available for khard:
 
    khard(1) <man/khard>
    khard-subcommands(1) <man/khard-subcommands>
-   khard.conf(1) <man/khard.conf>
+   khard.conf(5) <man/khard.conf>

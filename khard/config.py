@@ -8,6 +8,7 @@ import os
 import re
 import shlex
 from typing import Iterable, Optional, Union
+from glob import iglob
 
 import configobj
 try:
@@ -94,7 +95,9 @@ class Config:
         self.abooks: AddressBookCollection
         locale.setlocale(locale.LC_ALL, '')
         config = self._load_config_file(config_file)
-        self.config = self._validate(config)
+        config = self._validate(config)
+        config["addressbooks"] = self._unfold_discover_books(config["addressbooks"])
+        self.config = config
         self._set_attributes()
 
     @classmethod
@@ -136,6 +139,53 @@ class Config:
         if result:
             raise ConfigError
         return config
+
+    @classmethod
+    def _unfold_discover_books(cls, addressbooks: configobj.Section) -> configobj.Section:
+        """Expand globs in path of addressbooks of type "discover"
+
+        This expands all addressbooks of type "discover" into (potentially)
+        multiple addressbooks of type "vdir". The names are automatically generated
+        based on the directory name.
+
+        :param config: the configuration to be changed
+        :returns: the changed configuration with no "discover" addressbooks
+        """
+        for section_name, book in addressbooks.copy().items():
+            if book["type"] != "discover":
+                continue
+            hits = iglob(os.path.expanduser(book["path"]), recursive=True)
+            dirs = cls._find_leaf_dirs(hits)
+            for bookpath in dirs:
+                bookname = os.path.basename(bookpath)
+                # Make sure our name is unique
+                counter = 0
+                while bookname in addressbooks:
+                    counter += 1
+                    if bookname + f"-{counter}" in addressbooks:
+                        continue
+                    bookname += f"-{counter}"
+                    break
+                addressbooks[bookname] = {
+                    "type": "vdir",
+                    "path": bookpath,
+                }
+            addressbooks.pop(section_name)
+        return addressbooks
+
+    @staticmethod
+    def _find_leaf_dirs(hits: Iterable[str]) -> set[str]:
+        """Find leaf directories in a tree of hits when using glob.iglob
+
+        The hits are neither guaranteed to be unique nor leaf directories, both
+        of which are enforced by this function.
+
+        :param hits: the hits of a glob as returned by glob.iglob
+        :returns: a set of path strings
+        """
+        dirs = {os.path.normpath(hit) for hit in hits if os.path.isdir(hit)}
+        parents = {os.path.normpath(os.path.join(dir, os.pardir)) for dir in dirs}
+        return dirs - parents
 
     def _set_attributes(self) -> None:
         """Set the attributes from the internal config instance on self."""

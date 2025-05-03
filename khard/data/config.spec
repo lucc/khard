@@ -25,3 +25,4 @@ skip_unparsable = boolean(default=False)
 [addressbooks]
   [[__many__]]
     path = string
+    type = option('vdir', 'discover', default='vdir')
