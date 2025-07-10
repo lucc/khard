@@ -23,7 +23,6 @@ keywords = ["vcard", "console", "addressbook"]
 license = {text = "GPL"}
 
 dependencies = [
-    "atomicwrites == 1.4.1",
     "configobj == 5.*, >= 5.0.6",
     "ruamel.yaml >= 0.17.0",
     "vobject ~= 0.9.7",
@@ -38,7 +37,6 @@ doc = [
 ]
 typing = [
     "mypy",
-    "types-atomicwrites",
     # vobject does fancy dynamic stuff that is hard to type-check
     #"types-vobject",
 ]
@@ -74,7 +72,6 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 # These do not provide type anotations or stub files
 module = [
-    "atomicwrites",
     "configobj",
     "configobj.validate",
     "validate",
