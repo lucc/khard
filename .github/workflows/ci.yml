@@ -37,11 +37,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install .[typing]
-    - name: Ignore a strange type error that only happens in CI
-      # This error only happens in CI and I can not reproduce it in the nix
-      # check or locally:
-      # khard/khard.py:658: error: Argument "policy" to "message_from_string" has incompatible type "EmailPolicy[EmailMessage]"; expected "Policy[Message[str, str]]"  [arg-type]
-      run: "sed -i '/message = message_from_string/s/$/#type: ignore[arg-type]/' khard/khard.py"
     - name: Run the type checker
       run: mypy
 
