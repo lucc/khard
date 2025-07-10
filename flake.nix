@@ -16,19 +16,7 @@
       doc ? true,
       typing ? false,
     }: let
-      packageOverrides = final: prev: {
-        types-atomicwrites = python3.pkgs.buildPythonPackage rec {
-          pname = "types-atomicwrites";
-          version = "1.4.5.1";
-          src = pkgs.fetchPypi {
-            inherit pname version;
-            hash = "sha256-np8JI+v5NSSyi87OWiOsjDgg85sGDfKfZxk20uS8BLw=";
-          };
-        };
-      };
-      attrs = project.renderers.buildPythonPackage {
-        python = python3.override {inherit packageOverrides;};
-      };
+      attrs = project.renderers.buildPythonPackage {python = python3;};
       overrides = {
         version = "0.dev+${self.shortRev or self.dirtyShortRev}";
         build-system =

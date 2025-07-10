@@ -74,6 +74,7 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 # These do not provide type anotations or stub files
 module = [
+    "atomicwrites",
     "configobj",
     "configobj.validate",
     "validate",
