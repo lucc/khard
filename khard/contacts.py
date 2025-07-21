@@ -1354,7 +1354,11 @@ def atomic_write(dest: str, overwrite: bool = False) -> Iterator[IO[str]]:
     try:
         yield file
     except Exception:
-        os.unlink(src)
+        try:
+            file.close()
+            os.unlink(src)
+        except Exception:
+            pass
         raise
     else:
         file.flush()
