@@ -1362,8 +1362,10 @@ def atomic_write(dest: str, overwrite: bool = False) -> Iterator[IO[str]]:
         if overwrite:
             os.rename(src, dest)
         else:
-            os.link(src, dest)
-            os.unlink(src)
+            try:
+                os.link(src, dest)
+            finally:
+                os.unlink(src)
 
 
 class Contact(YAMLEditable):
