@@ -1,6 +1,27 @@
 Change Log
 ==========
 
+v0.20.0 2025-07-22
+
+- Remove support for python 3.8 (638fb2e)
+- Replace atomicwrites dependency with an inlined function (#343)
+- Allow new version of vobject (f768845)
+- Add new addressbook type "discover" (#341)
+- Use python's glibc bindings for locale aware sorting, replacing the unidecode dependency (aad8d03, #338)
+- Add support for KIND: vCard fields (#310)
+- Remove command line options --strict-search, --uid and --target-uid (946999c)
+- Allow address_book as field for list -F (512d8ce)
+- Add new man page with subcommand listing (71fb6f0)
+- Internal changes:
+  - Rename default branch to main (369106c)
+  - Remove setup.py (f6f0047)
+  - Specify version (ranges) for dependencies (e4a3f71)
+  - Replace sys.exit calls with exceptions and return values (b721246)
+  - Use standard list, dict and tuple for type hints (9d17c5f)
+  - Use python 3.13 in CI (17a8681, f6b7c5c)
+  - Add extra opt dependency group for type checking (031682c)
+
+
 v0.19.1: 2023-11-26
 
 - Fix documentation builds on https://khard.readthedocs.io/
