@@ -11,6 +11,7 @@ field see:
 - device: https://tools.ietf.org/html/rfc6869
 """
 
+import contextlib
 import copy
 import datetime
 import io
@@ -18,11 +19,11 @@ import locale
 import logging
 import os
 import re
+import tempfile
 import time
-from typing import Any, Callable, Literal, Optional, TypeVar, Union, \
-    Sequence, overload
+from typing import Any, Callable, IO, Iterator, Literal, Optional, TypeVar, \
+    Union, Sequence, overload
 
-from atomicwrites import atomic_write
 from ruamel import yaml
 from ruamel.yaml import YAML
 import vobject
@@ -1340,6 +1341,35 @@ class YAMLEditable(VCardWrapper):
         yaml.dump(template_obj, stream)
         # posix standard: eof char must be \n
         return stream.getvalue() + "\n"
+
+
+@contextlib.contextmanager
+def atomic_write(dest: str, overwrite: bool = False) -> Iterator[IO[str]]:
+    """Atomically write to the destination file.
+
+    Optionally overwrite the path (using rename) rather than using `os.link`.
+    """
+    fd, src = tempfile.mkstemp(prefix=os.path.basename(dest), dir=os.path.dirname(dest))
+    file = os.fdopen(fd, mode='w')
+    try:
+        yield file
+    except Exception:
+        try:
+            file.close()
+            os.unlink(src)
+        except Exception:
+            pass
+        raise
+    else:
+        file.flush()
+        file.close()
+        if overwrite:
+            os.rename(src, dest)
+        else:
+            try:
+                os.link(src, dest)
+            finally:
+                os.unlink(src)
 
 
 class Contact(YAMLEditable):
