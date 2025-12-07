@@ -663,8 +663,7 @@ def find_email_addresses(text: str, fields: list[str]) -> list[Address]:
 
     email_addresses = []
 
-    _all = any([f == "all" for f in fields])
-    if _all:
+    if "all" in fields:
         for _, value in message.items():
             email_addresses.extend(extract_addresses(value))
     else:
