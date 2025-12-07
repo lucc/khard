@@ -11,7 +11,7 @@ import operator
 import os
 import sys
 import textwrap
-from typing import cast, Callable, Iterable
+from typing import Any, cast, Callable, Iterable
 
 from . import helpers
 from .address_book import AddressBookCollection, VdirAddressBook
@@ -656,7 +656,7 @@ def find_email_addresses(text: str, fields: list[str]) -> list[Address]:
     """
     message = message_from_string(text, policy=SMTP_POLICY)
 
-    def extract_addresses(header) -> list[Address]:
+    def extract_addresses(header: Any) -> list[Address]:
         if header and isinstance(header, (AddressHeader, Group)):
             return list(header.addresses)
         return []

@@ -457,6 +457,6 @@ def init(argv: list[str]) -> tuple[argparse.Namespace, Config]:
         sys.exit(str(err))
 
 
-def _sphinxarg_helper():
+def _sphinxarg_helper() -> argparse.ArgumentParser:
     """Helper function to return the correct argument parser for the docs."""
     return create_parsers()[1]
