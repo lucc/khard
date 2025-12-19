@@ -1157,7 +1157,8 @@ def main(argv: list[str] = sys.argv[1:]) -> ExitStatus:
             # otherwise further user interaction is not possible (for example
             # selecting a contact from the contact table)
             try:
-                sys.stdin = open('/dev/tty')
+                tty_name = 'CONIN$' if os.name == 'nt' else '/dev/tty'
+                sys.stdin = open(tty_name, 'r')
             except OSError:
                 pass
 
