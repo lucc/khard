@@ -12,6 +12,7 @@ be converted to proper "unit" tests.
 import io
 import pathlib
 import shutil
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -34,6 +35,7 @@ def run_main(*args):
 
 
 @mock.patch('sys.argv', ['TESTSUITE'])
+@mock.patch.object(sys.modules['__main__'], '__spec__', None)
 class HelpOption(unittest.TestCase):
 
     def _test(self, args, expect):
