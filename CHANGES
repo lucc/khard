@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.20.1 2026-01-01
+
+- Fix reopening of stdin on Windows (#347)
+
+
 v0.20.0 2025-07-22
 
 - Remove support for python 3.8 (638fb2e)
