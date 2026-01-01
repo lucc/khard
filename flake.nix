@@ -39,6 +39,12 @@
     in
       python3.pkgs.buildPythonApplication (attrs // overrides);
     default = pkgs.callPackage khard {};
+    tests = python3:
+      default.override {
+        inherit python3;
+        doc = false;
+      };
+    typing = default.override {typing = true;};
   in {
     packages.${system} = {inherit default;};
     devShells.${system} = let
@@ -69,13 +75,13 @@
         '';
       };
     };
-    checks.${system} = let
-      tests = default.override {doc = false;};
-      typing = default.override {typing = true;};
-    in {
+    checks.${system} = {
       inherit default;
-      tests-python-311 = tests.override {python3 = pkgs.python311;};
-      tests-python-312 = tests.override {python3 = pkgs.python312;};
+      tests-python-310 = tests pkgs.python310;
+      tests-python-311 = tests pkgs.python311;
+      tests-python-312 = tests pkgs.python312;
+      tests-python-313 = tests pkgs.python313;
+      tests-python-314 = tests pkgs.python314;
       ruff = pkgs.runCommand "ruff" {} ''
         ${pkgs.ruff}/bin/ruff check ${./khard}
         touch $out
