@@ -67,20 +67,44 @@ def string_to_date(string: str) -> datetime:
     :param string: the date string to parse
     :returns: the parsed datetime object
     """
-    # try date formats --mmdd, --mm-dd, yyyymmdd, yyyy-mm-dd and datetime
-    # formats yyyymmddThhmmss, yyyy-mm-ddThh:mm:ss, yyyymmddThhmmssZ,
-    # yyyy-mm-ddThh:mm:ssZ.
-    for fmt in ("--%m%d", "--%m-%d", "%Y%m%d", "%Y-%m-%d", "%Y%m%dT%H%M%S",
-                "%Y-%m-%dT%H:%M:%S", "%Y%m%dT%H%M%SZ", "%Y-%m-%dT%H:%M:%SZ"):
+
+    # Attempt to parse the string as any of the date and time formats supported
+    # by Khard, as defined by the vCard and ISO 8601:2000 specifications.
+    # Strings which define a day-of-month but not a year are ambiguous, require
+    # special handling, and will be unsupported in Python >= 3.15. (They were
+    # already removed in ISO 8601:2004, but remain a part of vCard.)
+
+    # Ambiguous cases of a date with no year (--%m%d and --%m-%d).
+    try:
+        if string.startswith("--"):
+            if "-" in string[2:]:
+                return datetime.strptime("1900-" + string[2:], "%Y-%m-%d")
+            else:
+                return datetime.strptime("1900" + string[2:], "%Y%m%d")
+    except ValueError:
+        pass
+
+    # Fully qualified date and time formats.
+    for fmt in (
+        "%Y%m%d",
+        "%Y-%m-%d",
+        "%Y%m%dT%H%M%S",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y%m%dT%H%M%SZ",
+        "%Y-%m-%dT%H:%M:%SZ",
+    ):
         try:
             return datetime.strptime(string, fmt)
         except ValueError:
-            continue  # with the next format
-    # try datetime formats yyyymmddThhmmsstz and yyyy-mm-ddThh:mm:sstz where tz
-    # may look like -06:00.
+            continue
+
+    # Timezone formats which may contain a problematic colon.
     for fmt in ("%Y%m%dT%H%M%S%z", "%Y-%m-%dT%H:%M:%S%z"):
         try:
-            return datetime.strptime(''.join(string.rsplit(":", 1)), fmt)
+            return datetime.strptime("".join(string.rsplit(":", 1)), fmt)
         except ValueError:
-            continue  # with the next format
+            continue
+
+    # All formats tried. Date cannot be parsed.
     raise ValueError
+
