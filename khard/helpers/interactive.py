@@ -6,10 +6,11 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Generator, Sequence, TypeVar
+from typing import Any, Callable, Generator, Sequence, TypeVar
 
 from ..exceptions import Cancelled
 from ..contacts import Contact
+from .. import csv
 
 
 T = TypeVar("T")
@@ -122,13 +123,14 @@ class Editor:
 
     @staticmethod
     @contextlib.contextmanager
-    def write_temp_file(text: str = "") -> Generator[str, None, None]:
+    def write_temp_file(text: str = "", suffix: str = ".yml"
+                        ) -> Generator[str, None, None]:
         """Create a new temporary file and write some initial text to it.
 
         :param text: the text to write to the temp file
         :returns: the file name of the newly created temp file
         """
-        with NamedTemporaryFile(mode='w+t', suffix='.yml') as tmp:
+        with NamedTemporaryFile(mode='w+t', suffix=suffix) as tmp:
             tmp.write(text)
             tmp.flush()
             yield tmp.name
@@ -197,3 +199,47 @@ class Editor:
                         print("Canceled")
                         return None
         return None  # only for mypy
+
+
+    def edit_csv_template(self,
+                          dict2card: Callable[[dict[str, Any]], Contact],
+                          template: str, delimiter: str
+                          ) -> list[Contact] | None:
+        """Edit CSV template of contacts and parse them back
+
+        :param dict2card: a function to convert each parsed row of the
+            modified CSV template into a Contact
+        :param template: the template
+        :returns: the list of parsed Contacts or None
+        """
+        with contextlib.ExitStack() as stack:
+            filename = stack.enter_context(
+                    self.write_temp_file(template, ".csv")
+                    )
+            # Try to edit the files until we detect a modification or the user
+            # aborts
+            while True:
+                if self.edit_files(filename) == EditState.unmodified:
+                    return None
+                # read temp file contents after editing
+                with open(filename, "r") as tmp:
+                    modified_template = tmp.read()
+                # No actual modification was done
+                if modified_template == template:
+                    return None
+
+                # try to create contacts from user input
+                parser = csv.Parser(modified_template, delimiter=delimiter)
+                new_contacts = []
+                try:
+                    for contact_data in parser:
+                        new_contact = dict2card(contact_data)
+                        new_contacts.append(new_contact)
+                except ValueError as err:
+                    print(f"\nError: {err}\n")
+                    if not confirm("Do you want to open the editor again?"):
+                        print("Canceled")
+                        return None
+                else:
+                    return new_contacts
+        return None

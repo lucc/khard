@@ -65,6 +65,24 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
         print("Creation successful\n\n{}".format(new_contact.pretty()))
 
 
+def create_new_contacts(address_book: VdirAddressBook, delimiter: str) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
+    # create temp file
+    template = helpers.get_csv_template(delimiter, config.private_objects)
+    # create contact objects from temp file
+    new_contacts = editor.edit_csv_template(lambda t: Contact.from_dict(
+        address_book, t, config.private_objects,
+        config.preferred_vcard_version, config.localize_dates),
+                                            template, delimiter)
+
+    if new_contacts is None:
+        print("Canceled")
+    else:
+        for new_contact in new_contacts:
+            new_contact.write_to_file()
+            print("Creation successful\n\n{}".format(new_contact.pretty()))
+
+
 def modify_existing_contact(old_contact: Contact) -> None:
     editor = interactive.Editor(config.editor, config.merge_editor)
     # create temp file and open it with the specified text editor
