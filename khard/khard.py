@@ -1101,12 +1101,15 @@ def main(argv: list[str] = sys.argv[1:]) -> ExitStatus:
     global config
     config = conf
 
-    # Check some of the simpler subcommands first.  These don't have any
-    # options and can directly be run.
+    # Check some of the simpler subcommands first.
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.abooks))
         return None
     if args.action == "template":
+        if args.format == 'csv':
+            print(helpers.get_csv_template(
+                args.delimiter, config.private_objects))
+            return None
         print("# Contact template for khard version {}\n#\n"
               "# Use this yaml formatted template to create a new contact:\n"
               "#   either with: khard new -a address_book -i template.yaml\n"

@@ -207,7 +207,16 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "-o", "--output-file", default=sys.stdout,
         type=argparse.FileType("w"),
         help="Specify output template file name or use stdout by default")
-    subparsers.add_parser("template", help="print an empty yaml template")
+    template_parser = subparsers.add_parser(
+        "template",
+        description="print an empty yaml (default) or CSV template",
+        help="print an empty yaml (default) or CSV template")
+    template_parser.add_argument(
+        "-O", "--format", choices=("yaml", "csv"), default="yaml",
+        help="select the template format")
+    template_parser.add_argument(
+        "-d", "--delimiter", default=",",
+        help="Use DELIMITER instead of \",\" for CSV field delimiter")
     birthdays_parser = subparsers.add_parser(
         "birthdays",
         aliases=Actions.get_aliases("birthdays"),
