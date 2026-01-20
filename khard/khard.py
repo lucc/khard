@@ -451,7 +451,7 @@ def new_subcommand(abooks: AddressBookCollection, fmt: str, delimiter: str,
         if fmt == 'yaml':
             create_new_contact(abook)
         elif fmt == 'csv':
-            create_new_contacts(abook)
+            create_new_contacts(abook, delimiter)
 
 
 def add_email_to_contact(name: str, email_address: str,
