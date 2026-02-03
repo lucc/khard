@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import reduce
 from operator import and_, or_
 import re
-from typing import cast, Any, Optional, Union
+from typing import cast, Any, Optional
 
 from . import contacts
 
@@ -18,7 +18,7 @@ class Query(metaclass=abc.ABCMeta):
     """A query to match against strings, lists of strings and Contacts"""
 
     @abc.abstractmethod
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         """Match the self query against the given thing"""
 
     @abc.abstractmethod
@@ -70,7 +70,7 @@ class NullQuery(Query):
 
     """The null-query, it matches nothing."""
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         return False
 
     def get_term(self) -> None:
@@ -84,7 +84,7 @@ class AnyQuery(Query):
 
     """The match-anything-query, it always matches."""
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         return True
 
     def get_term(self) -> str:
@@ -104,7 +104,7 @@ class TermQuery(Query):
     def __init__(self, term: str) -> None:
         self._term = term.lower()
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         if isinstance(thing, str):
             return self._term in thing.lower()
         return self._term in thing.pretty().lower()
@@ -130,14 +130,14 @@ class FieldQuery(TermQuery):
         self._field = field
         super().__init__(value)
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         if isinstance(thing, str):
             return super().match(thing)
         if hasattr(thing, self._field):
             return self._match_union(getattr(thing, self._field))
         return False
 
-    def _match_union(self, value: Union[str, datetime, list, dict[str, Any]]
+    def _match_union(self, value: str | datetime | list | dict[str, Any]
                      ) -> bool:
         if isinstance(value, str):
             return self.match(value)
@@ -172,7 +172,7 @@ class AndQuery(Query):
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         return all(q.match(thing) for q in self._queries)
 
     def get_term(self) -> Optional[str]:
@@ -203,7 +203,7 @@ class OrQuery(Query):
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         return any(q.match(thing) for q in self._queries)
 
     def get_term(self) -> Optional[str]:
@@ -236,7 +236,7 @@ class NameQuery(TermQuery):
         self._props_query = OrQuery(FieldQuery("formatted_name", term),
                                     FieldQuery("nicknames", term))
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         m = super().match
         if isinstance(thing, str):
             return m(thing)
@@ -266,13 +266,13 @@ class PhoneNumberQuery(FieldQuery):
         super().__init__(FIELD_PHONE_NUMBERS, value)
         self._term_only_digits = self._strip_phone_number(value)
 
-    def match(self, thing: Union[str, "contacts.Contact"]) -> bool:
+    def match(self, thing: "str | contacts.Contact") -> bool:
         if isinstance(thing, str):
             return self._match_union(thing)
         else:
             return super().match(thing)
 
-    def _match_union(self, value: Union[str, datetime, list, dict[str, Any]]
+    def _match_union(self, value: str | datetime | list | dict[str, Any]
                      ) -> bool:
         if isinstance(value, str):
             if self._term in value.lower() \
@@ -329,7 +329,7 @@ class PhoneNumberQuery(FieldQuery):
         return 'phone numbers:{}'.format(self._term)
 
 
-def parse(string: str) -> Union[TermQuery, FieldQuery]:
+def parse(string: str) -> TermQuery | FieldQuery:
     """Parse a string into a query object
 
     The input string interpreted as a :py:class:`FieldQuery` if it starts with

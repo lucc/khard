@@ -29,7 +29,7 @@ from .version import version as khard_version
 logger = logging.getLogger(__name__)
 config: Config
 # the types that sys.exit() can digest
-ExitStatus = Union[str, int, None]
+ExitStatus = str | int | None
 
 
 def version_check(contact: Contact, description: str) -> bool:
@@ -152,8 +152,8 @@ def copy_contact(contact: Contact, target_address_book: VdirAddressBook,
         contact.address_book, target_address_book))
 
 
-def list_address_books(address_books: Union[AddressBookCollection,
-                                            list[VdirAddressBook]]) -> None:
+def list_address_books(address_books:
+                       AddressBookCollection | list[VdirAddressBook]) -> None:
     table = [["Index", "Address book"]]
     for index, address_book in enumerate(address_books, 1):
         table.append([cast(str, index), address_book.name])

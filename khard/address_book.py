@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 import glob
 import logging
 import os
-from typing import Generator, Iterator, Optional, Union, overload
+from typing import Generator, Iterator, Optional, overload
 
 import vobject.base
 
@@ -252,11 +252,11 @@ class AddressBookCollection(AddressBook, Mapping, Sequence):
                      len(self.contacts), self.name)
 
     @overload
-    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook: ...
+    def __getitem__(self, key: int | str) -> VdirAddressBook: ...
     @overload
     def __getitem__(self, key: slice) -> list[VdirAddressBook]: ...
-    def __getitem__(self, key: Union[int, str, slice]
-                    ) -> Union[VdirAddressBook, list[VdirAddressBook]]:
+    def __getitem__(self, key: int | str | slice
+                    ) -> VdirAddressBook | list[VdirAddressBook]:
         """Get one or more of the backing address books by name or index
 
         :param key: the name of the address book to get or its index

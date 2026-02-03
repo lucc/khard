@@ -39,7 +39,7 @@ from .query import AnyQuery, Query
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
-LabeledStrs = list[Union[str, dict[str, str]]]
+LabeledStrs = list[str | dict[str, str]]
 
 
 @overload
@@ -47,8 +47,8 @@ def multi_property_key(item: str) -> tuple[Literal[0], str]: ...
 @overload
 def multi_property_key(item: dict[T, Any]) -> tuple[Literal[1], T]: ...
 @overload
-def multi_property_key(item: Union[str, dict[T, Any]]) -> tuple[Literal[0, 1], Union[T, str]]: ...
-def multi_property_key(item: Union[str, dict[T, Any]]) -> tuple[Literal[0, 1], Union[T, str]]:
+def multi_property_key(item: str | dict[T, Any]) -> tuple[Literal[0, 1], T | str]: ...
+def multi_property_key(item: str | dict[T, Any]) -> tuple[Literal[0, 1], T | str]:
     """Key function to pass to sorted(), allowing sorting of dicts with lists
     and strings. Dicts will be sorted by their label, after other types.
 
