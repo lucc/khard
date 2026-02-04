@@ -11,7 +11,7 @@ import operator
 import os
 import sys
 import textwrap
-from typing import cast, Callable, Iterable, Optional, Union
+from typing import cast, Callable, Iterable
 
 from . import helpers
 from .address_book import AddressBookCollection, VdirAddressBook
@@ -29,7 +29,7 @@ from .version import version as khard_version
 logger = logging.getLogger(__name__)
 config: Config
 # the types that sys.exit() can digest
-ExitStatus = Union[str, int, None]
+ExitStatus = str | int | None
 
 
 def version_check(contact: Contact, description: str) -> bool:
@@ -152,8 +152,8 @@ def copy_contact(contact: Contact, target_address_book: VdirAddressBook,
         contact.address_book, target_address_book))
 
 
-def list_address_books(address_books: Union[AddressBookCollection,
-                                            list[VdirAddressBook]]) -> None:
+def list_address_books(address_books:
+                       AddressBookCollection | list[VdirAddressBook]) -> None:
     table = [["Index", "Address book"]]
     for index, address_book in enumerate(address_books, 1):
         table.append([cast(str, index), address_book.name])
@@ -231,9 +231,9 @@ def list_with_headers(the_list: list[str], *headers: str) -> None:
     print(helpers.pretty_print(table))
 
 
-def choose_address_book_from_list(header: str, abooks: Union[
-                                  AddressBookCollection, list[VdirAddressBook]]
-                                  ) -> Optional[VdirAddressBook]:
+def choose_address_book_from_list(header: str, abooks:
+                                  AddressBookCollection | list[VdirAddressBook]
+                                  ) -> VdirAddressBook | None:
     """Let the user select one of the given address books
 
     :param header: some text to print in front of the list
@@ -252,7 +252,7 @@ def choose_address_book_from_list(header: str, abooks: Union[
 
 def choose_vcard_from_list(header: str, vcards: list[Contact],
                            include_none: bool = False
-                           ) -> Optional[Contact]:
+                           ) -> Contact | None:
     """Let the user select a contact from a list
 
     :param header: some text to print in front of the list
@@ -269,8 +269,7 @@ def choose_vcard_from_list(header: str, vcards: list[Contact],
     return interactive.select(vcards, True)
 
 
-def get_contact_list(address_books: Union[VdirAddressBook,
-                                          AddressBookCollection],
+def get_contact_list(address_books: VdirAddressBook | AddressBookCollection,
                      query: Query) -> list[Contact]:
     """Find contacts in the given address book grouped, sorted and reversed
     according to the loaded configuration.
@@ -731,7 +730,7 @@ def birthdays_subcommand(vcard_list: list[Contact], parsable: bool
         if parsable:
             # We did filter out None above but the type checker does not know
             # this.
-            bday = cast(Union[str, datetime.datetime], vcard.birthday)
+            bday = cast(str | datetime.datetime, vcard.birthday)
             if isinstance(bday, str):
                 date = bday
             else:

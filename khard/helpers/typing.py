@@ -1,12 +1,12 @@
 """Helper code for type annotations and runtime type conversion."""
 
 from datetime import datetime
-from typing import Union, overload
+from typing import overload
 
 
 # some type aliases
-Date = Union[str, datetime]
-StrList = Union[str, list[str]]
+Date = str | datetime
+StrList = str | list[str]
 PostAddress = dict[str, str]
 
 
@@ -16,7 +16,7 @@ def convert_to_vcard(name: str, value: StrList, constraint: type[str]) -> str: .
 def convert_to_vcard(name: str, value: StrList, constraint: type[list]) -> list[str]: ...
 @overload
 def convert_to_vcard(name: str, value: StrList, constraint: None) -> StrList: ...
-def convert_to_vcard(name: str, value: StrList, constraint: Union[None, type[str], type[list]]) -> StrList:
+def convert_to_vcard(name: str, value: StrList, constraint: None | type[str] | type[list]) -> StrList:
     """converts user input into vCard compatible data structures
 
     :param name: object name, only required for error messages
@@ -42,7 +42,7 @@ def convert_to_vcard(name: str, value: StrList, constraint: Union[None, type[str
     raise ValueError(f"{name} must be a string or a list with strings.")
 
 
-def list_to_string(input: Union[str, list], delimiter: str) -> str:
+def list_to_string(input: str | list, delimiter: str) -> str:
     """converts list to string recursively so that nested lists are supported
 
     :param input: a list of strings and lists of strings (and so on recursive)
@@ -55,7 +55,7 @@ def list_to_string(input: Union[str, list], delimiter: str) -> str:
     return input
 
 
-def string_to_list(input: Union[str, list[str]], delimiter: str) -> list[str]:
+def string_to_list(input: str | list[str], delimiter: str) -> list[str]:
     if isinstance(input, list):
         return input
     return [x.strip() for x in input.split(delimiter)]

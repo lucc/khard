@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 import glob
 import logging
 import os
-from typing import Generator, Iterator, Optional, Union, overload
+from typing import Generator, Iterator, overload
 
 import vobject.base
 
@@ -25,8 +25,7 @@ class AddressBook(metaclass=abc.ABCMeta):
         """:param name: the name to identify the address book"""
         self._loaded = False
         self.contacts: dict[str, "contacts.Contact"] = {}
-        self._short_uids: Optional[dict[str,
-                                        "contacts.Contact"]] = None
+        self._short_uids: "dict[str, contacts.Contact] | None" = None
         self.name = name
 
     def __str__(self) -> str:
@@ -136,7 +135,7 @@ class VdirAddressBook(AddressBook):
     """
 
     def __init__(self, name: str, path: str,
-                 private_objects: Optional[list[str]] = None,
+                 private_objects: list[str] | None = None,
                  localize_dates: bool = True, skip: bool = False) -> None:
         """
         :param name: the name to identify the address book
@@ -252,11 +251,11 @@ class AddressBookCollection(AddressBook, Mapping, Sequence):
                      len(self.contacts), self.name)
 
     @overload
-    def __getitem__(self, key: Union[int, str]) -> VdirAddressBook: ...
+    def __getitem__(self, key: int | str) -> VdirAddressBook: ...
     @overload
     def __getitem__(self, key: slice) -> list[VdirAddressBook]: ...
-    def __getitem__(self, key: Union[int, str, slice]
-                    ) -> Union[VdirAddressBook, list[VdirAddressBook]]:
+    def __getitem__(self, key: int | str | slice
+                    ) -> VdirAddressBook | list[VdirAddressBook]:
         """Get one or more of the backing address books by name or index
 
         :param key: the name of the address book to get or its index

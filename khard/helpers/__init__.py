@@ -4,13 +4,14 @@ from datetime import datetime
 import pathlib
 import random
 import string
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Sequence
 
 from ruamel.yaml.scalarstring import LiteralScalarString
 from .typing import list_to_string, PostAddress
 
 
-YamlPostAddresses = dict[str, Union[list[dict[str, Any]], dict[str, Any]]]
+YamlPostAddresses = dict[str, list[dict[str, Any]] | dict[str, Any]]
+YAML = str | Sequence | dict[str, Any] | None
 
 
 def pretty_print(table: list[list[str]], justify: str = "L") -> str:
@@ -66,9 +67,7 @@ def get_random_uid() -> str:
                     for _ in range(36)])
 
 
-def yaml_clean(value: Union[str, Sequence, dict[str, Any], None]
-               ) -> Union[Sequence, str, dict[str, Any], LiteralScalarString,
-                          None]:
+def yaml_clean(value: YAML) -> YAML | LiteralScalarString:
     """
     sanitize yaml values according to some simple principles:
       1. empty values are none, so ruamel does not print an empty list/str
@@ -95,9 +94,9 @@ def yaml_clean(value: Union[str, Sequence, dict[str, Any], None]
 
 
 def yaml_dicts(
-        data: Optional[dict[str, Any]],
-        defaults: Union[dict[str, Any], list[str], None] = None
-    ) -> Optional[dict[str, Any]]:
+        data: dict[str, Any] | None,
+        defaults: dict[str, Any] | list[str] | None = None
+    ) -> dict[str, Any] | None:
     """
     format a dict according to template, if empty use specified defaults
 
@@ -118,10 +117,10 @@ def yaml_dicts(
     return data_dict
 
 
-def yaml_addresses(addresses: Optional[dict[str, list[PostAddress]]],
+def yaml_addresses(addresses: dict[str, list[PostAddress]] | None,
                    address_properties: list[str],
-                   defaults: Optional[list[str]] = None
-                   ) -> Optional[YamlPostAddresses]:
+                   defaults: list[str] | None = None
+                   ) -> YamlPostAddresses | None:
     """
     build a dict from an address, using a list of properties, an address has.
 
@@ -151,8 +150,8 @@ def yaml_addresses(addresses: Optional[dict[str, list[PostAddress]]],
     return address_dict
 
 
-def yaml_anniversary(anniversary: Union[str, datetime, None],
-                     version: str) -> Optional[str]:
+def yaml_anniversary(anniversary: str | datetime | None,
+                     version: str) -> str | None:
     """
     format an anniversary according to its contents and the vCard version.
 
@@ -185,7 +184,7 @@ def yaml_anniversary(anniversary: Union[str, datetime, None],
     return anniversary
 
 
-def convert_to_yaml(name: str, value: Union[None, str, list], indentation: int,
+def convert_to_yaml(name: str, value: None | str | list, indentation: int,
                     index_of_colon: int, show_multi_line_character: bool
                     ) -> list[str]:
     """converts a value list into yaml syntax
@@ -250,7 +249,7 @@ def convert_to_yaml(name: str, value: Union[None, str, list], indentation: int,
     return strings
 
 
-def indent_multiline_string(input: Union[str, list], indentation: int,
+def indent_multiline_string(input: str | list, indentation: int,
                             show_multi_line_character: bool) -> str:
     # if input is a list, convert to string first
     if isinstance(input, list):
@@ -265,7 +264,7 @@ def indent_multiline_string(input: Union[str, list], indentation: int,
 
 
 def get_new_contact_template(
-        supported_private_objects: Optional[list[str]] = None) -> str:
+        supported_private_objects: list[str] | None = None) -> str:
     formatted_private_objects = []
     if supported_private_objects:
         formatted_private_objects.append("")

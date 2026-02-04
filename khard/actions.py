@@ -1,6 +1,6 @@
 """Names and aliases for the subcommands on the command line"""
 
-from typing import Generator, Iterable, Optional
+from typing import Generator, Iterable
 
 
 class Actions:
@@ -28,7 +28,7 @@ class Actions:
     }
 
     @classmethod
-    def get_action(cls, alias: str) -> Optional[str]:
+    def get_action(cls, alias: str) -> str | None:
         """Find the name of the action for the supplied alias.  If no action is
         associated with the given alias, None is returned.
 
