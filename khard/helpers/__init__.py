@@ -4,7 +4,7 @@ from datetime import datetime
 import pathlib
 import random
 import string
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from ruamel.yaml.scalarstring import LiteralScalarString
 from .typing import list_to_string, PostAddress
@@ -94,9 +94,9 @@ def yaml_clean(value: YAML) -> YAML | LiteralScalarString:
 
 
 def yaml_dicts(
-        data: Optional[dict[str, Any]],
+        data: dict[str, Any] | None,
         defaults: dict[str, Any] | list[str] | None = None
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
     """
     format a dict according to template, if empty use specified defaults
 
@@ -117,10 +117,10 @@ def yaml_dicts(
     return data_dict
 
 
-def yaml_addresses(addresses: Optional[dict[str, list[PostAddress]]],
+def yaml_addresses(addresses: dict[str, list[PostAddress]] | None,
                    address_properties: list[str],
-                   defaults: Optional[list[str]] = None
-                   ) -> Optional[YamlPostAddresses]:
+                   defaults: list[str] | None = None
+                   ) -> YamlPostAddresses | None:
     """
     build a dict from an address, using a list of properties, an address has.
 
@@ -151,7 +151,7 @@ def yaml_addresses(addresses: Optional[dict[str, list[PostAddress]]],
 
 
 def yaml_anniversary(anniversary: str | datetime | None,
-                     version: str) -> Optional[str]:
+                     version: str) -> str | None:
     """
     format an anniversary according to its contents and the vCard version.
 
@@ -264,7 +264,7 @@ def indent_multiline_string(input: str | list, indentation: int,
 
 
 def get_new_contact_template(
-        supported_private_objects: Optional[list[str]] = None) -> str:
+        supported_private_objects: list[str] | None = None) -> str:
     formatted_private_objects = []
     if supported_private_objects:
         formatted_private_objects.append("")

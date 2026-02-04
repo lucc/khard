@@ -21,8 +21,8 @@ import os
 import re
 import tempfile
 import time
-from typing import Any, Callable, IO, Iterator, Literal, Optional, TypeVar, \
-    Union, Sequence, overload
+from typing import Any, Callable, IO, Iterator, Literal, TypeVar, Sequence, \
+        overload
 
 from ruamel import yaml
 from ruamel.yaml import YAML
@@ -92,7 +92,7 @@ class VCardWrapper:
     address_types_v4 = ("home", "work")
 
     def __init__(self, vcard: vobject.base.Component,
-                 version: Optional[str] = None) -> None:
+                 version: str | None = None) -> None:
         """Initialize the wrapper around the given vcard.
 
         :param vcard: the vCard to wrap
@@ -113,13 +113,12 @@ class VCardWrapper:
         return self.formatted_name
 
     @overload
-    def get_first(self, property: Literal["n"]) -> Optional[vobject.vcard.Name]: ...
+    def get_first(self, property: Literal["n"]) -> vobject.vcard.Name | None: ...
     @overload
-    def get_first(self, property: Literal["adr"]) -> Optional[vobject.vcard.Address]: ...
+    def get_first(self, property: Literal["adr"]) -> vobject.vcard.Address | None: ...
     @overload
-    def get_first(self, property: str) -> Optional[str]: ...
-    def get_first(self, property: str) -> Union[None, str, vobject.vcard.Name,
-                                                vobject.vcard.Address]:
+    def get_first(self, property: str) -> str | None: ...
+    def get_first(self, property: str) -> None | str | vobject.vcard.Name | vobject.vcard.Address:
         """Get a property from the underlying vCard.
 
         This method should only be called for properties with cardinality \\*1
@@ -262,7 +261,7 @@ class VCardWrapper:
         return [default_type]
 
     @property
-    def version(self) -> Optional[str]:
+    def version(self) -> str | None:
         return self.get_first("version")
 
     @version.setter
@@ -277,7 +276,7 @@ class VCardWrapper:
         version.value = convert_to_vcard("version", value, str)
 
     @property
-    def uid(self) -> Optional[str]:
+    def uid(self) -> str | None:
         return self.get_first("uid")
 
     @uid.setter
@@ -300,7 +299,7 @@ class VCardWrapper:
         rev.value = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
 
     @property
-    def birthday(self) -> Optional[Date]:
+    def birthday(self) -> Date | None:
         """Return the birthday as a datetime object or a string depending on
         whether it is of type text or not.  If no birthday is present in the
         vcard None is returned.
@@ -336,7 +335,7 @@ class VCardWrapper:
             bday.params['VALUE'] = ['text']
 
     @property
-    def anniversary(self) -> Optional[Date]:
+    def anniversary(self) -> Date | None:
         """
         :returns: contacts anniversary or None if not available
         """
@@ -414,9 +413,9 @@ class VCardWrapper:
                 return group_name
 
     def _add_labelled_property(
-            self, property: str, value: StrList, label: Optional[str] = None,
+            self, property: str, value: StrList, label: str | None = None,
             name_groups: bool = False,
-            allowed_object_type: Union[None, type[str], type[list]] = str) -> None:
+            allowed_object_type: None | type[str] | type[list] = str) -> None:
         """Add an object to the VCARD. If a label is given it will be added to
         a group with an ABLABEL.
 
@@ -437,7 +436,7 @@ class VCardWrapper:
             ablabel_obj.group = group_name
             ablabel_obj.value = label
 
-    def _prepare_birthday_value(self, date: Date) -> tuple[Optional[str],
+    def _prepare_birthday_value(self, date: Date) -> tuple[str | None,
                                                            bool]:
         """Prepare a value to be stored in a BDAY or ANNIVERSARY attribute.
 
@@ -580,13 +579,13 @@ class VCardWrapper:
         return self.formatted_name
 
     @property
-    def first_name(self) -> Optional[str]:
+    def first_name(self) -> str | None:
         if parts := self._get_first_names():
             return list_to_string(parts, " ")
         return None
 
     @property
-    def last_name(self) -> Optional[str]:
+    def last_name(self) -> str | None:
         if parts := self._get_last_names():
             return list_to_string(parts, " ")
         return None
@@ -611,13 +610,13 @@ class VCardWrapper:
             suffix=convert_to_vcard("name suffix", suffix, None))
 
     @property
-    def organisations(self) -> list[Union[list[str], dict[str, list[str]]]]:
+    def organisations(self) -> list[list[str] | dict[str, list[str]]]:
         """
         :returns: list of organisations, sorted alphabetically
         """
         return self.get_all("org")
 
-    def _add_organisation(self, organisation: StrList, label: Optional[str] = None) -> None:
+    def _add_organisation(self, organisation: StrList, label: str | None = None) -> None:
         """Add one ORG entry to the underlying vcard
 
         :param organisation: the value to add
@@ -640,39 +639,39 @@ class VCardWrapper:
     def titles(self) -> LabeledStrs:
         return self.get_all("title")
 
-    def _add_title(self, title: str, label: Optional[str] = None) -> None:
+    def _add_title(self, title: str, label: str | None = None) -> None:
         self._add_labelled_property("title", title, label, True)
 
     @property
     def roles(self) -> LabeledStrs:
         return self.get_all("role")
 
-    def _add_role(self, role: str, label: Optional[str] = None) -> None:
+    def _add_role(self, role: str, label: str | None = None) -> None:
         self._add_labelled_property("role", role, label, True)
 
     @property
     def nicknames(self) -> LabeledStrs:
         return self.get_all("nickname")
 
-    def _add_nickname(self, nickname: str, label: Optional[str] = None) -> None:
+    def _add_nickname(self, nickname: str, label: str | None = None) -> None:
         self._add_labelled_property("nickname", nickname, label, True)
 
     @property
     def notes(self) -> LabeledStrs:
         return self.get_all("note")
 
-    def _add_note(self, note: str, label: Optional[str] = None) -> None:
+    def _add_note(self, note: str, label: str | None = None) -> None:
         self._add_labelled_property("note", note, label, True)
 
     @property
     def webpages(self) -> LabeledStrs:
         return self.get_all("url")
 
-    def _add_webpage(self, webpage: str, label: Optional[str] = None) -> None:
+    def _add_webpage(self, webpage: str, label: str | None = None) -> None:
         self._add_labelled_property("url", webpage, label, True)
 
     @property
-    def categories(self) -> Union[list[str], list[list[str]]]:
+    def categories(self) -> list[str] | list[list[str]]:
         category_list = self.get_all("categories")
         if not category_list:
             return category_list
@@ -920,8 +919,8 @@ class YAMLEditable(VCardWrapper):
     """Conversion of vcards to YAML and updating the vcard from YAML"""
 
     def __init__(self, vcard: vobject.base.Component,
-                 supported_private_objects: Optional[list[str]] = None,
-                 version: Optional[str] = None, localize_dates: bool = False
+                 supported_private_objects: list[str] | None = None,
+                 version: str | None = None, localize_dates: bool = False
                  ) -> None:
         """Initialize attributes needed for yaml conversions
 
@@ -972,7 +971,7 @@ class YAMLEditable(VCardWrapper):
     #######################
 
     @staticmethod
-    def _format_date_object(date: Optional[Date], localize: bool) -> str:
+    def _format_date_object(date: Date | None, localize: bool) -> str:
         if not date:
             return ""
         if isinstance(date, str):
@@ -1029,8 +1028,8 @@ class YAMLEditable(VCardWrapper):
         return contact_data
 
     @staticmethod
-    def _set_string_list(setter: Callable[[str, Optional[str]], None],
-                         key: str, data: dict[str, Union[str, list[str]]]
+    def _set_string_list(setter: Callable[[str, str | None], None],
+                         key: str, data: dict[str, str | list[str]]
                          ) -> None:
         """Pre-process a string or list and set each value with the given
         setter
@@ -1376,8 +1375,8 @@ class Contact(YAMLEditable):
 
     def __init__(self, vcard: vobject.base.Component,
                  address_book: "address_book.VdirAddressBook", filename: str,
-                 supported_private_objects: Optional[list[str]] = None,
-                 vcard_version: Optional[str] = None,
+                 supported_private_objects: list[str] | None = None,
+                 vcard_version: str | None = None,
                  localize_dates: bool = False) -> None:
         """Initialize the vcard object.
 
@@ -1403,8 +1402,8 @@ class Contact(YAMLEditable):
 
     @classmethod
     def new(cls, address_book: "address_book.VdirAddressBook",
-            supported_private_objects: Optional[list[str]] = None,
-            version: Optional[str] = None, localize_dates: bool = False
+            supported_private_objects: list[str] | None = None,
+            version: str | None = None, localize_dates: bool = False
             ) -> "Contact":
         """Create a new Contact from scratch"""
         vcard = vobject.vCard()
@@ -1418,8 +1417,8 @@ class Contact(YAMLEditable):
     @classmethod
     def from_file(cls, address_book: "address_book.VdirAddressBook",
                   filename: str, query: Query = AnyQuery(),
-                  supported_private_objects: Optional[list[str]] = None,
-                  localize_dates: bool = False) -> Optional["Contact"]:
+                  supported_private_objects: list[str] | None = None,
+                  localize_dates: bool = False) -> "Contact | None":
         """Load a Contact object from a .vcf file if the plain file
         matches the query.
 
@@ -1450,8 +1449,8 @@ class Contact(YAMLEditable):
 
     @classmethod
     def from_yaml(cls, address_book: "address_book.VdirAddressBook", yaml: str,
-                  supported_private_objects: Optional[list[str]] = None,
-                  version: Optional[str] = None, localize_dates: bool = False
+                  supported_private_objects: list[str] | None = None,
+                  version: str | None = None, localize_dates: bool = False
                   ) -> "Contact":
         """Use this if you want to create a new contact from user input."""
         contact = cls.new(address_book, supported_private_objects, version,

@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import reduce
 from operator import and_, or_
 import re
-from typing import cast, Any, Optional
+from typing import cast, Any
 
 from . import contacts
 
@@ -22,7 +22,7 @@ class Query(metaclass=abc.ABCMeta):
         """Match the self query against the given thing"""
 
     @abc.abstractmethod
-    def get_term(self) -> Optional[str]:
+    def get_term(self) -> str | None:
         """Extract the search terms from a query."""
 
     def __and__(self, other: "Query") -> "Query":
@@ -175,7 +175,7 @@ class AndQuery(Query):
     def match(self, thing: "str | contacts.Contact") -> bool:
         return all(q.match(thing) for q in self._queries)
 
-    def get_term(self) -> Optional[str]:
+    def get_term(self) -> str | None:
         terms = [x.get_term() for x in self._queries]
         if None in terms:
             return None
@@ -189,7 +189,7 @@ class AndQuery(Query):
         return hash((AndQuery, frozenset(self._queries)))
 
     @staticmethod
-    def reduce(queries: list[Query], start: Optional[Query] = None) -> Query:
+    def reduce(queries: list[Query], start: Query | None = None) -> Query:
         return reduce(and_, queries, start or AnyQuery())
 
     def __str__(self) -> str:
@@ -206,7 +206,7 @@ class OrQuery(Query):
     def match(self, thing: "str | contacts.Contact") -> bool:
         return any(q.match(thing) for q in self._queries)
 
-    def get_term(self) -> Optional[str]:
+    def get_term(self) -> str | None:
         terms = [x.get_term() for x in self._queries]
         if all(t is None for t in terms):
             return None
@@ -220,7 +220,7 @@ class OrQuery(Query):
         return hash((OrQuery, frozenset(self._queries)))
 
     @staticmethod
-    def reduce(queries: list[Query], start: Optional[Query] = None) -> Query:
+    def reduce(queries: list[Query], start: Query | None = None) -> Query:
         return reduce(or_, queries, start or NullQuery())
 
     def __str__(self) -> str:

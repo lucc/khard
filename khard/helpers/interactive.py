@@ -6,7 +6,7 @@ from enum import Enum
 import os.path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Generator, Optional, Sequence, TypeVar, Union
+from typing import Callable, Generator, Sequence, TypeVar
 
 from ..exceptions import Cancelled
 from ..contacts import Contact
@@ -26,8 +26,8 @@ def confirm(message: str, accept_enter_key: bool = True) -> bool:
                         "no" if accept_enter_key else None)
 
 
-def ask(message: str, choices: list[str], default: Optional[str] = None,
-        help: Optional[str] = None) -> str:
+def ask(message: str, choices: list[str], default: str | None = None,
+        help: str | None = None) -> str:
     """Ask the user to select one of the given choices
 
     :param message: a text to show to the user
@@ -74,7 +74,7 @@ def ask(message: str, choices: list[str], default: Optional[str] = None,
             print(help)
 
 
-def select(items: Sequence[T], include_none: bool = False) -> Optional[T]:
+def select(items: Sequence[T], include_none: bool = False) -> T | None:
     """Ask the user to select an item from a list.
 
     The list should be displayed to the user before calling this function and
@@ -114,8 +114,8 @@ class Editor:
 
     """Wrapper around subprocess.Popen to edit and merge files."""
 
-    def __init__(self, editor: Union[str, list[str]],
-                 merge_editor: Union[str, list[str]]) -> None:
+    def __init__(self, editor: str | list[str],
+                 merge_editor: str | list[str]) -> None:
         self.editor = [editor] if isinstance(editor, str) else editor
         self.merge_editor = [merge_editor] if isinstance(merge_editor, str) \
             else merge_editor
@@ -137,7 +137,7 @@ class Editor:
     def _mtime(filename: str) -> datetime:
         return datetime.fromtimestamp(os.path.getmtime(filename))
 
-    def edit_files(self, file1: str, file2: Optional[str] = None) -> EditState:
+    def edit_files(self, file1: str, file2: str | None = None) -> EditState:
         """Edit the given files
 
         If only one file is given the timestamp of this file is checked, if two
@@ -163,8 +163,8 @@ class Editor:
         return EditState.modified
 
     def edit_templates(self, yaml2card: Callable[[str], Contact],
-                       template1: str, template2: Optional[str] = None
-                       ) -> Optional[Contact]:
+                       template1: str, template2: str | None = None
+                       ) -> Contact | None:
         """Edit YAML templates of contacts and parse them back
 
         :param yaml2card: a function to convert the modified YAML templates

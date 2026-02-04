@@ -7,7 +7,7 @@ import logging
 import os
 import re
 import shlex
-from typing import Iterable, Optional, Union
+from typing import Iterable
 from glob import iglob
 
 import configobj
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # This is the type of the config file parameter accepted by the configobj
 # library:
 # https://configobj.readthedocs.io/en/latest/configobj.html#reading-a-config-file
-ConfigFile = Union[str, list[str], io.StringIO]
+ConfigFile = str | list[str] | io.StringIO
 
 
 def validate_command(value: list[str]) -> list[str]:
@@ -90,7 +90,7 @@ class Config:
 
     supported_vcard_versions = ("3.0", "4.0")
 
-    def __init__(self, config_file: Optional[ConfigFile] = None) -> None:
+    def __init__(self, config_file: ConfigFile | None = None) -> None:
         self.config: configobj.ConfigObj
         self.abooks: AddressBookCollection
         locale.setlocale(locale.LC_ALL, '')
@@ -101,7 +101,7 @@ class Config:
         self._set_attributes()
 
     @classmethod
-    def _load_config_file(cls, config_file: Optional[ConfigFile]
+    def _load_config_file(cls, config_file: ConfigFile | None
                           ) -> configobj.ConfigObj:
         """Find and load the config file.
 
@@ -258,7 +258,7 @@ class Config:
             abook.load(queries[abook.name], self.search_in_source_files)
         return collection
 
-    def merge(self, other: Union[configobj.ConfigObj, dict]) -> None:
+    def merge(self, other: configobj.ConfigObj | dict) -> None:
         """Merge the config with some other dict or ConfigObj
 
         :param other: the other dict or ConfigObj to merge into self
