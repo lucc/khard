@@ -149,3 +149,11 @@ class StringToDate(unittest.TestCase):
         string = "1900-01-02T06:42:17-06:00"
         result = string_to_date(string)
         self.assertEqual(result, self.zone)
+
+    @unittest.expectedFailure
+    def test_partial_date_with_february_29(self):
+        # FIXME: this fails because 1900 is not a leap year, see
+        # https://github.com/python/cpython/pull/116179 for more info.
+        string = "--02-29"
+        result = string_to_date(string)
+        self.assertEqual(result, datetime.datetime(year=1900, month=2, day=29))
