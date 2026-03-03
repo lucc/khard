@@ -56,7 +56,7 @@ filename
 Detailed display
 ~~~~~~~~~~~~~~~~
 
-These subcommands display detailed information about one subcommand.
+These subcommands display detailed information about one contact.
 
 show
   display detailed information about one contact, supported output formats
