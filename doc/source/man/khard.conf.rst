@@ -38,14 +38,20 @@ Options
 The config file consists of these four sections:
 
 addressbooks
-  This section contains several subsections, but at least one. Each subsection
-  can have an arbitrary name which will be the name of an addressbook known to
-  khard.  Each of these subsections **must** have a *path* key with the path to
-  the folder containing the vCard files for that addressbook. Optionally, you
-  can set the *type* value to either ``discover`` or ``vdir``, the default. The
-  *path* value supports environment variables and tilde prefixes. When using
-  the ``discover`` type, it also supports globbing. :program:`khard` expects
-  the vCard files to hold only one VCARD record each and end in a :file:`.vcf`
+  This section describes the addressbooks that are known to :program:`khard`.
+  It contains several subsections, but at least one. Each subsection can have
+  an arbitrary title and **must** have a *path* key and may have a *type* key.
+  The optional *type* can be either  ``discover`` or ``vdir`` (which is the
+  default).  A subsection with type ``vdir`` describes a single addressbook.
+  In this case the title of the subsection is the name of the addressbook as
+  it is referenced in khard.  With a type of ``discover`` the subsection might
+  describes several addressbooks which are discover by globbing.  The name of
+  each addressbook will be the basename of the folder found via globbing. The
+  *path* key contains the path to the folder containing the vCard files for
+  that addressbook. The *path* value supports environment variables and tilde
+  prefixes. When using the ``discover`` type, it also supports globbing (for
+  the exact syntax see :module:`glob`). :program:`khard` expects the vCard
+  files to hold only one VCARD record each and end in a :file:`.vcf`
   extension.
 
 general
