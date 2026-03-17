@@ -2,8 +2,10 @@
 
 # pylint: disable=missing-docstring
 
+import io
 import logging
 import os.path
+from pathlib import Path
 import tempfile
 import unittest
 import unittest.mock as mock
@@ -50,18 +52,63 @@ class LoadingConfigFile(unittest.TestCase):
                 with self.assertRaises(ConfigError):
                     config.Config(name)
 
-    def test_discover_books(self):
-        filename = "test/fixture/discover.conf"
-        cfg = config.Config(filename)
-        cfg.init_address_books()
-        expected = {'broken.abook', 'nick.abook', 'test.abook', 'minimal.abook'}
-        self.assertEqual(set(cfg.abooks._abooks.keys()), expected)
-
     @mock.patch.dict("os.environ", EDITOR="editor", MERGE_EDITOR="meditor")
     def test_load_minimal_file_by_name(self):
         cfg = config.Config("test/fixture/minimal.conf")
         self.assertEqual(cfg.editor, ["editor"])
         self.assertEqual(cfg.merge_editor, "meditor")
+
+
+class DiscoverAddressBooks(unittest.TestCase):
+    def test_discover_books(self):
+        filename = "test/fixture/discover.conf"
+        cfg = config.Config(filename)
+        cfg.init_address_books()
+        expected = {"broken.abook", "nick.abook", "test.abook", "minimal.abook"}
+        self.assertEqual(set(cfg.abooks._abooks.keys()), expected)
+
+    @staticmethod
+    def config_file(abooks: dict) -> config.Config:
+        string = "[addressbooks]\n"
+        for key, value in abooks.items():
+            string += f"""[[{key}]]
+            path = {value["path"]}
+            type = {value["type"]}
+            """
+        c = config.Config(io.StringIO(string))
+        c.init_address_books()
+        return c
+
+    def test_simple_vdir_and_discover_abooks(self):
+        c = self.config_file({
+            "normal addressbook": {"path": "doc", "type": "vdir"},
+            "discover addressbook": {"path": "doc/so*", "type": "discover"},
+        })
+        self.assertEqual(c.abooks[0].name, "normal addressbook")
+        self.assertEqual(c.abooks[0].path, "doc")
+        self.assertEqual(c.abooks[1].name, "source")
+        self.assertEqual(c.abooks[1].path, "doc/source")
+
+    def test_discover_abooks_ignore_files_when_globbing(self):
+        c = self.config_file({
+            "discover": {"path": "doc/source/*", "type": "discover"},
+        })
+        self.assertEqual(len(c.abooks), 2)
+
+    def test_names_of_discover_abooks_are_the_basenames_of_the_leaf_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "a" / "b" / "c").mkdir(parents=True)
+            (tmp / "a" / "x" / "x1").mkdir(parents=True)
+            (tmp / "a" / "x" / "x2").mkdir(parents=True)
+            (tmp / "a" / "y" / "y1").mkdir(parents=True)
+            (tmp / "a" / "y" / "y2").mkdir(parents=True)
+            c = self.config_file({
+                "discover": {"path": f"{tmp}/**", "type": "discover"}
+            })
+            actual = sorted([a.name for a in c.abooks])
+        expected = ["c", "x1", "x2", "y1", "y2"]
+        self.assertEqual(actual, expected)
 
 
 class ConfigPreferredVcardVersion(unittest.TestCase):
