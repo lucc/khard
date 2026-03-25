@@ -1,11 +1,15 @@
 {
   description = "Development flake for khard";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  # keep an old version of nixpkgs for ci until we drop python 3.10 support
+  # https://github.com/NixOS/nixpkgs/issues/488818
+  inputs.nixpkgs-python310.url = "github:NixOS/nixpkgs/cad22e7d996aea55ecab064e84834289143e44a0";
   inputs.pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
   inputs.pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
   outputs = {
     self,
     nixpkgs,
+    nixpkgs-python310,
     pyproject-nix,
   }: let
     project = pyproject-nix.lib.project.loadPyproject {projectRoot = ./.;};
@@ -77,7 +81,7 @@
     };
     checks.${system} = {
       inherit default;
-      tests-python-310 = tests pkgs.python310;
+      tests-python-310 = tests (import nixpkgs-python310 {inherit system;}).python310;
       tests-python-311 = tests pkgs.python311;
       tests-python-312 = tests pkgs.python312;
       tests-python-313 = tests pkgs.python313;
