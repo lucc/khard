@@ -49,10 +49,9 @@ del update_template_file
 # ones.
 extensions = [
     'autoapi.extension',  # https://sphinx-autoapi.readthedocs.io/en/latest/
-    'sphinx.ext.autodoc',  # https://pypi.org/project/sphinx-autodoc-typehints/
+    'sphinx.ext.autodoc',  # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
-    'sphinx_autodoc_typehints',  # https://pypi.org/project/sphinx-autodoc-typehints/
     'sphinxarg.ext',
 ]
 
