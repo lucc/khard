@@ -52,7 +52,8 @@ extensions = [
     'sphinx.ext.autodoc',  # https://pypi.org/project/sphinx-autodoc-typehints/
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
-    'sphinx_autodoc_typehints',  # https://pypi.org/project/sphinx-autodoc-typehints/
+    # this is uncommented because of https://github.com/lucc/khard/issues/352
+    #'sphinx_autodoc_typehints',  # https://pypi.org/project/sphinx-autodoc-typehints/
     'sphinxarg.ext',
 ]
 
