@@ -61,10 +61,9 @@ class HelpOption(unittest.TestCase):
 class ListingCommands(unittest.TestCase):
     """Tests for subcommands that simply list stuff."""
 
-
     def test_simple_ls_without_options(self):
         stdout = run_main("list")
-        text = [l.strip() for l in stdout.getvalue().splitlines()]
+        text = [line.strip() for line in stdout.getvalue().splitlines()]
         expected = [
             "Address book: foo",
             "Index    Name              Phone                "
@@ -140,8 +139,8 @@ class ListingCommands(unittest.TestCase):
     def test_order_of_search_term_does_not_matter(self):
         stdout1 = run_main('list', 'second', 'contact')
         stdout2 = run_main('list', 'contact', 'second')
-        text1 = [l.strip() for l in stdout1.getvalue().splitlines()]
-        text2 = [l.strip() for l in stdout2.getvalue().splitlines()]
+        text1 = [line.strip() for line in stdout1.getvalue().splitlines()]
+        text2 = [line.strip() for line in stdout2.getvalue().splitlines()]
         expected = [
             "Address book: foo",
             "Index    Name              Phone                "
@@ -154,8 +153,8 @@ class ListingCommands(unittest.TestCase):
     def test_case_of_search_terms_does_not_matter(self):
         stdout1 = run_main('list', 'second', 'contact')
         stdout2 = run_main('list', 'SECOND', 'CONTACT')
-        text1 = [l.strip() for l in stdout1.getvalue().splitlines()]
-        text2 = [l.strip() for l in stdout2.getvalue().splitlines()]
+        text1 = [line.strip() for line in stdout1.getvalue().splitlines()]
+        text2 = [line.strip() for line in stdout2.getvalue().splitlines()]
         expected = [
             "Address book: foo",
             "Index    Name              Phone                "
@@ -196,7 +195,7 @@ class ListingCommands(unittest.TestCase):
                   "second contact    home    user@example.com"]
         self.assertListEqual(expect, text)
 
-    def test_phone_lists_only_contacts_with_phone_nubers(self):
+    def test_phone_lists_only_contacts_with_phone_numbers(self):
         with TmpConfig(["contact1.vcf", "contact2.vcf"]):
             stdout = run_main("phone")
         text = [line.strip() for line in stdout.getvalue().splitlines()]
