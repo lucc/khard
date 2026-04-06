@@ -57,10 +57,15 @@ jobs:
       run: make -C doc html man
 
   nix:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Install Nix
-      uses: cachix/install-nix-action@v20
-    - uses: actions/checkout@v3
+      uses: cachix/install-nix-action@v31
+    - uses: actions/checkout@v6
     - name: Build the nix derivation (also runs the tests)
       run: nix build --print-build-logs
