@@ -58,6 +58,7 @@
           p.build
           p.mypy
           p.pylint
+          p.pytest
         ]
         ++ (upstream p));
       packages = with pkgs; [git ruff pythonEnv];

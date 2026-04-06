@@ -24,7 +24,7 @@ from khard import config
 from khard.helpers.interactive import Editor
 from khard import khard
 
-from .helpers import TmpConfig, mock_stream
+from .helpers import TmpConfig, load_contact, mock_stream
 
 
 def run_main(*args):
@@ -387,8 +387,7 @@ class FileSystemCommands(unittest.TestCase):
         self.assertEqual(new, old + 1)
 
 
-class MiscCommands(unittest.TestCase):
-    """Tests for other subcommands."""
+class ShowCommands(unittest.TestCase):
 
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_show_with_yaml_format(self):
@@ -403,6 +402,11 @@ class MiscCommands(unittest.TestCase):
         self.assertIn('Last name', yaml)
         self.assertIn('Nickname', yaml)
 
+
+class EditCommands(unittest.TestCase):
+
+    # TODO: with pytest this test needs the command line option -s, I don't
+    # know how to fix that
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
     def test_simple_edit_without_modification(self):
         editor = mock.Mock()
@@ -415,6 +419,20 @@ class MiscCommands(unittest.TestCase):
         # precisely?
         editor.edit_templates.assert_called_once()
 
+    def test_simple_edit_without_modification_inner1(self):
+        editor = mock.Mock()
+        editor.edit_templates = mock.Mock(return_value=None)
+        editor.write_temp_file = Editor.write_temp_file
+        with mock.patch('khard.khard.interactive.Editor',
+                        mock.Mock(return_value=editor)):
+            khard.modify_subcommand(load_contact("contact1.vcf"), "", True,
+                                    False)
+        # The editor is called with a temp file so how to we check this more
+        # precisely?
+        editor.edit_templates.assert_called_once()
+
+    # TODO: with pytest this test needs the command line option -s, I don't
+    # know how to fix that
     @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf',
                      EDITOR='editor')
     def test_edit_source_file_without_modifications(self):
@@ -422,6 +440,30 @@ class MiscCommands(unittest.TestCase):
             run_main("edit", "--format=vcard", "uid1")
         popen.assert_called_once_with(['editor',
                                        'test/fixture/test.abook/contact1.vcf'])
+
+    def test_edit_source_file_without_modifications_inner1(self):
+        with mock.patch('subprocess.Popen') as popen:
+            khard.modify_subcommand(load_contact("contact1.vcf"), "", True,
+                                    True)
+        popen.assert_called_once_with(['editor',
+                                       'test/fixture/vcards/contact1.vcf'])
+
+    @mock.patch.dict('os.environ', EDITOR='editor')
+    def test_modify_existing_contact(self):
+        with mock.patch('subprocess.Popen') as popen:
+            khard.modify_existing_contact(load_contact("contact1.vcf"))
+        popen.assert_called_once()
+
+    def test_modify_existing_contact_2(self):
+        editor = mock.Mock()
+        editor.edit_templates = mock.Mock(return_value=None)
+        editor.write_temp_file = Editor.write_temp_file
+        with mock.patch('khard.khard.interactive.Editor',
+                        mock.Mock(return_value=editor)):
+            khard.modify_existing_contact(load_contact("contact1.vcf"))
+        # The editor is called with a temp file so how to we check this more
+        # precisely?
+        editor.edit_templates.assert_called_once()
 
 
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
