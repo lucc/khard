@@ -19,6 +19,7 @@ from .exceptions import AddressBookNameError, AddressBookParseError, Cancelled
 from .contacts import Contact
 from . import cli
 from .config import Config
+from . import csv
 from .formatter import Formatter
 from .helpers import interactive
 from .helpers.interactive import confirm
@@ -63,6 +64,60 @@ def create_new_contact(address_book: VdirAddressBook) -> None:
     else:
         new_contact.write_to_file()
         print("Creation successful\n\n{}".format(new_contact.pretty()))
+
+
+def create_new_contacts(address_book: VdirAddressBook, delimiter: str) -> None:
+    editor = interactive.Editor(config.editor, config.merge_editor)
+    # create temp file
+    template = helpers.get_csv_template(delimiter, config.private_objects)
+    # create contact objects from temp file
+    new_contacts = editor.edit_csv_template(lambda t: Contact.from_dict(
+        address_book, t, config.private_objects,
+        config.preferred_vcard_version, config.localize_dates),
+                                            template, delimiter)
+
+    if new_contacts is None:
+        print("Canceled")
+    else:
+        for new_contact in new_contacts:
+            new_contact.write_to_file()
+            print("Creation successful\n\n{}".format(new_contact.pretty()))
+
+
+def import_new_contact(abook: VdirAddressBook, data: str, open_editor: bool
+                       ) -> ExitStatus:
+    # create new contact from stdin/the input file
+    try:
+        new_contact = Contact.from_yaml(
+            abook, data, config.private_objects,
+            config.preferred_vcard_version, config.localize_dates)
+    except ValueError as err:
+        return str(err)
+    else:
+        new_contact.write_to_file()
+    if open_editor:
+        modify_existing_contact(new_contact)
+    else:
+        print("Creation successful\n\n{}".format(new_contact.pretty()))
+
+
+def import_new_contacts(abook: VdirAddressBook, delimiter: str, data: str,
+                        open_editor: bool) -> ExitStatus:
+    # create new contacts from stdin/the input file
+    parser = csv.Parser(data, delimiter=delimiter)
+    for contact_data in parser:
+        try:
+            new_contact = Contact.from_dict(
+                abook, contact_data, config.private_objects,
+                config.preferred_vcard_version, config.localize_dates)
+        except ValueError as err:
+            return str(err)
+        else:
+            new_contact.write_to_file()
+        if open_editor:
+            modify_existing_contact(new_contact)
+        else:
+            print("Creation successful\n\n{}".format(new_contact.pretty()))
 
 
 def modify_existing_contact(old_contact: Contact) -> None:
@@ -367,39 +422,36 @@ def generate_contact_list(args: Namespace) -> list[Contact]:
     return get_contact_list(args.addressbook, args.search_terms)
 
 
-def new_subcommand(abooks: AddressBookCollection, data: str, open_editor: bool
-                   ) -> ExitStatus:
+def new_subcommand(abooks: AddressBookCollection, fmt: str, delimiter: str,
+                   data: str, open_editor: bool) -> ExitStatus:
     """Create a new contact.
 
     :param abooks: a list of address books that were selected on the command
         line
-    :param data: the data for the new contact as a yaml formatted string
+    :param fmt: the input format (yaml or csv)
+    :param delimiter: the CSV field delimiter
+    :param data: the data for the new contact as a yaml or CSV formatted
+        string
     :param open_editor: whether to open the new contact in the editor after
         creation
     :raises Canceled: when the user canceled a selection
     """
     # ask for address book, in which to create the new contact
     abook = choose_address_book_from_list(
-        "Select address book for new contact", abooks)
+        "Select address book for new contact(s)", abooks)
     if abook is None:
         return "address book list is empty"
     # if there is some data in stdin/the input file
     if data:
-        # create new contact from stdin/the input file
-        try:
-            new_contact = Contact.from_yaml(
-                abook, data, config.private_objects,
-                config.preferred_vcard_version, config.localize_dates)
-        except ValueError as err:
-            return str(err)
-        else:
-            new_contact.write_to_file()
-        if open_editor:
-            modify_existing_contact(new_contact)
-        else:
-            print("Creation successful\n\n{}".format(new_contact.pretty()))
+        if fmt == 'yaml':
+            import_new_contact(abook, data, open_editor)
+        elif fmt == 'csv':
+            import_new_contacts(abook, delimiter, data, open_editor)
     else:
-        create_new_contact(abook)
+        if fmt == 'yaml':
+            create_new_contact(abook)
+        elif fmt == 'csv':
+            create_new_contacts(abook, delimiter)
 
 
 def add_email_to_contact(name: str, email_address: str,
@@ -1101,12 +1153,15 @@ def main(argv: list[str] = sys.argv[1:]) -> ExitStatus:
     global config
     config = conf
 
-    # Check some of the simpler subcommands first.  These don't have any
-    # options and can directly be run.
+    # Check some of the simpler subcommands first.
     if args.action == "addressbooks":
         print('\n'.join(str(book) for book in config.abooks))
         return None
     if args.action == "template":
+        if args.format == 'csv':
+            print(helpers.get_csv_template(
+                args.delimiter, config.private_objects))
+            return None
         print("# Contact template for khard version {}\n#\n"
               "# Use this yaml formatted template to create a new contact:\n"
               "#   either with: khard new -a address_book -i template.yaml\n"
@@ -1178,7 +1233,9 @@ def main(argv: list[str] = sys.argv[1:]) -> ExitStatus:
         # these commands require user interaction
         try:
             if args.action == "new":
-                return new_subcommand(args.addressbook, input_from_stdin_or_file,
+                return new_subcommand(args.addressbook,
+                                      args.format, args.delimiter,
+                                      input_from_stdin_or_file,
                                       args.open_editor)
             elif args.action == "add-email":
                 return add_email_subcommand(input_from_stdin_or_file,

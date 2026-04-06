@@ -275,3 +275,18 @@ def get_new_contact_template(
     template = pathlib.Path(__file__).parent.parent / 'data' / 'template.yaml'
     with template.open() as temp:
         return temp.read().format('\n'.join(formatted_private_objects))
+
+
+def get_csv_template(
+        delimiter: str,
+        supported_private_objects: list[str] | None = []) -> str:
+    formatted_private_objects = []
+    if supported_private_objects:
+        formatted_private_objects.append("")
+        for i in range(0, len(supported_private_objects)):
+            formatted_private_objects.append(f"Private {i + 1} - type")
+            formatted_private_objects.append(f"Private {i + 1} - value")
+    path = pathlib.Path(__file__).parent.parent / 'data' / 'template.csv'
+    with path.open() as temp:
+        template = temp.read().replace(",", delimiter)
+    return template.format(delimiter.join(formatted_private_objects))
