@@ -8,7 +8,7 @@
   inputs.flake-utils.inputs.systems.follows = "systems";
   inputs.pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
   inputs.pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
-  inputs.systems.url = "github:nix-systems/default";
+  inputs.systems.url = "github:nix-systems/x86_64-linux";
   outputs =
     {
       self,
@@ -62,46 +62,43 @@
             doc = false;
           };
         typing = default.override { typing = true; };
+        pythonEnv = pkgs.python3.withPackages (
+          p:
+          [
+            p.build
+            p.mypy
+            p.pylint
+            p.pytest
+          ]
+          ++ default.nativeBuildInputs
+          ++ default.propagatedBuildInputs
+        );
+        devPackages = with pkgs; [
+          git
+          ruff
+          pythonEnv
+        ];
       in
       {
         packages = { inherit default; };
-        devShells =
-          let
-            upstream = p: default.nativeBuildInputs ++ default.propagatedBuildInputs;
-            pythonEnv = pkgs.python3.withPackages (
-              p:
-              [
-                p.build
-                p.mypy
-                p.pylint
-                p.pytest
-              ]
-              ++ (upstream p)
-            );
-            packages = with pkgs; [
-              git
-              ruff
-              pythonEnv
-            ];
-          in
-          {
-            default = pkgs.mkShell { inherit packages; };
-            release = pkgs.mkShell {
-              packages = packages ++ [ pkgs.twine ];
-              shellHook = ''
-                cat <<EOF
-                To publish a tag on pypi
-                0. version=$(git tag --list --sort=version:refname v\* | sed -n '$s/^v//p')
-                1. git checkout v\$version
-                2. nix flake check
-                3. python3 -m build
-                4. twine check --strict dist/khard-\$version*
-                5. twine upload -r khardtest dist/khard-\$version*
-                6. twine upload -r khard dist/khard-\$version*
-                EOF
-              '';
-            };
+        devShells = {
+          default = pkgs.mkShell { packages = devPackages; };
+          release = pkgs.mkShell {
+            packages = devPackages ++ [ pkgs.twine ];
+            shellHook = ''
+              cat <<EOF
+              To publish a tag on pypi
+              0. version=$(git tag --list --sort=version:refname v\* | sed -n '$s/^v//p')
+              1. git checkout v\$version
+              2. nix flake check
+              3. python3 -m build
+              4. twine check --strict dist/khard-\$version*
+              5. twine upload -r khardtest dist/khard-\$version*
+              6. twine upload -r khard dist/khard-\$version*
+              EOF
+            '';
           };
+        };
         checks = {
           inherit default;
           tests-python-310 = tests (import nixpkgs-python310 { inherit system; }).python310;

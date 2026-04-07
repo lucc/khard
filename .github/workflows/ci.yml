@@ -69,3 +69,7 @@ jobs:
     - uses: actions/checkout@v6
     - name: Build the nix derivation (also runs the tests)
       run: nix build --print-build-logs
+      if: matrix.os == 'ubuntu-latest'
+    - name: Build the nix derivation (also runs the tests)
+      run: nix build --print-build-logs --override-input systems github:nix-systems/aarch64-darwin
+      if: matrix.os == 'macos-latest'
