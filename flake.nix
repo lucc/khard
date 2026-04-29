@@ -38,7 +38,7 @@
         # see https://github.com/scheibler/khard/issues/263
         preCheck = "export COLUMNS=80";
         pythonImportsCheck = ["khard"];
-        pytestFlagsArray = ["-s"];
+        pytestFlags = ["-s"];
       };
     in
       python3.pkgs.buildPythonApplication (attrs // overrides);
