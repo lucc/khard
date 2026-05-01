@@ -1001,10 +1001,11 @@ class YAMLEditable(VCardWrapper):
                               flags=re.IGNORECASE)
         return contents
 
-    @staticmethod
-    def _parse_yaml(input: str) -> dict:
-        """Parse a YAML document into a dictionary and validate the data to
-        some degree.
+    @classmethod
+    def _parse_yaml(cls, input: str) -> dict:
+        """Parse a YAML document into a dictionary.
+
+        And validate to some degree.
 
         :param input: the YAML document to parse
         :returns: the parsed data structure
@@ -1020,8 +1021,19 @@ class YAMLEditable(VCardWrapper):
             if not contact_data:
                 raise ValueError("Found no contact information")
 
-        # check for available data
-        # at least enter name or organisation
+        return cls._validate(contact_data)
+
+    @staticmethod
+    def _validate(contact_data: dict) -> dict:
+        """Validate contact data to some degree.
+
+        Ensure that at a name or organisation has been entered.
+
+        :param contact_data: dict of contact data, as returned by
+            YAMLEditable._parse_yaml()
+        :returns: the same value
+        :raises: ValueError
+        """
         if not (contact_data.get("First name") or contact_data.get("Last name")
                 or contact_data.get("Organisation")):
             raise ValueError("You must either enter a name or an organisation")
@@ -1088,12 +1100,18 @@ class YAMLEditable(VCardWrapper):
                          "Use format yyyy-mm-dd or "
                          "yyyy-mm-ddTHH:MM:SS")
 
-    def update(self, input: str) -> None:
-        """Update this vcard with some yaml input
+    def update(self, input: str | dict) -> None:
+        """Update this vcard with yaml input or with a dict of contact data.
 
-        :param input: a yaml string to parse and then use to update self
+        :param input: a yaml string to parse and then use to update self, or a
+            dict of the same structure as the dict returned by
+            self._parse_yaml()
         """
-        contact_data = self._parse_yaml(input)
+        if isinstance(input, str):
+            contact_data = self._parse_yaml(input)
+        elif isinstance(input, dict):
+            contact_data = self._validate(input)
+
         # update rev
         self._update_revision()
 
@@ -1456,6 +1474,22 @@ class Contact(YAMLEditable):
         contact = cls.new(address_book, supported_private_objects, version,
                           localize_dates=localize_dates)
         contact.update(yaml)
+        return contact
+
+    @classmethod
+    def from_dict(cls, address_book: "address_book.VdirAddressBook",
+                  data: dict,
+                  supported_private_objects: list[str] | None = None,
+                  version: str | None = None, localize_dates: bool = False
+                  ) -> "Contact":
+        """Use this if you want to create a new contact from a dict.
+
+        The dict must have the same structure as the dict returned by
+        cls._parse_yaml().
+        """
+        contact = cls.new(address_book, supported_private_objects, version,
+                          localize_dates=localize_dates)
+        contact.update(data)
         return contact
 
     @classmethod
