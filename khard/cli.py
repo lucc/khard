@@ -65,9 +65,9 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         description="Khard is a vcard address book for the console",
         formatter_class=argparse.RawTextHelpFormatter, add_help=False)
     base.add_argument("-c", "--config", help="config file to use")
-    base.add_argument("--debug", action="store_true",
+    base.add_argument("--debug", action="store_true", default=None,
                       help="enable debug output")
-    base.add_argument("--skip-unparsable", action="store_true",
+    base.add_argument("--skip-unparsable", action="store_true", default=None,
                       help="skip unparsable vcard files")
     base.add_argument("-v", "--version", action="version",
                       version="Khard version {}".format(khard_version))
@@ -139,10 +139,10 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         choices=("first_name", "last_name", "formatted_name"),
         help="Display names in contact table by first or last name")
     sort_parser.add_argument(
-        "-g", "--group-by-addressbook", action="store_true",
+        "-g", "--group-by-addressbook", action="store_true", default=None,
         help="Group contact table by address book")
     sort_parser.add_argument(
-        "-r", "--reverse", action="store_true",
+        "-r", "--reverse", action="store_true", default=None,
         help="Reverse order of contact table")
     sort_parser.add_argument(
         "-s", "--sort", choices=("first_name", "last_name", "formatted_name"),
@@ -151,7 +151,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
     # create search subparsers
     default_search_parser = argparse.ArgumentParser(add_help=False)
     default_search_parser.add_argument(
-        "-f", "--search-in-source-files", action="store_true",
+        "-f", "--search-in-source-files", action="store_true", default=None,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")
@@ -161,7 +161,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "contact")
     merge_search_parser = argparse.ArgumentParser(add_help=False)
     merge_search_parser.add_argument(
-        "-f", "--search-in-source-files", action="store_true",
+        "-f", "--search-in-source-files", action="store_true", default=None,
         help="Look into source vcf files to speed up search queries in "
         "large address books. Beware that this option could lead "
         "to incomplete results.")

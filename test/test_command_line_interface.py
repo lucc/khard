@@ -467,23 +467,26 @@ class EditCommands(unittest.TestCase):
 
 
 @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
-class CommandLineDefaultsDoNotOverwriteConfigValues(unittest.TestCase):
+class MergeCliArgsWithConfig(unittest.TestCase):
 
-    @staticmethod
-    def _with_contact_table(args, **kwargs):
-        args = cli.parse_args(args)
-        options = '\n'.join('{}={}'.format(key, kwargs[key]) for key in kwargs)
-        conf = config.Config(io.StringIO('[addressbooks]\n[[test]]\npath=.\n'
-                                         '[contact table]\n' + options))
-        return cli.merge_args_into_config(args, conf)
+    BOOL_SETTINGS = [('general', 'debug'),
+                     ('contact table', 'reverse'),
+                     ('contact table', 'group_by_addressbook'),
+                     ('vcard', 'search_in_source_files'),
+                     ('vcard', 'skip_unparsable')]
 
-    def test_group_by_addressbook(self):
-        conf = self._with_contact_table(['list'], group_by_addressbook=True)
-        self.assertTrue(conf.group_by_addressbook)
-
-
-@mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
-class CommandLineArgumentsOverwriteConfigValues(unittest.TestCase):
+    def test_cli_defaults_do_not_override_boolean_config_options(self):
+        for section, key in self.BOOL_SETTINGS:
+            with self.subTest(section=section, key=key):
+                args, _conf = cli.parse_args(["list"])
+                conf = config.Config(io.StringIO(f"""
+                    [addressbooks]
+                    [[test]]
+                    path = .
+                    [{section}]
+                    {key} = true"""))
+                conf = cli.merge_args_into_config(args, conf)
+                self.assertTrue(getattr(conf, key))
 
     @staticmethod
     def _merge(args):
@@ -513,7 +516,7 @@ class CommandLineArgumentsOverwriteConfigValues(unittest.TestCase):
         self.assertTrue(conf.search_in_source_files)
 
 
-class Merge(unittest.TestCase):
+class MergeSubcommand(unittest.TestCase):
 
     def test_merge_with_exact_search_terms(self):
         with TmpConfig(["contact1.vcf", "contact2.vcf"]):
