@@ -395,7 +395,15 @@ def parse_args(argv: list[str]) -> tuple[argparse.Namespace, Config]:
 
     # Save the last option that needs to be carried from the first parser run
     # to the second.
-    skip = args.skip_unparsable
+    # The default value for skip_unparsable in both the parser, and the config
+    # spec is False. So if a user doesnt specify both, it would end up as
+    # False. However, if either one of them is true we must save that
+    # information because during the merge, the CLI args merge over the config
+    # params. This means if the config sets skip_unparsable to True, and the
+    # user doesn't pass any CLI flags, the default CLI value of False
+    # overwrites the config's True value. The logical OR enables us to set the
+    # correct "skip" value, which lets the merge take place correctly.
+    skip = args.skip_unparsable or config.skip_unparsable
 
     # Parse the remainder of the command line.  All options from the previous
     # run have already been processed and are not needed any more.
