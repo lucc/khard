@@ -33,7 +33,7 @@ from khard.exceptions import Cancelled
 from . import address_book  # pylint: disable=unused-import # for type checking
 from . import helpers
 from .helpers.typing import (Date, PostAddress, StrList, convert_to_vcard,
-    list_to_string, string_to_date, string_to_list)
+    list_to_string, string_to_date, string_to_list, DEFAULT_YEAR)
 from .query import AnyQuery, Query
 
 
@@ -449,7 +449,7 @@ class VCardWrapper:
                 return date.strip(), True
             return None, False
         tz = date.tzname()
-        if date.year == 1900 and date.month != 0 and date.day != 0 \
+        if date.year == DEFAULT_YEAR and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0 \
                 and self.version == "4.0":
             fmt = '--%m%d'
@@ -976,7 +976,7 @@ class YAMLEditable(VCardWrapper):
             return ""
         if isinstance(date, str):
             return date
-        if date.year == 1900 and date.month != 0 and date.day != 0 \
+        if date.year == DEFAULT_YEAR and date.month != 0 and date.day != 0 \
                 and date.hour == 0 and date.minute == 0 and date.second == 0:
             return date.strftime("--%m-%d")
         tz = date.tzname()
@@ -1074,8 +1074,8 @@ class YAMLEditable(VCardWrapper):
                              "with vcard version 4.0.")
         if re.match(r"^--\d\d-?\d\d$", new) and self.version != "4.0":
             raise ValueError(
-                f"{key} format --mm-dd and --mmdd only usable with "
-                "vcard version 4.0. You may use 1900 as placeholder, if "
+                f"{key} format --mm-dd and --mmdd only usable with vcard "
+                f"version 4.0. You may use {DEFAULT_YEAR} as placeholder, if "
                 "the year is unknown.")
         try:
             v2 = string_to_date(new)

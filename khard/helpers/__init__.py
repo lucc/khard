@@ -7,7 +7,7 @@ import string
 from typing import Any, Sequence
 
 from ruamel.yaml.scalarstring import LiteralScalarString
-from .typing import list_to_string, PostAddress
+from .typing import list_to_string, PostAddress, DEFAULT_YEAR
 
 
 YamlPostAddresses = dict[str, list[dict[str, Any]] | dict[str, Any]]
@@ -163,7 +163,7 @@ def yaml_anniversary(anniversary: str | datetime | None,
         return None
 
     if isinstance(anniversary, datetime):
-        if (version == "4.0" and anniversary.year == 1900
+        if (version == "4.0" and anniversary.year == DEFAULT_YEAR
                              and anniversary.month != 0
                              and anniversary.day != 0
                              and anniversary.hour == 0
