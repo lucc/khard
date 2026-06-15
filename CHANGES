@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+v0.21.0 2026-06-15
+
+- Remove support for python 3.9
+- Fix bug skipping config's skip_unparsable setting (#355)
+- Fix special handling for ambiguous date formats (#349)
+- Add failing test for partial date with leap day
+- Remove the autodoc typehints extension in sphinx
+
+
 v0.20.1 2026-01-01
 
 - Fix reopening of stdin on Windows (#347)
