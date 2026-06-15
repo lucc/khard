@@ -10,6 +10,14 @@ StrList = Union[str, list[str]]
 PostAddress = dict[str, str]
 
 
+# A default year for datetimes without one.  Python does not support datetime
+# objects without a year from 3.15 onwards but vCard does.  We add a default
+# year to the python object and detect it again when formatting the object.
+# 1900 was the internally used default year of python's datetime object when it
+# still did support instances without a year (before python 3.5).
+DEFAULT_YEAR = 1900
+
+
 @overload
 def convert_to_vcard(name: str, value: StrList, constraint: type[str]) -> str: ...
 @overload
@@ -77,10 +85,11 @@ def string_to_date(string: str) -> datetime:
     # Ambiguous cases of a date with no year (--%m%d and --%m-%d).
     try:
         if string.startswith("--"):
+            tmp = str(DEFAULT_YEAR) + string[2:]
             if "-" in string[2:]:
-                return datetime.strptime("1900-" + string[2:], "%Y-%m-%d")
+                return datetime.strptime(tmp, "%Y%m-%d")
             else:
-                return datetime.strptime("1900" + string[2:], "%Y%m%d")
+                return datetime.strptime(tmp, "%Y%m%d")
     except ValueError:
         pass
 
@@ -107,4 +116,3 @@ def string_to_date(string: str) -> datetime:
 
     # All formats tried. Date cannot be parsed.
     raise ValueError
-
