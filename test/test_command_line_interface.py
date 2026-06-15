@@ -425,8 +425,9 @@ class EditCommands(unittest.TestCase):
         editor.write_temp_file = Editor.write_temp_file
         with mock.patch('khard.khard.interactive.Editor',
                         mock.Mock(return_value=editor)):
-            khard.modify_subcommand(load_contact("contact1.vcf"), "", True,
-                                    False)
+            with mock.patch("sys.stdout"):
+                khard.modify_subcommand(load_contact("contact1.vcf"), "", True,
+                                        False)
         # The editor is called with a temp file so how to we check this more
         # precisely?
         editor.edit_templates.assert_called_once()
@@ -451,7 +452,8 @@ class EditCommands(unittest.TestCase):
     @mock.patch.dict('os.environ', EDITOR='editor')
     def test_modify_existing_contact(self):
         with mock.patch('subprocess.Popen') as popen:
-            khard.modify_existing_contact(load_contact("contact1.vcf"))
+            with mock.patch("sys.stdout"):
+                khard.modify_existing_contact(load_contact("contact1.vcf"))
         popen.assert_called_once()
 
     def test_modify_existing_contact_2(self):
@@ -460,7 +462,8 @@ class EditCommands(unittest.TestCase):
         editor.write_temp_file = Editor.write_temp_file
         with mock.patch('khard.khard.interactive.Editor',
                         mock.Mock(return_value=editor)):
-            khard.modify_existing_contact(load_contact("contact1.vcf"))
+            with mock.patch("sys.stdout"):
+                khard.modify_existing_contact(load_contact("contact1.vcf"))
         # The editor is called with a temp file so how to we check this more
         # precisely?
         editor.edit_templates.assert_called_once()
