@@ -33,7 +33,6 @@ doc = [
     'sphinx',
     'sphinx-argparse',
     'sphinx-autoapi',
-    'sphinx-autodoc-typehints',
 ]
 typing = [
     "mypy",
