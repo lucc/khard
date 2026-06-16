@@ -13,14 +13,13 @@ classifiers = [
     "Environment :: Console",
     "Topic :: Utilities",
     "Topic :: Communications :: Email :: Address Book",
-    "License :: OSI Approved :: GNU General Public License (GPL)",
     "Intended Audience :: End Users/Desktop",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
 ]
 
 keywords = ["vcard", "console", "addressbook"]
-license = {text = "GPL"}
+license = "GPL-3.0-only"
 
 dependencies = [
     "configobj == 5.*, >= 5.0.6",
@@ -50,7 +49,7 @@ changelog = "https://github.com/lucc/khard/blob/main/CHANGES"
 khard = "khard.khard:main"
 
 [build-system]
-requires = ["setuptools>=61.0", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=77.0", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
