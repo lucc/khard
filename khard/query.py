@@ -167,7 +167,7 @@ class FieldQuery(TermQuery):
 
 class AndQuery(Query):
 
-    """A query to combine multiple queries with "and"."""
+    """A query to combine multiple queries with \"and\"."""
 
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
@@ -198,7 +198,7 @@ class AndQuery(Query):
 
 class OrQuery(Query):
 
-    """A query to combine multiple queries with "or"."""
+    """A query to combine multiple queries with \"or\"."""
 
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
@@ -252,6 +252,34 @@ class NameQuery(TermQuery):
 
     def __str__(self) -> str:
         return 'name:{}'.format(self._term)
+
+
+class UidQuery(FieldQuery):
+
+    """A query to match the UID field using prefix matching.
+
+    khard list shows a short unique UID prefix for each contact. This
+    query matches only contacts whose UID starts with the given term so
+    that the displayed prefix selects exactly the expected contact.
+    """
+
+    def __init__(self, value: str) -> None:
+        super().__init__("uid", value)
+
+    def _match_union(self, value: "str | datetime | list | dict[str, Any]"
+                     ) -> bool:
+        if isinstance(value, str):
+            return value.lower().startswith(self._term)
+        return super()._match_union(value)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, UidQuery) and self._term == other._term
+
+    def __hash__(self) -> int:
+        return hash((UidQuery, self._term))
+
+    def __str__(self) -> str:
+        return 'uid:{}'.format(self._term)
 
 
 class PhoneNumberQuery(FieldQuery):
@@ -353,6 +381,8 @@ def parse(string: str) -> TermQuery | FieldQuery:
                 if kind.startswith(term.lower()):
                     return FieldQuery(field, kind)
             return TermQuery(string)
+        if field == "uid":
+            return UidQuery(term)
         if field in contacts.Contact.get_properties():
             return FieldQuery(field, term)
     return TermQuery(string)
