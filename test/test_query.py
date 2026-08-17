@@ -319,12 +319,8 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parse("kind:org"), FieldQuery("kind", "org"))
         self.assertEqual(parse("kind:o"), FieldQuery("kind", "org"))
 
-    def test_uid_query_creates_uid_query_instance(self):
+    def test_uid_field_creates_uid_query_instance(self):
         actual = parse("uid:abc123")
         expected = UidQuery("abc123")
         self.assertEqual(actual, expected)
-
-    def test_uid_query_is_not_a_plain_field_query(self):
-        actual = parse("uid:abc123")
-        self.assertIsInstance(actual, UidQuery)
-        self.assertNotIsInstance(actual, FieldQuery)
+        self.assertEqual(type(actual), UidQuery)
