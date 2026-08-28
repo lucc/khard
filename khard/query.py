@@ -167,7 +167,7 @@ class FieldQuery(TermQuery):
 
 class AndQuery(Query):
 
-    """A query to combine multiple queries with \"and\"."""
+    """A query to combine multiple queries with "and"."""
 
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
@@ -198,7 +198,7 @@ class AndQuery(Query):
 
 class OrQuery(Query):
 
-    """A query to combine multiple queries with \"or\"."""
+    """A query to combine multiple queries with "or"."""
 
     def __init__(self, first: Query, second: Query, *queries: Query) -> None:
         self._queries = (first, second, *queries)
@@ -266,7 +266,7 @@ class UidQuery(FieldQuery):
     def __init__(self, value: str) -> None:
         super().__init__("uid", value)
 
-    def _match_union(self, value: "str | datetime | list | dict[str, Any]"
+    def _match_union(self, value: str | datetime | list | dict[str, Any]
                      ) -> bool:
         if isinstance(value, str):
             return value.lower().startswith(self._term)

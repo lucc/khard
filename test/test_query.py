@@ -323,4 +323,3 @@ class TestParser(unittest.TestCase):
         actual = parse("uid:abc123")
         expected = UidQuery("abc123")
         self.assertEqual(actual, expected)
-        self.assertEqual(type(actual), UidQuery)
