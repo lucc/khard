@@ -71,7 +71,7 @@ def yaml_clean(value: YAML) -> YAML | LiteralScalarString:
     """
     sanitize yaml values according to some simple principles:
       1. empty values are none, so ruamel does not print an empty list/str
-      2. list with only one item become this item
+      2. simple single-item lists are flattened
       3. multiline strings use the YAML literal style:
          https://yaml.org/spec/1.2.2/#literal-style
 
@@ -83,9 +83,19 @@ def yaml_clean(value: YAML) -> YAML | LiteralScalarString:
         return None
 
     if isinstance(value, list):
-        # special case for single item lists:
+        # Flatten a single string value, e.g. ["foo"] -> "foo"
         if len(value) == 1 and isinstance(value[0], str):
             return value[0]
+
+        # Flatten a nested single string value, e.g. [["foo"]] -> "foo"
+        if (
+            len(value) == 1
+            and isinstance(value[0], list)
+            and len(value[0]) == 1
+            and isinstance(value[0][0], str)
+        ):
+            return value[0][0]
+
     elif isinstance(value, str):
         if "\n" in value:
             return LiteralScalarString(value)
