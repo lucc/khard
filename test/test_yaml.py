@@ -149,6 +149,14 @@ class UpdateVcardWithYamlUserInput(unittest.TestCase):
         card.update(data)
         self.assertListEqual(card.organisations, [org])
 
+    def test_org_simple_to_yaml(self):
+        card = create_test_card()
+        card._add_organisation("Foo")
+
+        data = YAML().load(card.to_yaml())
+
+        self.assertEqual(data["Organisation"], "Foo")
+
     def test_update_categories_simple(self):
         card = create_test_card()
         data = {"Categories": "foo"}
