@@ -807,6 +807,30 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
+    def impp(self) -> dict[str, list[str]]:
+        """
+        :returns: dict of type and instant message handle list
+        """
+        impp_dict: dict[str, list[str]] = {}
+        try:
+            impp = self.vcard.impp_list
+        except AttributeError:
+            return {}
+        for child in impp:
+            impp_parts = child.value.split(":")
+            if len(impp_parts) < 2:
+                continue
+            type = impp_parts[0]
+            value = ":".join(impp_parts[1:])
+            if type not in impp_dict:
+                impp_dict[type] = []
+            impp_dict[type].append(value)
+        # sort impp handles lists
+        for impp_list in impp_dict.values():
+            impp_list.sort()
+        return impp_dict
+
+    @property
     def post_addresses(self) -> dict[str, list[PostAddress]]:
         """
         :returns: dict of type and post address list
@@ -1549,6 +1573,14 @@ class Contact(YAMLEditable):
                                            key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                     type, email_list, 4, -1, False)
+
+        # impp addresses
+        if self.impp:
+            strings.append("IMPP")
+            for type, impp_list in sorted(self.impp.items(),
+                                           key=lambda k: k[0].lower()):
+                strings += helpers.convert_to_yaml(
+                    type, impp_list, 4, -1, False)
 
         # post addresses
         if self.post_addresses:
