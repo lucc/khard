@@ -47,6 +47,14 @@ Private       :
         self.assertIn("home1", yaml_dump)
         self.assertIn("home2", yaml_dump)
 
+    def test_dumping_multiple_impp_handles_to_yaml(self):
+        yaml_editable = TestYAMLEditable()
+        yaml_editable._add_impp("xmpp", "alice@example.com")
+        yaml_editable._add_impp("xmpp", "bob@example.org")
+        yaml_dump = yaml_editable.to_yaml()
+        self.assertIn("alice@example.com", yaml_dump)
+        self.assertIn("bob@example.org", yaml_dump)
+
     def test_empty_kind_is_included_in_yaml_format(self):
         contact = TestYAMLEditable()
         yaml = contact.to_yaml()
