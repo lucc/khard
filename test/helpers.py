@@ -7,17 +7,19 @@ import locale
 import os
 import shutil
 import tempfile
-from typing import Generator
+from collections.abc import Generator
 from unittest import SkipTest, mock
 
 import vobject
 
-from khard import address_book
-from khard import contacts
+from khard import address_book, contacts
 
 
-def vCard(**kwargs):
-    """Create a simple vobject.vCard for tests."""
+def vCard(**kwargs) -> vobject.base.Component:
+    """Create a simple vobject.vCard for tests.
+
+    The default version is 3.0.
+    """
     vcard = vobject.vCard()
     if 'fn' not in kwargs:
         kwargs['fn'] = 'Test vCard'
@@ -28,17 +30,17 @@ def vCard(**kwargs):
     return vcard
 
 
-def TestVCardWrapper(**kwargs):
+def TestVCardWrapper(**kwargs) -> contacts.VCardWrapper:
     """Create a simple VCardWrapper for tests."""
     return contacts.VCardWrapper(vCard(**kwargs))
 
 
-def TestYAMLEditable(**kwargs):
+def TestYAMLEditable(**kwargs) -> contacts.YAMLEditable:
     """Create a simple YAMLEditable for tests."""
     return contacts.YAMLEditable(vCard(**kwargs))
 
 
-def TestContact(**kwargs):
+def TestContact(**kwargs) -> contacts.Contact:
     """Create a simple Contact for tests."""
     return contacts.Contact(vCard(**kwargs), None, None)
 
