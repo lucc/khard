@@ -389,6 +389,24 @@ class TypedProperties(unittest.TestCase):
     def test_list_of_strings_as_country(self):
         self._test_list_of_strings_as("country")
 
+    def test_pref_formatting_for_v3_vcards(self):
+        vcard = TestVCardWrapper(version="3.0")
+        vcard.add_email("pref", "test@example.com")
+        line = self._find_line("EMAIL", vcard.vcard.serialize())
+        self.assertEqual(line, ["EMAIL;TYPE=pref:test@example.com"])
+
+    def test_pref_formatting_for_v4_vcards(self):
+        vcard = TestVCardWrapper(version="4.0")
+        vcard.add_email("pref", "test@example.com")
+        line = self._find_line("EMAIL", vcard.vcard.serialize())
+        self.assertEqual(line, ["EMAIL;PREF=1:test@example.com"])
+
+    @staticmethod
+    def _find_line(pattern: str, lines: str | list[str]) -> list[str]:
+        if isinstance(lines, str):
+            lines = lines.splitlines()
+        return [line for line in lines if pattern in line]
+
 
 class OtherProperties(unittest.TestCase):
 
