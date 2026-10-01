@@ -42,7 +42,7 @@ def TestYAMLEditable(**kwargs) -> contacts.YAMLEditable:
 
 def TestContact(**kwargs) -> contacts.Contact:
     """Create a simple Contact for tests."""
-    return contacts.Contact(vCard(**kwargs), None, None)
+    return contacts.Contact(vCard(**kwargs), None, None)  # type: ignore
 
 
 def mock_stream(name="stdout"):
