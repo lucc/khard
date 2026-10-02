@@ -205,7 +205,7 @@ def list_contacts(vcard_list: list[Contact], fields: Iterable[str] = (),
         for field in table_header:
             if field == 'index':
                 row.append(str(index + 1))
-            elif field in ['name', 'phone', 'email', 'kind']:
+            elif field in ['name', 'phone', 'email', 'kind', 'impp']:
                 row.append(formatter.get_special_field(vcard, field))
             elif field == 'uid':
                 if parsable:

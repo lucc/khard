@@ -807,6 +807,47 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
+    def impp(self) -> dict[str, list[str]]:
+        """
+        :returns: dict of type and instant message handle list
+        """
+        impp_dict: dict[str, list[str]] = {}
+        try:
+            impp = self.vcard.impp_list
+        except AttributeError:
+            return {}
+        for child in impp:
+            try:
+                type, value = child.value.split(":", maxsplit=1)
+            except ValueError:
+                continue
+            try:
+                pref = int(child.params.get("PREF")[0])
+                type += f", pref={pref}"
+            except (IndexError, TypeError, ValueError):
+                pass
+            if type not in impp_dict:
+                impp_dict[type] = []
+            impp_dict[type].append(value)
+        # sort impp handles lists
+        for impp_list in impp_dict.values():
+            impp_list.sort()
+        return impp_dict
+
+    def _add_impp(self, type: str, handle: str) -> None:
+        _, types, pref = self._parse_type_value(string_to_list(type, ","), [])
+        if not types:
+            raise ValueError(f"Type for impp handle {handle} is missing.")
+        for type in types:
+            if ":" in type:
+                raise ValueError(f"Impp type \"{type}\" must not contain a colon.")
+            impp_obj = self.vcard.add('impp')
+            handle = convert_to_vcard("impp handle", handle, str)
+            impp_obj.value = f"{type}:{handle}"
+            if pref > 0:
+                impp_obj.params['PREF'] = str(pref)
+
+    @property
     def post_addresses(self) -> dict[str, list[PostAddress]]:
         """
         :returns: dict of type and post address list
@@ -1176,6 +1217,25 @@ class YAMLEditable(VCardWrapper):
             else:
                 raise ValueError("Missing type value for email address field")
 
+        # impp
+        self._delete_vcard_object("IMPP")
+        impp_data = contact_data.get("Impp")
+        if impp_data:
+            if isinstance(impp_data, dict):
+                for type, impp_list in impp_data.items():
+                    if isinstance(impp_list, str):
+                        impp_list = [impp_list]
+                    if isinstance(impp_list, list):
+                        for impp in impp_list:
+                            if impp:
+                                self._add_impp(type, impp)
+                    else:
+                        raise ValueError(
+                            "Got no impp or list of impps for the "
+                            f"impp address type {type}")
+            else:
+                raise ValueError("Missing type value for impp handle field")
+
         # post addresses
         self._delete_vcard_object("ADR")
         address_data = contact_data.get("Address")
@@ -1308,6 +1368,8 @@ class YAMLEditable(VCardWrapper):
                 self.phone_numbers, defaults=["cell", "home"]),
             "Email": helpers.yaml_dicts(
                 self.emails, defaults=["home", "work"]),
+            "Impp": helpers.yaml_dicts(
+                self.impp, defaults=["xmpp", "irc"]),
             "Categories": self.categories,
             "Note": self.notes,
             "Webpage": self.webpages,
@@ -1549,6 +1611,14 @@ class Contact(YAMLEditable):
                                            key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                     type, email_list, 4, -1, False)
+
+        # impp addresses
+        if self.impp:
+            strings.append("IMPP")
+            for type, impp_list in sorted(self.impp.items(),
+                                           key=lambda k: k[0].lower()):
+                strings += helpers.convert_to_yaml(
+                    type, impp_list, 4, -1, False)
 
         # post addresses
         if self.post_addresses:
