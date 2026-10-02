@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+v0.22.0  2026-10-02
+
+- Support vcard IMPP field (#359)
+- Fix YAML output for single organisation (#358)
+- Require setuptools >= 77 (60be3cb)
+- deps: remove dependency on sphinx_autodoc_typehints extension (#356)
+
+
 v0.21.0 2026-06-15
 
 - Remove support for python 3.9
