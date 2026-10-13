@@ -8,6 +8,7 @@ import unittest
 from unittest import mock
 
 from khard.contacts import Contact, multi_property_key
+from khard.helpers.typing import DEFAULT_YEAR
 
 
 class ContactFormatDateObject(unittest.TestCase):
@@ -27,8 +28,8 @@ class ContactFormatDateObject(unittest.TestCase):
             actual = Contact._format_date_object(d, False)
         self.assertEqual(actual, "2018-02-13T00:38:31+02:00")
 
-    def test_format_date_object_with_date_1900(self):
-        d = datetime.datetime(1900, 2, 13)
+    def test_format_date_object_with_default_year(self):
+        d = datetime.datetime(DEFAULT_YEAR, 2, 13)
         actual = Contact._format_date_object(d, False)
         self.assertEqual(actual, "--02-13")
 
