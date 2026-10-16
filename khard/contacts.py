@@ -808,7 +808,7 @@ class VCardWrapper:
             label_obj.value = custom_types[0]
 
     @property
-    def impp(self) -> dict[str, list[str]]:
+    def impps(self) -> dict[str, list[str]]:
         """
         :returns: dict of type and instant message handle list
         """
@@ -1370,7 +1370,7 @@ class YAMLEditable(VCardWrapper):
             "Email": helpers.yaml_dicts(
                 self.emails, defaults=["home", "work"]),
             "Impp": helpers.yaml_dicts(
-                self.impp, defaults=["xmpp", "irc"]),
+                self.impps, defaults=["xmpp", "irc"]),
             "Categories": self.categories,
             "Note": self.notes,
             "Webpage": self.webpages,
@@ -1619,9 +1619,9 @@ class Contact(YAMLEditable):
                     type, email_list, 4, -1, False)
 
         # impp addresses
-        if self.impp:
+        if self.impps:
             strings.append("IMPP")
-            for type, impp_list in sorted(self.impp.items(),
+            for type, impp_list in sorted(self.impps.items(),
                                            key=lambda k: k[0].lower()):
                 strings += helpers.convert_to_yaml(
                     type, impp_list, 4, -1, False)

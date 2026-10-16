@@ -70,8 +70,8 @@ class Formatter:
                 return self.format_labeled_field(vcard.emails,
                                                  self._preferred_email)
         if field == 'impp':
-            if vcard.impp:
-                return self.format_labeled_field(vcard.impp, [])
+            if vcard.impps:
+                return self.format_labeled_field(vcard.impps, [])
         if field == 'kind':
             return vcard.kind
         return ""

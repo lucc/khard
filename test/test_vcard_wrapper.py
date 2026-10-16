@@ -314,7 +314,7 @@ class TypedProperties(unittest.TestCase):
     def test_adding_a_simple_impp(self):
         wrapper = TestVCardWrapper()
         wrapper._add_impp('xmpp', 'alice@example.com')
-        self.assertDictEqual(wrapper.impp, {'xmpp': ['alice@example.com']})
+        self.assertDictEqual(wrapper.impps, {'xmpp': ['alice@example.com']})
 
     def test_adding_multiple_impp(self):
         wrapper = TestVCardWrapper()
@@ -322,7 +322,7 @@ class TypedProperties(unittest.TestCase):
         wrapper._add_impp('xmpp', 'bob@example.org')
         wrapper._add_impp('xmpp', 'alice@example.com')
         self.assertDictEqual(
-            wrapper.impp,
+            wrapper.impps,
             # The lists are sorted!
             {'matrix': ['@foo:example.com'], 'xmpp': ['alice@example.com', 'bob@example.org']})
 
@@ -331,7 +331,7 @@ class TypedProperties(unittest.TestCase):
         wrapper._add_impp('xmpp', 'bob@example.org')
         wrapper._add_impp('pref,xmpp', 'alice@example.com')
         self.assertDictEqual(
-            wrapper.impp, {'xmpp': ['bob@example.org'],
+            wrapper.impps, {'xmpp': ['bob@example.org'],
                                     'xmpp, pref=1': ['alice@example.com']})
 
     def test_adding_a_simple_address(self):
@@ -619,7 +619,7 @@ class NullableProperties(unittest.TestCase):
 
     LIST_PROPERTIES = ["categories", "titles", "webpages", "organisations",
                        "notes", "roles", "nicknames"]
-    DICT_PROPERTIES = ["post_addresses", "emails", "phone_numbers", "impp"]
+    DICT_PROPERTIES = ["post_addresses", "emails", "phone_numbers", "impps"]
     BASE_PROPERTIES = ["formatted_name", "kind", "version"]
 
     def test_for_non_existing_attributes(self):
