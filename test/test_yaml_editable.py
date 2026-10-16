@@ -2,10 +2,58 @@
 
 import unittest
 
+from ruamel.yaml import YAML
+
 from .helpers import TestYAMLEditable
 
 
 class ToYamlConversion(unittest.TestCase):
+    def test_multiline_note_uses_literal_style(self):
+        for note in ("First line.\nSecond line.", "First\n\n  Indented line."):
+            with self.subTest(note=note):
+                contact = TestYAMLEditable()
+                contact._add_name("", "Example", "", "", "")
+                contact._add_note(note)
+                yaml_dump = contact.to_yaml()
+                value = YAML().load(yaml_dump)["Note"]
+                self.assertEqual(value, note)
+                self.assertEqual(getattr(value, "style", None), "|")
+                contact.update(yaml_dump)
+                self.assertEqual(contact.notes, [note])
+
+    def test_multiple_multiline_notes_use_literal_style(self):
+        contact = TestYAMLEditable()
+        contact._add_name("", "Example", "", "", "")
+        notes = ["First note.\nSecond line.", "Other note.\nAnother line."]
+        for note in notes:
+            contact._add_note(note)
+        yaml_dump = contact.to_yaml()
+        values = YAML().load(yaml_dump)["Note"]
+        self.assertEqual(values, notes)
+        self.assertTrue(all(getattr(value, "style", None) == "|"
+                            for value in values))
+        contact.update(yaml_dump)
+        self.assertEqual(contact.notes, notes)
+
+    def test_labelled_multiline_note_uses_literal_style(self):
+        contact = TestYAMLEditable()
+        contact._add_name("", "Example", "", "", "")
+        note = "First line.\nSecond line."
+        contact._add_note(note, label="work")
+        yaml_dump = contact.to_yaml()
+        value = YAML().load(yaml_dump)["Note"][0]["work"]
+        self.assertEqual(value, note)
+        self.assertEqual(getattr(value, "style", None), "|")
+        contact.update(yaml_dump)
+        self.assertEqual(contact.notes, [{"work": note}])
+
+    def test_multiline_note_keeps_carriage_returns(self):
+        contact = TestYAMLEditable()
+        note = "First line.\r\nSecond line."
+        contact._add_note(note)
+        value = YAML().load(contact.to_yaml())["Note"]
+        self.assertEqual(value, note)
+
     def test_yaml_quoted_special_characters(self):
         yaml_editable = TestYAMLEditable()
         yaml_editable.supported_private_objects = ["Twitter"]

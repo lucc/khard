@@ -26,6 +26,7 @@ from typing import Any, Callable, IO, Iterator, Literal, TypeVar, Sequence, \
 
 from ruamel import yaml
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import LiteralScalarString, walk_tree
 import vobject
 
 from khard.exceptions import Cancelled
@@ -1398,6 +1399,11 @@ class YAMLEditable(VCardWrapper):
                     self.supported_private_objects
                 ))
 
+        # Also format multiline strings nested in lists or labelled properties.
+        # Keep carriage returns quoted so YAML does not normalize them away.
+        walk_tree(template_obj, map={
+            "\n": lambda v: v if "\r" in v else LiteralScalarString(v),
+        })
         stream = io.StringIO()
         yaml.dump(template_obj, stream)
         # posix standard: eof char must be \n
