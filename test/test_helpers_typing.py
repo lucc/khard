@@ -4,6 +4,7 @@ import datetime
 import unittest
 
 from khard.helpers.typing import (
+    DEFAULT_YEAR,
     convert_to_vcard,
     list_to_string,
     string_to_date,
@@ -89,6 +90,7 @@ class ListToString(unittest.TestCase):
 
 class StringToDate(unittest.TestCase):
     date = datetime.datetime(year=1900, month=1, day=2)
+    no_year = datetime.datetime(year=DEFAULT_YEAR, month=1, day=2)
     time = datetime.datetime(year=1900, month=1, day=2, hour=12, minute=42, second=17)
     zone = datetime.datetime(
         year=1900,
@@ -103,12 +105,12 @@ class StringToDate(unittest.TestCase):
     def test_mmdd_format(self):
         string = "--0102"
         result = string_to_date(string)
-        self.assertEqual(result, self.date)
+        self.assertEqual(result, self.no_year)
 
     def test_mm_dd_format(self):
         string = "--01-02"
         result = string_to_date(string)
-        self.assertEqual(result, self.date)
+        self.assertEqual(result, self.no_year)
 
     def test_yyyymmdd_format(self):
         string = "19000102"
@@ -150,10 +152,10 @@ class StringToDate(unittest.TestCase):
         result = string_to_date(string)
         self.assertEqual(result, self.zone)
 
-    @unittest.expectedFailure
     def test_partial_date_with_february_29(self):
-        # FIXME: this fails because 1900 is not a leap year, see
-        # https://github.com/python/cpython/pull/116179 for more info.
-        string = "--02-29"
-        result = string_to_date(string)
-        self.assertEqual(result, datetime.datetime(year=1900, month=2, day=29))
+        for string in ["--02-29", "--0229"]:
+            with self.subTest(string=string):
+                result = string_to_date(string)
+                self.assertEqual(
+                    result,
+                    datetime.datetime(year=DEFAULT_YEAR, month=2, day=29))

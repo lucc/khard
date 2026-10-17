@@ -13,9 +13,10 @@ PostAddress = dict[str, str]
 # A default year for datetimes without one.  Python does not support datetime
 # objects without a year from 3.15 onwards but vCard does.  We add a default
 # year to the python object and detect it again when formatting the object.
-# 1900 was the internally used default year of python's datetime object when it
-# still did support instances without a year (before python 3.5).
-DEFAULT_YEAR = 1900
+# It has to be a leap year, otherwise a date like --02-29 can not be
+# represented.  1904 is the first leap year of the 20th century (1900 is not
+# a leap year).
+DEFAULT_YEAR = 1904
 
 
 @overload
