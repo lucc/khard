@@ -187,7 +187,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "-p", "--parsable", action="store_true",
         help="Machine readable format: uid\\tcontact_name\\taddress_book_name")
     field_argument = FieldsArgument(
-        'index', 'name', 'phone', 'email', 'address_book',
+        'index', 'name', 'phone', 'email', 'impp', 'address_book',
         *Contact.get_properties(), nested=True)
     list_parser.add_argument(
         "-F", "--fields", default=[], type=field_argument,
