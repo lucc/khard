@@ -1,6 +1,6 @@
 {
   description = "Development flake for khard";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
   # keep an old version of nixpkgs for ci until we drop python 3.10 support
   # https://github.com/NixOS/nixpkgs/issues/488818
   inputs.nixpkgs-python310.url = "github:NixOS/nixpkgs/cad22e7d996aea55ecab064e84834289143e44a0";
