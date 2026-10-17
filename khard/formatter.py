@@ -61,16 +61,15 @@ class Formatter:
             if vcard.nicknames and self._show_nicknames and not self._parsable:
                 return "{} (Nickname: {})".format(name, vcard.nicknames[0])
             return name
-        if field == 'phone':
-            if vcard.phone_numbers:
-                return self.format_labeled_field(vcard.phone_numbers,
-                                                 self._preferred_phone)
-        if field == 'email':
-            if vcard.emails:
-                return self.format_labeled_field(vcard.emails,
-                                                 self._preferred_email)
-        if field == 'impp':
-            if vcard.impps:
+        # these are the special singular output field names for some plural
+        # properties
+        if field == 'phone' and vcard.phone_numbers:
+            return self.format_labeled_field(vcard.phone_numbers,
+                                             self._preferred_phone)
+        if field == 'email' and vcard.emails:
+            return self.format_labeled_field(vcard.emails,
+                                             self._preferred_email)
+        if field == 'impp' and vcard.impps:
                 return self.format_labeled_field(vcard.impps, [])
         if field == 'kind':
             return vcard.kind
