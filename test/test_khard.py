@@ -1,8 +1,8 @@
 """Unittests for the khard module"""
 
+import itertools
 import locale
 import unittest
-import itertools
 from argparse import Namespace
 from email.headerregistry import Address
 from unittest import mock

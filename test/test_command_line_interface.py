@@ -19,10 +19,8 @@ from unittest import mock
 
 from ruamel.yaml import YAML
 
-from khard import cli
-from khard import config
+from khard import cli, config, khard
 from khard.helpers.interactive import Editor
-from khard import khard
 
 from .helpers import TmpConfig, load_contact, mock_stream
 

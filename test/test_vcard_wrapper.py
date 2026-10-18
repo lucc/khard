@@ -9,7 +9,7 @@ import vobject
 
 from khard.contacts import Contact, VCardWrapper
 
-from .helpers import vCard, TestVCardWrapper
+from .helpers import TestVCardWrapper, vCard
 
 
 def _from_file(path):

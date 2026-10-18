@@ -1,11 +1,11 @@
 """Queries to match against contacts"""
 
 import abc
+import re
 from datetime import datetime
 from functools import reduce
 from operator import and_, or_
-import re
-from typing import cast, Any
+from typing import Any, cast
 
 from . import contacts
 

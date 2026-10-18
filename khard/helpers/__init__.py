@@ -1,14 +1,14 @@
 """Some helper functions for khard"""
 
-from datetime import datetime
 import pathlib
 import random
 import string
+from datetime import datetime
 from typing import Any, Sequence
 
 from ruamel.yaml.scalarstring import LiteralScalarString
-from .typing import list_to_string, PostAddress, DEFAULT_YEAR
 
+from .typing import DEFAULT_YEAR, PostAddress, list_to_string
 
 YamlPostAddresses = dict[str, list[dict[str, Any]] | dict[str, Any]]
 YAML = str | Sequence | dict[str, Any] | None

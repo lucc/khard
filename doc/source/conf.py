@@ -20,6 +20,7 @@
 import os
 import pathlib
 import sys
+
 sys.path.insert(0, os.path.abspath('../..'))
 from khard.version import version as original_version
 

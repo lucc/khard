@@ -21,22 +21,30 @@ import os
 import re
 import tempfile
 import time
-from typing import Any, Callable, IO, Iterator, Literal, TypeVar, Sequence, \
-        overload
+from typing import IO, Any, Callable, Iterator, Literal, Sequence, TypeVar, overload
 
+import vobject
 from ruamel import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString, walk_tree
-import vobject
 
 from khard.exceptions import Cancelled
 
-from . import address_book  # pylint: disable=unused-import # for type checking
-from . import helpers
-from .helpers.typing import (Date, PostAddress, StrList, convert_to_vcard,
-    list_to_string, string_to_date, string_to_list, DEFAULT_YEAR)
+from . import (
+    address_book,  # pylint: disable=unused-import # for type checking
+    helpers,
+)
+from .helpers.typing import (
+    DEFAULT_YEAR,
+    Date,
+    PostAddress,
+    StrList,
+    convert_to_vcard,
+    list_to_string,
+    string_to_date,
+    string_to_list,
+)
 from .query import AnyQuery, Query
-
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")

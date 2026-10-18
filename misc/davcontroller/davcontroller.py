@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import sys
 import argparse
+import sys
+
 from caldavclientlibrary.client.account import CalDAVAccount
 from caldavclientlibrary.protocol.url import URL
 

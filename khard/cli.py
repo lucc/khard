@@ -5,12 +5,11 @@ import logging
 import sys
 
 from .actions import Actions
-from .exceptions import ConfigError
-from .contacts import Contact
 from .config import Config
+from .contacts import Contact
+from .exceptions import ConfigError
 from .query import AndQuery, AnyQuery, parse
 from .version import version as khard_version
-
 
 logger = logging.getLogger(__name__)
 

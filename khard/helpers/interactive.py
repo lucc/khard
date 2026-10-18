@@ -1,16 +1,15 @@
 """Helper functions for user interaction."""
 
 import contextlib
-from datetime import datetime
-from enum import Enum
 import os.path
 import subprocess
+from datetime import datetime
+from enum import Enum
 from tempfile import NamedTemporaryFile
 from typing import Callable, Generator, Sequence, TypeVar
 
-from ..exceptions import Cancelled
 from ..contacts import Contact
-
+from ..exceptions import Cancelled
 
 T = TypeVar("T")
 

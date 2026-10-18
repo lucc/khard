@@ -1,30 +1,28 @@
 """Main application logic of khard including command line handling"""
 
-from argparse import Namespace
 import datetime
-from email import message_from_string
-from email.policy import SMTP as SMTP_POLICY
-from email.headerregistry import Address, AddressHeader, Group
 import locale
 import logging
 import operator
 import os
 import sys
 import textwrap
-from typing import Any, cast, Callable, Iterable
+from argparse import Namespace
+from email import message_from_string
+from email.headerregistry import Address, AddressHeader, Group
+from email.policy import SMTP as SMTP_POLICY
+from typing import Any, Callable, Iterable, cast
 
-from . import helpers
+from . import cli, helpers
 from .address_book import AddressBookCollection, VdirAddressBook
-from .exceptions import AddressBookNameError, AddressBookParseError, Cancelled
-from .contacts import Contact
-from . import cli
 from .config import Config
+from .contacts import Contact
+from .exceptions import AddressBookNameError, AddressBookParseError, Cancelled
 from .formatter import Formatter
 from .helpers import interactive
 from .helpers.interactive import confirm
 from .query import AndQuery, AnyQuery, OrQuery, Query, TermQuery
 from .version import version as khard_version
-
 
 logger = logging.getLogger(__name__)
 config: Config

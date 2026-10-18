@@ -5,10 +5,10 @@
 import io
 import logging
 import os.path
-from pathlib import Path
 import tempfile
 import unittest
-import unittest.mock as mock
+from pathlib import Path
+from unittest import mock
 
 import configobj
 

@@ -2,10 +2,10 @@
 
 import abc
 import binascii
-from collections.abc import Mapping, Sequence
 import glob
 import logging
 import os
+from collections.abc import Mapping, Sequence
 from typing import Generator, Iterator, overload
 
 import vobject.base
@@ -13,7 +13,6 @@ import vobject.base
 from . import contacts
 from .exceptions import AddressBookParseError
 from .query import AnyQuery, Query
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,16 +1,17 @@
 """Loading and validation of the configuration file"""
 
-from argparse import Namespace
 import io
 import locale
 import logging
 import os
 import re
 import shlex
-from typing import Iterable
+from argparse import Namespace
 from glob import iglob
+from typing import Iterable
 
 import configobj
+
 try:
     # since configobj 5.1
     from configobj import validate
@@ -21,7 +22,6 @@ from .actions import Actions
 from .address_book import AddressBookCollection, VdirAddressBook
 from .exceptions import AddressBookNameError, ConfigError
 from .query import Query
-
 
 logger = logging.getLogger(__name__)
 # This is the type of the config file parameter accepted by the configobj
