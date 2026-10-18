@@ -7,8 +7,8 @@ import os
 import re
 import shlex
 from argparse import Namespace
+from collections.abc import Iterable
 from glob import iglob
-from typing import Iterable
 
 import configobj
 

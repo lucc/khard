@@ -5,8 +5,8 @@ import binascii
 import glob
 import logging
 import os
-from collections.abc import Mapping, Sequence
-from typing import Generator, Iterator, overload
+from collections.abc import Generator, Iterator, Mapping, Sequence
+from typing import overload
 
 import vobject.base
 

@@ -3,10 +3,11 @@
 import contextlib
 import os.path
 import subprocess
+from collections.abc import Callable, Generator, Sequence
 from datetime import datetime
 from enum import Enum
 from tempfile import NamedTemporaryFile
-from typing import Callable, Generator, Sequence, TypeVar
+from typing import TypeVar
 
 from ..contacts import Contact
 from ..exceptions import Cancelled

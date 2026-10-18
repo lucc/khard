@@ -3,8 +3,9 @@
 import pathlib
 import random
 import string
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any
 
 from ruamel.yaml.scalarstring import LiteralScalarString
 

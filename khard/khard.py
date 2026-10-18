@@ -8,10 +8,11 @@ import os
 import sys
 import textwrap
 from argparse import Namespace
+from collections.abc import Callable, Iterable
 from email import message_from_string
 from email.headerregistry import Address, AddressHeader, Group
 from email.policy import SMTP as SMTP_POLICY
-from typing import Any, Callable, Iterable, cast
+from typing import Any, cast
 
 from . import cli, helpers
 from .address_book import AddressBookCollection, VdirAddressBook

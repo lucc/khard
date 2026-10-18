@@ -21,7 +21,8 @@ import os
 import re
 import tempfile
 import time
-from typing import IO, Any, Callable, Iterator, Literal, Sequence, TypeVar, overload
+from collections.abc import Callable, Iterator, Sequence
+from typing import IO, Any, Literal, TypeVar, overload
 
 import vobject
 from ruamel import yaml

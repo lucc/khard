@@ -1,6 +1,6 @@
 """Names and aliases for the subcommands on the command line"""
 
-from typing import Generator, Iterable
+from collections.abc import Generator, Iterable
 
 
 class Actions:
