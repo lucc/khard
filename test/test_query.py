@@ -8,6 +8,7 @@ from khard.query import (
     NullQuery,
     OrQuery,
     TermQuery,
+    UidQuery,
     parse,
 )
 
@@ -203,6 +204,52 @@ class TestFieldQuery(unittest.TestCase):
         self.assertFalse(query.match(contact))
 
 
+class TestUidQuery(unittest.TestCase):
+    def setUp(self):
+        self.uid_a = "aaabbbb"
+        self.uid_b = "bbbaaaa"
+        self.contact_a = TestContact(uid=self.uid_a)
+        self.contact_b = TestContact(uid=self.uid_b)
+
+    def test_matches_uid_by_prefix(self):
+        q = UidQuery("a")
+        self.assertTrue(q.match(self.contact_a))
+
+    def test_does_not_match_uid_with_term_as_substring_only(self):
+        # "a" is a substring of "bbbaaaa" but not a prefix
+        q = UidQuery("a")
+        self.assertFalse(q.match(self.contact_b))
+
+    def test_matches_full_uid(self):
+        q = UidQuery(self.uid_a)
+        self.assertTrue(q.match(self.contact_a))
+        self.assertFalse(q.match(self.contact_b))
+
+    def test_matching_is_case_insensitive(self):
+        q = UidQuery("AAA")
+        self.assertTrue(q.match(self.contact_a))
+        self.assertFalse(q.match(self.contact_b))
+
+    def test_empty_term_matches_any_contact_with_uid_set(self):
+        q = UidQuery("")
+        self.assertTrue(q.match(self.contact_a))
+        self.assertTrue(q.match(self.contact_b))
+
+    def test_empty_term_does_not_match_contact_without_uid(self):
+        q = UidQuery("")
+        self.assertFalse(q.match(TestContact()))
+
+    def test_shared_prefix_can_be_disambiguated(self):
+        uid_a = "aaabbbb"
+        uid_a2 = "aaacccc"
+        contact_a = TestContact(uid=uid_a)
+        contact_a2 = TestContact(uid=uid_a2)
+        self.assertTrue(UidQuery("aaab").match(contact_a))
+        self.assertFalse(UidQuery("aaab").match(contact_a2))
+        self.assertFalse(UidQuery("aaac").match(contact_a))
+        self.assertTrue(UidQuery("aaac").match(contact_a2))
+
+
 class TestNameQuery(unittest.TestCase):
     def test_matches_formatted_name_field(self):
         vcard = load_contact("minimal.vcf")
@@ -271,3 +318,8 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parse("kind:i"), FieldQuery("kind", "individual"))
         self.assertEqual(parse("kind:org"), FieldQuery("kind", "org"))
         self.assertEqual(parse("kind:o"), FieldQuery("kind", "org"))
+
+    def test_uid_field_creates_uid_query_instance(self):
+        actual = parse("uid:abc123")
+        expected = UidQuery("abc123")
+        self.assertEqual(actual, expected)
