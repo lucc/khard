@@ -95,7 +95,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
     new_addressbook_parser.add_argument(
         "-a", "--addressbook", default=[],
         type=lambda x: [y.strip() for y in x.split(",")],
-        help="Specify address book in which to create the new contact")
+        help="Specify address book in which to create the new contact(s)")
     copy_move_addressbook_parser = argparse.ArgumentParser(add_help=False)
     copy_move_addressbook_parser.add_argument(
         "-a", "--addressbook", default=[],
@@ -207,7 +207,16 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "-o", "--output-file", default=sys.stdout,
         type=argparse.FileType("w"),
         help="Specify output template file name or use stdout by default")
-    subparsers.add_parser("template", help="print an empty yaml template")
+    template_parser = subparsers.add_parser(
+        "template",
+        description="print an empty yaml (default) or CSV template",
+        help="print an empty yaml (default) or CSV template")
+    template_parser.add_argument(
+        "-O", "--format", choices=("yaml", "csv"), default="yaml",
+        help="select the template format")
+    template_parser.add_argument(
+        "-d", "--delimiter", default=",",
+        help="Use DELIMITER instead of \",\" for CSV field delimiter")
     birthdays_parser = subparsers.add_parser(
         "birthdays",
         aliases=Actions.get_aliases("birthdays"),
@@ -259,11 +268,17 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "new",
         aliases=Actions.get_aliases("new"),
         parents=[new_addressbook_parser, template_input_file_parser],
-        description="create a new contact",
-        help="create a new contact")
+        description="create a new contact or new contacts",
+        help="create a new contact or new contacts")
     new_parser.add_argument(
         "--vcard-version", choices=("3.0", "4.0"), dest='preferred_version',
         help="Select preferred vcard version for new contact")
+    new_parser.add_argument(
+        "-O", "--format", choices=("yaml", "csv"), default="yaml",
+        help="Select input format (yaml by default)")
+    new_parser.add_argument(
+        "-d", "--delimiter",  default=",",
+        help="Use DELIMITER instead of \",\" for CSV field delimiter")
     add_email_parser = subparsers.add_parser(
         "add-email",
         aliases=Actions.get_aliases("add-email"),
