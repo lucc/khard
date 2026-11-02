@@ -10,3 +10,5 @@ doc/source/examples/template.yaml
 __pycache__
 khard.egg-info
 result
+config.bat
+node_modules

@@ -1,5 +1,6 @@
 """Main application logic of khard including command line handling"""
 
+import helpers.session
 from argparse import Namespace
 import datetime
 from email import message_from_string

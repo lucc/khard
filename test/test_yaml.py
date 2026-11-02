@@ -124,7 +124,7 @@ class yaml_ablabel(unittest.TestCase):
 class UpdateVcardWithYamlUserInput(unittest.TestCase):
     _date = datetime.datetime(2000, 1, 1)
     _datetime = datetime.datetime(2013, 4, 2, 13, 14, 15)
-    _no_year = datetime.datetime(1900, 1, 1)
+    _no_year = datetime.datetime(khard.helpers.DEFAULT_YEAR, 1, 1)
 
     def test_update_org_simple(self):
         card = create_test_card()
