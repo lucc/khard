@@ -7,8 +7,6 @@ from operator import and_, or_
 import re
 from typing import cast, Any
 
-from . import contacts
-
 # constants
 FIELD_PHONE_NUMBERS = "phone_numbers"
 
@@ -342,6 +340,10 @@ def parse(string: str) -> TermQuery | FieldQuery:
     :returns: a FieldQuery if the string contains a valid field specifier, a
         TermQuery otherwise
     """
+    # Imported here instead of at module level: contacts (transitively via
+    # address_book) imports this module, so a top-level import is circular
+    # and breaks `from khard.query import ...` as the first khard import.
+    from . import contacts
     if ":" in string:
         field, term = string.split(":", maxsplit=1)
         if field == "name":
