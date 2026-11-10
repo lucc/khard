@@ -271,3 +271,27 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parse("kind:i"), FieldQuery("kind", "individual"))
         self.assertEqual(parse("kind:org"), FieldQuery("kind", "org"))
         self.assertEqual(parse("kind:o"), FieldQuery("kind", "org"))
+
+
+class TestQueryModuleImport(unittest.TestCase):
+    def test_query_importable_as_first_khard_import(self):
+        """Importing khard.query first must not raise a circular ImportError.
+
+        Regression test: khard.query used to import khard.contacts at
+        module level, which (via address_book) imports khard.query back,
+        so ``from khard.query import parse`` failed unless another khard
+        module had been imported first.
+        """
+        import pathlib
+        import subprocess
+        import sys
+        repo_root = pathlib.Path(__file__).resolve().parent.parent
+        code = (
+            "from khard.query import NameQuery, parse; "
+            "assert str(parse('foo')) == 'foo'; "
+            "assert isinstance(parse('name:bar'), NameQuery)"
+        )
+        proc = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True, text=True, cwd=repo_root)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
