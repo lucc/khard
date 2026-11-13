@@ -40,10 +40,10 @@ class FieldsArgument:
             if test in self._choices:
                 ret.append(candidate)
             else:
-                choices = ', '.join('"{}"'.format(c) for c in self._choices)
+                choices = ', '.join(f'"{c}"' for c in self._choices)
                 raise argparse.ArgumentTypeError(
-                    '"{}" is not an accepted field. Accepted fields are {}.'
-                    .format(test, choices))
+                    f'"{test}" is not an accepted field. Accepted fields are {choices}.'
+                )
         return ret
 
 
@@ -69,7 +69,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
     base.add_argument("--skip-unparsable", action="store_true", default=None,
                       help="skip unparsable vcard files")
     base.add_argument("-v", "--version", action="version",
-                      version="Khard version {}".format(khard_version))
+                      version=f"Khard version {khard_version}")
 
     # Create the first argument parser.  Its main job is to set the correct
     # config file.  The config file is needed to get the default command if no
@@ -372,9 +372,9 @@ def parse_args(argv: list[str]) -> tuple[argparse.Namespace, Config]:
     try:
         config = Config(args.config)
     except ConfigError as err:
-        parser.exit(3, "Error in config file: {}\n".format(err))
+        parser.exit(3, f"Error in config file: {err}\n")
     except OSError as err:
-        parser.exit(3, "Error reading config file: {}\n".format(err))
+        parser.exit(3, f"Error reading config file: {err}\n")
     logger.debug("Finished parsing config=%s", vars(config))
 
     # Check the log level again and merge the value from the command line with
