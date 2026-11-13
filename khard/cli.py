@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 from .actions import Actions
 from .config import Config
@@ -203,8 +204,7 @@ def create_parsers() -> tuple[argparse.ArgumentParser,
         "--format", choices=("pretty", "yaml", "vcard"), default="pretty",
         help="select the output format")
     show_parser.add_argument(
-        "-o", "--output-file", default=sys.stdout,
-        type=argparse.FileType("w"),
+        "-o", "--output-file", type=Path,
         help="Specify output template file name or use stdout by default")
     subparsers.add_parser("template", help="print an empty yaml template")
     birthdays_parser = subparsers.add_parser(

@@ -1192,14 +1192,19 @@ def main(argv: list[str] = sys.argv[1:]) -> ExitStatus:
                     if args.format == "pretty":
                         output = selected_vcard.pretty()
                     elif args.format == "vcard":
-                        output = open(selected_vcard.filename).read()
+                        with open(selected_vcard.filename) as file:
+                            output = file.read()
                     else:
                         output = "# Contact template for khard version {}\n" \
                                  "# Name: {}\n# Vcard version: {}\n\n{}".format(
                                      khard_version, selected_vcard,
                                      selected_vcard.version,
                                      selected_vcard.to_yaml())
-                    args.output_file.write(output)
+                    if args.output_file:
+                        with open(args.output_file, "w") as output_file:
+                            output_file.write(output)
+                    else:
+                        sys.stdout.write(output)
                 elif args.action == "edit":
                     return modify_subcommand(selected_vcard, input_from_stdin_or_file,
                                       args.open_editor, args.format == 'vcard')

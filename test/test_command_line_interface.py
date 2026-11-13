@@ -25,10 +25,10 @@ from khard.helpers.interactive import Editor
 from .helpers import TmpConfig, load_contact, mock_stream
 
 
-def run_main(*args):
+def run_main(*args: str):
     """Run the khard.main() method with mocked stdout"""
     with mock_stream() as stdout:
-        khard.main(args)
+        khard.main(list(args))
     return stdout
 
 
@@ -399,6 +399,15 @@ class ShowCommands(unittest.TestCase):
         self.assertIn('First name', yaml)
         self.assertIn('Last name', yaml)
         self.assertIn('Nickname', yaml)
+
+    @mock.patch.dict('os.environ', KHARD_CONFIG='test/fixture/minimal.conf')
+    def test_writing_show_to_output_file(self):
+        stdout = run_main("show", "uid1").getvalue()
+        with tempfile.NamedTemporaryFile() as tmp:
+            run_main("show", "--output-file", tmp.name, "uid1")
+            with open(tmp.name) as outfile:
+                output = outfile.read()
+        self.assertEqual(stdout, output)
 
 
 class EditCommands(unittest.TestCase):
