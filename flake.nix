@@ -83,10 +83,6 @@
       tests-python-313 = tests pkgs.python313;
       tests-python-314 = tests pkgs.python314;
       tests-python-315 = tests pkgs.python315;
-      ruff = pkgs.runCommand "ruff" {} ''
-        ${pkgs.ruff}/bin/ruff check ${self}/khard
-        touch $out
-      '';
       mypy = pkgs.runCommand "mypy" {
         buildInputs = [
           (pkgs.python3.withPackages (p: typing.propagatedBuildInputs ++ typing.nativeBuildInputs))
